@@ -1,26 +1,345 @@
 @import "tailwindcss";
 
+/*
+  Geekdom design tokens.
+
+  Palette sampled from the live geekdom.com stylesheet, so the new site reads
+  as the same brand rather than a redesign: rust, ink, gold, sage, sky, and a
+  family of warm sands.
+
+  Type is Geist — Sans for prose and display, Mono for anything read as data.
+  See the note in app/layout.tsx for why it replaces the brand's Rubik and why
+  Geist Pixel isn't loaded.
+
+  The site is light by default and uses ink as a full-bleed ground for the
+  sections that need weight. There is no dark-mode variant — this is a brand
+  surface with one intended look, not an app, and a media-query palette would
+  mean maintaining two versions of contrast decisions below.
+*/
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Warm neutrals — the ground the whole site sits on. */
+  --sand: #faf8f5;
+  --sand-deep: #f5efe8;
+  --sand-edge: #e6dfd7;
+
+  --background: var(--sand);
+  --foreground: #1d1d1d;
+
+  /* Brand */
+  --rust: #ca3625;
+  --rust-deep: #aa2d29;
+  --ink: #1d1d1d;
+  --gold: #fcb316;
+  --sage: #5eaf88;
+  --sky: #87c2ea;
+  --white: #ffffff;
+
+  /*
+    Contrast, measured, because these decisions get relitigated otherwise:
+
+      rust on sand      5.0:1  — passes AA for body text
+      white on rust     5.2:1  — passes AA, so the primary button's LABEL is
+                                 legible, not just its boundary
+      rust on ink       3.3:1  — FAILS AA for normal text. Rust is a light-ground
+                                 colour. On the ink sections the accent is gold.
+      gold on ink       9.3:1  — comfortably AA, which is why the eyebrows and
+                                 rules inside dark bands are gold
+      gold on white     1.8:1  — unusable as text on light. Gold is an
+                                 ink-ground colour, strictly.
+
+    The two accents are not interchangeable: each one works on exactly the
+    ground the other fails on. `--accent` / `--accent-on-ink` name that split so
+    a component doesn't have to remember which band it's rendering into.
+  */
+  --accent: var(--rust);
+  --accent-on-ink: var(--gold);
+
+  /* Semantic */
+  --muted: var(--sand-deep);
+  --muted-foreground: #6b6560;
+  --border: var(--sand-edge);
+  --ring: var(--rust);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
+  --color-sand: var(--sand);
+  --color-sand-deep: var(--sand-deep);
+  --color-sand-edge: var(--sand-edge);
+
+  --color-rust: var(--rust);
+  --color-rust-deep: var(--rust-deep);
+  --color-ink: var(--ink);
+  --color-gold: var(--gold);
+  --color-sage: var(--sage);
+  --color-sky: var(--sky);
+
+  --color-accent: var(--accent);
+  --color-accent-on-ink: var(--accent-on-ink);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/*
+  Display type. Geist is drawn fairly tight already, so this is a nudge, not a
+  correction — and it's scoped to headings rather than set on :root because the
+  same negative tracking at body scale closes up the counters and reads as a
+  rendering fault rather than a choice.
+*/
+h1,
+h2,
+h3 {
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+/*
+  `text-wrap: pretty` on paragraphs prevents single-word last lines in the long
+  prose on /whats-changing, which is the page most likely to be read start to
+  finish.
+*/
+p {
+  text-wrap: pretty;
+}
+
+/*
+  Clips a <ShaderCanvas> to the crown.
+
+  The canvas itself is a plain rectangle of flowing colour; this is what makes
+  it read as the mark. Same technique as the SASTW bolt in the sibling repo.
+
+  `contain` rather than `cover`: the crown has to fit its box whole. With cover
+  it would fill the box and crop its own points off on any aspect that isn't
+  the artwork's.
+
+  Points at a FLATTENED copy of the crown — `crown-mask.svg`, plain fill
+  attributes, no <style> block. A mask only consumes the alpha channel, so
+  colour is irrelevant, but class-based fills inside a mask reference are a
+  dependency with nothing to gain.
+*/
+.crown-mask {
+  -webkit-mask: url("/brand/crown-mask.svg") center / contain no-repeat;
+  mask: url("/brand/crown-mask.svg") center / contain no-repeat;
+}
+
+/* The crown-over-g lockup, same technique. Its own flattened mask file for the
+   same reason: a mask consumes alpha only, so colour and <style> blocks are
+   dead weight inside one. */
+.g-mark-mask {
+  -webkit-mask: url("/brand/g-mark-mask.svg") center / contain no-repeat;
+  mask: url("/brand/g-mark-mask.svg") center / contain no-repeat;
+}
+
+/*
+  Hero bleed — the photograph dissolving into the page rather than sitting in a
+  box on it.
+
+  Two layers over the image, and the order matters: `hero-blur` sits directly on
+  the photo and softens only the band where it emerges, then `hero-bleed` washes
+  that band back to the page colour. Blur first, then fade — reversed, you'd be
+  blurring a gradient instead of the photograph.
+
+  Written here rather than as Tailwind arbitrary values because the stops are
+  the whole design and they need to be legible enough to adjust. `--sand` is
+  repeated as literal rgb in the mid-stops: a colour function can't take a
+  custom property and an alpha in the same argument on every engine we care
+  about, and getting it wrong shows up as a grey seam.
+
+  DESKTOP ONLY — deliberately. Below lg the photograph is a plain image in the
+  flow between the headline and the body copy; it is meant to read as a
+  photograph there, not as a texture. Both classes are therefore defined
+  entirely inside the media query and have no base rules at all: on a phone
+  these two elements resolve to nothing.
+
+  Stops are relative to the IMAGE ELEMENT, not the viewport.
+*/
+@media (min-width: 1024px) {
+  .hero-bleed {
+    /*
+      A SHORT dissolve, and that's the point.
+
+      The hero element is positioned to begin just past where the body copy
+      ends, so the gradient no longer has to wash over a column of text — it
+      only has to soften the element's own left edge. Solid page colour to 6%,
+      clear by 20%.
+
+      Earlier versions ran this to 48% and beyond because the element started
+      underneath the copy. That cost the left half of the photograph, which is
+      where the seated members applauding actually are. Narrowing the element
+      and shortening the fade is what put them back on screen.
+
+      Text clears the fade by +31px at worst (1024px), +155px at 4K. If the copy
+      column ever gets wider, this stop has to move with it.
+    */
+    background-image: linear-gradient(
+      to right,
+      var(--sand) 0%,
+      var(--sand) 6%,
+      rgb(250 248 245 / 0.62) 12%,
+      rgb(250 248 245 / 0.16) 16%,
+      transparent 20%
+    );
+  }
+
+  .hero-blur {
+    /* Deliberately slight. Past ~4px this reads as an out-of-focus photo
+       rather than a soft edge, and the faces are the reason the frame is here. */
+    backdrop-filter: blur(3px);
+    /* Tracks the fade above — the blur has to end before the picture clears,
+       or there's a soft patch sitting on nothing. */
+    mask-image: linear-gradient(
+      to right,
+      transparent 1%,
+      black 7%,
+      black 13%,
+      transparent 19%
+    );
+  }
+}
+
+/*
+  Logo intro — the wordmark assembling itself, one glyph at a time.
+
+  This is the CSS answer to a Lottie logotype. The reference implementation on
+  anthropic.com ships a designer-authored After Effects file plus a player
+  runtime; the reason we don't need one is that the Geekdom source art already
+  keeps every letter of "geekdom" as a separate path, so the letterforms can be
+  revealed independently. A Lottie would only be required for something CSS
+  genuinely can't express — per-vertex path morphing, or stroke-drawing an
+  outline that doesn't exist in the file.
+
+  `transform-box: fill-box` is load-bearing. Without it a transform on an SVG
+  <path> resolves against the SVG viewport origin, not the glyph, so every
+  letter would swing in from the top-left corner of the canvas instead of
+  nudging up from its own baseline.
+
+  Delays are set per glyph inline by the component (see GLYPH_DELAYS_MS);
+  `both` holds each letter at its `from` state through its delay, so they hold
+  invisible and then arrive rather than all appearing at once and then moving.
+*/
+@keyframes logo-glyph-in {
+  from {
+    opacity: 0;
+    transform: translateY(24%) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The crown caps the word, so it drops onto it from above rather than rising. */
+@keyframes logo-crown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-38%) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/*
+  The exit, which is the intro run backwards and faster.
+
+  Letters lift AWAY (negative translateY) rather than sinking back down the way
+  they arrived — leaving along the path you entered reads as an undo, whereas
+  lifting off reads as the word being absorbed into the crown that's left
+  behind. The crown pieces follow last, once the letters they cap are gone.
+
+  Easing flips too: the intro decelerates into place (`0.32, 0.72, 0, 1`), the
+  exit accelerates out of it (`0.4, 0, 1, 1`). An exit that eases OUT looks like
+  it's hesitating.
+
+  Shorter than the intro on purpose — 170ms a glyph against 460ms. An entrance
+  is an event worth watching; an exit is something you want out of the way.
+*/
+@keyframes logo-glyph-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-30%) scale(0.88);
+  }
+}
+
+@keyframes logo-crown-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-45%) scale(0.85);
+  }
+}
+
+.logo-glyph {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: logo-glyph-in 460ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+.logo-glyph--crown {
+  transform-origin: 50% 0%;
+  animation-name: logo-crown-in;
+}
+
+/*
+  Swapping animation-name restarts the animation, which is exactly the trigger
+  here: the component flips these classes when `scrolled` changes, and the
+  browser replays from the new keyframes. That's why this is an animation and
+  not a transition — a transition can't stagger nine elements independently.
+*/
+.logo-glyph--out {
+  animation: logo-glyph-out 170ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+.logo-glyph--out.logo-glyph--crown {
+  animation-name: logo-crown-out;
+}
+
+/*
+  Respect a reduced-motion preference.
+
+  `!important` here beats the inline `transition` shorthands the navbar sets on
+  the logo marks — an author-stylesheet !important outranks an inline
+  declaration, which is exactly why this works without the component knowing
+  about it.
+
+  The DELAY rules are not decoration. The navbar staggers its crossfade so the
+  outgoing mark clears before the incoming one arrives, which means the arriving
+  mark carries a transition-delay. Zeroing duration alone would leave that delay
+  intact: the outgoing mark would vanish instantly, then ~120ms of empty box,
+  then the new mark would pop in. Collapsing both is what turns the animation
+  into a clean instant swap instead of a flicker.
+*/
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
 }

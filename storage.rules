@@ -1,0 +1,20 @@
+rules_version = '2';
+
+// Firebase Storage holds brand assets and any member-uploaded media. Writes
+// always go through the Admin SDK on the server (which bypasses these rules).
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Public brand assets — logos, site imagery, email artwork. Safe to read
+    // directly via the ?alt=media download URL (no token), which is what
+    // next/image and email <img> tags need. Writes stay server-side.
+    match /geekdom-assets/{allPaths=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Everything else: deny all direct client access.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
