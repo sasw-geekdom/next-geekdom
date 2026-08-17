@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import { CalendarX } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
-import { Eyebrow, Section, SectionTitle } from "@/components/site/section";
+import { Container, Eyebrow, Section, SectionTitle } from "@/components/site/section";
 import { EventCard } from "@/components/site/event-card";
-import { PhotoHero } from "@/components/site/photo-hero";
-import { PHOTOS } from "@/lib/photos";
+import { TypeHero } from "@/components/site/type-hero";
 import { hasEventsToShow, safePastEvents, safeUpcomingEvents } from "@/lib/luma";
 import { LUMA_CALENDAR_URL } from "@/lib/site";
 
@@ -26,9 +25,16 @@ export const metadata: Metadata = {
 export const revalidate = 300;
 
 /**
- * Events come from Luma, cached for five minutes (see lib/luma.ts). This page
- * is a Server Component so the API key never reaches the browser and the
- * rendered list is indexable.
+ * The calendar.
+ *
+ * A COMPACT TYPE HEADER, not the full-bleed photograph the floor and the
+ * homepage-adjacent pages use. This page's job is the list: a listing that
+ * spends a whole viewport on a hero pushes the first event below the fold and
+ * hides the thing the visitor came for. The photograph's argument has already
+ * been made by the time anyone gets here.
+ *
+ * Server Component, so the API key never reaches the browser and the rendered
+ * list is indexable.
  */
 export default async function EventsPage() {
   const configured = hasEventsToShow();
@@ -36,75 +42,67 @@ export default async function EventsPage() {
 
   // Only reach for past events when there's a thin upcoming list to pad — a
   // full calendar shouldn't cost a second API round trip on every render.
-  const past =
-    configured && upcoming.length < 3 ? await safePastEvents(3) : [];
+  const past = configured && upcoming.length < 3 ? await safePastEvents(3) : [];
 
   return (
     <>
-      <PhotoHero
+      <TypeHero
+        size="compact"
         eyebrow="The calendar"
         title={
           <>
             What&rsquo;s <span className="text-rust">on.</span>
           </>
         }
-        photo={PHOTOS.fullHouse}
-        priority
       >
         <p className="text-lg leading-relaxed text-muted-foreground">
           Meetups, build sessions, office hours with mentors, fireside chats,
-          and pitch nights. Some are members only. Plenty aren&rsquo;t — come see
-          how the room feels before you apply.
+          and pitch nights. Some are members only. Plenty aren&rsquo;t — come
+          see how the room feels before you apply.
         </p>
-      </PhotoHero>
+      </TypeHero>
 
-      <Section tone="white" className="pt-4">
-        {upcoming.length > 0 ? (
-          <>
-            <h2 className="sr-only">Upcoming events</h2>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {upcoming.map((event) => (
-                <EventCard key={event.id} event={event} />
-              ))}
+      <section className="bg-sand pb-24">
+        <Container>
+          {upcoming.length > 0 ? (
+            <>
+              <h2 className="sr-only">Upcoming events</h2>
+              <EventGrid events={upcoming} />
+            </>
+          ) : (
+            <EmptyState configured={configured} />
+          )}
+
+          {past.length > 0 && (
+            <div className="mt-20">
+              <h2 className="text-2xl font-bold text-ink">Recently</h2>
+              <p className="mt-2 text-muted-foreground">
+                A sense of what happens here.
+              </p>
+              <div className="mt-8 opacity-75">
+                <EventGrid events={past} />
+              </div>
             </div>
-          </>
-        ) : (
-          <EmptyState configured={configured} />
-        )}
+          )}
 
-        {past.length > 0 && (
-          <div className="mt-20">
-            <h2 className="text-2xl font-bold text-ink">Recently</h2>
-            <p className="mt-2 text-muted-foreground">
-              A sense of what happens here.
-            </p>
-            <div className="mt-8 grid gap-6 opacity-75 sm:grid-cols-2 lg:grid-cols-3">
-              {past.map((event) => (
-                <EventCard key={event.id} event={event} />
-              ))}
+          <div className="mt-16 rounded-xl border border-border bg-white p-7 sm:flex sm:items-center sm:justify-between sm:gap-8">
+            <div>
+              <h2 className="text-lg font-semibold text-ink">Never miss one</h2>
+              <p className="mt-1 text-muted-foreground">
+                Subscribe on Luma and everything new lands on your calendar.
+              </p>
             </div>
+            <a
+              href={LUMA_CALENDAR_URL}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="mt-5 inline-flex h-11 shrink-0 items-center justify-center rounded-lg bg-ink px-5 font-medium text-white transition-colors hover:bg-ink/90 sm:mt-0"
+            >
+              Subscribe on Luma
+            </a>
           </div>
-        )}
-
-        <div className="mt-16 rounded-xl border border-border bg-sand p-7 sm:flex sm:items-center sm:justify-between sm:gap-8">
-          <div>
-            <h2 className="text-lg font-semibold text-ink">
-              Never miss one
-            </h2>
-            <p className="mt-1 text-muted-foreground">
-              Subscribe on Luma and everything new lands on your calendar.
-            </p>
-          </div>
-          <a
-            href={LUMA_CALENDAR_URL}
-            target="_blank"
-            rel="noreferrer noopener"
-            className="mt-5 inline-flex h-11 shrink-0 items-center justify-center rounded-lg bg-ink px-5 font-medium text-white transition-colors hover:bg-ink/90 sm:mt-0"
-          >
-            Subscribe on Luma
-          </a>
-        </div>
-      </Section>
+        </Container>
+      </section>
 
       <Section tone="ink">
         <Eyebrow onInk>Want in on the members-only ones?</Eyebrow>
@@ -120,6 +118,33 @@ export default async function EventsPage() {
 }
 
 /**
+ * FLEX-WRAP, NOT GRID — and that's the one structural thing worth copying from
+ * the reference.
+ *
+ * A three-column grid left-aligns a final row of two, which reads as a hole on
+ * the right of an otherwise symmetrical page. Wrapping flex items with
+ * `justify-center` centres whatever the last row happens to hold. Calendars
+ * almost never divide by three, so this is the common case, not the edge one.
+ *
+ * Widths subtract the gap so three still fit per row: `gap-6` is 1.5rem, and
+ * each of the three cards gives up two thirds of one.
+ */
+function EventGrid({ events }: { events: Parameters<typeof EventCard>[0]["event"][] }) {
+  return (
+    <div className="flex flex-wrap justify-center gap-6">
+      {events.map((event) => (
+        <div
+          key={event.id}
+          className="w-full sm:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1rem)]"
+        >
+          <EventCard event={event} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/**
  * Two genuinely different empty states.
  *
  * A missing API key is a deployment problem and should read as "the calendar
@@ -128,7 +153,7 @@ export default async function EventsPage() {
  */
 function EmptyState({ configured }: { configured: boolean }) {
   return (
-    <div className="rounded-xl border border-dashed border-border bg-sand px-6 py-16 text-center">
+    <div className="rounded-xl border border-dashed border-border bg-white px-6 py-16 text-center">
       <CalendarX
         className="mx-auto h-8 w-8 text-muted-foreground"
         strokeWidth={1.5}

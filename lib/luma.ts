@@ -1,7 +1,11 @@
 import "server-only";
 import { env, hasEnv } from "@/lib/env";
 import { IS_PREVIEW } from "@/lib/preview";
-import { sampleUpcomingEvents, samplePastEvents } from "@/lib/sample/events";
+import {
+  sampleUpcomingEvents,
+  samplePastEvents,
+  sampleEventDetail,
+} from "@/lib/sample/events";
 
 /**
  * Luma — the club calendar.
@@ -194,6 +198,74 @@ export async function safeUpcomingEvents(limit = 24): Promise<LumaEvent[]> {
   } catch (error) {
     console.error("[luma] failed to load upcoming events", error);
     return [];
+  }
+}
+
+// ─── Slugs ──────────────────────────────────────────────────────────────────
+
+/**
+ * A readable URL for one event, on OUR domain.
+ *
+ * Luma has no slug field — an event carries an opaque `id` (documented in its
+ * spec as "usually starts with evt-") and a `url` pointing at lu.ma. So the
+ * slug is built here: the name, kebab-cased for humans and for search engines,
+ * with the id kept on the END as the part that actually resolves.
+ *
+ * That ordering is the whole trick. Titles repeat ("Office Hours with Mentors"
+ * runs monthly) and titles get edited after publication, so a name-only slug
+ * would collide and would rot. Keeping the id last means the lookup never
+ * depends on the words in front of it — an edited title changes the URL's
+ * prose and still resolves, and the old link keeps working.
+ */
+export function eventSlug(event: Pick<LumaEvent, "id" | "name">): string {
+  const words = event.name
+    .toLowerCase()
+    .normalize("NFKD")
+    // Strip accents, then anything that isn't a letter, digit or space.
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .slice(0, 60)
+    // A trailing hyphen from the 60-char cut would double up against the join.
+    .replace(/-+$/, "");
+
+  return words ? `${words}-${event.id}` : event.id;
+}
+
+/**
+ * The Luma id back out of one of our slugs, or null if there isn't one.
+ *
+ * Anchored to the END so it cannot be fooled by an event whose NAME contains
+ * something id-shaped. Returns null rather than throwing: this parses a value
+ * straight out of the URL bar, so a malformed one is a 404, not a 500.
+ */
+export function eventIdFromSlug(slug: string): string | null {
+  const match = /(evt-[a-zA-Z0-9_]+)$/.exec(slug);
+  return match ? match[1] : null;
+}
+
+/**
+ * One event by slug, or null if it can't be found.
+ *
+ * Never throws — a bad slug, a deleted event and a Luma outage all have to end
+ * up as a 404 on a public page rather than an error.
+ */
+export async function safeEventBySlug(
+  slug: string,
+): Promise<LumaEventDetail | null> {
+  const id = eventIdFromSlug(slug);
+  if (!id) return null;
+
+  if (!isLumaConfigured()) {
+    return IS_PREVIEW ? (sampleEventDetail(id) ?? null) : null;
+  }
+
+  try {
+    return await getEvent(id);
+  } catch (error) {
+    console.error("[luma] failed to load event", id, error);
+    return null;
   }
 }
 

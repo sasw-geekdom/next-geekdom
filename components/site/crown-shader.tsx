@@ -55,3 +55,12 @@ export function CrownShader({
     />
   );
 }
+
+/**
+ * The g-mark, same flow. A named wrapper because `shape="g-mark"` at a call
+ * site says less than the component name does, and the two marks are chosen
+ * for different reasons — the crown is wide and shallow, the g is tall.
+ */
+export function GMarkShader({ className }: { className?: string }) {
+  return <CrownShader shape="g-mark" className={className} />;
+}

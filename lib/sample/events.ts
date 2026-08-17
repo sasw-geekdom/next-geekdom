@@ -1,4 +1,4 @@
-import type { LumaEvent } from "@/lib/luma";
+import type { LumaEvent, LumaEventDetail } from "@/lib/luma";
 import { LOCATION } from "@/lib/site";
 
 /**
@@ -47,20 +47,20 @@ interface Seed {
 }
 
 const UPCOMING: Seed[] = [
-  { id: "evt-devsa", name: "DEVSA Monthly Meetup", days: 4, hour: 18, hours: 3, spots: null, cover: "the-crowd" },
-  { id: "evt-build", name: "Build Session: Ship Something Small", days: 6, hour: 17, hours: 3, spots: 12, cover: "programming" },
-  { id: "evt-hours", name: "Office Hours with Mentors", days: 9, hour: 9, hours: 3, visibility: "members-only", spots: 4, cover: "one-on-one" },
-  { id: "evt-fireside", name: "Fireside: Founders Who Stayed", days: 13, hour: 18, hours: 2, spots: 31, cover: "fireside" },
-  { id: "evt-pitch", name: "Pitch Night", days: 20, hour: 18, hours: 3, spots: 2, cover: "pitch" },
+  { id: "evt-s1devsa01", name: "DEVSA Monthly Meetup", days: 4, hour: 18, hours: 3, spots: null, cover: "the-crowd" },
+  { id: "evt-s2build02", name: "Build Session: Ship Something Small", days: 6, hour: 17, hours: 3, spots: 12, cover: "programming" },
+  { id: "evt-s3hours03", name: "Office Hours with Mentors", days: 9, hour: 9, hours: 3, visibility: "members-only", spots: 4, cover: "one-on-one" },
+  { id: "evt-s4fires04", name: "Fireside: Founders Who Stayed", days: 13, hour: 18, hours: 2, spots: 31, cover: "fireside" },
+  { id: "evt-s5pitch05", name: "Pitch Night", days: 20, hour: 18, hours: 3, spots: 2, cover: "pitch" },
   // Deliberately left without cover art — roughly one in six Luma events has
   // none, and the card's flat-band fallback needs reviewing too.
-  { id: "evt-coffee", name: "Third Floor Coffee", days: 25, hour: 8, hours: 2, spots: null },
+  { id: "evt-s6coffee06", name: "Third Floor Coffee", days: 25, hour: 8, hours: 2, spots: null },
 ];
 
 const PAST: Seed[] = [
-  { id: "evt-past-demo", name: "Demo Day: Summer Cohort", days: -9, hour: 18, hours: 3, spots: 0, cover: "speaking" },
-  { id: "evt-past-hours", name: "Office Hours with Mentors", days: -16, hour: 9, hours: 3, visibility: "members-only", spots: 0, cover: "the-cafe" },
-  { id: "evt-past-design", name: "Design Critique Night", days: -23, hour: 18, hours: 2, spots: 0, cover: "make-a-point" },
+  { id: "evt-p1demo07", name: "Demo Day: Summer Cohort", days: -9, hour: 18, hours: 3, spots: 0, cover: "speaking" },
+  { id: "evt-p2hours08", name: "Office Hours with Mentors", days: -16, hour: 9, hours: 3, visibility: "members-only", spots: 0, cover: "the-cafe" },
+  { id: "evt-p3design09", name: "Design Critique Night", days: -23, hour: 18, hours: 2, spots: 0, cover: "make-a-point" },
 ];
 
 function toEvent(seed: Seed): LumaEvent {
@@ -93,4 +93,40 @@ export function sampleUpcomingEvents(limit = 24): LumaEvent[] {
 
 export function samplePastEvents(limit = 6): LumaEvent[] {
   return PAST.slice(0, limit).map(toEvent);
+}
+
+/**
+ * Blurb for the detail page, so the event route can be reviewed too.
+ *
+ * Keyed by seed id rather than written into `Seed`, because only this one
+ * field is detail-only — putting it on every seed would imply the list cards
+ * use it.
+ */
+const DESCRIPTIONS: Record<string, string> = {
+  "evt-s1devsa01":
+    "DEVSA runs this one, and it fills the cafe. Two short talks from people building locally, then an hour where nobody leaves because the actual conversation started at the end of the second talk.\n\nOpen to everyone. Come early if you want a seat at the long table.",
+  "evt-s2build02":
+    "Three hours, heads down, with the goal of shipping something before you leave. Bring the thing you keep not finishing.\n\nNo talks, no agenda. A room of people working, and someone to ask when you get stuck.",
+  "evt-s3hours03":
+    "Mentors on the calendar for the specific problem, not a general chat. Book a slot, bring the thing that is blocking you, and get thirty minutes with someone who has already hit that wall.\n\nMembers only.",
+  "evt-s4fires04":
+    "A conversation with founders who built here and stayed here. What the first two years actually cost, what they would do differently, and what kept them in San Antonio.",
+  "evt-s5pitch05":
+    "Five founders, five minutes each, then questions from a room that will tell you the truth. Watching is as useful as pitching.",
+  "evt-s6coffee06":
+    "Coffee on the third floor, no agenda. The conversation that turns into a co-founder, a customer, or a check usually starts over one.",
+  "evt-p1demo07":
+    "The summer cohort showed what they built. Twelve teams, eight minutes each.",
+  "evt-p2hours08": "Mentors on the calendar, for the specific problem.",
+  "evt-p3design09":
+    "Bring work in progress and get a real critique from people who design for a living.",
+};
+
+/** One sample event with its description, or undefined if the id is unknown. */
+export function sampleEventDetail(id: string): LumaEventDetail | undefined {
+  const seed = [...UPCOMING, ...PAST].find((s) => s.id === id);
+  if (!seed) return undefined;
+
+  const description = DESCRIPTIONS[id] ?? "";
+  return { ...toEvent(seed), description, description_md: description };
 }

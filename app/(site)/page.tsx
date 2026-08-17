@@ -1,9 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import {
-  Container,
   Eyebrow,
   Lede,
   Section,
@@ -11,11 +9,16 @@ import {
 } from "@/components/site/section";
 import { EventCard } from "@/components/site/event-card";
 import { Photo } from "@/components/site/photo";
+import { TypeHero, FootnoteMark } from "@/components/site/type-hero";
+import { PhotoBand } from "@/components/site/photo-band";
+import { GMarkShader } from "@/components/site/crown-shader";
 import { PHOTOS } from "@/lib/photos";
 import { BENEFITS, priceLabel } from "@/lib/membership";
 import { safeUpcomingEvents } from "@/lib/luma";
 import {
   HOOK,
+  LETTER_AUTHOR,
+  MILESTONES,
   LOCATION,
   LUMA_CALENDAR_URL,
   MISSION,
@@ -60,114 +63,99 @@ export default async function HomePage() {
   const events = await safeUpcomingEvents(3);
   const price = priceLabel();
 
+  /*
+    The hook with its closing phrase in gold. Derived from the HOOK constant by
+    slicing rather than retyped, so the accent can't quietly drift out of step
+    with lib/site.ts — and it falls back to the plain string if the constant is
+    ever reworded, instead of rendering a half-highlighted sentence.
+
+    Rust, not gold: this headline sits on SAND now, where rust measures 5.0:1
+    and passes AA. Gold on this ground is 1.8:1 and would be unreadable — the
+    two are not interchangeable, which is the standing rule in globals.css.
+  */
+  const ACCENT = "unfair advantage.";
+  const title = HOOK.endsWith(ACCENT) ? (
+    <>
+      {HOOK.slice(0, -ACCENT.length)}
+      <span className="text-rust">
+        {ACCENT}
+        <FootnoteMark />
+      </span>
+    </>
+  ) : (
+    HOOK
+  );
+
   return (
     <>
       {/* ── Hero ─────────────────────────────────────────────────────── */}
       {/*
-        The photograph is the ground the hero sits on, not a block beside it. On
-        desktop it holds the right side and dissolves leftward into the page;
-        on mobile it's a plain image in the flow between the headline and the
-        body copy. Stops live in `.hero-bleed` / `.hero-blur` in globals.css.
+        Type carries the fold; the photograph comes straight after it.
 
-        The Container is NOT `relative`, on purpose. The photograph lives inside
-        it in the DOM (it has to, to land between the headline and the body copy
-        on mobile) but on desktop it goes `absolute` and must resolve against
-        the SECTION to reach the screen edge — a positioned Container would trap
-        it inside the 72rem measure. It still paints behind the text, because a
-        `-z-10` child of the isolated section sits above that section's
-        background and below its in-flow content.
+        No image up here on purpose. The claim is the strongest thing the
+        homepage has, and giving it the whole viewport at 8xl is what makes it
+        read as a claim rather than a caption. The footnote is the other half:
+        it cites the letter that actually went out to members, so the page opens
+        by quoting a real document instead of asserting at you.
       */}
-      <section className="relative isolate overflow-hidden bg-sand">
-        {/*
-          HEIGHT. `calc(100svh - 4rem)` is the viewport minus the sticky
-          navbar's h-16, so on a large monitor or a TV the hero fills exactly
-          the space below the header instead of stopping short of it.
-
-          PADDING is symmetric at lg (`py-16`), which is the part that was
-          actually broken. `justify-center` centres the copy in the CONTENT box,
-          so the old pt-28/pb-24 pair pushed it permanently low — and on a
-          MacBook Air the copy was tall enough to exceed that box entirely, at
-          which point justify-center stops doing anything and everything sits
-          under 112px of dead padding. Equal padding lets it centre for real.
-        */}
-        <Container className="pt-20 pb-20 sm:pt-28 sm:pb-24 lg:flex lg:min-h-[calc(100svh-4rem)] lg:flex-col lg:justify-center lg:py-16">
-          <Eyebrow>
+      <TypeHero
+        eyebrow={
+          <>
             A space for problem solvers
             {/* The city is the first thing to go when the line gets tight. */}
             <span className="hidden sm:inline"> · {LOCATION.city}</span>
-          </Eyebrow>
-          {/*
-            6xl from lg up. The copy is held to max-w-2xl so it clears the
-            photograph's fade; 7xl inside that measure pushes "unfair
-            advantage." onto a third line and crowds the paragraphs beneath it.
-          */}
-          <h1 className="mt-5 max-w-2xl text-5xl font-bold leading-[1.02] tracking-[-0.03em] text-ink sm:text-7xl lg:text-6xl">
-            {HOOK}
-          </h1>
+          </>
+        }
+        title={title}
+        footnote={{
+          quote: (
+            <>
+              &ldquo;The desk was never really the point. The point was the
+              person sitting next to you.&rdquo;
+            </>
+          ),
+          source: `— ${LETTER_AUTHOR.name}, ${LETTER_AUTHOR.role}`,
+        }}
+        tail={
+          price
+            ? `One membership · ${price}`
+            : "One membership · pricing coming soon"
+        }
+      >
+        <p className="text-xl leading-relaxed text-ink/75">
+          {PROMISE} Not a tool — a person. The one who breaks the problem down
+          with you, builds on your idea, and tells you the truth about it.
+        </p>
 
-          {/*
-            One element for both layouts — `relative` in flow on mobile,
-            `lg:absolute` on desktop. Rendering two and hiding one per
-            breakpoint would fetch the page's heaviest asset twice, because a
-            `priority` image downloads even inside a `display:none` parent.
+        <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <ButtonLink href="/apply" size="lg">
+            Apply for membership
+          </ButtonLink>
+          <ButtonLink href="/the-floor" size="lg" variant="outline">
+            See the floor
+          </ButtonLink>
+        </div>
+      </TypeHero>
 
-            The two overlay divs are inert below lg: their classes exist only
-            inside the desktop media query, so on a phone this is just a photo.
+      {/*
+        What the fold gives up, the next screen gets back — full width, the
+        room, no type over it.
 
-            The element is narrow and full-height on desktop, which suits the
-            near-square crop: at 1440 it's 691×766 against the file's 0.93, so
-            almost nothing is thrown away. Widths are set so the element begins
-            just past where the copy ends, leaving the gradient only a short
-            distance to do its work — solid page colour to 6%, clear by 20%.
-            Text clears the fade by +31px in the worst case.
+        The UNCROPPED frame, deliberately. Cropped, it is one man standing
+        alone; whole, it is two members greeting each other, which is the
+        sentence above it made literal. The crop only existed because a hero
+        put a headline across his face — with no type on the image, that reason
+        is gone.
 
-            Mobile uses an aspect close to the file's own so the composition
-            arrives intact rather than being centre-cropped into a letterbox.
-          */}
-          <div className="relative mt-10 aspect-9/10 w-full overflow-hidden rounded-xl bg-sand-deep sm:aspect-4/3 lg:absolute lg:inset-y-0 lg:left-auto lg:right-0 lg:-z-10 lg:mt-0 lg:aspect-auto lg:h-full lg:w-[40%] lg:rounded-none lg:bg-transparent xl:w-[46%] 2xl:w-[48%]">
-            <Image
-              src={PHOTOS.welcomeHero.src}
-              alt={PHOTOS.welcomeHero.alt}
-              fill
-              /*
-                `object-right` here — the opposite of the previous frame, because
-                the crop moved the subject. He now sits at 55–97% of the file, so
-                anchoring RIGHT is what guarantees he survives whatever
-                horizontal crop the viewport imposes. He is full-frame on every
-                size from a 1024px laptop to a 4K TV; the seated members behind
-                him are what yields when space is tight (1% at 1024px, 43% on a
-                MacBook Air, 56% from 1080p up).
-              */
-              className="object-cover lg:object-right"
-              sizes="(min-width: 1536px) 48vw, (min-width: 1280px) 46vw, (min-width: 1024px) 40vw, 100vw"
-              placeholder="blur"
-              priority
-            />
-            <div className="hero-blur pointer-events-none absolute inset-0" />
-            <div className="hero-bleed pointer-events-none absolute inset-0" />
-          </div>
-
-          <p className="mt-10 max-w-xl text-xl leading-relaxed text-ink/75 lg:mt-8">
-            {PROMISE} Not a tool — a person. The one who breaks the problem down
-            with you, builds on your idea, and tells you the truth about it.
-          </p>
-          <p className="mt-5 max-w-xl text-xl leading-relaxed text-ink/75">
-            Geekdom is a membership club for founders and builders in San
-            Antonio. One membership{price ? `, ${price}` : ""}. No dedicated
-            desks. No offices. Just the {LOCATION.floor.toLowerCase()}, and
-            everyone on it.
-          </p>
-
-          <div className="mt-10 flex flex-col gap-3 sm:flex-row">
-            <ButtonLink href="/apply" size="lg">
-              Apply for membership
-            </ButtonLink>
-            <ButtonLink href="/the-floor" size="lg" variant="outline">
-              See the floor
-            </ButtonLink>
-          </div>
-        </Container>
-      </section>
+        16/9 rather than the default 3:1: this file is 3:2, and a 3:1 letterbox
+        would throw away half its height and start cutting heads.
+      */}
+      <PhotoBand
+        photo={PHOTOS.welcomeHero}
+        aspect="lg:aspect-video"
+        fadeTo="ink"
+        priority
+      />
 
       {/* ── Mission ──────────────────────────────────────────────────── */}
       <Section tone="ink">
@@ -273,29 +261,79 @@ export default async function HomePage() {
       </Section>
 
       {/* ── The origin ───────────────────────────────────────────────── */}
+      {/*
+        The one place on the homepage the crown appears at size, with the flow
+        running through it.
+
+        It belongs to THIS section specifically: the mark is the oldest thing
+        Geekdom owns, and this is the section about the fifteen years behind the
+        change. Anywhere else on the page it would be decoration; here it's the
+        subject. The paragraphs drop from two columns to one to make room for
+        it, which they can afford — the measure was wide and thin at 2×.
+
+        Below lg the crown moves under the copy rather than beside it, and it is
+        capped: a full-width crown on a phone is a banner, not a mark.
+
+        The mark is the g, not the crown: the crown is wide and shallow and sat
+        as a band beside the copy, while the g stands the full height of the
+        text block and holds the right edge of the section.
+      */}
       <Section tone="white">
-        <Eyebrow>Fifteen years in</Eyebrow>
-        <SectionTitle>The desk was never the point.</SectionTitle>
-        <div className="mt-8 grid gap-8 lg:grid-cols-2">
-          <p className="text-lg leading-relaxed text-muted-foreground">
-            Geekdom opened as a coworking space for geeks. A shared desk was the
-            best tool we had for putting builders next to each other, and it
-            worked — hundreds of companies got started because someone sat down
-            next to the right person.
-          </p>
-          <p className="text-lg leading-relaxed text-muted-foreground">
-            But the desk was never really the point. The point was the person
-            sitting next to you. So we stopped selling desks and started building
-            the room around the thing that was actually working.
-          </p>
+        <div className="grid items-center gap-12 lg:grid-cols-[1fr_14rem] lg:gap-16">
+          <div>
+            <Eyebrow>Fifteen years in</Eyebrow>
+            <SectionTitle>The desk was never the point.</SectionTitle>
+            <p className="mt-8 text-lg leading-relaxed text-muted-foreground">
+              Geekdom opened as a coworking space for geeks. A shared desk was
+              the best tool we had for putting builders next to each other, and
+              it worked — hundreds of companies got started because someone sat
+              down next to the right person.
+            </p>
+            <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
+              But the desk was never really the point. The point was the person
+              sitting next to you. So we stopped selling desks and started
+              building the room around the thing that was actually working.
+            </p>
+            <Link
+              href="/whats-changing"
+              className="mt-8 inline-flex items-center gap-1.5 font-medium text-rust hover:underline"
+            >
+              Read the letter to our members
+              <ArrowRight className="h-4 w-4" strokeWidth={2} />
+            </Link>
+          </div>
+
+          {/*
+            SIZED BY HEIGHT, not width. The g-mark is 40×127 — nearly four times
+            taller than it is wide — so giving it a column width the way the
+            crown took one would make it about 1,200px tall. Constrain the
+            height and let the width follow.
+          */}
+          <GMarkShader className="mx-auto h-56 w-auto sm:h-72 lg:h-[26rem]" />
         </div>
-        <Link
-          href="/whats-changing"
-          className="mt-8 inline-flex items-center gap-1.5 font-medium text-rust hover:underline"
-        >
-          Read the letter to our members
-          <ArrowRight className="h-4 w-4" strokeWidth={2} />
-        </Link>
+
+        {/*
+          The evidence for "fifteen years in", and the only hard numbers on the
+          site. They sit INSIDE this section rather than in a band of their own
+          because they are the proof of the claim directly above them — a
+          floating stats strip is a brag, the same numbers under a sentence
+          about the track record are an argument.
+
+          `tabular-nums` so the figures line up as a grid rather than drifting
+          on the varying widths of proportional digits.
+        */}
+        <dl className="mt-16 grid grid-cols-2 gap-x-8 gap-y-10 border-t border-border pt-12 sm:grid-cols-3">
+          {MILESTONES.map((m) => (
+            <div key={m.label}>
+              <dt className="text-3xl font-bold tabular-nums tracking-tight text-ink sm:text-4xl">
+                {m.figure}
+              </dt>
+              <dd className="mt-2 font-mono text-xs uppercase leading-relaxed tracking-[0.14em] text-muted-foreground">
+                {m.label}
+              </dd>
+            </div>
+          ))}
+        </dl>
       </Section>
 
       {/* ── What you get ─────────────────────────────────────────────── */}

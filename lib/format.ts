@@ -30,6 +30,21 @@ export function formatLongDate(date: Date | string): string {
   }).format(new Date(date));
 }
 
+/**
+ * "Tuesday, August 18" — weekday first, no year.
+ *
+ * For event listings, where the weekday is the thing people actually plan
+ * around and the year is noise on a calendar that only shows the near future.
+ */
+export function formatEventDate(date: Date | string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    timeZone: TZ,
+  }).format(new Date(date));
+}
+
 /** "6:30 PM" */
 export function formatTime(date: Date | string): string {
   return new Intl.DateTimeFormat("en-US", {

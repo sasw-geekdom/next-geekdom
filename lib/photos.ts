@@ -72,23 +72,23 @@ export interface Photo {
 
 export const PHOTOS = {
   /**
-   * The hero frame, and the only one cropped rather than used whole.
+   * The frame the homepage opens on — not in the hero, which is type only, but
+   * in the full-width band directly beneath it.
    *
-   * The full photograph has a second figure in black on the right, mid-greeting.
-   * Cutting the frame at 62% removes them completely and leaves one subject —
-   * the man in the short-sleeve polo — with the bank of seated members
-   * applauding behind him. That crop is baked into the FILE on purpose: the
-   * hero element changes shape a lot between a 1024px laptop and a 4K TV, and
-   * no combination of width and object-position could keep that second figure
-   * out of frame at every size.
+   * This is the WHOLE photograph (2180×1454). It used to be cropped at 62% to
+   * 1352×1454, which removed the second figure and left one man standing alone.
+   * That crop existed for a layout that no longer exists: the old hero laid a
+   * headline across the frame, and the second person read as a stranger's back
+   * behind the type. With no type on the image, the crop's only reason is gone
+   * — and uncropped it shows two members greeting each other, which is the
+   * site's actual claim rather than a man by himself.
    *
-   * Cropping left it nearly square (1352×1454, 0.93), which happens to match
-   * the hero element's shape on desktop almost exactly — so very little of it
-   * is lost there.
+   * Note it puts a SECOND identifiable person on the homepage, so the release
+   * question in the header comment applies to them too.
    */
   welcomeHero: {
     src: welcomeHero,
-    alt: "A Geekdom member smiling mid-greeting on the third floor, with a room of seated members applauding behind him.",
+    alt: "Two Geekdom members greeting each other on the third floor, with a room of seated members applauding around them.",
   },
 
   /**

@@ -58,20 +58,33 @@ export const MISSION = [
 ] as const;
 
 export const LOCATION = {
-  // The Rand Building, downtown, one block off the Riverwalk.
+  // Downtown, one block off the Riverwalk.
   //
   // FLOOR — the members letter says the club consolidates to "the third floor
   // only". Geekdom's coworking era ran across the Rand's upper floors, so this
   // is a move, not a typo, and the letter is the newer source. If the club
-  // actually lands on a different floor, this constant and the copy in
-  // components/site/the-floor.tsx are the only two places to change.
+  // actually lands on a different floor, this constant is the place to change.
   floor: "Third floor",
+  // The building has a NAME, and it has to appear wherever the floor is used as
+  // an address. On its own, "Third floor / 110 E Houston St" reads as though
+  // the place is called "Third floor" — the floor is a position inside a
+  // building, not the building. Geekdom is on the third floor OF THE RAND.
+  building: "The Rand Building",
   street: "110 E Houston St",
   city: "San Antonio",
   state: "TX",
   zip: "78205",
+  /** "Third floor, The Rand Building" — the first line of a postal address. */
+  get line1() {
+    return `${this.floor}, ${this.building}`;
+  },
+  /** Street, city, state, zip. No building, no floor. */
   get full() {
     return `${this.street}, ${this.city}, ${this.state} ${this.zip}`;
+  },
+  /** Everything, for a map query or a one-line address. */
+  get postal() {
+    return `${this.building}, ${this.full}`;
   },
 } as const;
 
@@ -81,14 +94,123 @@ export const LOCATION = {
  * `CONTRACTS_END` is the hard one — offices and dedicated desks wrap up on
  * September 25. The transition page counts down to it and switches to past
  * tense on its own once it passes, so nobody has to remember to edit copy.
+ *
+ * `CLUB_OPENS` is October 5, from the members FAQ: "fully operate the new club
+ * membership starting October 5." It was October 1 here, which was a guess made
+ * before that sheet existed — the kind of date a member plans around, so it is
+ * worth being exact about.
  */
 export const CONTRACTS_END = new Date(2026, 8, 25); // Sept 25
-export const CLUB_OPENS = new Date(2026, 9, 1); // October
+export const CLUB_OPENS = new Date(2026, 9, 5); // October 5
 
 /** Years since Geekdom opened — "Fifteen years ago…" in the letter. */
 export const FOUNDED_YEAR = 2011;
 
 export const CONTACT_EMAIL = "members@geekdom.com";
+
+/**
+ * Who wrote the letter.
+ *
+ * The letter on /whats-changing is a real document that really went out, and an
+ * unsigned letter reads as corporate announcement rather than as someone
+ * putting their name to a decision. Cited on the homepage too — the whole point
+ * of that footnote is that it quotes an identified person, the way the
+ * reference site quotes Paul Graham.
+ */
+export const LETTER_AUTHOR = {
+  name: "Charles Woodin",
+  role: "CEO",
+  email: "charles@geekdom.com",
+} as const;
+
+/**
+ * Named contacts from the members FAQ, by what they actually own.
+ *
+ * Routed by subject on purpose. "Email us" on a page about leases and refunds
+ * sends the anxious question to a shared inbox and adds a hop; a member with a
+ * billing problem should reach the person who can answer it.
+ */
+export const TEAM_CONTACTS = [
+  {
+    name: "Charles Woodin",
+    role: "CEO",
+    email: "charles@geekdom.com",
+    topic: "The new direction",
+  },
+  {
+    name: "Brooke Rodriguez",
+    role: "Sr. Director of Operations",
+    email: "brooke@geekdom.com",
+    topic: "Leases and billing",
+  },
+  {
+    name: "Leslie Chasnoff",
+    role: "Director of Programs & Partnerships",
+    email: "lesliechasnoff@geekdom.com",
+    topic: "Programming and founder support",
+  },
+] as const;
+
+/**
+ * The free weekly gathering, off-site and open to everyone.
+ *
+ * Named here because it is the answer to "how do I stay connected if I don't
+ * join" — the one concrete thing a non-member can turn up to.
+ */
+export const OPEN_COFFEE = {
+  name: "SATX Open Coffee Club",
+  when: "Tuesdays, 8–9:30 AM",
+  where: "Creme Coffee and Social",
+} as const;
+
+/**
+ * The track record, verbatim from Geekdom's own one-pager.
+ *
+ * These are the site's only hard numbers, and the single largest piece of proof
+ * it has — every reference site in this space leads with figures like these and
+ * we had none. Split into `figure` and `label` so the number can be set large
+ * and the words small, rather than being one string nobody can typeset.
+ *
+ * TRANSCRIBED, NOT ESTIMATED. Do not round, restate, or "tidy" any of them:
+ * $422.7M is not $400M+, and 151 is not 150+. They are claims Geekdom makes in
+ * print and they should match it exactly.
+ *
+ * THEY ARE ALSO UNDATED. The one-pager carries no "as of", so these are a
+ * point-in-time snapshot that will drift — jobs, members and dollars raised all
+ * only go up. Worth asking Geekdom for the date they were last computed and
+ * recording it here; a stale figure on a homepage is worse than no figure,
+ * because it is checkable.
+ */
+export const MILESTONES = [
+  { figure: "1,300+", label: "Geekdom members" },
+  { figure: "151", label: "Active startups created" },
+  { figure: "$422.7M", label: "Raised by startups" },
+  { figure: "2,500+", label: "Jobs created by Geekdom startups" },
+  { figure: "77", label: "Minority & women-led startups" },
+  { figure: "$1.62M", label: "Invested in startups by Geekdom" },
+] as const;
+
+/**
+ * The goal, from the same sheet. Stated as Geekdom states it.
+ */
+/**
+ * NOT ON THE SITE, DELIBERATELY: the one-pager's four startup programs —
+ * Startup Bootcamp, Incubator, Pre-Accelerator, Community Fund.
+ *
+ * They are LEGACY. The sheet still lists them because it predates the club, and
+ * anyone reading it as a content source would reasonably assume they belong on
+ * /the-floor or /membership. They don't — listing a program Geekdom no longer
+ * runs is worse than listing nothing, because someone will apply to it.
+ *
+ * The milestones above and the goal below are the parts of that sheet that
+ * still hold.
+ */
+
+export const GOAL =
+  "To launch the next 500 startups, with at least 75% calling San Antonio home.";
+
+/** Who runs the floors Geekdom is handing back. Named in the members FAQ. */
+export const PROPERTY_OWNER = "Weston Urban";
 
 export const SOCIALS = [
   { label: "LinkedIn", href: "https://www.linkedin.com/company/geekdom/" },

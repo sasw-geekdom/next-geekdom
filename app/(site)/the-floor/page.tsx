@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ButtonLink } from "@/components/ui/button";
 import { Eyebrow, Section, SectionTitle } from "@/components/site/section";
 import { Photo } from "@/components/site/photo";
-import { PhotoHero } from "@/components/site/photo-hero";
+import { BleedHero } from "@/components/site/bleed-hero";
 import { PHOTOS } from "@/lib/photos";
 import { BENEFITS } from "@/lib/membership";
 import { LOCATION } from "@/lib/site";
@@ -51,23 +51,23 @@ const RHYTHM = [
 export default function TheFloorPage() {
   return (
     <>
-      <PhotoHero
+      <BleedHero
         eyebrow={`${LOCATION.floor} · ${LOCATION.street}`}
         title={
           <>
             One floor. All of it pointed at{" "}
-            <span className="text-rust">one thing.</span>
+            <span className="text-gold">one thing.</span>
           </>
         }
         photo={PHOTOS.theFloor}
         priority
       >
-        <p className="text-lg leading-relaxed text-muted-foreground">
+        <p className="text-lg leading-relaxed text-white/75">
           We consolidated on purpose. A place you come to do your best thinking,
           have your most important conversations, and be around people who raise
           your game.
         </p>
-      </PhotoHero>
+      </BleedHero>
 
       {/* What's in the room */}
       <Section tone="white" className="pt-4">
@@ -162,13 +162,14 @@ export default function TheFloorPage() {
         <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
           <div>
             <Eyebrow>Finding us</Eyebrow>
-            <SectionTitle>{LOCATION.full}</SectionTitle>
+            <SectionTitle>{LOCATION.building}</SectionTitle>
+            <p className="mt-4 text-lg text-muted-foreground">{LOCATION.full}</p>
             <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
               Downtown, on Houston Street, a block off the Riverwalk. Take the
               elevator to the {LOCATION.floor.toLowerCase()}.
             </p>
             <a
-              href={`https://maps.google.com/?q=${encodeURIComponent(`Geekdom, ${LOCATION.full}`)}`}
+              href={`https://maps.google.com/?q=${encodeURIComponent(`Geekdom, ${LOCATION.postal}`)}`}
               target="_blank"
               rel="noreferrer noopener"
               className="mt-8 inline-flex h-13 items-center justify-center rounded-lg bg-rust px-7 text-lg font-medium text-white transition-colors hover:bg-rust-deep"

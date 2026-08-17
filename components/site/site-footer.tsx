@@ -42,7 +42,7 @@ export function SiteFooter() {
               {TAGLINE}
             </p>
             <address className="mt-6 text-sm not-italic leading-relaxed text-white/65">
-              {LOCATION.floor}
+              {LOCATION.line1}
               <br />
               {LOCATION.street}
               <br />

@@ -2,7 +2,12 @@ import type { Metadata } from "next";
 import { ButtonLink } from "@/components/ui/button";
 import { Eyebrow, Section, SectionTitle } from "@/components/site/section";
 import { CrownPage } from "@/components/site/crown-page";
-import { CONTRACTS_END, CONTACT_EMAIL } from "@/lib/site";
+import {
+  CONTRACTS_END,
+  CONTACT_EMAIL,
+  LETTER_AUTHOR,
+  SITE_NAME,
+} from "@/lib/site";
 import { formatLongDate } from "@/lib/format";
 
 export const metadata: Metadata = {
@@ -104,6 +109,18 @@ export default function WhatsChangingPage() {
             calls to you, we hope you&rsquo;re excited to keep building with us
             too.
           </p>
+
+          {/*
+            The signature. An unsigned letter reads as a corporate announcement;
+            this one is a person putting their name to a decision, which is the
+            whole reason it carries the weight it does.
+          */}
+          <footer className="!mt-12 border-t border-border pt-8 not-italic">
+            <p className="!mt-0 font-semibold text-ink">{LETTER_AUTHOR.name}</p>
+            <p className="!mt-1 font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground">
+              {LETTER_AUTHOR.role}, {SITE_NAME}
+            </p>
+          </footer>
         </div>
       </CrownPage>
 

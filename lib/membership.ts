@@ -107,11 +107,26 @@ export const BENEFITS: Benefit[] = [
       "Reserve a room with a door for the deep dives, the brainstorms, and the offsite your team keeps postponing.",
   },
   {
+    title: "Guests",
+    description:
+      "Bring someone. Guests are complimentary for as long as you're there with them.",
+  },
+  {
     title: "Beyond the room",
     description:
-      "Virtual platforms that keep you connected between visits, so the momentum doesn't stop when you walk out.",
+      "A virtual channel and a member directory that keep you connected between visits, so the momentum doesn't stop when you walk out.",
   },
 ];
+
+/**
+ * Real, and priced separately. Named on the page rather than left to be
+ * discovered at the garage — a membership page that quietly omits a cost people
+ * will meet on day one buys a small conversion win and spends it on the first
+ * awkward conversation.
+ */
+export const EXTRAS = [
+  "Parking passes and validations, at additional cost",
+] as const;
 
 /** What the membership is explicitly not — the letter is blunt about this. */
 export const NOT_INCLUDED = [
