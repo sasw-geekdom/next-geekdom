@@ -117,6 +117,30 @@ client is constructed lazily, `/events` falls back to a link to the public Luma
 calendar, and email failures never fail the request that triggered them. The
 build itself needs no secrets.
 
+### Preview mode
+
+Set `NEXT_PUBLIC_PREVIEW_MODE=1` to run the whole site for design and copy
+review before any service is wired up:
+
+- `/events` and the homepage calendar render [sample events](lib/sample/events.ts)
+  instead of an empty state, so the event card can actually be judged. Dates are
+  computed relative to the request, not hard-coded, so the preview doesn't empty
+  out a week after it's written.
+- `/apply` completes into its success state and `/apply/thanks` — **after**
+  validation, so the error states stay reachable. Nothing is written.
+- The whole deployment goes `noindex` and `Disallow: /`, in both robots.txt and
+  the meta tag. A public copy of the site left crawlable competes with
+  geekdom.com for its own content.
+- A "Preview · sample data" badge sits in the corner, so nobody mistakes an
+  invented event for a real one or thinks their application landed.
+
+**The gate is the domain, not the environment.** This ships to
+`next-geekdom.vercel.app`, which is a *production* Vercel deployment, so
+`VERCEL_ENV` can't be used to tell review from live. Preview mode switches
+itself off as soon as `NEXT_PUBLIC_SITE_URL` points at `geekdom.com` — a
+forgotten flag cannot put sample data on the real site. See
+[lib/preview.ts](lib/preview.ts).
+
 ### Stripe setup
 
 1. Create a **recurring price** for the membership → `STRIPE_MEMBERSHIP_PRICE_ID`.

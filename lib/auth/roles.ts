@@ -12,6 +12,8 @@
  * (see app/api/billing/portal). Keeping members out of Firebase Auth entirely
  * means the only accounts that exist are staff accounts.
  */
+import { envOr } from "@/lib/env";
+
 export type Role = "superadmin" | "staff";
 
 export interface AdminUser {
@@ -23,14 +25,14 @@ export interface AdminUser {
 }
 
 function superAdminEmails(): string[] {
-  return (process.env.SUPER_ADMIN_EMAILS ?? "")
+  return envOr(process.env.SUPER_ADMIN_EMAILS, "")
     .split(",")
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean);
 }
 
 function allowedDomain(): string {
-  return (process.env.ALLOWED_WORKSPACE_DOMAIN ?? "geekdom.com").toLowerCase();
+  return envOr(process.env.ALLOWED_WORKSPACE_DOMAIN, "geekdom.com").toLowerCase();
 }
 
 /**

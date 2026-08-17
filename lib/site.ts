@@ -4,9 +4,11 @@
  * and the proxy alike.
  */
 
+import { envOr } from "@/lib/env";
+
 // Trailing slash stripped so `${SITE_URL}/apply` never doubles up.
 export const SITE_URL = (
-  process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
+  envOr(process.env.NEXT_PUBLIC_SITE_URL, "http://localhost:3000")
 ).replace(/\/$/, "");
 
 export const SITE_NAME = "Geekdom";
@@ -97,7 +99,7 @@ export const SOCIALS = [
 
 /** Public calendar the events page links out to when Luma isn't configured. */
 export const LUMA_CALENDAR_URL =
-  process.env.NEXT_PUBLIC_LUMA_CALENDAR_URL ?? "https://luma.com/geekdom";
+  envOr(process.env.NEXT_PUBLIC_LUMA_CALENDAR_URL, "https://luma.com/geekdom");
 
 export interface NavLink {
   href: string;

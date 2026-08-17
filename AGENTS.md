@@ -71,6 +71,30 @@ class or copy change doesn't need one.
   applicant — the forms submit with `noValidate`, so the server is the only
   validator.
 
+- **Preview mode is gated on the DOMAIN, not `VERCEL_ENV`.** The review URL
+  `next-geekdom.vercel.app` is a *production* Vercel deployment, so
+  `VERCEL_ENV === "production"` is true there — gating on it would switch
+  preview mode off at exactly the URL that needs it. [lib/preview.ts](lib/preview.ts)
+  checks whether `NEXT_PUBLIC_SITE_URL` resolves to `geekdom.com` instead, so
+  the flag disarms itself the moment the real domain is pointed here.
+
+- **Read env vars through [lib/env.ts](lib/env.ts), and pass the VALUE, not the
+  name.** `process.env.X ?? fallback` misses a variable that exists but is
+  empty — a blank Vercel field, a copied `.env.example` — and the empty string
+  reaches code expecting the fallback (`new URL("")` inside `metadataBase` took
+  down a whole build this way). The helpers take a value rather than a key
+  because Next inlines `NEXT_PUBLIC_*` by matching the literal text
+  `process.env.NEXT_PUBLIC_X`; a dynamic `process.env[name]` lookup is invisible
+  to that and silently becomes `undefined` in the browser while working on the
+  server.
+
+- **`checkBotId()` throws when it can't reach its backend** — outside the Vercel
+  runtime it reports a missing `x-vercel-oidc-token`. Unhandled that's a 500 on
+  every submission, real applicant and bot alike. Call `isBot()` from
+  [lib/botid.ts](lib/botid.ts), which fails **open** on an infrastructure error
+  and still rejects a positively identified bot; the reasoning is written out
+  there.
+
 - **npm, not pnpm.** There's a `package-lock.json` (the sibling `next-sasw` repo
   is pnpm — don't copy its commands over).
 

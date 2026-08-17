@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { checkBotId } from "botid/server";
+import { isBot } from "@/lib/botid";
 import { getMemberByEmail } from "@/lib/admin/queries";
 import { createPortalSession } from "@/lib/stripe/server";
 import { portalRequestSchema } from "@/lib/validation/schemas";
@@ -29,8 +29,7 @@ export async function POST(request: Request) {
     response exists to withhold — and would tell whoever is probing that they've
     been spotted.
   */
-  const verification = await checkBotId();
-  if (verification.isBot) {
+  if (await isBot()) {
     return NextResponse.json({
       ok: true,
       message:

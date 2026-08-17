@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { checkBotId } from "botid/server";
+import { isBot } from "@/lib/botid";
 import { Timestamp } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { COLLECTIONS, type ApplicationDoc } from "@/lib/firebase/collections";
@@ -14,6 +14,7 @@ import {
   teamNotifyEmail,
 } from "@/lib/email/templates";
 import { SITE_URL } from "@/lib/site";
+import { IS_PREVIEW } from "@/lib/preview";
 
 /** Window in which a repeat submission from the same email is treated as a dupe. */
 const DUPLICATE_WINDOW_MS = 24 * 60 * 60 * 1000;
@@ -25,8 +26,7 @@ export async function POST(request: Request) {
   // runtime, so it always reports "not a bot" locally. That's what keeps the
   // form usable in development; it also means a local pass proves nothing about
   // the deployed behaviour.
-  const verification = await checkBotId();
-  if (verification.isBot) {
+  if (await isBot()) {
     return NextResponse.json({ error: "Access denied." }, { status: 403 });
   }
 
@@ -61,6 +61,15 @@ export async function POST(request: Request) {
   }
 
   const input = parsed.data;
+
+  // Preview deploys have no Firestore and no Resend. Answer as though the
+  // application landed, so the success state and the /apply/thanks handoff can
+  // be reviewed — but only AFTER validation above, so the error states stay
+  // reachable too. A form that always succeeds proves nothing about the form.
+  if (IS_PREVIEW) {
+    console.info("[apply] preview mode — not saved", { email: input.email });
+    return NextResponse.json({ ok: true, preview: true });
+  }
 
   try {
     // Guard against double submissions — a slow network and an impatient

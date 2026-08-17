@@ -1,5 +1,6 @@
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, type Auth } from "firebase/auth";
+import { envOr } from "@/lib/env";
 
 /**
  * Browser-side Firebase. NEXT_PUBLIC_* values ship to the client by design —
@@ -44,7 +45,7 @@ export function getFirebaseAuth(): Auth {
 export function getGoogleProvider(): GoogleAuthProvider {
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({
-    hd: process.env.NEXT_PUBLIC_ALLOWED_WORKSPACE_DOMAIN ?? "geekdom.com",
+    hd: envOr(process.env.NEXT_PUBLIC_ALLOWED_WORKSPACE_DOMAIN, "geekdom.com"),
     prompt: "select_account",
   });
   return provider;

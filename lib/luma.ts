@@ -1,4 +1,7 @@
 import "server-only";
+import { env, hasEnv } from "@/lib/env";
+import { IS_PREVIEW } from "@/lib/preview";
+import { sampleUpcomingEvents, samplePastEvents } from "@/lib/sample/events";
 
 /**
  * Luma — the club calendar.
@@ -68,7 +71,20 @@ interface ListResponse {
  * 500 on a public page.
  */
 export function isLumaConfigured(): boolean {
-  return Boolean(process.env.LUMA_API_KEY);
+  return hasEnv(process.env.LUMA_API_KEY);
+}
+
+/**
+ * Whether the events pages have anything to show — a real key, or preview
+ * mode standing in for one.
+ *
+ * Deliberately separate from `isLumaConfigured`, which answers the narrower
+ * question "is the key set" and drives the staff portal's setup prompt. Fusing
+ * the two would have the admin page report the calendar as connected on a
+ * preview deploy, which is the opposite of what staff need to know.
+ */
+export function hasEventsToShow(): boolean {
+  return isLumaConfigured() || IS_PREVIEW;
 }
 
 async function lumaFetch<T>(
@@ -76,7 +92,7 @@ async function lumaFetch<T>(
   params: Record<string, string | number | undefined> = {},
   revalidate = 300,
 ): Promise<T> {
-  const key = process.env.LUMA_API_KEY;
+  const key = env(process.env.LUMA_API_KEY);
   if (!key) throw new Error("LUMA_API_KEY is not set.");
 
   const url = new URL(`${LUMA_API}${path}`);
@@ -143,6 +159,23 @@ export async function getPastEvents(limit = 6): Promise<LumaEvent[]> {
   return data.entries;
 }
 
+/**
+ * Past events, degrading the same way `safeUpcomingEvents` does. The events
+ * page renders these beside live content, so a Luma outage must not take the
+ * page down with it.
+ */
+export async function safePastEvents(limit = 6): Promise<LumaEvent[]> {
+  if (!isLumaConfigured()) {
+    return IS_PREVIEW ? samplePastEvents(limit) : [];
+  }
+  try {
+    return await getPastEvents(limit);
+  } catch (error) {
+    console.error("[luma] failed to load past events", error);
+    return [];
+  }
+}
+
 /** One event, with its description. Used by the event detail page. */
 export async function getEvent(id: string): Promise<LumaEventDetail> {
   return lumaFetch<LumaEventDetail>("/events/get", { event_id: id });
@@ -153,7 +186,9 @@ export async function getEvent(id: string): Promise<LumaEventDetail> {
  * events alongside other content use this and degrade to an empty list.
  */
 export async function safeUpcomingEvents(limit = 24): Promise<LumaEvent[]> {
-  if (!isLumaConfigured()) return [];
+  if (!isLumaConfigured()) {
+    return IS_PREVIEW ? sampleUpcomingEvents(limit) : [];
+  }
   try {
     return await getUpcomingEvents(limit);
   } catch (error) {

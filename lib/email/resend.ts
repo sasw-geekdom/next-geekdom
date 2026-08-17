@@ -1,6 +1,7 @@
 import "server-only";
 
 import { Resend } from "resend";
+import { env, envOr, hasEnv } from "@/lib/env";
 
 /**
  * Lazily constructed.
@@ -25,13 +26,13 @@ export function getResend(): Resend {
  * — which looks exactly like "email is broken" if you forget.
  */
 export const EMAIL_FROM =
-  process.env.RESEND_FROM ?? "Geekdom <onboarding@resend.dev>";
+  envOr(process.env.RESEND_FROM, "Geekdom <onboarding@resend.dev>");
 
-export const EMAIL_REPLY_TO = process.env.RESEND_REPLY_TO?.trim() || undefined;
+export const EMAIL_REPLY_TO = env(process.env.RESEND_REPLY_TO);
 
 /** Inboxes notified when a membership application lands. */
 export const TEAM_NOTIFY_TO = (
-  process.env.TEAM_NOTIFY_EMAILS ?? "members@geekdom.com"
+  envOr(process.env.TEAM_NOTIFY_EMAILS, "members@geekdom.com")
 )
   .split(",")
   .map((s) => s.trim())
@@ -50,7 +51,7 @@ export async function sendSafely(payload: {
   html: string;
   replyTo?: string;
 }): Promise<boolean> {
-  if (!process.env.RESEND_API_KEY) {
+  if (!hasEnv(process.env.RESEND_API_KEY)) {
     console.warn("[email] RESEND_API_KEY not set — skipping:", payload.subject);
     return false;
   }

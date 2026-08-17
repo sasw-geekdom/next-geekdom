@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SITE_URL, SITE_NAME, TAGLINE, PROMISE } from "@/lib/site";
+import { IS_PREVIEW } from "@/lib/preview";
+import { PreviewBadge } from "@/components/site/preview-badge";
 import { priceLabel } from "@/lib/membership";
 import "./globals.css";
 
@@ -94,11 +96,13 @@ export const metadata: Metadata = {
     title: `${SITE_NAME} — ${PROMISE}`,
     description: `A space for problem solvers in San Antonio. ${TAGLINE}`,
   },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: { index: true, follow: true },
-  },
+  // Flipped wholesale on a review deploy. robots.txt already tells crawlers to
+  // stay out, but that only governs *fetching* — a URL that gets linked from
+  // somewhere can still be indexed without ever being fetched, and the meta tag
+  // is what actually prevents that. Both, or neither really holds.
+  robots: IS_PREVIEW
+    ? { index: false, follow: false, googleBot: { index: false, follow: false } }
+    : { index: true, follow: true, googleBot: { index: true, follow: true } },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -109,6 +113,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
         {children}
+        <PreviewBadge />
       </body>
     </html>
   );

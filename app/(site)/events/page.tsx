@@ -5,7 +5,7 @@ import { Eyebrow, Section, SectionTitle } from "@/components/site/section";
 import { EventCard } from "@/components/site/event-card";
 import { PhotoHero } from "@/components/site/photo-hero";
 import { PHOTOS } from "@/lib/photos";
-import { getPastEvents, isLumaConfigured, safeUpcomingEvents } from "@/lib/luma";
+import { hasEventsToShow, safePastEvents, safeUpcomingEvents } from "@/lib/luma";
 import { LUMA_CALENDAR_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -31,15 +31,13 @@ export const revalidate = 300;
  * rendered list is indexable.
  */
 export default async function EventsPage() {
-  const configured = isLumaConfigured();
+  const configured = hasEventsToShow();
   const upcoming = await safeUpcomingEvents(24);
 
   // Only reach for past events when there's a thin upcoming list to pad — a
   // full calendar shouldn't cost a second API round trip on every render.
   const past =
-    configured && upcoming.length < 3
-      ? await getPastEvents(3).catch(() => [])
-      : [];
+    configured && upcoming.length < 3 ? await safePastEvents(3) : [];
 
   return (
     <>
