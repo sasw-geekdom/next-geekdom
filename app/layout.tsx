@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { SITE_URL, SITE_NAME, TAGLINE, PROMISE } from "@/lib/site";
+import { SITE_URL, SITE_NAME, PROMISE } from "@/lib/site";
 import { IS_PREVIEW } from "@/lib/preview";
 import { PreviewBadge } from "@/components/site/preview-badge";
-import { priceLabel } from "@/lib/membership";
+import { SiteJsonLd } from "@/components/site/structured-data";
+import { SITE_DESCRIPTION } from "@/lib/seo";
 import "./globals.css";
 
 /*
@@ -50,25 +51,13 @@ const geistMono = Geist_Mono({
   declare it on that component — not on this layout.
 */
 
-/*
-  Built from `priceLabel()` rather than typed as a literal. The price appears in
-  the search snippet, and a hardcoded "$100 a month" here would quietly go stale
-  the day someone changes MEMBERSHIP_PRICE_CENTS — leaving Google advertising a
-  figure the checkout doesn't charge.
-*/
-const price = priceLabel();
-const DESCRIPTION =
-  `A space for problem solvers in San Antonio. Geekdom is a membership club for founders and builders — one membership${
-    price ? `, ${price}` : ""
-  }, and a floor full of people who'll break the problem down with you.`;
-
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
     default: `${SITE_NAME} — ${PROMISE}`,
     template: `%s · ${SITE_NAME}`,
   },
-  description: DESCRIPTION,
+  description: SITE_DESCRIPTION,
   applicationName: SITE_NAME,
   keywords: [
     "Geekdom",
@@ -82,20 +71,22 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Geekdom" }],
   creator: "Geekdom",
-  alternates: { canonical: "/" },
-  openGraph: {
-    type: "website",
-    url: SITE_URL,
-    siteName: SITE_NAME,
-    title: `${SITE_NAME} — ${PROMISE}`,
-    description: DESCRIPTION,
-    locale: "en_US",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: `${SITE_NAME} — ${PROMISE}`,
-    description: `A space for problem solvers in San Antonio. ${TAGLINE}`,
-  },
+  /*
+    NO `alternates` OR `openGraph` HERE, and that is the fix rather than an
+    omission.
+
+    Metadata is inherited down the segment tree, so a canonical declared at the
+    root is inherited by every page that doesn't set its own — and this one
+    said "/". Every page on the site was telling Google it was a duplicate of
+    the homepage and should not be indexed in its own right. `openGraph.url`,
+    `.title` and `.description` had the same problem in the share card: a page
+    setting `title` does NOT backfill `openGraph.title`, so /membership
+    unfurled on LinkedIn as "Geekdom — Find your thinking partner."
+
+    All four now come from `pageMetadata()` in lib/seo.ts, per page. Anything
+    left here would inherit again and quietly overwrite nothing — or, worse,
+    win.
+  */
   // Flipped wholesale on a review deploy. robots.txt already tells crawlers to
   // stay out, but that only governs *fetching* — a URL that gets linked from
   // somewhere can still be indexed without ever being fetched, and the meta tag
@@ -113,6 +104,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
         {children}
+        <SiteJsonLd />
         <PreviewBadge />
       </body>
     </html>

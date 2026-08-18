@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { ButtonLink, ButtonAnchor } from "@/components/ui/button";
 import { Eyebrow, Section, SectionTitle, Subhead, HEADING } from "@/components/site/section";
 import { Photo } from "@/components/site/photo";
@@ -8,11 +9,12 @@ import { BENEFITS } from "@/lib/membership";
 import { LOCATION } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "The Floor",
+  path: "/the-floor",
   description:
     "The third floor is the home of the Geekdom club — drop-in workspace, a cafe, reservable meeting rooms, and the programming that fills them.",
-};
+});
 
 /**
  * What the room actually is.

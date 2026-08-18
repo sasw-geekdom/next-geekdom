@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
+import { MembershipJsonLd } from "@/components/site/structured-data";
 import { Check, Minus, Plus } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { Eyebrow, Section, SectionTitle, Subhead, FIGURE, HEADING } from "@/components/site/section";
@@ -22,12 +24,13 @@ import { cn } from "@/lib/utils";
 
 // Built from priceLabel() so the search snippet can't drift from Stripe — see
 // the note in app/layout.tsx.
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Membership",
+  path: "/membership",
   description: `One membership${
     priceLabel() ? `, ${priceLabel()}` : ""
   }. The third floor, the programming, and a room full of people who'll break the problem down with you. No dedicated desks. No offices.`,
-};
+});
 
 export default function MembershipPage() {
   // null while pricing is unannounced — see lib/membership.ts. The page reads
@@ -36,6 +39,14 @@ export default function MembershipPage() {
 
   return (
     <>
+      {/*
+        The price, as an Offer. This is the one page on the site with a number
+        that a search engine can show next to the link, and a membership listed
+        without one invites the "contact for pricing" reading that the whole
+        page exists to refuse.
+      */}
+      <MembershipJsonLd />
+
       {/*
         Type-led, with the PRICE as the visual anchor rather than a photograph.
 

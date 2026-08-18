@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import Link from "next/link";
 import { ButtonLink, ButtonAnchor } from "@/components/ui/button";
 import { CrownPage } from "@/components/site/crown-page";
@@ -15,11 +16,12 @@ import {
 import { formatLongDate } from "@/lib/format";
 import { isPriceAnnounced, priceLabel } from "@/lib/membership";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "FAQ",
+  path: "/faq",
   description:
     "Questions about Geekdom's move from coworking to a membership club: what happens to desks and offices, what the membership includes, what it costs, and how to apply.",
-};
+});
 
 /**
  * The members FAQ.

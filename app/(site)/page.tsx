@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { formatLongDate } from "@/lib/format";
@@ -22,6 +23,7 @@ import { MemberVoices } from "@/components/site/member-voices";
 import { PHOTOS } from "@/lib/photos";
 import { BENEFITS, priceLabel } from "@/lib/membership";
 import { safeUpcomingEvents } from "@/lib/luma";
+import { pageMetadata, SITE_DESCRIPTION } from "@/lib/seo";
 import {
   HOOK,
   MILESTONES,
@@ -31,6 +33,7 @@ import {
   LUMA_CALENDAR_URL,
   MISSION,
   PROMISE,
+  SITE_NAME,
   TAGLINE,
 } from "@/lib/site";
 
@@ -40,6 +43,21 @@ import {
  * time the page would otherwise be prerendered as permanently static with the
  * events section missing. See the note on app/(site)/events/page.tsx.
  */
+/*
+  The homepage sets its own, rather than leaning on the root layout.
+
+  The layout supplies the <title> and <meta description> defaults for every
+  page, but it deliberately declares no openGraph or canonical any more — those
+  inherit, and a canonical of "/" on every page was telling Google the whole
+  site was a duplicate of this one. So the homepage now claims "/" explicitly,
+  the same way every other page claims its own path.
+*/
+export const metadata: Metadata = pageMetadata({
+  title: `${SITE_NAME} — ${PROMISE}`,
+  path: "",
+  description: SITE_DESCRIPTION,
+});
+
 export const revalidate = 300;
 
 /**

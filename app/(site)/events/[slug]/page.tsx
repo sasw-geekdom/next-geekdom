@@ -4,6 +4,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarDays, Clock, MapPin, Users } from "lucide-react";
 import { Container, Eyebrow, PageTitle } from "@/components/site/section";
+import { EventJsonLd } from "@/components/site/structured-data";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 import { ButtonAnchor } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatEventDate, formatTime } from "@/lib/format";
@@ -36,14 +38,32 @@ export async function generateMetadata({
   // past ~160 characters is truncated by search engines mid-word anyway.
   const summary = event.description?.split("\n").find(Boolean)?.slice(0, 200);
 
+  const url = `${SITE_URL}/events/${slug}`;
+
   return {
     title: event.name,
     description: summary,
+    // Its own canonical, like every other page. Without one it inherits the
+    // root's, and a calendar that turns over weekly would have every event on
+    // it pointing at the homepage.
+    alternates: { canonical: `/events/${slug}` },
     openGraph: {
-      title: event.name,
+      title: `${event.name} · ${SITE_NAME}`,
       description: summary,
       type: "article",
+      url,
+      siteName: SITE_NAME,
+      /*
+        The organiser's own poster, when there is one. Left undefined otherwise,
+        which is not a gap: the events segment ships an opengraph-image.png and
+        Next falls back to it for every child route that doesn't override.
+      */
       images: event.cover_url ? [{ url: event.cover_url }] : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${event.name} · ${SITE_NAME}`,
+      description: summary,
     },
   };
 }
@@ -70,6 +90,23 @@ export default async function EventPage({
 
   return (
     <main className="flex-1 bg-sand">
+      {/*
+        Event schema, which is what puts a date, a time and a place into the
+        search result rather than a blue link. Only for events that haven't
+        happened — marking up a past event asks to be shown as upcoming.
+      */}
+      {!past && (
+        <EventJsonLd
+          name={event.name}
+          description={event.description ?? undefined}
+          startAt={event.start_at}
+          endAt={event.end_at}
+          url={`${SITE_URL}/events/${slug}`}
+          image={event.cover_url ?? undefined}
+          location={eventLocation(event)}
+        />
+      )}
+
       <Container className="py-14 sm:py-20">
         <Link
           href="/events"

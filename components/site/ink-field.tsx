@@ -157,6 +157,7 @@ export function InkField({
   colorB = "#B4552F",
   base = [0.09, 0.028, 0.024],
   alpha = 1,
+  frozenTime,
 }: {
   className?: string;
   /**
@@ -181,13 +182,33 @@ export function InkField({
   base?: [number, number, number];
   /** Overall opacity of the whole field. 1 inside a mask. */
   alpha?: number;
+  /**
+   * Render ONE frame, at this second on the shader's clock, and stop.
+   *
+   * For the share-card generator, which screenshots this component through a
+   * headless browser (scripts/og.mjs). Two things follow from freezing the
+   * clock, and both are the point:
+   *
+   * A still is reproducible. Sampling a live animation means `npm run og`
+   * writes seven different PNGs every run and every run is a binary diff
+   * against a file nobody changed. Naming the second makes the output a pure
+   * function of the input.
+   *
+   * A still is also not an animation, so `prefers-reduced-motion` stops
+   * applying — the whole reason that check exists is movement. Left in, it
+   * would return null on any machine with the OS setting on and silently
+   * generate seven cards with a hole where the crown goes.
+   */
+  frozenTime?: number;
 }) {
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const [failed, setFailed] = React.useState(false);
   const reduced = usePrefersReducedMotion();
 
+  const still = frozenTime !== undefined;
+
   React.useEffect(() => {
-    if (reduced || failed) return;
+    if ((reduced && !still) || failed) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -260,6 +281,19 @@ export function InkField({
         raf = requestAnimationFrame(frame);
       };
 
+      /*
+        One frame, then nothing — no rAF, and no IntersectionObserver either.
+        The observer's job is to stop burning frames off screen, and there are
+        no further frames to stop. Leaving it attached would also mean the
+        screenshotter races a callback that may not have fired yet.
+      */
+      if (still) {
+        resize();
+        gl.uniform1f(uTime, frozenTime);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+        return;
+      }
+
       const io = new IntersectionObserver(([entry]) => {
         visible = entry.isIntersecting;
         if (visible && !raf) raf = requestAnimationFrame(frame);
@@ -299,11 +333,11 @@ export function InkField({
     } catch {
       setFailed(true);
     }
-  }, [reduced, failed, colorA, colorB, base, alpha]);
+  }, [reduced, still, frozenTime, failed, colorA, colorB, base, alpha]);
 
   // No static fallback shape: unlike the brand marks, this carries no
   // information. If it cannot run, the hero is simply the hero.
-  if (reduced || failed) return null;
+  if ((reduced && !still) || failed) return null;
 
   return (
     <canvas

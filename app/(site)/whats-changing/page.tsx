@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { ButtonLink, ButtonAnchor } from "@/components/ui/button";
 import { Eyebrow, Section, SectionTitle } from "@/components/site/section";
 import { CrownPage } from "@/components/site/crown-page";
@@ -10,11 +11,12 @@ import {
 } from "@/lib/site";
 import { formatLongDate } from "@/lib/format";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "What's Changing",
+  path: "/whats-changing",
   description:
     "Geekdom becomes a membership club for serious founders and builders. Coworking is sunsetting and we're consolidating to the third floor. The letter to our members, in full.",
-};
+});
 
 /**
  * The announcement, kept whole.

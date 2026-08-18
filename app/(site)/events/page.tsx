@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { CalendarX } from "lucide-react";
 import { ButtonLink, ButtonAnchor } from "@/components/ui/button";
 import { Container, Eyebrow, Section, SectionTitle, Subhead } from "@/components/site/section";
@@ -7,11 +8,12 @@ import { TypeHero } from "@/components/site/type-hero";
 import { hasEventsToShow, safePastEvents, safeUpcomingEvents } from "@/lib/luma";
 import { LUMA_CALENDAR_URL } from "@/lib/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Events",
+  path: "/events",
   description:
     "Meetups, build sessions, office hours, fireside chats, and pitch nights on the third floor. The Geekdom calendar.",
-};
+});
 
 /**
  * Revalidate every five minutes, declared at the segment rather than left to

@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { CrownPage } from "@/components/site/crown-page";
 import { ApplyForm } from "@/components/forms/apply-form";
 import { isPriceAnnounced, priceLabel } from "@/lib/membership";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Apply",
+  path: "/apply",
   description:
     "Apply for membership at Geekdom — a club for serious founders and builders in San Antonio.",
-};
+});
 
 export default function ApplyPage() {
   return (

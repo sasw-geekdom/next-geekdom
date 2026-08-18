@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { CrownPage } from "@/components/site/crown-page";
 import { BillingForm } from "@/components/forms/billing-form";
 import { CONTACT_EMAIL } from "@/lib/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Manage membership",
+  path: "/account",
   description:
     "Update your card, download invoices, or cancel your Geekdom membership.",
   robots: { index: false, follow: true },
-};
+});
 
 export default function AccountPage() {
   return (
