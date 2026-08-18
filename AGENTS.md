@@ -106,6 +106,33 @@ on the light sand ground is 5.0:1 and passes AA; on the ink ground it drops to
 3.3:1 and fails. Gold is the reverse — 9.3:1 on ink, 1.8:1 on white. Anything
 rendering into a dark band uses gold (`Eyebrow onInk`, `Button variant="on-ink"`).
 
+### The scales
+
+Type and buttons are **named scales, not per-component decisions**. Before
+writing a `text-*`, `font-*`, `tracking-*` or a button-shaped `className`, use
+the constant:
+
+- **`HEADING`** in [section.tsx](components/site/section.tsx) — `display` /
+  `title` / `heading` / `subhead`. One rule runs through it: as size grows,
+  tracking and leading both tighten (-0.02em/1.08 to -0.035em/0.98). Six h1
+  definitions with four different tracking values collapsed into this; none of
+  them differed on purpose. `PageTitle`, `SectionTitle` and `Subhead` wrap it.
+- **`FIGURE`** — numerals only (milestones, the price). `tabular-nums` on every
+  tier, because proportional digits make a column of figures wander.
+- **`MONO`** — `eyebrow` (0.18em, a kicker standing alone) vs `label` (0.14em,
+  a caption attached to something). That distinction existed by feel across
+  nine files; it is a decision now.
+- **Buttons**: `Button` (a `<button>`), `ButtonLink` (an in-app route),
+  `ButtonAnchor` (external or `mailto:`). **The third one exists because its
+  absence caused thirteen hand-rolled `<a className="inline-flex h-13 ...">` to
+  accumulate**, several already missing the focus ring or the size's own
+  `text-*`. If a button shape is missing, add a variant — don't hand-roll it.
+
+Passing an override `className` to a button WITHOUT a `variant` leaves
+`primary` in place, and if the override carries no background of its own
+twMerge finds no conflict to resolve — so `bg-rust` survives and a secondary
+action silently renders as a second primary CTA.
+
 ### Type
 
 **Geist Sans** for everything you read, **Geist Mono** for everything you scan.

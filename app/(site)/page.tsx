@@ -1,24 +1,31 @@
 import Link from "next/link";
+import { cn } from "@/lib/utils";
+import { formatLongDate } from "@/lib/format";
 import { ArrowRight } from "lucide-react";
-import { ButtonLink } from "@/components/ui/button";
+import { ButtonLink, ButtonAnchor } from "@/components/ui/button";
 import {
   Eyebrow,
   Lede,
   Section,
   SectionTitle,
+  FIGURE,
+  HEADING,
 } from "@/components/site/section";
 import { EventCard } from "@/components/site/event-card";
 import { Photo } from "@/components/site/photo";
-import { TypeHero, FootnoteMark } from "@/components/site/type-hero";
+import { TypeHero } from "@/components/site/type-hero";
 import { PhotoBand } from "@/components/site/photo-band";
+import { PartnerRow } from "@/components/site/partner-row";
 import { GMarkShader } from "@/components/site/crown-shader";
+import { MemberVoices } from "@/components/site/member-voices";
 import { PHOTOS } from "@/lib/photos";
 import { BENEFITS, priceLabel } from "@/lib/membership";
 import { safeUpcomingEvents } from "@/lib/luma";
 import {
   HOOK,
-  LETTER_AUTHOR,
   MILESTONES,
+  GOAL,
+  CLUB_OPENS,
   LOCATION,
   LUMA_CALENDAR_URL,
   MISSION,
@@ -77,10 +84,7 @@ export default async function HomePage() {
   const title = HOOK.endsWith(ACCENT) ? (
     <>
       {HOOK.slice(0, -ACCENT.length)}
-      <span className="text-rust">
-        {ACCENT}
-        <FootnoteMark />
-      </span>
+<span className="text-rust">{ACCENT}</span>
     </>
   ) : (
     HOOK
@@ -94,9 +98,7 @@ export default async function HomePage() {
 
         No image up here on purpose. The claim is the strongest thing the
         homepage has, and giving it the whole viewport at 8xl is what makes it
-        read as a claim rather than a caption. The footnote is the other half:
-        it cites the letter that actually went out to members, so the page opens
-        by quoting a real document instead of asserting at you.
+        read as a claim rather than a caption.
       */}
       <TypeHero
         eyebrow={
@@ -107,27 +109,15 @@ export default async function HomePage() {
           </>
         }
         title={title}
-        footnote={{
-          quote: (
-            <>
-              &ldquo;The desk was never really the point. The point was the
-              person sitting next to you.&rdquo;
-            </>
-          ),
-          source: `— ${LETTER_AUTHOR.name}, ${LETTER_AUTHOR.role}`,
-        }}
-        tail={
-          price
-            ? `One membership · ${price}`
-            : "One membership · pricing coming soon"
-        }
+        footer={<PartnerRow />}
+        // PROTOTYPE — the g-mark in the hero's empty right zone.
       >
         <p className="text-xl leading-relaxed text-ink/75">
           {PROMISE} Not a tool — a person. The one who breaks the problem down
           with you, builds on your idea, and tells you the truth about it.
         </p>
 
-        <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+        <div className="mt-10 flex flex-col gap-3 sm:flex-row short:mt-7">
           <ButtonLink href="/apply" size="lg">
             Apply for membership
           </ButtonLink>
@@ -153,9 +143,61 @@ export default async function HomePage() {
       <PhotoBand
         photo={PHOTOS.welcomeHero}
         aspect="lg:aspect-video"
-        fadeTo="ink"
         priority
       />
+
+      {/* ── What Geekdom does ────────────────────────────────────────── */}
+      {/*
+        THE SECTION THE PAGE WAS MISSING.
+
+        Everything else here describes a PLACE and what is in it — a room, a
+        cafe, a calendar. None of it said that Geekdom is an organisation that
+        does something. A visitor could read the whole page and conclude they
+        were being sold access to a nice floor.
+
+        Mentorship leads because Geekdom's own one-pager calls it "at the core
+        of everything we do", and on this page it had been reduced to one bullet
+        among nine.
+
+        The numbers sit here, immediately under the claim, rather than five
+        screens down where they were. They are the only hard evidence the site
+        has, and proof placed after someone has already decided to leave is not
+        proof. Both reference sites put their figures directly below the hero.
+      */}
+      <Section tone="white">
+        <Eyebrow>What we do</Eyebrow>
+        <SectionTitle>Building San Antonio, one startup at a time.</SectionTitle>
+        <Lede>
+          Geekdom is a startup community, not a landlord. Mentorship is the core
+          of it — founders sitting with people who have already hit the wall
+          they&rsquo;re hitting — wrapped in programming, events, and the
+          introductions that come from being in the room every week.
+        </Lede>
+        <Lede className="mt-5">{GOAL}</Lede>
+
+        {/*
+          The evidence for "fifteen years in", and the only hard numbers on the
+          site. They sit INSIDE this section rather than in a band of their own
+          because they are the proof of the claim directly above them — a
+          floating stats strip is a brag, the same numbers under a sentence
+          about the track record are an argument.
+
+          `tabular-nums` so the figures line up as a grid rather than drifting
+          on the varying widths of proportional digits.
+        */}
+        <dl className="mt-16 grid grid-cols-2 gap-x-8 gap-y-10 border-t border-border pt-12 sm:grid-cols-3">
+          {MILESTONES.map((m) => (
+            <div key={m.label}>
+              <dt className={cn(FIGURE.md, "text-ink")}>
+                {m.figure}
+              </dt>
+              <dd className="mt-2 font-mono text-xs uppercase leading-relaxed tracking-[0.14em] text-muted-foreground">
+                {m.label}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </Section>
 
       {/* ── Mission ──────────────────────────────────────────────────── */}
       <Section tone="ink">
@@ -165,7 +207,13 @@ export default async function HomePage() {
             <SectionTitle className="text-white">
               Hard problems don&rsquo;t get solved alone.
             </SectionTitle>
-            <div className="mt-8 flex flex-col gap-6">
+            {/*
+              mt-6, matching Lede. Sections that used the Lede primitive sat at
+              24px under their heading while the three that hand-rolled their
+              own paragraph had drifted to 32 and 40 — the same class of problem
+              the button and type scales fixed, one level down.
+            */}
+            <div className="mt-6 flex flex-col gap-6">
               {MISSION.map((paragraph) => (
                 <p
                   key={paragraph}
@@ -185,37 +233,6 @@ export default async function HomePage() {
             sizes="(min-width: 1024px) 544px, 100vw"
           />
         </div>
-      </Section>
-
-      {/* ── How the room works ───────────────────────────────────────── */}
-      <Section tone="white">
-        <Eyebrow>How it works</Eyebrow>
-        <SectionTitle>Break the problem down together.</SectionTitle>
-        <Lede>
-          Every hard thing you&rsquo;re building moves through the same three
-          stages. The room is built for all of them.
-        </Lede>
-
-        <ul className="mt-14 grid gap-x-10 gap-y-12 lg:grid-cols-3">
-          {MODES.map((mode, i) => (
-            <li key={mode.title}>
-              <Photo
-                photo={mode.photo}
-                aspect="aspect-[3/2]"
-                sizes="(min-width: 1024px) 341px, (min-width: 640px) 50vw, 100vw"
-              />
-              <p className="mt-5 font-mono text-xs tracking-[0.18em] text-muted-foreground">
-                {String(i + 1).padStart(2, "0")}
-              </p>
-              <h3 className="mt-2 text-2xl font-bold leading-tight text-ink">
-                {mode.title}
-              </h3>
-              <p className="mt-3 leading-relaxed text-muted-foreground">
-                {mode.body}
-              </p>
-            </li>
-          ))}
-        </ul>
       </Section>
 
       {/* ── Who's in the room ────────────────────────────────────────── */}
@@ -260,80 +277,48 @@ export default async function HomePage() {
         </div>
       </Section>
 
-      {/* ── The origin ───────────────────────────────────────────────── */}
+      {/* ── Member voices ────────────────────────────────────────────── */}
       {/*
-        The one place on the homepage the crown appears at size, with the flow
-        running through it.
-
-        It belongs to THIS section specifically: the mark is the oldest thing
-        Geekdom owns, and this is the section about the fifteen years behind the
-        change. Anywhere else on the page it would be decoration; here it's the
-        subject. The paragraphs drop from two columns to one to make room for
-        it, which they can afford — the measure was wide and thin at 2×.
-
-        Below lg the crown moves under the copy rather than beside it, and it is
-        capped: a full-width crown on a phone is a banner, not a mark.
-
-        The mark is the g, not the crown: the crown is wide and shallow and sat
-        as a band beside the copy, while the g stands the full height of the
-        text block and holds the right edge of the section.
+        Placed straight after "Who's in the room" on purpose: that section
+        claims a range of people, and this is where some of them get to speak
+        for themselves. Empty until there are real quotes.
       */}
+      <MemberVoices />
+
+      {/* ── How the room works ───────────────────────────────────────── */}
       <Section tone="white">
-        <div className="grid items-center gap-12 lg:grid-cols-[1fr_14rem] lg:gap-16">
-          <div>
-            <Eyebrow>Fifteen years in</Eyebrow>
-            <SectionTitle>The desk was never the point.</SectionTitle>
-            <p className="mt-8 text-lg leading-relaxed text-muted-foreground">
-              Geekdom opened as a coworking space for geeks. A shared desk was
-              the best tool we had for putting builders next to each other, and
-              it worked — hundreds of companies got started because someone sat
-              down next to the right person.
-            </p>
-            <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
-              But the desk was never really the point. The point was the person
-              sitting next to you. So we stopped selling desks and started
-              building the room around the thing that was actually working.
-            </p>
-            <Link
-              href="/whats-changing"
-              className="mt-8 inline-flex items-center gap-1.5 font-medium text-rust hover:underline"
-            >
-              Read the letter to our members
-              <ArrowRight className="h-4 w-4" strokeWidth={2} />
-            </Link>
-          </div>
+        <Eyebrow>How it works</Eyebrow>
+        <SectionTitle>Break the problem down together.</SectionTitle>
+        <Lede>
+          Every hard thing you&rsquo;re building moves through the same three
+          stages. The room is built for all of them.
+        </Lede>
 
-          {/*
-            SIZED BY HEIGHT, not width. The g-mark is 40×127 — nearly four times
-            taller than it is wide — so giving it a column width the way the
-            crown took one would make it about 1,200px tall. Constrain the
-            height and let the width follow.
-          */}
-          <GMarkShader className="mx-auto h-56 w-auto sm:h-72 lg:h-[26rem]" />
-        </div>
-
-        {/*
-          The evidence for "fifteen years in", and the only hard numbers on the
-          site. They sit INSIDE this section rather than in a band of their own
-          because they are the proof of the claim directly above them — a
-          floating stats strip is a brag, the same numbers under a sentence
-          about the track record are an argument.
-
-          `tabular-nums` so the figures line up as a grid rather than drifting
-          on the varying widths of proportional digits.
-        */}
-        <dl className="mt-16 grid grid-cols-2 gap-x-8 gap-y-10 border-t border-border pt-12 sm:grid-cols-3">
-          {MILESTONES.map((m) => (
-            <div key={m.label}>
-              <dt className="text-3xl font-bold tabular-nums tracking-tight text-ink sm:text-4xl">
-                {m.figure}
-              </dt>
-              <dd className="mt-2 font-mono text-xs uppercase leading-relaxed tracking-[0.14em] text-muted-foreground">
-                {m.label}
-              </dd>
-            </div>
+        <ul className="mt-14 grid gap-x-10 gap-y-12 lg:grid-cols-3">
+          {MODES.map((mode, i) => (
+            <li key={mode.title}>
+              <Photo
+                photo={mode.photo}
+                aspect="aspect-[3/2]"
+                sizes="(min-width: 1024px) 341px, (min-width: 640px) 50vw, 100vw"
+              />
+              {/*
+                Label tracking, not eyebrow. These numerals are attached to the
+                heading directly beneath them; the wider 0.18em is for a kicker
+                standing on its own. See MONO in section.tsx.
+              */}
+              <p className="mt-5 font-mono text-xs tracking-[0.14em] text-muted-foreground">
+                {String(i + 1).padStart(2, "0")}
+              </p>
+              <h3 className={cn("mt-2", HEADING.subhead, "text-ink")}>
+                {mode.title}
+              </h3>
+              <p className="mt-3 leading-relaxed text-muted-foreground">
+                {mode.body}
+              </p>
+            </li>
           ))}
-        </dl>
+        </ul>
       </Section>
 
       {/* ── What you get ─────────────────────────────────────────────── */}
@@ -347,13 +332,13 @@ export default async function HomePage() {
           photo={PHOTOS.theFloorWide}
           aspect="aspect-[16/8]"
           sizes="(min-width: 1152px) 1088px, 100vw"
-          className="mt-10"
+          className="mt-6"
         />
 
         <ul className="mt-14 grid gap-x-10 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
           {BENEFITS.map((benefit) => (
             <li key={benefit.title}>
-              <h3 className="text-lg font-semibold text-ink">
+              <h3 className={cn(HEADING.item, "text-ink")}>
                 {benefit.title}
               </h3>
               <p className="mt-2 leading-relaxed text-muted-foreground">
@@ -366,14 +351,14 @@ export default async function HomePage() {
         <div className="mt-14 flex flex-col gap-6 rounded-xl border border-border bg-white p-7 sm:flex-row sm:items-center sm:justify-between sm:p-8">
           <div>
             {price ? (
-              <p className="text-4xl font-bold tracking-tight text-ink">
+              <p className={cn(FIGURE.md, "text-ink")}>
                 {price.split("/")[0]}
                 <span className="text-lg font-medium text-muted-foreground">
                   /{price.split("/")[1]}
                 </span>
               </p>
             ) : (
-              <p className="text-3xl font-bold tracking-tight text-ink">
+              <p className={cn(FIGURE.sm, "text-ink")}>
                 Pricing coming soon
               </p>
             )}
@@ -398,6 +383,14 @@ export default async function HomePage() {
               Nothing is charged until you&rsquo;re accepted, and you can cancel
               any time.
             </p>
+            {/*
+              WHEN. The page asked for an application and a card without ever
+              saying when the thing being bought starts — a date the FAQ has
+              had all along and the homepage did not.
+            */}
+            <p className="mt-1 font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground">
+              The club opens {formatLongDate(CLUB_OPENS)}
+            </p>
           </div>
           <ButtonLink href="/apply" size="lg" className="shrink-0">
             Apply for membership
@@ -406,7 +399,7 @@ export default async function HomePage() {
       </Section>
 
       {/* ── Events ───────────────────────────────────────────────────── */}
-      {events.length > 0 && (
+      {
         <Section tone="white">
           <div className="flex flex-wrap items-end justify-between gap-6">
             <div>
@@ -422,23 +415,93 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {events.map((event) => (
-              <EventCard key={event.id} event={event} />
-            ))}
-          </div>
+          {/*
+            NEVER an empty section. This used to be wrapped in
+            `{events.length > 0 && …}`, so a missing Luma key on production
+            deleted the whole thing silently — taking the "there is always
+            something on" proof with it, with no error anywhere to notice.
+            An empty calendar now points at the calendar instead.
+          */}
+          {events.length > 0 ? (
+            <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {events.map((event) => (
+                <EventCard key={event.id} event={event} />
+              ))}
+            </div>
+          ) : (
+            <p className="mt-10 max-w-xl text-lg leading-relaxed text-muted-foreground">
+              The full calendar lives on Luma — meetups, build sessions, office
+              hours, and pitch nights, most of them open to non-members.
+            </p>
+          )}
         </Section>
-      )}
+      }
+
+      {/* ── The origin ───────────────────────────────────────────────── */}
+      {/*
+        MOVED to just before the close, and that is the point. "The space
+        changes. The people in it don't." only lands if you have been told a
+        space changed — sitting five sections earlier, most readers reached the
+        close without that setup and the line read as a non sequitur.
+      */}
+      {/*
+        The one place on the homepage a mark appears at size, with the flow
+        running through it.
+
+        It belongs to THIS section specifically: the mark is the oldest thing
+        Geekdom owns, and this is the section about the fifteen years behind the
+        change. Anywhere else on the page it would be decoration; here it's the
+        subject. The paragraphs run one column rather than two to make room for
+        it, which they can afford — the measure was wide and thin at 2x.
+
+        The g, not the crown: the crown is wide and shallow and sat as a band
+        beside the copy, while the g stands the full height of the text block
+        and holds the right edge of the section.
+      */}
+      <Section tone="sand">
+        <div className="grid items-center gap-12 lg:grid-cols-[1fr_14rem] lg:gap-16">
+          <div>
+            <Eyebrow>Fifteen years in</Eyebrow>
+            <SectionTitle>The desk was never the point.</SectionTitle>
+            <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
+              Geekdom opened as a coworking space for geeks. A shared desk was
+              the best tool we had for putting builders next to each other, and
+              it worked — hundreds of companies got started because someone sat
+              down next to the right person.
+            </p>
+            <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
+              But the desk was never really the point. The point was the person
+              sitting next to you. So we stopped selling desks and started
+              building the room around the thing that was actually working.
+            </p>
+            <Link
+              href="/whats-changing"
+              className="mt-8 inline-flex items-center gap-1.5 font-medium text-rust hover:underline"
+            >
+              Read the letter to our members
+              <ArrowRight className="h-4 w-4" strokeWidth={2} />
+            </Link>
+          </div>
+
+          {/*
+            SIZED BY HEIGHT, not width. The g-mark is 40x127 — nearly four times
+            taller than it is wide — so giving it a column width the way the
+            crown took one would make it about 1,200px tall. Constrain the
+            height and let the width follow.
+          */}
+          <GMarkShader className="mx-auto h-56 w-auto sm:h-72 lg:h-[26rem]" />
+        </div>
+      </Section>
 
       {/* ── Close ────────────────────────────────────────────────────── */}
       <Section tone="ink">
         <div className="max-w-3xl">
-          <p className="text-4xl font-bold leading-[1.1] text-white sm:text-5xl">
+          <p className={cn(HEADING.heading, "text-white")}>
             The space changes.
             <br />
             <span className="text-gold">The people in it don&rsquo;t.</span>
           </p>
-          <p className="mt-8 text-lg leading-relaxed text-white/70">
+          <p className="mt-6 text-lg leading-relaxed text-white/70">
             {TAGLINE} If it still calls to you, we hope you&rsquo;re excited to
             keep building with us too.
           </p>
@@ -446,14 +509,14 @@ export default async function HomePage() {
             <ButtonLink href="/apply" size="lg" variant="on-ink">
               Apply for membership
             </ButtonLink>
-            <a
+            <ButtonAnchor
+              external
               href={LUMA_CALENDAR_URL}
-              target="_blank"
-              rel="noreferrer noopener"
-              className="inline-flex h-13 items-center justify-center rounded-lg border border-white/25 px-7 text-lg font-medium text-white transition-colors hover:bg-white/10"
+              variant="on-ink-outline"
+              size="lg"
             >
               Browse the calendar
-            </a>
+            </ButtonAnchor>
           </div>
         </div>
       </Section>

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ButtonLink } from "@/components/ui/button";
+import { ButtonLink, ButtonAnchor } from "@/components/ui/button";
 import { Eyebrow, Section, SectionTitle } from "@/components/site/section";
 import { CrownPage } from "@/components/site/crown-page";
 import {
@@ -135,12 +135,9 @@ export default function WhatsChangingPage() {
           rather answer the question than have you wonder.
         </p>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <a
-            href={`mailto:${CONTACT_EMAIL}`}
-            className="inline-flex h-13 items-center justify-center rounded-lg bg-rust px-7 text-lg font-medium text-white transition-colors hover:bg-rust-deep"
-          >
+          <ButtonAnchor href={`mailto:${CONTACT_EMAIL}`} size="lg">
             Email the team
-          </a>
+          </ButtonAnchor>
           <ButtonLink href="/faq" size="lg" variant="outline">
             Read the FAQ
           </ButtonLink>

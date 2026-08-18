@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Check, Minus, Plus } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
-import { Eyebrow, Section, SectionTitle } from "@/components/site/section";
+import { Eyebrow, Section, SectionTitle, Subhead, FIGURE, HEADING } from "@/components/site/section";
 import { TypeHero } from "@/components/site/type-hero";
 import { PhotoBand } from "@/components/site/photo-band";
 import { PHOTOS } from "@/lib/photos";
@@ -18,6 +18,7 @@ import {
 } from "@/lib/membership";
 import { LOCATION, CLUB_OPENS, MILESTONES } from "@/lib/site";
 import { formatLongDate } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 // Built from priceLabel() so the search snippet can't drift from Stripe — see
 // the note in app/layout.tsx.
@@ -63,7 +64,7 @@ export default function MembershipPage() {
         </p>
 
         {isPriceAnnounced() && MEMBERSHIP_PRICE_CENTS !== null && (
-          <p className="mt-12 text-7xl font-bold tracking-[-0.03em] text-ink tabular-nums sm:text-8xl">
+          <p className={cn("mt-12", FIGURE.lg, "text-ink")}>
             {formatPrice(MEMBERSHIP_PRICE_CENTS)}
             <span className="align-middle text-2xl font-medium tracking-normal text-muted-foreground">
               /{MEMBERSHIP_INTERVAL}
@@ -76,7 +77,7 @@ export default function MembershipPage() {
           time.
         </p>
 
-        <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+        <div className="mt-10 flex flex-col gap-3 sm:flex-row">
           <ButtonLink href="/apply" size="lg">
             Apply for membership
           </ButtonLink>
@@ -115,7 +116,7 @@ export default function MembershipPage() {
         <dl className="mt-12 grid grid-cols-2 gap-x-8 gap-y-9 sm:grid-cols-3">
           {MILESTONES.map((m) => (
             <div key={m.label}>
-              <dt className="text-2xl font-bold tabular-nums tracking-tight text-ink sm:text-3xl">
+              <dt className={cn(FIGURE.sm, "text-ink")}>
                 {m.figure}
               </dt>
               <dd className="mt-1.5 font-mono text-xs uppercase leading-relaxed tracking-[0.14em] text-muted-foreground">
@@ -176,7 +177,7 @@ export default function MembershipPage() {
         <div className="grid gap-12 lg:grid-cols-[1fr_360px] lg:gap-16">
           {/* What you get */}
           <div>
-            <h2 className="text-2xl font-bold text-ink">What&rsquo;s included</h2>
+            <Subhead>What&rsquo;s included</Subhead>
             <ul className="mt-8 flex flex-col gap-7">
               {BENEFITS.map((benefit) => (
                 <li key={benefit.title} className="flex gap-4">
@@ -186,7 +187,7 @@ export default function MembershipPage() {
                     aria-hidden="true"
                   />
                   <div>
-                    <h3 className="font-semibold text-ink">{benefit.title}</h3>
+                    <h3 className={cn(HEADING.item, "text-ink")}>{benefit.title}</h3>
                     <p className="mt-1 leading-relaxed text-muted-foreground">
                       {benefit.description}
                     </p>
@@ -195,9 +196,7 @@ export default function MembershipPage() {
               ))}
             </ul>
 
-            <h2 className="mt-14 text-2xl font-bold text-ink">
-              What it isn&rsquo;t
-            </h2>
+<Subhead className="mt-14">What it isn&rsquo;t</Subhead>
             <ul className="mt-6 flex flex-col gap-3">
               {NOT_INCLUDED.map((item) => (
                 <li
@@ -240,7 +239,7 @@ export default function MembershipPage() {
               </p>
 
               {price ? (
-                <p className="mt-4 text-4xl font-bold tracking-tight text-ink">
+                <p className={cn("mt-4", FIGURE.md, "text-ink")}>
                   {price.split("/")[0]}
                   <span className="text-lg font-medium text-muted-foreground">
                     /{price.split("/")[1]}
@@ -248,7 +247,7 @@ export default function MembershipPage() {
                 </p>
               ) : (
                 <>
-                  <p className="mt-4 text-3xl font-bold tracking-tight text-ink">
+                  <p className={cn("mt-4", FIGURE.sm, "text-ink")}>
                     Pricing coming soon
                   </p>
                   <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
@@ -310,7 +309,7 @@ export default function MembershipPage() {
               <p className="font-mono text-xs tracking-[0.18em] text-rust">
                 {step.n}
               </p>
-              <h3 className="mt-2 text-xl font-bold text-ink">{step.title}</h3>
+              <h3 className={cn("mt-2", HEADING.subhead, "text-ink")}>{step.title}</h3>
               <p className="mt-3 leading-relaxed text-muted-foreground">
                 {step.body}
               </p>

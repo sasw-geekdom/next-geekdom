@@ -1,3 +1,4 @@
+import { Eyebrow, HEADING } from "@/components/site/section";
 import { CrownShader, type MarkShape } from "@/components/site/crown-shader";
 
 /*
@@ -16,7 +17,6 @@ const RAIL_SIZE: Record<MarkShape, string> = {
   "g-mark":
     "h-[32svh] w-auto lg:h-full lg:max-h-[min(40rem,calc(100svh-9rem))]",
 };
-import { Eyebrow } from "@/components/site/section";
 import { cn } from "@/lib/utils";
 
 /**
@@ -111,7 +111,7 @@ export function CrownPage({
       <div className={cn("flex flex-col justify-center", !fitViewport && "lg:py-20")}>
         <header className="mb-10">
           <Eyebrow>{eyebrow}</Eyebrow>
-          <h1 className="mt-4 text-4xl font-bold leading-[1.05] tracking-[-0.03em] text-ink sm:text-5xl">
+          <h1 className={cn("mt-4", HEADING.heading, "text-ink")}>
             {title}
           </h1>
           {subtitle && (

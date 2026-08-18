@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { CalendarX } from "lucide-react";
-import { ButtonLink } from "@/components/ui/button";
-import { Container, Eyebrow, Section, SectionTitle } from "@/components/site/section";
+import { ButtonLink, ButtonAnchor } from "@/components/ui/button";
+import { Container, Eyebrow, Section, SectionTitle, Subhead } from "@/components/site/section";
 import { EventCard } from "@/components/site/event-card";
 import { TypeHero } from "@/components/site/type-hero";
 import { hasEventsToShow, safePastEvents, safeUpcomingEvents } from "@/lib/luma";
@@ -75,7 +75,7 @@ export default async function EventsPage() {
 
           {past.length > 0 && (
             <div className="mt-20">
-              <h2 className="text-2xl font-bold text-ink">Recently</h2>
+              <Subhead>Recently</Subhead>
               <p className="mt-2 text-muted-foreground">
                 A sense of what happens here.
               </p>
@@ -87,19 +87,19 @@ export default async function EventsPage() {
 
           <div className="mt-16 rounded-xl border border-border bg-white p-7 sm:flex sm:items-center sm:justify-between sm:gap-8">
             <div>
-              <h2 className="text-lg font-semibold text-ink">Never miss one</h2>
+              <Subhead className="text-xl">Never miss one</Subhead>
               <p className="mt-1 text-muted-foreground">
                 Subscribe on Luma and everything new lands on your calendar.
               </p>
             </div>
-            <a
+            <ButtonAnchor
+              external
               href={LUMA_CALENDAR_URL}
-              target="_blank"
-              rel="noreferrer noopener"
-              className="mt-5 inline-flex h-11 shrink-0 items-center justify-center rounded-lg bg-ink px-5 font-medium text-white transition-colors hover:bg-ink/90 sm:mt-0"
+              variant="ink"
+              className="mt-5 shrink-0 sm:mt-0"
             >
               Subscribe on Luma
-            </a>
+            </ButtonAnchor>
           </div>
         </Container>
       </section>
@@ -159,24 +159,19 @@ function EmptyState({ configured }: { configured: boolean }) {
         strokeWidth={1.5}
         aria-hidden="true"
       />
-      <h2 className="mt-5 text-xl font-semibold text-ink">
+      <Subhead className="mt-5 text-xl">
         {configured
           ? "Nothing on the calendar right now."
           : "The calendar lives on Luma."}
-      </h2>
+      </Subhead>
       <p className="mx-auto mt-3 max-w-md leading-relaxed text-muted-foreground">
         {configured
           ? "New events go up regularly — subscribe on Luma and you'll know first."
           : "Head over to see everything coming up on the third floor."}
       </p>
-      <a
-        href={LUMA_CALENDAR_URL}
-        target="_blank"
-        rel="noreferrer noopener"
-        className="mt-7 inline-flex h-11 items-center justify-center rounded-lg bg-rust px-5 font-medium text-white transition-colors hover:bg-rust-deep"
-      >
+      <ButtonAnchor external href={LUMA_CALENDAR_URL} className="mt-7">
         Open the calendar
-      </a>
+      </ButtonAnchor>
     </div>
   );
 }

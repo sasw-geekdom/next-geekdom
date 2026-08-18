@@ -3,6 +3,8 @@ import Link from "next/link";
 import { formatEventDate } from "@/lib/format";
 import { eventLocation, eventSlug, isNearlyFull, type LumaEvent } from "@/lib/luma";
 import { Badge } from "@/components/ui/badge";
+import { HEADING } from "@/components/site/section";
+import { cn } from "@/lib/utils";
 
 /**
  * One event from the Luma calendar.
@@ -41,7 +43,7 @@ export function EventCard({ event }: { event: LumaEvent }) {
       </div>
 
       <div className="flex flex-1 flex-col p-5">
-        <h3 className="text-lg font-semibold leading-snug text-ink group-hover:text-rust">
+        <h3 className={cn(HEADING.item, "text-ink group-hover:text-rust")}>
           {event.name}
         </h3>
         <p className="mt-2 truncate text-sm text-muted-foreground">

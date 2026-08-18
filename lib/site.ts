@@ -112,10 +112,8 @@ export const CONTACT_EMAIL = "members@geekdom.com";
  * Who wrote the letter.
  *
  * The letter on /whats-changing is a real document that really went out, and an
- * unsigned letter reads as corporate announcement rather than as someone
- * putting their name to a decision. Cited on the homepage too — the whole point
- * of that footnote is that it quotes an identified person, the way the
- * reference site quotes Paul Graham.
+ * unsigned letter reads as a corporate announcement rather than as someone
+ * putting their name to a decision.
  */
 export const LETTER_AUTHOR = {
   name: "Charles Woodin",
@@ -208,6 +206,47 @@ export const MILESTONES = [
 
 export const GOAL =
   "To launch the next 500 startups, with at least 75% calling San Antonio home.";
+
+/**
+ * The partner wall and the member voices — the SHAPES only.
+ *
+ * The entries themselves are mock content and live in `data/mock/`, kept out of
+ * lib on purpose: one folder to open and delete when the real content arrives,
+ * rather than placeholder arrays buried among constants that are real.
+ *
+ * Both are destined for the CMS the admin portal will grow — the same shape
+ * sponsors and partners already have in the sibling repo.
+ */
+export interface Partner {
+  name: string;
+  /** Their site. Omit rather than guess a URL. */
+  href?: string;
+  /**
+   * Path under /public. OPTIONAL — without it the name renders as a wordmark.
+   *
+   * That fallback is not just for mock data: it lets Geekdom add a partner the
+   * day it is agreed rather than the day someone digs out an EPS, and a set of
+   * wordmarks is more legible than a row of mismatched logos anyway.
+   *
+   * When real files do arrive, ask for SINGLE-COLOUR versions. Marks vary in
+   * polarity — a white logo dies on sand, a dark one dies on ink — and a mixed
+   * set cannot share one band without boxing each logo, which turns a credit
+   * line into a sponsor grid.
+   */
+  logo?: string;
+  /** Tailwind height for the mark, e.g. "h-7 sm:h-8". Ignored for wordmarks. */
+  height?: string;
+}
+
+
+export interface MemberVoice {
+  /** One or two sentences. Long quotes stop being read. */
+  quote: string;
+  name: string;
+  /** "Co-founder, Acme" — the role is what makes the quote weigh anything. */
+  role: string;
+}
+
 
 /** Who runs the floors Geekdom is handing back. Named in the members FAQ. */
 export const PROPERTY_OWNER = "Weston Urban";

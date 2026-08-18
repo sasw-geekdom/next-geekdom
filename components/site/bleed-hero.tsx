@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Container, Eyebrow } from "@/components/site/section";
+import { Container, Eyebrow, HEADING } from "@/components/site/section";
 import type { Photo as PhotoData } from "@/lib/photos";
 import { cn } from "@/lib/utils";
 
@@ -98,7 +98,7 @@ export function BleedHero({
 
       <Container className="relative pb-16 pt-28 sm:pb-20 sm:pt-32">
         <Eyebrow onInk>{eyebrow}</Eyebrow>
-        <h1 className="mt-6 max-w-4xl text-4xl font-bold leading-[1.02] tracking-[-0.03em] text-white sm:text-6xl lg:text-7xl">
+        <h1 className={cn("mt-6 max-w-4xl text-white", HEADING.title)}>
           {title}
         </h1>
         <div className="mt-8 max-w-xl">{children}</div>

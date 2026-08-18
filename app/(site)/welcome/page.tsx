@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { ButtonLink } from "@/components/ui/button";
-import { Container, Eyebrow } from "@/components/site/section";
+import { ButtonLink, ButtonAnchor } from "@/components/ui/button";
+import { Container, Eyebrow, PageTitle } from "@/components/site/section";
 import { LOCATION, LUMA_CALENDAR_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -24,9 +24,9 @@ export default function WelcomePage() {
     <section className="bg-sand py-28 sm:py-36">
       <Container className="max-w-2xl">
         <Eyebrow>Membership active</Eyebrow>
-        <h1 className="mt-5 text-5xl font-bold leading-[1.05] tracking-[-0.03em] text-ink sm:text-6xl">
+        <PageTitle className="mt-5">
           Welcome to Geekdom.
-        </h1>
+        </PageTitle>
         <p className="mt-8 text-xl leading-relaxed text-ink/75">
           You&rsquo;re in. Come find us on the {LOCATION.floor.toLowerCase()} at{" "}
           {LOCATION.street} — drop-in workspace when you need to focus, a cafe
@@ -42,14 +42,14 @@ export default function WelcomePage() {
           <ButtonLink href="/events" size="lg">
             See what&rsquo;s on
           </ButtonLink>
-          <a
+          <ButtonAnchor
+            external
             href={LUMA_CALENDAR_URL}
-            target="_blank"
-            rel="noreferrer noopener"
-            className="inline-flex h-13 items-center justify-center rounded-lg border border-ink/20 px-7 text-lg font-medium text-ink transition-colors hover:bg-sand-deep"
+            variant="outline"
+            size="lg"
           >
             Subscribe on Luma
-          </a>
+          </ButtonAnchor>
         </div>
 
         <p className="mt-10 text-sm text-muted-foreground">

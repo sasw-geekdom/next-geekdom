@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { ButtonLink } from "@/components/ui/button";
-import { Eyebrow, Section, SectionTitle } from "@/components/site/section";
+import { ButtonLink, ButtonAnchor } from "@/components/ui/button";
+import { Eyebrow, Section, SectionTitle, Subhead, HEADING } from "@/components/site/section";
 import { Photo } from "@/components/site/photo";
 import { BleedHero } from "@/components/site/bleed-hero";
 import { PHOTOS } from "@/lib/photos";
 import { BENEFITS } from "@/lib/membership";
 import { LOCATION } from "@/lib/site";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "The Floor",
@@ -71,7 +72,7 @@ export default function TheFloorPage() {
 
       {/* What's in the room */}
       <Section tone="white" className="pt-4">
-        <h2 className="text-2xl font-bold text-ink">What&rsquo;s in the room</h2>
+        <Subhead>What&rsquo;s in the room</Subhead>
 
         {/*
           Three of the benefits below are places rather than ideas — the cafe,
@@ -100,7 +101,7 @@ export default function TheFloorPage() {
         <ul className="mt-12 grid gap-x-10 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
           {BENEFITS.map((benefit) => (
             <li key={benefit.title} className="border-t border-border pt-5">
-              <h3 className="font-semibold text-ink">{benefit.title}</h3>
+              <h3 className={cn(HEADING.item, "text-ink")}>{benefit.title}</h3>
               <p className="mt-2 leading-relaxed text-muted-foreground">
                 {benefit.description}
               </p>
@@ -136,7 +137,7 @@ export default function TheFloorPage() {
         <ul className="mt-14 grid gap-x-10 gap-y-9 sm:grid-cols-2 lg:grid-cols-3">
           {RHYTHM.map((item) => (
             <li key={item.title} className="border-t border-white/15 pt-5">
-              <h3 className="font-semibold text-gold">{item.title}</h3>
+              <h3 className={cn(HEADING.item, "text-gold")}>{item.title}</h3>
               <p className="mt-2 leading-relaxed text-white/65">{item.body}</p>
             </li>
           ))}
@@ -168,14 +169,14 @@ export default function TheFloorPage() {
               Downtown, on Houston Street, a block off the Riverwalk. Take the
               elevator to the {LOCATION.floor.toLowerCase()}.
             </p>
-            <a
+            <ButtonAnchor
+              external
               href={`https://maps.google.com/?q=${encodeURIComponent(`Geekdom, ${LOCATION.postal}`)}`}
-              target="_blank"
-              rel="noreferrer noopener"
-              className="mt-8 inline-flex h-13 items-center justify-center rounded-lg bg-rust px-7 text-lg font-medium text-white transition-colors hover:bg-rust-deep"
+              size="lg"
+              className="mt-8"
             >
               Open in Maps
-            </a>
+            </ButtonAnchor>
           </div>
           {/* Downtown is visible through the windows here, which is the one
               thing the address copy can only assert. It also shows the floor

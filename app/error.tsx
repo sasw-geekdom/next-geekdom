@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Button } from "@/components/ui/button";
+import { PageTitle } from "@/components/site/section";
 
 /**
  * Root error boundary.
@@ -27,9 +28,9 @@ export default function Error({
         <p className="font-mono text-xs uppercase tracking-[0.18em] text-rust">
           Something broke
         </p>
-        <h1 className="mt-4 text-4xl font-bold leading-[1.08] tracking-[-0.03em] text-ink">
+        <PageTitle className="mt-4">
           That didn&rsquo;t work.
-        </h1>
+        </PageTitle>
         <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
           Something on our end failed. Try again — and if it keeps happening,
           let us know at{" "}

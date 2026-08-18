@@ -10,6 +10,7 @@ import { NAV, activeHref } from "@/lib/admin/nav";
 import type { AdminUser } from "@/lib/auth/roles";
 import { Logo } from "@/components/site/logo";
 import { cn } from "@/lib/utils";
+import { buttonClass } from "@/components/ui/button";
 
 export function AdminShell({
   user,
@@ -54,7 +55,7 @@ export function AdminShell({
           aria-expanded={open}
           aria-controls="admin-nav"
           aria-label={open ? "Close menu" : "Open menu"}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-ink hover:bg-sand-deep"
+          className={buttonClass("ghost", "icon")}
         >
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
@@ -72,7 +73,7 @@ export function AdminShell({
           <Link href="/admin">
             <Logo className="h-8" />
           </Link>
-          <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+          <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
             Staff portal
           </p>
         </div>

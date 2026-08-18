@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ButtonLink } from "@/components/ui/button";
+import { ButtonLink, ButtonAnchor } from "@/components/ui/button";
 import { CrownPage } from "@/components/site/crown-page";
 import {
   CONTRACTS_END,
@@ -356,12 +356,13 @@ export default function FaqPage() {
         <ButtonLink href="/apply" size="lg">
           Apply for membership
         </ButtonLink>
-        <a
+        <ButtonAnchor
           href={`mailto:${CONTACT_EMAIL}`}
-          className="inline-flex h-13 items-center justify-center rounded-lg border border-ink/20 px-7 text-lg font-medium text-ink transition-colors hover:bg-sand-deep"
+          variant="outline"
+          size="lg"
         >
           Ask us something else
-        </a>
+        </ButtonAnchor>
       </div>
     </CrownPage>
   );

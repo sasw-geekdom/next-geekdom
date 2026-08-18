@@ -3,7 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarDays, Clock, MapPin, Users } from "lucide-react";
-import { Container, Eyebrow } from "@/components/site/section";
+import { Container, Eyebrow, PageTitle } from "@/components/site/section";
+import { ButtonAnchor } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatEventDate, formatTime } from "@/lib/format";
 import {
@@ -81,9 +82,9 @@ export default async function EventPage({
         <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_340px] lg:gap-14">
           <div>
             <Eyebrow>{past ? "Past event" : "Upcoming"}</Eyebrow>
-            <h1 className="mt-4 text-4xl font-bold leading-[1.05] tracking-[-0.02em] text-ink sm:text-5xl">
+            <PageTitle className="mt-4">
               {event.name}
-            </h1>
+            </PageTitle>
 
             {(membersOnly || nearlyFull) && (
               <div className="mt-5 flex flex-wrap gap-2">
@@ -153,16 +154,15 @@ export default async function EventPage({
                   .
                 </p>
               ) : (
-                <a
+                <ButtonAnchor
+                  external
                   href={event.url}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="mt-6 inline-flex h-11 w-full items-center justify-center rounded-lg bg-rust px-5 font-medium text-white transition-colors hover:bg-rust-deep"
+                  className="mt-6 w-full"
                 >
                   {event.registration_open === false
                     ? "View on Luma"
                     : "Register on Luma"}
-                </a>
+                </ButtonAnchor>
               )}
             </div>
 

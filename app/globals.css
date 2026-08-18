@@ -1,6 +1,20 @@
 @import "tailwindcss";
 
 /*
+  `short:` — a viewport that is WIDE but not TALL.
+
+  A 13" laptop with a bookmarks bar leaves roughly 700px of viewport height at
+  1440 wide, and the homepage hero's own content measures 762px. `min-height`
+  does nothing about that: the content is simply taller than the screen, so the
+  logo strip pinned to the hero's base was sliced in half by the fold. Every
+  breakpoint in Tailwind keys on WIDTH, which is exactly the axis that was fine.
+
+  800px rather than 740 (where it starts clipping), so the trim engages a little
+  before the failure rather than exactly at it.
+*/
+@custom-variant short (@media (max-height: 800px));
+
+/*
   Geekdom design tokens.
 
   Palette sampled from the live geekdom.com stylesheet, so the new site reads
@@ -145,6 +159,91 @@ p {
 }
 
 /*
+  The hero headline, one step down on a short screen.
+
+  Written as a plain media query rather than a `short:` utility because the
+  display size is set by three width breakpoints (`text-5xl sm:text-7xl
+  lg:text-8xl`) and a height-keyed utility racing those for precedence is not
+  something to leave to variant ordering. A rule in this file wins predictably.
+
+  96px of headline on a 620px-tall viewport is disproportionate anyway — this
+  is as much a fix for the look as for the fit.
+*/
+@media (max-height: 800px) {
+  .hero-display {
+    font-size: 4.5rem;
+    line-height: 0.98;
+  }
+}
+
+/*
+  The partner marquee.
+
+  Translating a DUPLICATED track by exactly -50% is what makes the loop
+  seamless: at the end of the animation the second copy sits precisely where
+  the first began, so the reset is invisible. Any other distance shows a jump.
+
+  The animation runs on `transform` alone, so it stays on the compositor and
+  never lays out — a marquee that animates `left` or `margin` re-flows the row
+  on every frame and is the classic way to make a page stutter.
+
+  Duration is long on purpose. This is furniture under a hero; it should read
+  as drift, not as a carousel demanding attention.
+*/
+@keyframes partner-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.partner-marquee {
+  animation: partner-marquee 60s linear infinite;
+}
+
+/* Stop on hover so a mark can actually be read, and on focus so a keyboard
+   user tabbing into a link is not chasing it across the screen. */
+.partner-marquee:hover,
+.partner-marquee:focus-within {
+  animation-play-state: paused;
+}
+
+/*
+  The fade at both ends.
+
+  A mask rather than two gradient overlays, because an overlay has to match
+  whatever is behind it — this band sits on sand here but would sit on
+  something else anywhere it is reused. A mask fades to transparent regardless
+  of ground.
+
+  IN REM, NOT PERCENT, and that is the fix for a real bug. At 6% the fade was
+  65px on a 1088px track while the widest marks are 208px wide, so a logo was
+  still near-opaque when the container clipped it — the right edge sliced
+  straight through the box rule around "Students + Startups". A percentage also
+  shrinks the fade exactly when the viewport gets smaller and the cut is most
+  visible. 7rem is a fixed 112px at both ends: over half the widest mark, so
+  nothing reaches the edge with enough opacity left to show a seam.
+*/
+.partner-fade {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 7rem,
+    #000 calc(100% - 7rem),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 7rem,
+    #000 calc(100% - 7rem),
+    transparent 100%
+  );
+}
+
+/*
   Logo intro — the wordmark assembling itself, one glyph at a time.
 
   This is the CSS answer to a Lottie logotype. The reference implementation on
@@ -274,5 +373,16 @@ p {
     transition-duration: 0.01ms !important;
     transition-delay: 0ms !important;
     scroll-behavior: auto !important;
+  }
+
+  /*
+    The blanket rule above would leave the marquee frozen at its END frame —
+    translated -50%, i.e. parked on the duplicate half. Harmless to look at,
+    but it means the track starts mid-way. Reset it and let the row simply sit
+    still; it stays scrollable by hand, so nothing is unreachable.
+  */
+  .partner-marquee {
+    animation: none !important;
+    transform: none !important;
   }
 }

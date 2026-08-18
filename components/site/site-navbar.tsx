@@ -9,6 +9,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { Logo, LogoCrown } from "@/components/site/logo";
 import { Container } from "@/components/site/section";
 import { cn } from "@/lib/utils";
+import { buttonClass } from "@/components/ui/button";
 
 /*
   Logo slot, in px. Derived from the marks' own aspect ratios so neither
@@ -293,7 +294,7 @@ export function SiteNavbar() {
                 aria-expanded={open}
                 aria-controls="mobile-nav"
                 aria-label={open ? "Close menu" : "Open menu"}
-                className="-mr-2 inline-flex h-10 w-10 items-center justify-center rounded-lg text-ink hover:bg-sand-deep md:hidden"
+                className={buttonClass("ghost", "icon", "-mr-2 md:hidden")}
               >
                 {open ? (
                   <X className="h-5 w-5" strokeWidth={1.75} />

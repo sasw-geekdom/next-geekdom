@@ -6,6 +6,7 @@ import { ApplicationBadge } from "@/components/ui/badge";
 import { PageHeader, AdminSection } from "@/components/admin/page-header";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { buttonClass } from "@/components/ui/button";
 
 export const metadata = { title: "Applications" };
 
@@ -32,7 +33,7 @@ export default async function ApplicationsPage(
         actions={
           <a
             href={`/api/admin/export/applications${status ? `?status=${status}` : ""}`}
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-white px-3.5 text-sm font-medium text-ink transition-colors hover:bg-sand-deep"
+            className={buttonClass("outline", "sm", "border-border bg-white")}
           >
             <Download className="h-3.5 w-3.5" strokeWidth={1.8} />
             Export CSV

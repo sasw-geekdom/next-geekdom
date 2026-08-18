@@ -1,4 +1,6 @@
 import * as React from "react";
+import { cn } from "@/lib/utils";
+import { HEADING } from "@/components/site/section";
 
 export function PageHeader({
   title,
@@ -12,7 +14,7 @@ export function PageHeader({
   return (
     <header className="flex flex-wrap items-start justify-between gap-4 border-b border-border bg-white px-6 py-6 lg:px-8">
       <div>
-        <h1 className="text-2xl font-bold tracking-[-0.02em] text-ink">
+        <h1 className={cn(HEADING.subhead, "text-ink")}>
           {title}
         </h1>
         {description && (
