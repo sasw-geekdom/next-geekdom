@@ -206,3 +206,4 @@ proxy.ts             # /admin/* fast-path guard (Next 16 renamed middleware → 
 > **Note:** this project tracks a fast-moving Next.js. When in doubt, read the
 > bundled guides in `node_modules/next/dist/docs/` — and read
 > [AGENTS.md](AGENTS.md) before changing anything in the list of gotchas there.
+
