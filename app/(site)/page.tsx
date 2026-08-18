@@ -120,7 +120,7 @@ export default async function HomePage() {
           */
           <InkField
             maskClassName="crown-mask"
-            className="aspect-[55/41] h-auto w-[19rem] min-w-0 shrink-0 translate-x-[15%] short:w-[29rem]"
+            className="aspect-[55/41] h-auto w-[29rem] min-w-0 shrink-0 translate-x-[15%]"
             alpha={0.95}
           />
         }

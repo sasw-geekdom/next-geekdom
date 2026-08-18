@@ -102,9 +102,6 @@ export function TypeHero({
             className={cn(
               "mt-6 max-w-4xl text-balance text-ink",
               size === "full" ? HEADING.display : HEADING.heading,
-              // See the `.hero-display` rule in globals.css — steps the
-              // display size down on a laptop-height viewport.
-              size === "full" && "hero-display",
             )}
           >
             {title}

@@ -92,9 +92,20 @@ export function Eyebrow({
  * one step on one page and left everywhere else.
  */
 export const HEADING = {
-  /** The claim on a page that has nothing else above the fold. */
+  /**
+   * The claim on a page that has nothing else above the fold.
+   *
+   * Caps at 7xl (72px), not 8xl. It used to run to 96px on a tall screen and
+   * step down to 72px on a laptop, which meant the headline CHANGED SIZE
+   * between displays — and on the homepage that moved its last glyph from 773
+   * to 972, squeezing the crown beside it from 336px to 220px. The proportion
+   * between the two halves of the hero was different on every machine.
+   *
+   * One size holds that relationship steady everywhere. 72px is still display
+   * type; 96px was only ever reachable on a monitor tall enough to fit it.
+   */
   display:
-    "text-5xl font-bold leading-[0.98] tracking-[-0.035em] sm:text-7xl lg:text-8xl",
+    "text-5xl font-bold leading-[0.98] tracking-[-0.035em] sm:text-6xl lg:text-7xl",
   /** A hero with a photograph behind it. */
   title:
     "text-4xl font-bold leading-[1.02] tracking-[-0.03em] sm:text-6xl lg:text-7xl",

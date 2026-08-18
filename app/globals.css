@@ -158,23 +158,6 @@ p {
   mask: url("/brand/g-mark-mask.svg") center / contain no-repeat;
 }
 
-/*
-  The hero headline, one step down on a short screen.
-
-  Written as a plain media query rather than a `short:` utility because the
-  display size is set by three width breakpoints (`text-5xl sm:text-7xl
-  lg:text-8xl`) and a height-keyed utility racing those for precedence is not
-  something to leave to variant ordering. A rule in this file wins predictably.
-
-  96px of headline on a 620px-tall viewport is disproportionate anyway — this
-  is as much a fix for the look as for the fit.
-*/
-@media (max-height: 800px) {
-  .hero-display {
-    font-size: 4.5rem;
-    line-height: 0.98;
-  }
-}
 
 /*
   The partner marquee.
