@@ -10,6 +10,7 @@ import { LOCATION } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = pageMetadata({
+  ownCard: true,
   title: "The Floor",
   path: "/the-floor",
   description:

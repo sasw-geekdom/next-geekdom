@@ -9,6 +9,7 @@ import { hasEventsToShow, safePastEvents, safeUpcomingEvents } from "@/lib/luma"
 import { LUMA_CALENDAR_URL } from "@/lib/site";
 
 export const metadata: Metadata = pageMetadata({
+  ownCard: true,
   title: "Events",
   path: "/events",
   description:

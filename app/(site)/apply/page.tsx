@@ -5,6 +5,7 @@ import { ApplyForm } from "@/components/forms/apply-form";
 import { isPriceAnnounced, priceLabel } from "@/lib/membership";
 
 export const metadata: Metadata = pageMetadata({
+  ownCard: true,
   title: "Apply",
   path: "/apply",
   description:

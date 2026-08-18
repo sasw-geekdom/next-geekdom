@@ -4,11 +4,43 @@
  * and the proxy alike.
  */
 
-import { envOr } from "@/lib/env";
+import { env, envOr } from "@/lib/env";
 
-// Trailing slash stripped so `${SITE_URL}/apply` never doubles up.
+/**
+ * Where this deployment thinks it lives.
+ *
+ * FALLING BACK TO LOCALHOST ON A DEPLOYMENT IS NEVER RIGHT, and it is not a
+ * theoretical failure. With NEXT_PUBLIC_SITE_URL unset on the Vercel project,
+ * this resolved to http://localhost:3000 in production, which became
+ * `metadataBase` — so every absolute URL the site emitted pointed at a machine
+ * no crawler can reach. The canonical, og:url and og:image on the live review
+ * deploy all read localhost, and LinkedIn, unable to fetch the share card,
+ * fell back to scraping the page for an <img> and unfurled a partner logo.
+ *
+ * So the ladder ends at localhost only when nothing else is available, which on
+ * Vercel is never: NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL is the project's
+ * stable production domain and NEXT_PUBLIC_VERCEL_URL is this exact
+ * deployment. Setting NEXT_PUBLIC_SITE_URL is still the right thing to do —
+ * these are a floor, not a substitute — but forgetting it now costs a
+ * cosmetically wrong domain rather than a site that describes itself as
+ * localhost.
+ *
+ * ALL THREE ARE NEXT_PUBLIC_, deliberately. This module is imported by client
+ * components, and Next only inlines variables matching the literal text
+ * `process.env.NEXT_PUBLIC_X` into the browser bundle. Reading the server-side
+ * VERCEL_URL here would give the server one origin and the browser
+ * `undefined` — the two would disagree mid-hydration.
+ *
+ * Trailing slash stripped so `${SITE_URL}/apply` never doubles up.
+ */
+const vercelProduction = env(process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL);
+const vercelDeployment = env(process.env.NEXT_PUBLIC_VERCEL_URL);
+
 export const SITE_URL = (
-  envOr(process.env.NEXT_PUBLIC_SITE_URL, "http://localhost:3000")
+  env(process.env.NEXT_PUBLIC_SITE_URL) ??
+  (vercelProduction && `https://${vercelProduction}`) ??
+  (vercelDeployment && `https://${vercelDeployment}`) ??
+  "http://localhost:3000"
 ).replace(/\/$/, "");
 
 export const SITE_NAME = "Geekdom";

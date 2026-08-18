@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 // Built from priceLabel() so the search snippet can't drift from Stripe — see
 // the note in app/layout.tsx.
 export const metadata: Metadata = pageMetadata({
+  ownCard: true,
   title: "Membership",
   path: "/membership",
   description: `One membership${

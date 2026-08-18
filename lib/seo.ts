@@ -3,6 +3,12 @@ import { priceLabel } from "@/lib/membership";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 
 /**
+ * The default share card, `app/opengraph-image.png`, at the URL Next serves it
+ * from. Resolved against `metadataBase`, so it comes out absolute.
+ */
+const ROOT_CARD = "/opengraph-image.png";
+
+/**
  * One page's metadata, with the parts that DON'T inherit correctly.
  *
  * Next merges metadata down the segment tree, and a field a page doesn't set is
@@ -34,6 +40,7 @@ export function pageMetadata({
   path,
   /** Pass through for pages that opt out of the index. */
   robots,
+  ownCard = false,
 }: {
   /** The page title, WITHOUT the "· Geekdom" suffix — the template adds it. */
   title: string;
@@ -41,6 +48,26 @@ export function pageMetadata({
   /** Route path with a leading slash. "" for the homepage. */
   path: string;
   robots?: Metadata["robots"];
+  /**
+   * True when this route's own folder holds an `opengraph-image.png`.
+   *
+   * THIS EXISTS BECAUSE DECLARING `openGraph` BREAKS IMAGE INHERITANCE, which
+   * is not obvious and cost a share card in production. The file convention
+   * cascades happily into a page that sets no openGraph of its own —
+   * /apply/thanks inherits /apply's card, /welcome inherits the root's. The
+   * moment a page declares an openGraph object, only its OWN segment's image
+   * file merges in; an ancestor's is dropped.
+   *
+   * Every page here declares one, to get a per-page canonical and og:url. So
+   * the homepage, which has no card in `app/(site)/` — the root card sits one
+   * level up, in `app/` — silently ended up with no og:image at all. LinkedIn
+   * scraped the page instead and unfurled a partner logo from the marquee.
+   *
+   * Hence the default below: a page gets the root card unless it says it has
+   * its own. Forgetting this on a new page yields the generic card, which is
+   * correct; the old behaviour yielded nothing, which was not.
+   */
+  ownCard?: boolean;
 }): Metadata {
   /*
     The HOMEPAGE IS THE EXCEPTION, in both titles.
@@ -70,6 +97,9 @@ export function pageMetadata({
       locale: "en_US",
       title: shareTitle,
       description,
+      // Left undefined when the segment has its own file, so Next merges that
+      // one — with its content hash, which an explicit path here would lose.
+      ...(ownCard ? {} : { images: [ROOT_CARD] }),
     },
     twitter: {
       card: "summary_large_image",

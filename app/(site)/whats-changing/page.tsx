@@ -12,6 +12,7 @@ import {
 import { formatLongDate } from "@/lib/format";
 
 export const metadata: Metadata = pageMetadata({
+  ownCard: true,
   title: "What's Changing",
   path: "/whats-changing",
   description:

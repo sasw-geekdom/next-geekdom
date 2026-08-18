@@ -17,6 +17,7 @@ import { formatLongDate } from "@/lib/format";
 import { isPriceAnnounced, priceLabel } from "@/lib/membership";
 
 export const metadata: Metadata = pageMetadata({
+  ownCard: true,
   title: "FAQ",
   path: "/faq",
   description:
