@@ -4,7 +4,7 @@ import type { Photo as PhotoData } from "@/lib/photos";
 import { cn } from "@/lib/utils";
 
 /**
- * The photograph IS the hero. Full bleed, type anchored to the bottom.
+ * The photograph IS the hero. Full bleed, type centred over it.
  *
  * Replaces the copy-left/photo-right split that every page used to run. That
  * split failed for a structural reason, not a stylistic one: every photograph
@@ -53,7 +53,7 @@ export function BleedHero({
   return (
     <section
       className={cn(
-        "relative isolate flex flex-col justify-end overflow-hidden bg-ink",
+        "relative isolate flex flex-col justify-center overflow-hidden bg-ink",
         size === "full"
           ? "min-h-[calc(100svh-4rem)]"
           : "min-h-[30rem] sm:min-h-[34rem] lg:min-h-[38rem]",
@@ -96,7 +96,14 @@ export function BleedHero({
       />
       <div className="absolute inset-0 bg-ink/10" aria-hidden="true" />
 
-      <Container className="relative pb-16 pt-28 sm:pb-20 sm:pt-32">
+      {/*
+        CENTRED, not bottom-anchored. The type used to sit at the foot of the
+        frame, which reads as a caption on a short hero and strands the copy at
+        the very bottom of the screen on a tall one — the taller the display,
+        the further it fell. Centring holds it in the same place on every
+        screen, and the scrim below is what keeps it legible either way.
+      */}
+      <Container className="relative py-20">
         <Eyebrow onInk>{eyebrow}</Eyebrow>
         <h1 className={cn("mt-6 max-w-4xl text-white", HEADING.title)}>
           {title}

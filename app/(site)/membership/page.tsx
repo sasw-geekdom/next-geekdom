@@ -50,11 +50,75 @@ export default function MembershipPage() {
         rendering of the price anywhere on the site.
       */}
       <TypeHero
-        eyebrow="Membership"
+        size="compact"
+        fill
+        /*
+          "What it costs", not "Membership" — which the h1 already says, and
+          which the nav has already told the reader.
+          
+          It also pairs with the column opposite: WHAT IT COSTS on the left,
+          WHAT IT GETS YOU on the right. The two labels name the two sides of
+          the decision, which is what makes the split hero read as one
+          deliberate structure rather than two blocks. Same family as the
+          site's other eyebrows — "What we do", "What happens next".
+        */
+        eyebrow="What it costs"
         title={
           <>
             One <span className="text-rust">membership.</span>
           </>
+        }
+        side={
+          /*
+            WHAT THE PRICE BUYS, beside the price.
+
+            The hero named the membership, said what it ISN'T, quoted $100 and
+            asked for an application — without ever saying what you get. Every
+            argument for the money sat below the fold, so a visitor met the
+            number before a single reason to pay it, on the one page whose whole
+            job is conversion. Roughly half the measure was empty exactly where
+            that reason belonged.
+
+            Titles only. The full descriptions are in the section below; this is
+            the summary that has to share the fold with the price, and nine
+            sentences would not.
+          */
+          <div>
+            <p className="font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground">
+              What it gets you
+            </p>
+            {/*
+              THE PAGE'S OWN LIST IDIOM — hairline-ruled rows at HEADING.item,
+              no icons. Identical to "Who it's for" further down, so the hero
+              reads as part of this page rather than as something imported into
+              it.
+
+              The first version used rust checkmarks and a vertical rule between
+              the columns. Both were the problem: the checkmark is a
+              feature-list idiom that appears nowhere else in a hero, and a
+              divider between two halves is a way of saying they are separate —
+              which is the opposite of what was wanted. The columns are held
+              together by shared type and rhythm instead.
+
+              `py-3` rather than the `py-4` used lower down: nine rows sit
+              beside a copy block of about 430px, and the looser step overshot
+              it by a hundred.
+            */}
+            <ul className="mt-5 grid grid-cols-1 gap-x-10 sm:grid-cols-2 lg:grid-cols-1">
+              {BENEFITS.map((benefit) => (
+                <li
+                  key={benefit.title}
+                  className={cn(
+                    "border-b border-border py-3",
+                    HEADING.item,
+                    "text-ink",
+                  )}
+                >
+                  {benefit.title}
+                </li>
+              ))}
+            </ul>
+          </div>
         }
       >
         <p className="text-lg leading-relaxed text-muted-foreground">

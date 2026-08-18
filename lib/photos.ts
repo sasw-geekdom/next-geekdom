@@ -96,9 +96,28 @@ export const PHOTOS = {
    * shot for /the-floor, chosen over a purely architectural frame because the
    * page argues the room is the people in it, not the square footage.
    */
+  /**
+   * The hero frame for /the-floor — the floor itself, not an event on it.
+   *
+   * It replaced a tight shot of two speakers in the cafe, which showed a talk
+   * happening rather than the room it happened in. The page's headline is "One
+   * floor. All of it pointed at one thing", and this is the frame that argues
+   * it: ceiling ducts and pendant lights overhead, the glass meeting room, the
+   * reclaimed wood, and tables running back to the windows.
+   *
+   * NOBODY IS FEATURED IN IT, and that is a requirement rather than a
+   * preference. Two people sit at the front but they are small and distant, and
+   * the whole foreground is backs of heads — the room is the subject. Every
+   * other wide frame in both shoots has an identifiable person presenting, and
+   * a previous choice had to be pulled for exactly that reason.
+   *
+   * It also suits BleedHero specifically: the foreground is dark and the
+   * daylight sits high and right, so the scrim carries the type without dimming
+   * the part of the picture worth seeing.
+   */
   theFloor: {
     src: theFloor,
-    alt: "Two speakers with microphones seated at the front of the third floor, an audience listening from long shared tables.",
+    alt: "The third floor from the back: long shared tables under pendant lights and exposed ducts, windows down one side looking onto downtown, members seated throughout.",
   },
 
   /**

@@ -61,6 +61,7 @@ export default function TheFloorPage() {
           </>
         }
         photo={PHOTOS.theFloor}
+        size="full"
         priority
       >
         <p className="text-lg leading-relaxed text-white/75">
@@ -68,6 +69,25 @@ export default function TheFloorPage() {
           have your most important conversations, and be around people who raise
           your game.
         </p>
+
+        {/*
+          The hero holds the whole viewport now, so without these the first
+          screen of the page had nothing to act on — and the only Apply link on
+          the page sat mid-way down inside another section.
+
+          "What it costs" rather than "See the floor" as the second action: the
+          homepage pairs Apply with a link HERE, and repeating that on this page
+          would point at the page you are already reading. Cost is the next
+          question someone asks once the room has done its work.
+        */}
+        <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+          <ButtonLink href="/apply" size="lg" variant="on-ink">
+            Apply for membership
+          </ButtonLink>
+          <ButtonLink href="/membership" size="lg" variant="on-ink-outline">
+            What it costs
+          </ButtonLink>
+        </div>
       </BleedHero>
 
       {/* What's in the room */}
@@ -187,6 +207,39 @@ export default function TheFloorPage() {
             aspect="aspect-[3/2]"
             sizes="(min-width: 1024px) 544px, 100vw"
           />
+        </div>
+      </Section>
+
+      {/*
+        THE CLOSE, which this page did not have.
+
+        Every other page that sells something ends on an ink band with Apply.
+        This one ended on "Open in Maps" — so a visitor who read the whole page,
+        the one page whose entire job is to make you want to be in the room, was
+        persuaded and then handed directions instead of an application. The only
+        Apply link on the page sat mid-way down inside another section.
+
+        Two paths, because this page has two honest next steps: apply, or come
+        to something open first. The second is the events page's own argument —
+        plenty of what happens here is open to non-members — and it is a lower
+        step for someone who has just been looking at photographs.
+      */}
+      <Section tone="ink">
+        <Eyebrow onInk>See it for yourself</Eyebrow>
+        <SectionTitle className="text-white">
+          Photographs only go so far.
+        </SectionTitle>
+        <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/70">
+          Plenty of what happens on this floor is open to non-members. Come to
+          one, see how the room feels, and decide from there.
+        </p>
+        <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+          <ButtonLink href="/apply" size="lg" variant="on-ink">
+            Apply for membership
+          </ButtonLink>
+          <ButtonLink href="/events" size="lg" variant="on-ink-outline">
+            See what&rsquo;s on
+          </ButtonLink>
         </div>
       </Section>
     </>

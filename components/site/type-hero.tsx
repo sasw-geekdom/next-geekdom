@@ -26,6 +26,8 @@ export function TypeHero({
   size = "full",
   footer,
   aside,
+  side,
+  fill = false,
 }: {
   eyebrow: React.ReactNode;
   /** Accent spans inside this use `text-rust` — this is a light ground. */
@@ -56,6 +58,30 @@ export function TypeHero({
    * at all. Measured: at 1024 anything here collides with the headline.
    */
   aside?: React.ReactNode;
+  /**
+   * A real second column, in flow — not decoration.
+   *
+   * Distinct from `aside` on purpose. That one is absolutely positioned,
+   * `pointer-events-none` and hidden below 1152px, which is right for a mark
+   * and wrong for anything a visitor needs to read: content in an overlay
+   * cannot reflow, and vanishing it on a phone would hide the argument. This
+   * renders as a grid column that stacks underneath on narrow screens.
+   */
+  side?: React.ReactNode;
+  /**
+   * Hold the viewport, whatever the type size.
+   *
+   * Deliberately separate from `size`, which controls the type scale. They were
+   * one knob and that was wrong: the membership hero wants `compact` TYPE — its
+   * headline shares the fold with a price and a list — and `full` HEIGHT, so
+   * the photograph below stays off screen until you scroll. Fused together, the
+   * only way to get the height was to take a 72px headline with it.
+   *
+   * Without this the hero is a fixed 644px on every display, so a laptop shows
+   * the photograph just below the fold while a 1440-tall monitor shows 730px of
+   * it — the page opens completely differently depending on the screen.
+   */
+  fill?: boolean;
 }) {
   return (
     <section
@@ -67,6 +93,8 @@ export function TypeHero({
         size === "full"
           ? "min-h-[calc(100svh-4rem)] py-20 short:py-10"
           : "pt-20 pb-14 sm:pt-24",
+        // `fill` is independent of the type scale — see the prop's note.
+        fill && size !== "full" && "min-h-[calc(100svh-4rem)] py-20 short:py-10",
       )}
     >
       <div className="flex flex-1 flex-col justify-center">
@@ -91,6 +119,13 @@ export function TypeHero({
             </div>
           )}
 
+          <div
+            className={cn(
+              side &&
+                "grid items-start gap-12 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-16",
+            )}
+          >
+            <div>
           <Eyebrow>{eyebrow}</Eyebrow>
 
           {/*
@@ -119,6 +154,10 @@ export function TypeHero({
               {tail}
             </p>
           )}
+            </div>
+
+            {side && <div className="lg:pt-2">{side}</div>}
+          </div>
         </Container>
       </div>
       {footer}
