@@ -25,6 +25,7 @@ export function TypeHero({
   tail,
   size = "full",
   footer,
+  aside,
 }: {
   eyebrow: React.ReactNode;
   /** Accent spans inside this use `text-rust` — this is a light ground. */
@@ -47,11 +48,19 @@ export function TypeHero({
    * headline centres within rather than pushing it up.
    */
   footer?: React.ReactNode;
+  /**
+   * PROTOTYPE — a field in the hero's empty right.
+   *
+   * Absolutely positioned so it costs no layout, `pointer-events-none` because
+   * it is atmosphere, and hidden below 1152px where that space does not exist
+   * at all. Measured: at 1024 anything here collides with the headline.
+   */
+  aside?: React.ReactNode;
 }) {
   return (
     <section
       className={cn(
-        "flex flex-col justify-center bg-sand",
+        "relative flex flex-col justify-center overflow-hidden bg-sand",
         // `short:py-10` halves the vertical padding on a laptop-height
         // screen — 80px of the ~100px that has to come out for the hero to
         // fit above the fold there.
@@ -61,7 +70,27 @@ export function TypeHero({
       )}
     >
       <div className="flex flex-1 flex-col justify-center">
-        <Container>
+        <Container className="relative">
+          {/*
+            Inside the Container, so the mark shares the measure the navbar and
+            the copy use — it was anchored to the section and ran to the
+            viewport edge, 176px past where every other element stops.
+
+            `right-8` rather than `right-0`: an absolutely positioned child
+            offsets from the PADDING box, so right-0 would sit at 1296 — outside
+            the 1264 content edge the headline aligns to.
+
+            Vertical centring comes free here. The Container's box is exactly
+            the copy block, so `inset-y-0` centres the mark on the copy rather
+            than on the section, whose height includes the footer strip and made
+            the crown look bottom-weighted.
+          */}
+          {aside && (
+            <div className="pointer-events-none absolute inset-y-0 right-6 hidden items-center [@media(min-width:1152px)]:flex [@media(min-width:1152px)]:right-8">
+              {aside}
+            </div>
+          )}
+
           <Eyebrow>{eyebrow}</Eyebrow>
 
           {/*

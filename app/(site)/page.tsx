@@ -16,6 +16,7 @@ import { Photo } from "@/components/site/photo";
 import { TypeHero } from "@/components/site/type-hero";
 import { PhotoBand } from "@/components/site/photo-band";
 import { PartnerRow } from "@/components/site/partner-row";
+import { InkField } from "@/components/site/ink-field";
 import { GMarkShader } from "@/components/site/crown-shader";
 import { MemberVoices } from "@/components/site/member-voices";
 import { PHOTOS } from "@/lib/photos";
@@ -110,6 +111,19 @@ export default async function HomePage() {
         }
         title={title}
         footer={<PartnerRow />}
+        aside={
+          /*
+            The crown, built out of the two pigments rather than filled with the
+            standard flow. The mask does the shape; the shader knows nothing
+            about it. `aspect-[55/41]` is the crown's own ratio — the mask is
+            `contain`, so any other box letterboxes the mark inside it.
+          */
+          <InkField
+            maskClassName="crown-mask"
+            className="aspect-[55/41] h-auto w-[19rem] min-w-0 shrink-0 translate-x-[15%] short:w-[29rem]"
+            alpha={0.95}
+          />
+        }
         // PROTOTYPE — the g-mark in the hero's empty right zone.
       >
         <p className="text-xl leading-relaxed text-ink/75">
