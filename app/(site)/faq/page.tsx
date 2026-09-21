@@ -369,7 +369,7 @@ export default function FaqPage() {
             <>
               <p>
                 Geekdom is on the {LOCATION.floor.toLowerCase()} of{" "}
-                {LOCATION.building}, {LOCATION.line1}. Three City garages sit
+                {LOCATION.building}, {LOCATION.street}. Three City garages sit
                 within a short walk:
               </p>
               <ul className="mt-3 space-y-2">
@@ -500,8 +500,25 @@ export default function FaqPage() {
     <Section tone="bone">
       <header className="mb-12 max-w-3xl">
         <Eyebrow>Questions</Eyebrow>
+        {/*
+          "HOW IT WORKS", ANSWERING THE HOMEPAGE'S "WHAT WE ARE".
+
+          That section states the institution — "The institution behind San
+          Antonio's startup community. Geekdom runs a members' club and a
+          venture fund." This page is the follow-up question, so the two titles
+          pair across the site rather than each labelling itself.
+
+          It replaces "The practical stuff.", which was in the right register —
+          the same terse utility voice as /events' "What's on." — but carried
+          the one word on the page doing no work. The voice rules ban filler,
+          and "stuff" was filler set at 48px.
+
+          THE H1 DOES NOT ENUMERATE, because the line under it already does:
+          joining the Club, how the Studio works, where to park. Naming them
+          twice in three lines is a list, not a heading.
+        */}
         <h1 className={cn("mt-4", HEADING.heading, "text-graphite")}>
-          The practical <span className="text-clay">stuff.</span>
+          How it <span className="text-clay">works.</span>
         </h1>
         {/*
           NO DESK IN THE SUBTITLE. It read "This covers the

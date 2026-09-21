@@ -168,17 +168,23 @@ export const OG_CARDS: Record<string, OgCard> = {
   faq: {
     eyebrow: "Questions",
     /*
-      MATCHES THE PAGE'S OWN <h1>, the same rule the home card follows: a card
-      and a title show up together in a search result and an unfurl, so they
-      should not make two different claims.
+      THE PAGE'S OWN H1, EXPANDED — not repeated, and the reason is size. The
+      h1 is "How it works.", thirteen characters, which on a 1200px card is a
+      few words adrift in a lot of graphite. This says the same thing with
+      enough of it to fill the measure, and names the two engines while it is
+      there.
 
-      It read "The ones members actually asked", which was true when the page
-      was the transition sheet and is not any more. The lease, refund and
-      prorated-credit questions have been retired — every member they were
-      written for was spoken to directly — and what is there now includes the
-      Studio and downtown parking, which no member asked for in that sheet.
+      Same claim, more specific: that is the bar. The rule the home card set is
+      that a card and a title must not make two DIFFERENT claims, because a
+      search result and an unfurl show them together.
+
+      It read "The ones members actually asked", which was true when this was
+      the transition sheet. The lease, refund and prorated-credit questions
+      have since been retired — every member they were written for was spoken
+      to directly — and what is here now includes the Studio and downtown
+      parking, which no member asked for in that sheet.
     */
-    lines: ["The practical", "stuff."],
+    lines: ["How the club and", "the Studio work."],
     seed: 42.5,
     out: "app/(site)/faq/opengraph-image.png",
     // Was "what happens to desks and offices". See the note on the page's own

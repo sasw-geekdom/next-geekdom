@@ -152,13 +152,41 @@ export const LOCATION = {
   // the place is called "Third floor" — the floor is a position inside a
   // building, not the building. Geekdom is on the third floor OF THE RAND.
   building: "The Rand Building",
+  /*
+    THE SAME FLOOR, SPELLED FOR AN ADDRESS RATHER THAN A SENTENCE, and the two
+    are not interchangeable.
+
+    `floor` above is prose — it reads "the third floor" in eleven places, in
+    running copy like "Elevator to the third floor" and "24/7 access to the
+    third floor". Spelling it out is correct there and "the 3rd floor" would
+    be wrong.
+
+    An address block is not a sentence. It is scanned, it is short, and "3rd
+    Floor" is the conventional form on a door, an envelope and a map listing.
+
+    DON'T RECONCILE THESE. Somebody will notice the file says "Third floor" in
+    one place and "3rd Floor" in another and make them agree; that is what
+    this note is for.
+  */
+  floorShort: "3rd Floor",
   street: "110 E Houston St",
   city: "San Antonio",
   state: "TX",
   zip: "78205",
-  /** "Third floor, The Rand Building" — the first line of a postal address. */
+  /*
+    "The Rand Building · 3rd Floor" — the first line of an address.
+
+    BUILDING FIRST. It read "Third floor, The Rand Building", which leads on a
+    position inside a place before naming the place. Nobody gives an address
+    that way: you are told the building, then where in it.
+
+    The separator is the middle dot the site already uses for this exact job —
+    the email template sets `${floor} · ${full}`, and the eyebrows run "Since
+    2011 · San Antonio". A comma here would be a third comma in a three-line
+    address block.
+  */
   get line1() {
-    return `${this.floor}, ${this.building}`;
+    return `${this.building} · ${this.floorShort}`;
   },
   /** Street, city, state, zip. No building, no floor. */
   get full() {
