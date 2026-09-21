@@ -2,12 +2,45 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import type { ApplicationStatus, MemberStatus } from "@/lib/firebase/collections";
 
+/*
+  TWO SETS OF TONES, AND THE SPLIT IS LOAD-BEARING.
+
+  ── Brand tones. Safe anywhere, including public pages. ──
+  Three, drawn only from the 2026 guide palette. They differentiate by WEIGHT
+  rather than by hue — a tinted chip against a filled one — because the guide
+  has exactly one accent and an event card needs two chips that don't look
+  alike. Text is graphite or bone throughout, so none of them depends on a
+  color clearing a contrast bar it can't.
+
+  ── Status tones. /admin ONLY. ──
+  These are NOT brand colors and three of them are not in the palette at all.
+  The exception is deliberate: a status chip has to encode five mutually
+  distinguishable states at a glance, and the brand palette is one accent plus
+  a reserved red plus three neutrals. Pushing five states through that yields
+  five chips that look the same, which defeats the only thing a chip does.
+
+  It is safe only because of where it renders — the review queue, the member
+  roster, the application detail page: a staff tool behind an auth wall, seen
+  by nobody outside Geekdom. DO NOT USE ONE ON A PUBLIC PAGE. If a public
+  surface needs a third state, add a brand tone above rather than reaching
+  down here.
+
+  They are named for the STATE, not the color, so nobody reads "rust" and
+  assumes Geekdom Red is doing brand work. Each pairs a tinted ground with
+  text dark enough to clear AA on it; the tints at full strength are
+  background colors, not text colors.
+*/
 const tones = {
-  neutral: "bg-sand-deep text-ink/80 ring-ink/10",
-  rust: "bg-rust/10 text-rust-deep ring-rust/25",
-  gold: "bg-gold/15 text-[#7a5405] ring-gold/40",
-  sage: "bg-sage/15 text-[#276b4b] ring-sage/40",
-  sky: "bg-sky/20 text-[#1f5a83] ring-sky/50",
+  // Brand — public-safe.
+  neutral: "bg-bone-light text-graphite/80 ring-graphite/10",
+  accent: "bg-clay/12 text-graphite ring-clay/35",
+  solid: "bg-graphite text-bone ring-graphite",
+
+  // Status — /admin only.
+  alert: "bg-[#ca3625]/10 text-[#8f2018] ring-[#ca3625]/25",
+  pending: "bg-[#fcb316]/15 text-[#7a5405] ring-[#fcb316]/40",
+  good: "bg-[#5eaf88]/15 text-[#276b4b] ring-[#5eaf88]/40",
+  info: "bg-[#87c2ea]/20 text-[#1f5a83] ring-[#87c2ea]/50",
 } as const;
 
 export type Tone = keyof typeof tones;
@@ -32,24 +65,21 @@ export function Badge({
 /*
   Status → tone mappings live here rather than at each call site so the queue,
   the detail page, and the CSV legend can't drift into disagreeing about what
-  colour "waitlisted" is.
+  color "waitlisted" is.
 
-  The darkened text values above are deliberate: gold and sage at full strength
-  are background colours, not text colours (gold on white is 1.8:1). Each tone
-  pairs a tinted ground with an ink dark enough to clear AA on it.
 */
 const APPLICATION_TONES: Record<ApplicationStatus, Tone> = {
-  new: "rust",
-  reviewing: "gold",
-  approved: "sage",
+  new: "alert",
+  reviewing: "pending",
+  approved: "good",
   declined: "neutral",
-  waitlisted: "sky",
+  waitlisted: "info",
 };
 
 const MEMBER_TONES: Record<MemberStatus, Tone> = {
-  active: "sage",
-  trialing: "sky",
-  past_due: "rust",
+  active: "good",
+  trialing: "info",
+  past_due: "alert",
   canceled: "neutral",
   inactive: "neutral",
 };

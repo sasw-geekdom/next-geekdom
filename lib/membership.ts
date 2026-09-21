@@ -92,9 +92,9 @@ export const BENEFITS: Benefit[] = [
       "Time away from the room with the people you'd want in it. Small, focused, built around what your company needs next.",
   },
   {
-    title: "Drop-in workspace",
+    title: "24/7 access",
     description:
-      "Sit down and work when you need to focus. No assigned seat, no contract, nothing with your name taped to it.",
+      "The third floor, whenever you need it. Sit down and work when you need to focus — no assigned seat, no contract, nothing with your name taped to it.",
   },
   {
     title: "The cafe",
@@ -102,9 +102,9 @@ export const BENEFITS: Benefit[] = [
       "For your coffee chats. The conversation that turns into a co-founder, a customer, or a check usually starts over one.",
   },
   {
-    title: "Meeting rooms",
+    title: "Rooms and desks to reserve",
     description:
-      "Reserve a room with a door for the deep dives, the brainstorms, and the offsite your team keeps postponing.",
+      "Meeting rooms with a door for the deep dives and the offsite your team keeps postponing, call rooms for the conversation you'd rather not have at the table, and workstations with monitors. Complimentary hours are included.",
   },
   {
     title: "Guests",
@@ -112,9 +112,14 @@ export const BENEFITS: Benefit[] = [
       "Bring someone. Guests are complimentary for as long as you're there with them.",
   },
   {
-    title: "Beyond the room",
+    title: "Member Slack and directory",
     description:
-      "A virtual channel and a member directory that keep you connected between visits, so the momentum doesn't stop when you walk out.",
+      "The room keeps working when you're not in it. Find who you need, ask the question between visits, and turn up already knowing who to look for.",
+  },
+  {
+    title: "First on the list",
+    description:
+      "Member-first and member-only access to the special events — the ones that fill before they're announced.",
   },
 ];
 
@@ -134,6 +139,46 @@ export const NOT_INCLUDED = [
   "Private offices",
   "Coworking contracts",
 ] as const;
+
+/**
+ * THE GENEROSITY BAR.
+ *
+ * The brand guide singles this line out and tells you where to use it:
+ * "anywhere the tone risks turning gate-keepy. It reframes selectivity as
+ * culture instead of prestige." An application-based club describing who it is
+ * and isn't for is the sharpest such moment on the site, so it opens that
+ * section rather than sitting under it.
+ */
+export const GENEROSITY_BAR =
+  "The bar isn't impressiveness. It's generosity.";
+
+/**
+ * Who the Club is for, and — the half that was missing — who it isn't.
+ *
+ * SAYING NO PLAINLY IS THE POINT. The site had a soft version of this buried
+ * in the FAQ; the source copy puts it on the Club page in two columns, which
+ * is the honest shape. Someone who wants a desk should find that out here, in
+ * ten seconds, rather than after a ten-minute application and a two-week wait.
+ * "Not the right fit RIGHT NOW" is the exact wording, and the "right now"
+ * carries weight — it is a statement about timing, not about the person.
+ */
+export const GOOD_FIT = [
+  "Aspiring and current founders",
+  "Engineers, developers, creators, technical builders",
+  "Operators and investors working with scalable, high-growth companies",
+  "Startup service providers whose work is oriented around startups",
+  "Innovators looking to up their game with other ambitious and interesting people",
+  "Corporate and civic leaders who want a hand in San Antonio's innovation economy",
+] as const;
+
+export const NOT_FIT = [
+  "People primarily looking for a traditional coworking space",
+  "Small business owners looking for general support",
+] as const;
+
+/** What we do instead of just declining. Said out loud, because it's true. */
+export const NOT_FIT_CLOSING =
+  "If the Club isn't the right fit, we'll point you toward free community events and refer you to spaces or resources that fit better.";
 
 /**
  * Who this is for. The letter names these groups directly; the apply form

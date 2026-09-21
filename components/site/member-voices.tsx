@@ -26,7 +26,7 @@ export function MemberVoices() {
       between them is — the page loses a beat exactly where it should be
       changing subject.
     */
-    <section className="border-y border-border bg-sand py-20 sm:py-28">
+    <section className="border-y border-border bg-bone py-20 sm:py-28">
       <Container>
         <Eyebrow>In their words</Eyebrow>
         <SectionTitle>Hear from the people in the room.</SectionTitle>
@@ -54,19 +54,19 @@ export function MemberVoices() {
                 i < 2 ? "sm:first:border-t-0 sm:[&:nth-child(2)]:border-t-0" : "",
               ].join(" ")}
             >
-              <blockquote className="text-lg leading-relaxed text-ink/85">
+              <blockquote className="text-lg leading-relaxed text-graphite/85">
                 {/* A real typographic quotation mark, sized down and dimmed —
                     it marks the block as speech without shouting. */}
                 <span
                   aria-hidden="true"
-                  className="mr-1 font-mono text-2xl leading-none text-rust/40"
+                  className="mr-1 font-mono text-2xl leading-none text-clay/60"
                 >
                   &ldquo;
                 </span>
                 {voice.quote}
               </blockquote>
               <figcaption className="not-italic">
-                <p className="font-semibold text-ink">{voice.name}</p>
+                <p className="font-medium text-graphite">{voice.name}</p>
                 <p className="mt-0.5 font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground">
                   {voice.role}
                 </p>

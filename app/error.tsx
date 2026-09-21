@@ -23,9 +23,9 @@ export default function Error({
   }, [error]);
 
   return (
-    <main className="flex flex-1 items-center bg-sand px-6 py-28">
+    <main className="flex flex-1 items-center bg-bone px-6 py-28">
       <div className="mx-auto w-full max-w-xl">
-        <p className="font-mono text-xs uppercase tracking-[0.18em] text-rust">
+        <p className="font-mono text-xs uppercase tracking-[0.18em] text-concrete">
           Something broke
         </p>
         <PageTitle className="mt-4">
@@ -34,7 +34,7 @@ export default function Error({
         <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
           Something on our end failed. Try again — and if it keeps happening,
           let us know at{" "}
-          <a href="mailto:members@geekdom.com" className="text-rust underline">
+          <a href="mailto:members@geekdom.com" className="font-medium text-graphite underline decoration-clay decoration-2 underline-offset-2 transition-colors hover:decoration-graphite">
             members@geekdom.com
           </a>
           .

@@ -42,7 +42,7 @@ function isLiveDomain(url: string): boolean {
     const host = new URL(url).hostname.toLowerCase();
     return host === LIVE_DOMAIN || host.endsWith(`.${LIVE_DOMAIN}`);
   } catch {
-    // An unparseable SITE_URL is a misconfiguration, not a licence to serve
+    // An unparseable SITE_URL is a misconfiguration, not a license to serve
     // sample data — fail toward the safer answer.
     return true;
   }

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Rubik, Geist_Mono } from "next/font/google";
 import { SITE_URL, SITE_NAME, PROMISE } from "@/lib/site";
 import { IS_PREVIEW } from "@/lib/preview";
 import { PreviewBadge } from "@/components/site/preview-badge";
@@ -8,29 +8,47 @@ import { SITE_DESCRIPTION } from "@/lib/seo";
 import "./globals.css";
 
 /*
-  Geist powers the whole type system — Sans for everything you read, Mono for
-  everything you scan.
+  Rubik for everything you read. Geist Mono for everything you scan.
 
-  Both are declared WITHOUT a `weight`, which loads the variable font rather
-  than a set of static cuts. That matters here: the display type runs 700 while
-  body runs 400 and the eyebrows run 400-with-wide-tracking, and pinning static
-  weights would mean shipping four separate files to cover a range one variable
-  axis already spans.
+  RUBIK REPLACES GEIST SANS, reversing the call this file used to document. The
+  2026 brand guide names Rubik as the workhorse — headlines, subheads, body, UI
+  — and Rubik is also the face geekdom.com serves today, so Geist made the
+  website the only Geekdom surface not in the brand's type: the Canva kit, the
+  decks, the newsletter, the print and the signage all go Rubik. A house face
+  that stops at the front door isn't a house face.
 
-  This replaces Rubik, which is the face geekdom.com serves today. Deliberate,
-  and the same call the sibling SASTW build made (Geist Sans over that brand's
-  Open Sans). The logo is unaffected either way — its letterforms are outlined
-  paths in the SVG, so the wordmark still renders in the true brand type no
-  matter what the body font is.
+  TWO STATIC CUTS, NOT THE VARIABLE FONT, and that inverts the reasoning that
+  used to live here. Geist was loaded without a `weight` because the scale ran
+  400 → 700 and a variable axis covers that in one file. This scale does not:
+  the guide allows Regular (400) and Medium (500) and says "Never Bold", so the
+  whole site needs exactly two values. Two static cuts are smaller than the
+  300–900 axis Rubik ships, and — more usefully — a static pair makes the rule
+  enforceable. A stray `font-bold` can't quietly resolve to 700 against a
+  weight that was never downloaded; it falls back to 500, which is visible.
+
+  NO ITALIC CUT HERE, deliberately. The guide bans italics in the sans outright
+  ("If you need italics, switch to Fraunces"), so an italic Rubik would only
+  ever be a mistake rendering successfully.
+
+  The logo is unaffected either way — its letterforms are outlined paths in the
+  SVG, so the wordmark renders in true brand type whatever the body font is.
 */
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const rubik = Rubik({
+  variable: "--font-rubik",
   subsets: ["latin"],
+  weight: ["400", "500"],
 });
 
 // Eyebrows, stat labels, dates, the admin tables — anything read as data
 // rather than prose. Its tabular figures are why the dashboard numbers and the
 // member roster's dates line up in a column.
+//
+// The guide names IBM Plex Mono for this slot. Geist Mono stays for now: the
+// two are interchangeable at the sizes this site uses mono (12px, tracked out,
+// uppercase), Plex has no tabular-figure advantage over it, and swapping the
+// face that carries the brand's *reading* voice is the change worth making
+// first. Revisit when the Canva kit and the site are being checked side by
+// side.
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
@@ -38,6 +56,10 @@ const geistMono = Geist_Mono({
 
 /*
   Geist Pixel is deliberately NOT loaded.
+
+  (Fraunces, the guide's third family, is loaded the way the last paragraph
+  here prescribes: declared on the components that use it, never on this
+  layout. See components/site/editorial.tsx.)
 
   It's the third face in the family and it is genuinely decorative — five shape
   variants on an `ELSH` axis, meant for iconographic use. There's nowhere on
@@ -100,7 +122,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${rubik.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
         {children}

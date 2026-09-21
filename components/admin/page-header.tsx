@@ -12,9 +12,9 @@ export function PageHeader({
   actions?: React.ReactNode;
 }) {
   return (
-    <header className="flex flex-wrap items-start justify-between gap-4 border-b border-border bg-white px-6 py-6 lg:px-8">
+    <header className="flex flex-wrap items-start justify-between gap-4 border-b border-border bg-bone-light px-6 py-6 lg:px-8">
       <div>
-        <h1 className={cn(HEADING.subhead, "text-ink")}>
+        <h1 className={cn(HEADING.subhead, "text-graphite")}>
           {title}
         </h1>
         {description && (

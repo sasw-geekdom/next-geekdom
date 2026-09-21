@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function LoginPage() {
   return (
-    <main className="flex-1 bg-sand">
+    <main className="flex-1 bg-bone">
       {/*
         navOffset 0 — the admin routes render outside the (site) group and have
         no navbar above them, so the crown rail takes the whole viewport rather
@@ -24,7 +24,7 @@ export default function LoginPage() {
         eyebrow="Staff portal"
         title={
           <>
-            Sign in to <span className="text-rust">Geekdom.</span>
+            Sign in to <span className="text-clay">Geekdom.</span>
           </>
         }
         subtitle="Geekdom staff only. Use your workspace account."
@@ -41,7 +41,7 @@ export default function LoginPage() {
 
           <Link
             href="/"
-            className="mt-10 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-ink"
+            className="mt-10 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-graphite"
           >
             <ArrowLeft className="h-4 w-4" strokeWidth={1.6} />
             Back to site

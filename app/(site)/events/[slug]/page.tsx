@@ -54,7 +54,7 @@ export async function generateMetadata({
       url,
       siteName: SITE_NAME,
       /*
-        The organiser's own poster, when there is one. Left undefined otherwise,
+        The organizer's own poster, when there is one. Left undefined otherwise,
         which is not a gap: the events segment ships an opengraph-image.png and
         Next falls back to it for every child route that doesn't override.
       */
@@ -89,7 +89,7 @@ export default async function EventPage({
   const past = new Date(event.end_at) < new Date();
 
   return (
-    <main className="flex-1 bg-sand">
+    <main className="flex-1 bg-bone">
       {/*
         Event schema, which is what puts a date, a time and a place into the
         search result rather than a blue link. Only for events that haven't
@@ -110,7 +110,7 @@ export default async function EventPage({
       <Container className="py-14 sm:py-20">
         <Link
           href="/events"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-ink"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-graphite"
         >
           <ArrowLeft className="h-4 w-4" strokeWidth={1.6} aria-hidden="true" />
           All events
@@ -125,9 +125,9 @@ export default async function EventPage({
 
             {(membersOnly || nearlyFull) && (
               <div className="mt-5 flex flex-wrap gap-2">
-                {membersOnly && <Badge tone="rust">Members only</Badge>}
+                {membersOnly && <Badge tone="accent">Members only</Badge>}
                 {nearlyFull && (
-                  <Badge tone="gold">
+                  <Badge tone="solid">
                     {event.spots_remaining === 0
                       ? "Waitlist"
                       : `${event.spots_remaining} spots left`}
@@ -137,7 +137,7 @@ export default async function EventPage({
             )}
 
             {event.cover_url && (
-              <div className="relative mt-10 aspect-16/9 w-full overflow-hidden rounded-xl bg-sand-deep">
+              <div className="relative mt-10 aspect-16/9 w-full overflow-hidden rounded-xl bg-bone-light">
                 <Image
                   src={event.cover_url}
                   alt=""
@@ -158,7 +158,7 @@ export default async function EventPage({
             reading expects it.
           */}
           <aside className="lg:sticky lg:top-24 lg:self-start">
-            <div className="rounded-xl border border-border bg-white p-6">
+            <div className="rounded-xl border border-border bg-bone-light p-6">
               <dl className="flex flex-col gap-4 text-sm">
                 <Fact icon={CalendarDays} label="Date">
                   {formatEventDate(event.start_at)}
@@ -185,7 +185,7 @@ export default async function EventPage({
               {past ? (
                 <p className="mt-6 text-sm text-muted-foreground">
                   This one has already happened.{" "}
-                  <Link href="/events" className="text-rust underline">
+                  <Link href="/events" className="font-medium text-graphite underline decoration-clay decoration-2 underline-offset-2 transition-colors hover:decoration-graphite">
                     See what&rsquo;s coming up
                   </Link>
                   .
@@ -206,7 +206,7 @@ export default async function EventPage({
             {!past && membersOnly && (
               <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
                 Not a member yet?{" "}
-                <Link href="/apply" className="text-rust underline">
+                <Link href="/apply" className="font-medium text-graphite underline decoration-clay decoration-2 underline-offset-2 transition-colors hover:decoration-graphite">
                   Apply for membership
                 </Link>
                 .
@@ -237,7 +237,7 @@ function Description({ text }: { text: LumaEventDetail["description"] }) {
   if (!paragraphs.length) return null;
 
   return (
-    <div className="mt-10 flex flex-col gap-5 text-lg leading-relaxed text-ink/80">
+    <div className="mt-10 flex flex-col gap-5 text-lg leading-relaxed text-graphite/80">
       {paragraphs.map((p, i) => (
         <p key={i}>{p}</p>
       ))}
@@ -263,7 +263,7 @@ function Fact({
       />
       <div>
         <dt className="sr-only">{label}</dt>
-        <dd className="text-ink">{children}</dd>
+        <dd className="text-graphite">{children}</dd>
       </div>
     </div>
   );

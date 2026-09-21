@@ -42,7 +42,7 @@ export default async function AdminEventsPage() {
             href={LUMA_CALENDAR_URL}
             target="_blank"
             rel="noreferrer noopener"
-            className={buttonClass("outline", "sm", "border-border bg-white")}
+            className={buttonClass("outline", "sm", "border-border bg-bone-light")}
           >
             Manage on Luma
             <ExternalLink className="h-3.5 w-3.5" strokeWidth={1.8} />
@@ -61,13 +61,13 @@ export default async function AdminEventsPage() {
         {error && <Notice title="Couldn't reach Luma." body={error} />}
 
         {configured && !error && events.length === 0 && (
-          <p className="rounded-xl border border-dashed border-border bg-white px-6 py-16 text-center text-sm text-muted-foreground">
+          <p className="rounded-xl border border-dashed border-border bg-bone-light px-6 py-16 text-center text-sm text-muted-foreground">
             No upcoming events on the calendar.
           </p>
         )}
 
         {events.length > 0 && (
-          <div className="overflow-hidden rounded-xl border border-border bg-white">
+          <div className="overflow-hidden rounded-xl border border-border bg-bone-light">
             <ul className="divide-y divide-border">
               {events.map((event) => (
                 <li
@@ -75,7 +75,7 @@ export default async function AdminEventsPage() {
                   className="flex flex-col gap-2 px-5 py-4 md:flex-row md:items-center md:gap-4"
                 >
                   <div className="min-w-0 md:flex-1">
-                    <p className="truncate font-medium text-ink">
+                    <p className="truncate font-medium text-graphite">
                       {event.name}
                     </p>
                     <p className="truncate text-sm text-muted-foreground">
@@ -84,17 +84,17 @@ export default async function AdminEventsPage() {
                   </div>
 
                   <div className="md:w-56">
-                    <p className="text-sm text-ink">
+                    <p className="text-sm text-graphite">
                       {formatDateTime(event.start_at)}
                     </p>
                   </div>
 
                   <div className="flex items-center gap-2 md:w-52 md:justify-end">
                     {event.visibility === "members-only" && (
-                      <Badge tone="sky">Members</Badge>
+                      <Badge tone="info">Members</Badge>
                     )}
                     {typeof event.spots_remaining === "number" && (
-                      <Badge tone={event.spots_remaining <= 5 ? "gold" : "neutral"}>
+                      <Badge tone={event.spots_remaining <= 5 ? "pending" : "neutral"}>
                         {event.spots_remaining} left
                       </Badge>
                     )}
@@ -102,7 +102,7 @@ export default async function AdminEventsPage() {
                       href={event.url}
                       target="_blank"
                       rel="noreferrer noopener"
-                      className="text-muted-foreground transition-colors hover:text-rust"
+                      className="text-muted-foreground transition-colors hover:text-graphite"
                     >
                       <ExternalLink className="h-4 w-4" strokeWidth={1.7} />
                       <span className="sr-only">Open {event.name} on Luma</span>
@@ -120,15 +120,15 @@ export default async function AdminEventsPage() {
 
 function Notice({ title, body }: { title: string; body: string }) {
   return (
-    <div className="flex gap-3 rounded-xl border border-gold/50 bg-gold/10 p-5">
+    <div className="flex gap-3 rounded-xl border border-clay/40 bg-clay/10 p-5">
       <TriangleAlert
         className="mt-0.5 h-5 w-5 shrink-0 text-[#7a5405]"
         strokeWidth={1.8}
         aria-hidden="true"
       />
       <div>
-        <p className="font-medium text-ink">{title}</p>
-        <p className="mt-1 text-sm leading-relaxed text-ink/75">{body}</p>
+        <p className="font-medium text-graphite">{title}</p>
+        <p className="mt-1 text-sm leading-relaxed text-graphite/75">{body}</p>
       </div>
     </div>
   );

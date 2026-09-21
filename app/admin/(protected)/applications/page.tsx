@@ -33,7 +33,7 @@ export default async function ApplicationsPage(
         actions={
           <a
             href={`/api/admin/export/applications${status ? `?status=${status}` : ""}`}
-            className={buttonClass("outline", "sm", "border-border bg-white")}
+            className={buttonClass("outline", "sm", "border-border bg-bone-light")}
           >
             <Download className="h-3.5 w-3.5" strokeWidth={1.8} />
             Export CSV
@@ -59,11 +59,11 @@ export default async function ApplicationsPage(
         </nav>
 
         {applications.length === 0 ? (
-          <p className="mt-6 rounded-xl border border-dashed border-border bg-white px-6 py-16 text-center text-sm text-muted-foreground">
+          <p className="mt-6 rounded-xl border border-dashed border-border bg-bone-light px-6 py-16 text-center text-sm text-muted-foreground">
             Nothing here{status ? ` with status “${status}”` : " yet"}.
           </p>
         ) : (
-          <div className="mt-6 overflow-hidden rounded-xl border border-border bg-white">
+          <div className="mt-6 overflow-hidden rounded-xl border border-border bg-bone-light">
             {/* A list on small screens, a table from md up — a six-column table
                 on a phone is unreadable however it's styled. */}
             <ul className="divide-y divide-border">
@@ -71,10 +71,10 @@ export default async function ApplicationsPage(
                 <li key={app.id}>
                   <Link
                     href={`/admin/applications/${app.id}`}
-                    className="flex flex-col gap-2 px-5 py-4 transition-colors hover:bg-sand md:flex-row md:items-center md:gap-4"
+                    className="flex flex-col gap-2 px-5 py-4 transition-colors hover:bg-bone md:flex-row md:items-center md:gap-4"
                   >
                     <div className="min-w-0 md:flex-1">
-                      <p className="truncate font-medium text-ink">
+                      <p className="truncate font-medium text-graphite">
                         {app.name}
                       </p>
                       <p className="truncate text-sm text-muted-foreground">
@@ -82,7 +82,7 @@ export default async function ApplicationsPage(
                       </p>
                     </div>
                     <div className="min-w-0 md:w-48">
-                      <p className="truncate text-sm text-ink">
+                      <p className="truncate text-sm text-graphite">
                         {app.company || "—"}
                       </p>
                       <p className="truncate text-xs text-muted-foreground">
@@ -127,8 +127,8 @@ function FilterChip({
       className={cn(
         "inline-flex h-8 items-center rounded-full px-3.5 text-sm font-medium transition-colors",
         active
-          ? "bg-ink text-white"
-          : "border border-border bg-white text-ink/70 hover:bg-sand-deep",
+          ? "bg-graphite text-bone"
+          : "border border-border bg-bone-light text-graphite/70 hover:bg-bone-light",
       )}
     >
       {children}

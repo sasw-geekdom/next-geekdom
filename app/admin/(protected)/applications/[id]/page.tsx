@@ -33,7 +33,7 @@ export default async function ApplicationDetailPage(
       <AdminSection>
         <Link
           href="/admin/applications"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-ink"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-graphite"
         >
           <ArrowLeft className="h-4 w-4" strokeWidth={1.6} />
           All applications
@@ -42,13 +42,13 @@ export default async function ApplicationDetailPage(
         <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_340px]">
           {/* The application itself */}
           <div className="flex flex-col gap-6">
-            <section className="rounded-xl border border-border bg-white p-6">
-              <h2 className="text-sm font-semibold text-ink">Contact</h2>
+            <section className="rounded-xl border border-border bg-bone-light p-6">
+              <h2 className="text-sm font-medium text-graphite">Contact</h2>
               <dl className="mt-4 grid gap-x-8 gap-y-4 sm:grid-cols-2">
                 <Detail label="Email">
                   <a
                     href={`mailto:${application.email}`}
-                    className="text-rust hover:underline"
+                    className="font-medium text-graphite underline decoration-clay decoration-2 underline-offset-2 transition-colors hover:decoration-graphite"
                   >
                     {application.email}
                   </a>
@@ -73,26 +73,26 @@ export default async function ApplicationDetailPage(
               </dl>
             </section>
 
-            <section className="rounded-xl border border-border bg-white p-6">
-              <h2 className="text-sm font-semibold text-ink">
+            <section className="rounded-xl border border-border bg-bone-light p-6">
+              <h2 className="text-sm font-medium text-graphite">
                 What they&rsquo;re building
               </h2>
               {/* whitespace-pre-line preserves the paragraph breaks people
                   actually type into a textarea. */}
-              <p className="mt-3 whitespace-pre-line leading-relaxed text-ink/85">
+              <p className="mt-3 whitespace-pre-line leading-relaxed text-graphite/85">
                 {application.building}
               </p>
 
-              <h2 className="mt-8 text-sm font-semibold text-ink">
+              <h2 className="mt-8 text-sm font-medium text-graphite">
                 What they need from the room
               </h2>
-              <p className="mt-3 whitespace-pre-line leading-relaxed text-ink/85">
+              <p className="mt-3 whitespace-pre-line leading-relaxed text-graphite/85">
                 {application.needs}
               </p>
             </section>
 
-            <section className="rounded-xl border border-border bg-white p-6">
-              <h2 className="text-sm font-semibold text-ink">History</h2>
+            <section className="rounded-xl border border-border bg-bone-light p-6">
+              <h2 className="text-sm font-medium text-graphite">History</h2>
               <dl className="mt-4 grid gap-x-8 gap-y-4 sm:grid-cols-2">
                 <Detail label="Applied">
                   {formatDateTime(application.createdAt)}
@@ -136,7 +136,7 @@ function Detail({
       <dt className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
         {label}
       </dt>
-      <dd className="mt-1 break-words text-sm text-ink">{children}</dd>
+      <dd className="mt-1 break-words text-sm text-graphite">{children}</dd>
     </div>
   );
 }
@@ -148,7 +148,7 @@ function ExternalDetail({ href }: { href?: string }) {
       href={href}
       target="_blank"
       rel="noreferrer noopener"
-      className="inline-flex items-center gap-1 text-rust hover:underline"
+      className="inline-flex items-center gap-1 font-medium text-graphite underline decoration-clay decoration-2 underline-offset-2 transition-colors hover:decoration-graphite"
     >
       <span className="truncate">{href.replace(/^https?:\/\//, "")}</span>
       <ExternalLink className="h-3 w-3 shrink-0" strokeWidth={1.8} />

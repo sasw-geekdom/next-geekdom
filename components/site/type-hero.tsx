@@ -1,10 +1,10 @@
-import { Container, Eyebrow, HEADING } from "@/components/site/section";
+import { Container, Eyebrow, HEADING, MONO } from "@/components/site/section";
 import { cn } from "@/lib/utils";
 
 /**
  * Type carries the fold. No photograph.
  *
- * LEFT-ALIGNED, like everything else in the app. This was centred, and centring
+ * LEFT-ALIGNED, like everything else in the app. This was centered, and centering
  * was the single thing that made the hero read as a template: BleedHero,
  * CrownPage and every Section are left-aligned, so the homepage was the one
  * screen running a different alignment from the site around it. The break
@@ -30,10 +30,19 @@ export function TypeHero({
   fill = false,
 }: {
   eyebrow: React.ReactNode;
-  /** Accent spans inside this use `text-rust` — this is a light ground. */
+  /** Accent spans inside this use `text-clay` — this is a light ground. */
   title: React.ReactNode;
   children?: React.ReactNode;
-  /** Optional quiet line under everything — a price, a scroll cue. */
+  /**
+   * Optional quiet line under everything — a price, an address, a scroll cue.
+   *
+   * RENDERS INSIDE A <p>, so pass PHRASING content: a string, a fragment, a
+   * <span>. A block element here — a <p>, a <div>, a list — nests inside that
+   * paragraph, which is invalid HTML: React refuses to hydrate it and the
+   * browser silently reparents the node, so server and client markup disagree.
+   * The styling is already applied by the wrapper; a caller does not need to
+   * restate it.
+   */
   tail?: React.ReactNode;
   /**
    * `full` gives the claim the whole viewport. `compact` is a page header with
@@ -45,9 +54,9 @@ export function TypeHero({
    * Pinned to the BASE of the hero, below the content.
    *
    * For the logo strip, which the reference site puts at the bottom of its own
-   * hero. The content stays optically centred in the space that remains — the
+   * hero. The content stays optically centered in the space that remains — the
    * wrapper takes `flex-1`, so the footer is subtracted from the box the
-   * headline centres within rather than pushing it up.
+   * headline centers within rather than pushing it up.
    */
   footer?: React.ReactNode;
   /**
@@ -86,7 +95,7 @@ export function TypeHero({
   return (
     <section
       className={cn(
-        "relative flex flex-col justify-center overflow-hidden bg-sand",
+        "relative flex flex-col justify-center overflow-hidden bg-bone",
         // `short:py-10` halves the vertical padding on a laptop-height
         // screen — 80px of the ~100px that has to come out for the hero to
         // fit above the fold there.
@@ -108,8 +117,8 @@ export function TypeHero({
             offsets from the PADDING box, so right-0 would sit at 1296 — outside
             the 1264 content edge the headline aligns to.
 
-            Vertical centring comes free here. The Container's box is exactly
-            the copy block, so `inset-y-0` centres the mark on the copy rather
+            Vertical centering comes free here. The Container's box is exactly
+            the copy block, so `inset-y-0` centers the mark on the copy rather
             than on the section, whose height includes the footer strip and made
             the crown look bottom-weighted.
           */}
@@ -135,7 +144,7 @@ export function TypeHero({
           */}
           <h1
             className={cn(
-              "mt-6 max-w-4xl text-balance text-ink",
+              "mt-6 max-w-4xl text-balance text-graphite",
               size === "full" ? HEADING.display : HEADING.heading,
             )}
           >
@@ -150,7 +159,7 @@ export function TypeHero({
           {children && <div className="mt-8 max-w-xl">{children}</div>}
 
           {tail && (
-            <p className="mt-14 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+            <p className={cn("mt-14", MONO.eyebrow, "text-muted-foreground")}>
               {tail}
             </p>
           )}

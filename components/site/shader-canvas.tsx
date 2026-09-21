@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
  * A WebGL flow, clipped to a brand shape by a CSS mask.
  *
  * Adapted from the SASTW bolt in the sibling `next-sasw` repo — same idea: the
- * canvas is a plain rectangle of moving colour, and a `mask: url(shape.svg)`
+ * canvas is a plain rectangle of moving color, and a `mask: url(shape.svg)`
  * is what turns it into the mark. Nothing here knows what shape it's inside.
  *
  * Two differences from that implementation, both deliberate:
@@ -32,7 +32,7 @@ void main() {
   gl_Position = vec4(a_pos, 0.0, 1.0);
 }`;
 
-// Domain-warped fBm, mixed from a dark floor up to the brand colour and
+// Domain-warped fBm, mixed from a dark floor up to the brand color and
 // brightened toward the cursor.
 const FRAG = `
 precision highp float;
@@ -70,10 +70,11 @@ void main(){
   float glow = smoothstep(0.6, 0.0, distance(uv, u_mouse));
 
   vec3 col = mix(u_base, u_color, smoothstep(0.15, 0.95, f));
-  // Gold rides on the brightest crests, so the mark has two brand colours in
-  // it rather than one being tinted lighter and darker.
-  col = mix(col, u_accent, smoothstep(0.62, 0.98, f) * 0.55);
-  col += u_accent * glow * 0.35;
+  // Bone rides the brightest crests. Held well back (0.26, down from the 0.55
+  // that gold took) because bone is the far end of the palette from red: laid
+  // on as thickly as gold was, the crests read pink rather than lit.
+  col = mix(col, u_accent, smoothstep(0.62, 0.98, f) * 0.26);
+  col += u_accent * glow * 0.16;
 
   gl_FragColor = vec4(col, 1.0);
 }`;
@@ -130,7 +131,7 @@ export function ShaderCanvas({
   className,
   base = [0.1, 0.03, 0.03],
 }: {
-  /** The colour the flow mixes up to from `base`. */
+  /** The color the flow mixes up to from `base`. */
   color: string;
   /** Rides the brightest crests and follows the cursor. */
   accent: string;

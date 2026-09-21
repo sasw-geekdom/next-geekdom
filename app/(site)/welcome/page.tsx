@@ -21,13 +21,13 @@ export const metadata: Metadata = {
  */
 export default function WelcomePage() {
   return (
-    <section className="bg-sand py-28 sm:py-36">
+    <section className="bg-bone py-28 sm:py-36">
       <Container className="max-w-2xl">
         <Eyebrow>Membership active</Eyebrow>
         <PageTitle className="mt-5">
           Welcome to Geekdom.
         </PageTitle>
-        <p className="mt-8 text-xl leading-relaxed text-ink/75">
+        <p className="mt-8 text-xl leading-relaxed text-graphite/75">
           You&rsquo;re in. Come find us on the {LOCATION.floor.toLowerCase()} at{" "}
           {LOCATION.street} — drop-in workspace when you need to focus, a cafe
           for your coffee chats, and meeting rooms for the conversations that
@@ -54,7 +54,7 @@ export default function WelcomePage() {
 
         <p className="mt-10 text-sm text-muted-foreground">
           Manage billing any time at{" "}
-          <a href="/account" className="text-rust underline">
+          <a href="/account" className="font-medium text-graphite underline decoration-clay decoration-2 underline-offset-2 transition-colors hover:decoration-graphite">
             your account
           </a>
           .

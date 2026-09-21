@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 /**
  * Single-select listbox, replacing the native `<select>`.
  *
- * Modelled on the CMS combobox in the sibling `next-sasw` repo, with three
+ * Modeled on the CMS combobox in the sibling `next-sasw` repo, with three
  * changes that matter here:
  *
  *   1. IT PARTICIPATES IN A FORM. The public forms read their values with
@@ -196,10 +196,10 @@ export function Combobox({
         onClick={() => (open ? close() : openList())}
         onKeyDown={onKeyDown}
         className={cn(
-          "flex h-11 w-full items-center justify-between rounded-lg border border-border bg-white px-3.5 text-left text-base",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rust focus-visible:ring-offset-1",
+          "flex h-11 w-full items-center justify-between rounded-lg border border-border bg-bone-light px-3.5 text-left text-base",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-offset-1",
           "disabled:cursor-not-allowed disabled:opacity-50",
-          invalid && "border-rust ring-1 ring-rust",
+          invalid && "border-clay ring-1 ring-clay",
         )}
       >
         <span className={cn("truncate", !selected && "text-muted-foreground")}>
@@ -213,7 +213,7 @@ export function Combobox({
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-border bg-white shadow-lg">
+        <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-border bg-bone-light shadow-lg">
           {showSearch && (
             <div className="border-b border-border p-2">
               <input
@@ -259,8 +259,8 @@ export function Combobox({
                     onClick={() => commit(option)}
                     className={cn(
                       "flex cursor-pointer items-center justify-between gap-3 rounded-md px-3 py-2 text-sm",
-                      i === active && "bg-sand-deep",
-                      isSelected && "font-medium text-rust",
+                      i === active && "bg-bone-light",
+                      isSelected && "font-medium text-graphite",
                     )}
                   >
                     <span>{option.label}</span>

@@ -21,14 +21,30 @@ const nextConfig: NextConfig = {
     // loop forever. Every source below differs by more than case; case-only
     // rules belong in proxy.ts, which compares exactly.
     return [
+      // /membership BECAME /club when the nav was rebuilt around the two
+      // engines. This is the only redirect here whose source was a live page
+      // on THIS site rather than on the old one, which makes it the one most
+      // likely to be followed by a real person with a real bookmark — and by
+      // Google, which has the old URL indexed with its own share card.
+      { source: "/membership", destination: "/club", permanent: true },
+      // /the-floor was retired into the Club's clubhouse section. Half of
+      // it duplicated /club and /events; the photography and the
+      // wayfinding moved. Same reasoning as /membership above — this was
+      // a live page on THIS site, indexed, with its own share card.
+      { source: "/the-floor", destination: "/club", permanent: true },
+
       // Coworking is sunsetting. Anyone landing on the old membership or
-      // pricing pages should get the club's story, not a 404 — /membership is
-      // the page that explains what replaced them.
-      { source: "/join", destination: "/membership", permanent: true },
-      { source: "/pricing", destination: "/membership", permanent: true },
-      { source: "/coworking", destination: "/membership", permanent: true },
-      { source: "/why-geekdom", destination: "/membership", permanent: true },
-      { source: "/tour", destination: "/membership", permanent: true },
+      // pricing pages should get the club's story, not a 404.
+      { source: "/join", destination: "/club", permanent: true },
+      { source: "/pricing", destination: "/club", permanent: true },
+      { source: "/coworking", destination: "/club", permanent: true },
+      { source: "/why-geekdom", destination: "/club", permanent: true },
+      { source: "/tour", destination: "/club", permanent: true },
+
+      // The Studio's two most guessable URLs. It has no open application, so
+      // /apply would be the wrong destination — the page explains why.
+      { source: "/venture", destination: "/studio", permanent: true },
+      { source: "/community-fund", destination: "/studio", permanent: true },
 
       // Programs and events now run through the club calendar.
       { source: "/programs", destination: "/events", permanent: true },

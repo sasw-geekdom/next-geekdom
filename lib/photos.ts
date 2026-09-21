@@ -25,7 +25,7 @@ import theCrowd from "@/public/photos/the-crowd.jpg";
  * are in the repo rather than anything bought or borrowed: the site's central
  * claim is that the club is this specific room and the specific people in it,
  * and stock photography would quietly contradict that on every page. Anyone
- * who has been to Geekdom will recognise the reclaimed wood, the tiled cafe
+ * who has been to Geekdom will recognize the reclaimed wood, the tiled cafe
  * wall, and the striped banquettes.
  *
  * Which means: if a replacement is ever needed, it has to come from the same
@@ -93,11 +93,13 @@ export const PHOTOS = {
 
   /**
    * The floor in use — a fireside chat, the room listening. The establishing
-   * shot for /the-floor, chosen over a purely architectural frame because the
+   * shot for the clubhouse section on /club, chosen over a purely
+ * architectural frame because the
    * page argues the room is the people in it, not the square footage.
    */
   /**
-   * The hero frame for /the-floor — the floor itself, not an event on it.
+   * The floor itself, not an event on it. It led /the-floor before that page
+   * was retired; it now opens the clubhouse section on /club.
    *
    * It replaced a tight shot of two speakers in the cafe, which showed a talk
    * happening rather than the room it happened in. The page's headline is "One
@@ -124,7 +126,7 @@ export const PHOTOS = {
    * The full width of the floor from the back — industrial ceiling, windows on
    * two sides, downtown behind them, every table taken.
    *
-   * Kept distinct from `theFloor` so the homepage and /the-floor don't open on
+   * Kept distinct from `theFloor` so the homepage and /club don't open on
    * the identical photograph.
    */
   theFloorWide: {
@@ -207,7 +209,7 @@ export const PHOTOS = {
     alt: "Two speakers laughing during a fireside chat on the third floor, members watching from close by.",
   },
 
-  /** A talk in progress — the build-sessions frame on /the-floor. */
+  /** A talk in progress — the programming frame in /club's clubhouse grid. */
   programming: {
     src: programming,
     alt: "A talk in progress on the third floor, a speaker in front of a screen and a seated audience.",

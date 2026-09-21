@@ -3,6 +3,7 @@ import { pageMetadata } from "@/lib/seo";
 import { ButtonLink, ButtonAnchor } from "@/components/ui/button";
 import { Eyebrow, Section, SectionTitle } from "@/components/site/section";
 import { CrownPage } from "@/components/site/crown-page";
+import { PullQuote } from "@/components/site/editorial";
 import {
   CONTRACTS_END,
   CONTACT_EMAIL,
@@ -39,11 +40,11 @@ export default function WhatsChangingPage() {
         title={
           <>
             Starting in October, Geekdom becomes a membership club for{" "}
-            <span className="text-rust">serious founders and builders.</span>
+            <span className="text-clay">serious founders and builders.</span>
           </>
         }
       >
-        <div className="text-lg leading-[1.75] text-ink/85 [&>p]:mt-6">
+        <div className="text-lg leading-[1.75] text-graphite/85 [&>p]:mt-6">
           <p className="!mt-0">
             Fifteen years ago, Geekdom opened as a coworking space for geeks in
             San Antonio. At that time, a shared desk was the best tool we had for
@@ -71,11 +72,18 @@ export default function WhatsChangingPage() {
             can scale.
           </p>
 
-          <p className="!mt-10 border-l-2 border-rust pl-6 text-xl font-medium leading-relaxed text-ink">
+          {/*
+            FRAUNCES. This is the sentence the whole letter turns on, and the
+            guide names exactly this — "pull quotes... the occasional
+            ceremonial line" — as what the editorial face is for. It was set in
+            the sans at `text-xl font-medium`, which made it a slightly larger
+            paragraph rather than a different register.
+          */}
+          <PullQuote className="!mt-10">
             So here&rsquo;s what we&rsquo;re doing: starting in October, Geekdom
             becomes a membership club for serious founders and builders. One
             membership. No dedicated desks. No offices.
-          </p>
+          </PullQuote>
 
           <p className="!mt-10">
             We&rsquo;re sunsetting coworking and consolidating our space to the
@@ -119,7 +127,7 @@ export default function WhatsChangingPage() {
             whole reason it carries the weight it does.
           */}
           <footer className="!mt-12 border-t border-border pt-8 not-italic">
-            <p className="!mt-0 font-semibold text-ink">{LETTER_AUTHOR.name}</p>
+            <p className="!mt-0 font-medium text-graphite">{LETTER_AUTHOR.name}</p>
             <p className="!mt-1 font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground">
               {LETTER_AUTHOR.role}, {SITE_NAME}
             </p>
@@ -127,7 +135,7 @@ export default function WhatsChangingPage() {
         </div>
       </CrownPage>
 
-      <Section tone="deep">
+      <Section tone="bone-light">
         <Eyebrow>Affected directly?</Eyebrow>
         <SectionTitle>
           If you have an office or a dedicated desk, we&rsquo;ll come to you.

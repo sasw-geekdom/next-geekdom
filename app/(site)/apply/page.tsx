@@ -18,7 +18,7 @@ export default function ApplyPage() {
       eyebrow="Apply"
       title={
         <>
-          Tell us what you&rsquo;re <span className="text-rust">building.</span>
+          Tell us what you&rsquo;re <span className="text-clay">building.</span>
         </>
       }
       subtitle={

@@ -48,9 +48,9 @@ export function BillingForm() {
     return (
       <div
         role="status"
-        className="rounded-xl border border-border bg-white p-7"
+        className="rounded-xl border border-border bg-bone-light p-7"
       >
-        <h2 className="text-xl font-semibold text-ink">Check your inbox.</h2>
+        <h2 className="text-xl font-medium text-graphite">Check your inbox.</h2>
         <p className="mt-3 leading-relaxed text-muted-foreground">
           If that email has a Geekdom membership, a secure billing link is on
           its way. It expires shortly, so use it while it&rsquo;s fresh.
@@ -78,7 +78,7 @@ export function BillingForm() {
       </Field>
 
       {error && (
-        <p role="alert" className="text-sm text-rust">
+        <p role="alert" className="text-sm text-geekdom-red">
           {error}
         </p>
       )}

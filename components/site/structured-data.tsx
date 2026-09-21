@@ -32,7 +32,7 @@ import { IS_PREVIEW } from "@/lib/preview";
  */
 export function SiteJsonLd() {
   // A review deploy is a full copy of the site. Describing it as the Geekdom
-  // organisation, on a URL that isn't geekdom.com, points the entity at the
+  // organization, on a URL that isn't geekdom.com, points the entity at the
   // wrong domain — the same reasoning that keeps robots.txt closed there.
   if (IS_PREVIEW) return null;
 
@@ -88,7 +88,7 @@ export function MembershipJsonLd() {
         serviceType: "Membership club for founders and builders",
         provider: { "@id": `${SITE_URL}/#organization` },
         areaServed: `${LOCATION.city}, ${LOCATION.state}`,
-        url: `${SITE_URL}/membership`,
+        url: `${SITE_URL}/club`,
         offers: {
           "@type": "Offer",
           url: `${SITE_URL}/apply`,

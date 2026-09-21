@@ -18,7 +18,7 @@ export function LoginForm() {
   /**
    * Where to land after sign-in.
    *
-   * Only relative, single-slash paths are honoured. `?from=https://evil.example`
+   * Only relative, single-slash paths are honored. `?from=https://evil.example`
    * is a working open redirect otherwise — the proxy puts this parameter in the
    * URL, but anyone can hand out a link with their own value.
    */
@@ -136,7 +136,7 @@ export function LoginForm() {
       </form>
 
       {error && (
-        <p role="alert" className="text-sm text-rust">
+        <p role="alert" className="text-sm text-geekdom-red">
           {error}
         </p>
       )}

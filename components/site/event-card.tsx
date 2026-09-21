@@ -28,9 +28,9 @@ export function EventCard({ event }: { event: LumaEvent }) {
   return (
     <Link
       href={`/events/${eventSlug(event)}`}
-      className="group flex flex-col overflow-hidden rounded-xl border border-border bg-white shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rust focus-visible:ring-offset-2"
+      className="group flex flex-col overflow-hidden rounded-xl border border-border bg-bone-light shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-offset-2"
     >
-      <div className="relative aspect-16/10 w-full overflow-hidden bg-sand-deep">
+      <div className="relative aspect-16/10 w-full overflow-hidden bg-bone-light">
         {event.cover_url && (
           <Image
             src={event.cover_url}
@@ -43,7 +43,7 @@ export function EventCard({ event }: { event: LumaEvent }) {
       </div>
 
       <div className="flex flex-1 flex-col p-5">
-        <h3 className={cn(HEADING.item, "text-ink group-hover:text-rust")}>
+        <h3 className={cn(HEADING.item, "text-graphite decoration-clay decoration-2 underline-offset-2 group-hover:underline")}>
           {event.name}
         </h3>
         <p className="mt-2 truncate text-sm text-muted-foreground">
@@ -57,14 +57,14 @@ export function EventCard({ event }: { event: LumaEvent }) {
         {/*
           Below the image, not over it. Every badge tone here is a TINT — they
           are built to sit on the page's own ground, and floating one on top of
-          an arbitrary event cover would put translucent colour over whatever
+          an arbitrary event cover would put translucent color over whatever
           that photograph happens to be, which no tone can be legible against.
         */}
         {(membersOnly || nearlyFull) && (
           <div className="mt-4 flex flex-wrap gap-1.5">
-            {membersOnly && <Badge tone="rust">Members only</Badge>}
+            {membersOnly && <Badge tone="accent">Members only</Badge>}
             {nearlyFull && (
-              <Badge tone="gold">
+              <Badge tone="solid">
                 {event.spots_remaining === 0
                   ? "Waitlist"
                   : `${event.spots_remaining} left`}

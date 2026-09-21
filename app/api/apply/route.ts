@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   // Note this is bypassed under `next dev` — `checkBotId()` needs the Vercel
   // runtime, so it always reports "not a bot" locally. That's what keeps the
   // form usable in development; it also means a local pass proves nothing about
-  // the deployed behaviour.
+  // the deployed behavior.
   if (await isBot()) {
     return NextResponse.json({ error: "Access denied." }, { status: 403 });
   }

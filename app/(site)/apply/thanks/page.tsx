@@ -12,13 +12,13 @@ export const metadata: Metadata = {
 
 export default function ApplyThanksPage() {
   return (
-    <section className="bg-sand py-28 sm:py-36">
+    <section className="bg-bone py-28 sm:py-36">
       <Container className="max-w-2xl">
         <Eyebrow>Application received</Eyebrow>
         <PageTitle className="mt-5">
           We got it.
         </PageTitle>
-        <p className="mt-8 text-xl leading-relaxed text-ink/75">
+        <p className="mt-8 text-xl leading-relaxed text-graphite/75">
           Check your inbox for a confirmation. A person on the Geekdom team
           reads every application — if it&rsquo;s a fit, we&rsquo;ll send you an
           invitation to activate your membership.

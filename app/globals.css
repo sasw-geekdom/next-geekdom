@@ -15,90 +15,140 @@
 @custom-variant short (@media (max-height: 800px));
 
 /*
-  Geekdom design tokens.
+  Geekdom design tokens — the 2026 brand guide palette, verbatim.
 
-  Palette sampled from the live geekdom.com stylesheet, so the new site reads
-  as the same brand rather than a redesign: rust, ink, gold, sage, sky, and a
-  family of warm sands.
+  EVERY HEX HERE IS THE GUIDE'S. The previous set was sampled off the live
+  geekdom.com stylesheet, which predates the guide: it was close on the
+  neutrals (within a point or two) and wrong on the accents, and it carried
+  three colors the brand does not have — gold, sage and sky. The guide is
+  explicit that five colors do almost all the work and that "the discipline of
+  not reaching for a sixth is what keeps the brand feeling considered".
 
-  Type is Geist — Sans for prose and display, Mono for anything read as data.
-  See the note in app/layout.tsx for why it replaces the brand's Rubik and why
-  Geist Pixel isn't loaded.
+  Type is Rubik for prose and display, Geist Mono for anything read as data.
+  See the note in app/layout.tsx.
 
-  The site is light by default and uses ink as a full-bleed ground for the
+  The site is light by default and uses graphite as a full-bleed ground for the
   sections that need weight. There is no dark-mode variant — this is a brand
   surface with one intended look, not an app, and a media-query palette would
-  mean maintaining two versions of contrast decisions below.
+  mean maintaining two versions of every contrast decision below.
 */
 
 :root {
-  /* Warm neutrals — the ground the whole site sits on. */
-  --sand: #faf8f5;
-  --sand-deep: #f5efe8;
-  --sand-edge: #e6dfd7;
+  /* ── Surfaces ──────────────────────────────────────────────────────── */
+  /* Bone is the default background for almost everything. Guide, verbatim. */
+  --bone: #f4f1eb;
+  /* The alternate surface. LIGHTER than Bone, which is the opposite of the
+     `sand-deep` it replaces — the old scale stepped DOWN for an alternating
+     band and the guide's steps UP. Sections alternate bone / bone-light. */
+  --bone-light: #faf8f3;
+  /* Fine dividers on Bone. 1.32:1 against it — this is a hairline, not a
+     boundary you are meant to read, and it should never carry text. */
+  --rule: #d9d3c5;
 
-  --background: var(--sand);
-  --foreground: #1d1d1d;
+  /* ── Dark ──────────────────────────────────────────────────────────── */
+  --graphite: #1b1b1b;
+  --graphite-soft: #2c2c2a;
 
-  /* Brand */
-  --rust: #ca3625;
-  --rust-deep: #aa2d29;
-  --ink: #1d1d1d;
-  --gold: #fcb316;
-  --sage: #5eaf88;
-  --sky: #87c2ea;
-  --white: #ffffff;
+  /* ── Text ──────────────────────────────────────────────────────────── */
+  /* Secondary text: captions, metadata, small labels — and, on this site,
+     eyebrows. See the accent note below for why eyebrows are not Clay. */
+  --concrete: #6b6b6b;
+
+  /* ── Accent ────────────────────────────────────────────────────────── */
+  --clay: #c8623d;
+  /*
+    RESERVED. The guide's rule is "Logo only. Rare accent moments", and the
+    source copy's developer notes repeat it: "Geekdom Red — logo only, rare
+    accent moments." It is deliberately named at full length so that every
+    single use of it is visible in a diff and has to be justified. Today that
+    is exactly one thing: the primary Apply button.
+  */
+  --geekdom-red: #ca3625;
+  /* Hover only. Not a palette color — a darkened Red for a pressed state. */
+  --geekdom-red-deep: #aa2d29;
+
+  --background: var(--bone);
+  --foreground: var(--graphite);
 
   /*
-    Contrast, measured, because these decisions get relitigated otherwise:
+    CONTRAST, MEASURED, because these decisions get relitigated otherwise.
+    Computed from the guide hexes above, not quoted from the guide — two of
+    the guide's own stated figures are optimiztic (it says Graphite on Bone is
+    15.4:1 and Concrete on Bone is 5.2:1; they are 15.3 and 4.7).
 
-      rust on sand      5.0:1  — passes AA for body text
-      white on rust     5.2:1  — passes AA, so the primary button's LABEL is
-                                 legible, not just its boundary
-      rust on ink       3.3:1  — FAILS AA for normal text. Rust is a light-ground
-                                 colour. On the ink sections the accent is gold.
-      gold on ink       9.3:1  — comfortably AA, which is why the eyebrows and
-                                 rules inside dark bands are gold
-      gold on white     1.8:1  — unusable as text on light. Gold is an
-                                 ink-ground colour, strictly.
+      ON BONE
+        graphite on bone     15.3:1   AAA. Body, headings, everything read.
+        concrete on bone      4.7:1   AA for body. Secondary text, EYEBROWS.
+        geekdom red on bone   4.6:1   AA for body — but reserved anyway.
+        clay on bone          3.5:1   FAILS AA for body. See below.
+        rule on bone          1.3:1   A hairline. Never text.
 
-    The two accents are not interchangeable: each one works on exactly the
-    ground the other fails on. `--accent` / `--accent-on-ink` name that split so
-    a component doesn't have to remember which band it's rendering into.
+      ON GRAPHITE
+        bone on graphite     15.3:1   AAA. Body, headings, eyebrows.
+        clay on graphite      4.3:1   AA for LARGE text only.
+        concrete on graphite  3.2:1   FAILS. Concrete is a light-ground
+                                      color, strictly — on dark, secondary
+                                      text is bone at reduced opacity.
+        geekdom red on graph. 3.3:1   FAILS for text. Red is a light-ground
+                                      color.
+
+      BUTTONS
+        white on geekdom red  5.2:1   AA, so the primary button's LABEL is
+                                      legible, not just its boundary.
+
+    WHERE CLAY CAN AND CANNOT GO — the one place the guide contradicts itself.
+
+    The guide assigns Clay to "eyebrow labels, small rules, numbered lists",
+    and three lines earlier states that Clay on Bone "clears AA for large text
+    only". Both cannot hold: an eyebrow on this site is 12px, and Clay is
+    3.5:1 on Bone and 4.3:1 on Graphite — it does not reach 4.5:1 on ANY
+    ground in the palette.
+
+    So Clay is used here for everything in that list EXCEPT the small text:
+
+      YES  small rules, numbered markers, borders, focus rings, list markers,
+           link underlines — non-text, where the bar is 3:1 and Clay clears it
+      YES  accent type at 24px+ (or 19px+ medium), where the bar is 3:1
+      NO   eyebrows, labels, captions, body copy, inline link text
+
+    Eyebrow TEXT is Concrete on light and Bone on dark. That is not a
+    departure from the brand: the guide gives Concrete the job of "small
+    labels" in the same breath, and the guide's own cover page sets its
+    eyebrows in gray rather than in Clay. Where an eyebrow wants color, the
+    rule beside it takes Clay and the words stay legible.
   */
-  --accent: var(--rust);
-  --accent-on-ink: var(--gold);
+  --accent: var(--clay);
 
   /* Semantic */
-  --muted: var(--sand-deep);
-  --muted-foreground: #6b6560;
-  --border: var(--sand-edge);
-  --ring: var(--rust);
+  --muted: var(--bone-light);
+  --muted-foreground: var(--concrete);
+  --border: var(--rule);
+  --ring: var(--clay);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
-  --color-sand: var(--sand);
-  --color-sand-deep: var(--sand-deep);
-  --color-sand-edge: var(--sand-edge);
+  --color-bone: var(--bone);
+  --color-bone-light: var(--bone-light);
+  --color-rule: var(--rule);
 
-  --color-rust: var(--rust);
-  --color-rust-deep: var(--rust-deep);
-  --color-ink: var(--ink);
-  --color-gold: var(--gold);
-  --color-sage: var(--sage);
-  --color-sky: var(--sky);
+  --color-graphite: var(--graphite);
+  --color-graphite-soft: var(--graphite-soft);
+
+  --color-concrete: var(--concrete);
+  --color-clay: var(--clay);
+  --color-geekdom-red: var(--geekdom-red);
+  --color-geekdom-red-deep: var(--geekdom-red-deep);
 
   --color-accent: var(--accent);
-  --color-accent-on-ink: var(--accent-on-ink);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
   --color-ring: var(--ring);
 
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-rubik);
   --font-mono: var(--font-geist-mono);
 }
 
@@ -109,15 +159,20 @@ body {
 }
 
 /*
-  Display type. Geist is drawn fairly tight already, so this is a nudge, not a
-  correction — and it's scoped to headings rather than set on :root because the
-  same negative tracking at body scale closes up the counters and reads as a
-  rendering fault rather than a choice.
+  Display type.
+
+  -0.01em, down from the -0.025em this carried under Geist. Rubik is a wider
+  face with a larger x-height and rounder bowls, and it is set here at 500
+  rather than 700 — all three of those close the counters faster than Geist
+  did, so the same negative tracking that read as a nudge before reads as a
+  rendering fault now. The real tightening happens per tier in HEADING
+  (components/site/section.tsx), which is where size and tracking move
+  together; this is only the floor for a heading that doesn't use the scale.
 */
 h1,
 h2,
 h3 {
-  letter-spacing: -0.025em;
+  letter-spacing: -0.01em;
   text-wrap: balance;
 }
 
@@ -133,7 +188,7 @@ p {
 /*
   Clips a <ShaderCanvas> to the crown.
 
-  The canvas itself is a plain rectangle of flowing colour; this is what makes
+  The canvas itself is a plain rectangle of flowing color; this is what makes
   it read as the mark. Same technique as the SASTW bolt in the sibling repo.
 
   `contain` rather than `cover`: the crown has to fit its box whole. With cover
@@ -142,7 +197,7 @@ p {
 
   Points at a FLATTENED copy of the crown — `crown-mask.svg`, plain fill
   attributes, no <style> block. A mask only consumes the alpha channel, so
-  colour is irrelevant, but class-based fills inside a mask reference are a
+  color is irrelevant, but class-based fills inside a mask reference are a
   dependency with nothing to gain.
 */
 .crown-mask {
@@ -151,7 +206,7 @@ p {
 }
 
 /* The crown-over-g lockup, same technique. Its own flattened mask file for the
-   same reason: a mask consumes alpha only, so colour and <style> blocks are
+   same reason: a mask consumes alpha only, so color and <style> blocks are
    dead weight inside one. */
 .g-mark-mask {
   -webkit-mask: url("/brand/g-mark-mask.svg") center / contain no-repeat;

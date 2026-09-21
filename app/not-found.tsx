@@ -29,7 +29,7 @@ export default function NotFound() {
     <>
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-60 focus:rounded-lg focus:bg-ink focus:px-4 focus:py-2 focus:text-white"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-60 focus:rounded-lg focus:bg-graphite focus:px-4 focus:py-2 focus:text-bone"
       >
         Skip to content
       </a>
@@ -42,7 +42,7 @@ export default function NotFound() {
           eyebrow="404"
           title={
             <>
-              That page <span className="text-rust">moved out.</span>
+              That page <span className="text-clay">moved out.</span>
             </>
           }
           subtitle="A lot of the old site went away when coworking did. The club is what's here now — start from the top, or use the menu above."

@@ -120,7 +120,7 @@ async function main() {
       mkdirSync(dirname(out), { recursive: true });
 
       /*
-        The viewport IS the card. The preview page centres a 1200×630 element
+        The viewport IS the card. The preview page centers a 1200×630 element
         in the window, so a window of exactly that size crops to the artwork
         with no bezel to trim — which is why there is no element-clipping step
         here.

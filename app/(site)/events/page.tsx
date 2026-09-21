@@ -54,7 +54,7 @@ export default async function EventsPage() {
         eyebrow="The calendar"
         title={
           <>
-            What&rsquo;s <span className="text-rust">on.</span>
+            What&rsquo;s <span className="text-clay">on.</span>
           </>
         }
       >
@@ -65,7 +65,7 @@ export default async function EventsPage() {
         </p>
       </TypeHero>
 
-      <section className="bg-sand pb-24">
+      <section className="bg-bone pb-24">
         <Container>
           {upcoming.length > 0 ? (
             <>
@@ -88,7 +88,7 @@ export default async function EventsPage() {
             </div>
           )}
 
-          <div className="mt-16 rounded-xl border border-border bg-white p-7 sm:flex sm:items-center sm:justify-between sm:gap-8">
+          <div className="mt-16 rounded-xl border border-border bg-bone-light p-7 sm:flex sm:items-center sm:justify-between sm:gap-8">
             <div>
               <Subhead className="text-xl">Never miss one</Subhead>
               <p className="mt-1 text-muted-foreground">
@@ -107,9 +107,9 @@ export default async function EventsPage() {
         </Container>
       </section>
 
-      <Section tone="ink">
+      <Section tone="graphite">
         <Eyebrow onInk>Want in on the members-only ones?</Eyebrow>
-        <SectionTitle className="text-white">
+        <SectionTitle className="text-bone">
           The best conversations happen in the room.
         </SectionTitle>
         <ButtonLink href="/apply" size="lg" variant="on-ink" className="mt-8">
@@ -126,7 +126,7 @@ export default async function EventsPage() {
  *
  * A three-column grid left-aligns a final row of two, which reads as a hole on
  * the right of an otherwise symmetrical page. Wrapping flex items with
- * `justify-center` centres whatever the last row happens to hold. Calendars
+ * `justify-center` centers whatever the last row happens to hold. Calendars
  * almost never divide by three, so this is the common case, not the edge one.
  *
  * Widths subtract the gap so three still fit per row: `gap-6` is 1.5rem, and
@@ -156,7 +156,7 @@ function EventGrid({ events }: { events: Parameters<typeof EventCard>[0]["event"
  */
 function EmptyState({ configured }: { configured: boolean }) {
   return (
-    <div className="rounded-xl border border-dashed border-border bg-white px-6 py-16 text-center">
+    <div className="rounded-xl border border-dashed border-border bg-bone-light px-6 py-16 text-center">
       <CalendarX
         className="mx-auto h-8 w-8 text-muted-foreground"
         strokeWidth={1.5}

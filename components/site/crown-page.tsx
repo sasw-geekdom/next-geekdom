@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 /**
  * Two-column page: the crown holding the left rail, content on the right.
  *
- * Modelled on the SASTW `FormPage` in the sibling repo — but used here for the
+ * Modeled on the SASTW `FormPage` in the sibling repo — but used here for the
  * FAQ, the letter and the 404 as well as the forms, so it takes arbitrary
  * children rather than assuming a form underneath.
  *
@@ -52,7 +52,7 @@ export function CrownPage({
    */
   crownOnMobile = false,
   shape = "g-mark",
-  /** Vertically centre the content column and hold the whole page to one screen. */
+  /** Vertically center the content column and hold the whole page to one screen. */
   fitViewport = false,
 }: {
   eyebrow: string;
@@ -97,7 +97,7 @@ export function CrownPage({
               //
               // `lg:max-h-none` is not optional. Without the reset the mobile
               // cap keeps applying in the two-column layout, which squeezes the
-              // rail to 30% of the viewport, start-aligns it against a centred
+              // rail to 30% of the viewport, start-aligns it against a centered
               // text column, and leaves the crown overflowing its own box with
               // its points clipped.
               "flex max-h-[36svh] lg:max-h-none [@media(max-height:560px)]:hidden"
@@ -111,7 +111,7 @@ export function CrownPage({
       <div className={cn("flex flex-col justify-center", !fitViewport && "lg:py-20")}>
         <header className="mb-10">
           <Eyebrow>{eyebrow}</Eyebrow>
-          <h1 className={cn("mt-4", HEADING.heading, "text-ink")}>
+          <h1 className={cn("mt-4", HEADING.heading, "text-graphite")}>
             {title}
           </h1>
           {subtitle && (

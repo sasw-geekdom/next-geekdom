@@ -84,7 +84,7 @@ export function ApplyForm() {
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-10">
       {/* ── You ────────────────────────────────────────────────────── */}
       <fieldset className="flex flex-col gap-5">
-        <legend className="font-mono text-xs uppercase tracking-[0.18em] text-rust">
+        <legend className="font-mono text-xs uppercase tracking-[0.18em] text-concrete">
           You
         </legend>
 
@@ -135,7 +135,7 @@ export function ApplyForm() {
 
       {/* ── Your company ───────────────────────────────────────────── */}
       <fieldset className="flex flex-col gap-5">
-        <legend className="font-mono text-xs uppercase tracking-[0.18em] text-rust">
+        <legend className="font-mono text-xs uppercase tracking-[0.18em] text-concrete">
           Your company
         </legend>
 
@@ -187,7 +187,7 @@ export function ApplyForm() {
 
       {/* ── The part we actually read ──────────────────────────────── */}
       <fieldset className="flex flex-col gap-5">
-        <legend className="font-mono text-xs uppercase tracking-[0.18em] text-rust">
+        <legend className="font-mono text-xs uppercase tracking-[0.18em] text-concrete">
           The part we actually read
         </legend>
 
@@ -233,11 +233,11 @@ export function ApplyForm() {
           <Input id="referredBy" name="referredBy" />
         </Field>
 
-        <label className="flex items-start gap-3 text-sm text-ink">
+        <label className="flex items-start gap-3 text-sm text-graphite">
           <input
             type="checkbox"
             name="formerMember"
-            className="mt-0.5 h-4 w-4 rounded border-border text-rust focus-visible:ring-2 focus-visible:ring-rust"
+            className="mt-0.5 h-4 w-4 rounded border-border text-clay focus-visible:ring-2 focus-visible:ring-clay"
           />
           <span>
             I was a Geekdom coworking member before the transition.
@@ -271,7 +271,7 @@ export function ApplyForm() {
       {formError && (
         <p
           role="alert"
-          className="rounded-lg border border-rust/30 bg-rust/5 px-4 py-3 text-sm text-rust-deep"
+          className="rounded-lg border border-geekdom-red/30 bg-geekdom-red/5 px-4 py-3 text-sm text-geekdom-red-deep"
         >
           {formError}
         </p>

@@ -22,7 +22,7 @@ export function PreviewBadge() {
     <div
       // aria-hidden would be wrong — this is real information about the state
       // of the site, and it matters most to someone who cannot see the styling.
-      className="pointer-events-none fixed bottom-4 right-4 z-50 rounded-full bg-ink/90 px-3 py-1.5 font-mono text-[0.6875rem] uppercase tracking-[0.14em] text-gold shadow-lg backdrop-blur-sm print:hidden"
+      className="pointer-events-none fixed bottom-4 right-4 z-50 rounded-full bg-graphite/90 px-3 py-1.5 font-mono text-[0.6875rem] uppercase tracking-[0.14em] text-bone shadow-lg backdrop-blur-sm print:hidden"
     >
       Preview · sample data
     </div>

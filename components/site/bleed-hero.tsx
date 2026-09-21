@@ -4,7 +4,7 @@ import type { Photo as PhotoData } from "@/lib/photos";
 import { cn } from "@/lib/utils";
 
 /**
- * The photograph IS the hero. Full bleed, type centred over it.
+ * The photograph IS the hero. Full bleed, type centered over it.
  *
  * Replaces the copy-left/photo-right split that every page used to run. That
  * split failed for a structural reason, not a stylistic one: every photograph
@@ -32,7 +32,7 @@ export function BleedHero({
    * Which part of the frame survives the crop, per breakpoint.
    *
    * Worth setting per page. A landscape file in a portrait phone viewport loses
-   * most of its width, so a subject standing off-centre needs anchoring toward
+   * most of its width, so a subject standing off-center needs anchoring toward
    * their side or they are simply cropped out — which is the failure the old
    * hero had, just in the other axis.
    */
@@ -42,7 +42,7 @@ export function BleedHero({
   priority = false,
 }: {
   eyebrow: React.ReactNode;
-  /** Accent spans inside this must use `text-gold`, never `text-rust`. */
+  /** Accent spans inside this use `text-clay`; small text on it must be bone. */
   title: React.ReactNode;
   children: React.ReactNode;
   photo: PhotoData;
@@ -53,7 +53,7 @@ export function BleedHero({
   return (
     <section
       className={cn(
-        "relative isolate flex flex-col justify-center overflow-hidden bg-ink",
+        "relative isolate flex flex-col justify-center overflow-hidden bg-graphite",
         size === "full"
           ? "min-h-[calc(100svh-4rem)]"
           : "min-h-[30rem] sm:min-h-[34rem] lg:min-h-[38rem]",
@@ -87,25 +87,25 @@ export function BleedHero({
         Container after them is `relative`, so the type stays above both.
       */}
       <div
-        className="absolute inset-0 bg-gradient-to-t from-ink via-ink/60 to-transparent"
+        className="absolute inset-0 bg-gradient-to-t from-graphite via-graphite/60 to-transparent"
         aria-hidden="true"
       />
       <div
-        className="absolute inset-0 bg-gradient-to-r from-ink/85 via-ink/35 to-transparent"
+        className="absolute inset-0 bg-gradient-to-r from-graphite/85 via-graphite/35 to-transparent"
         aria-hidden="true"
       />
-      <div className="absolute inset-0 bg-ink/10" aria-hidden="true" />
+      <div className="absolute inset-0 bg-graphite/10" aria-hidden="true" />
 
       {/*
-        CENTRED, not bottom-anchored. The type used to sit at the foot of the
+        CENTERED, not bottom-anchored. The type used to sit at the foot of the
         frame, which reads as a caption on a short hero and strands the copy at
         the very bottom of the screen on a tall one — the taller the display,
-        the further it fell. Centring holds it in the same place on every
+        the further it fell. Centering holds it in the same place on every
         screen, and the scrim below is what keeps it legible either way.
       */}
       <Container className="relative py-20">
         <Eyebrow onInk>{eyebrow}</Eyebrow>
-        <h1 className={cn("mt-6 max-w-4xl text-white", HEADING.title)}>
+        <h1 className={cn("mt-6 max-w-4xl text-bone", HEADING.title)}>
           {title}
         </h1>
         <div className="mt-8 max-w-xl">{children}</div>

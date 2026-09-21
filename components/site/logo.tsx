@@ -11,15 +11,15 @@ import { cn } from "@/lib/utils";
  * one that matters — the fills stay addressable, so the mark can go white on
  * the ink footer and each glyph can animate independently.
  *
- * The original SVG carries its colours in a `<style>` block (`.st0` / `.st1`).
+ * The original SVG carries its colors in a `<style>` block (`.st0` / `.st1`).
  * That form is unusable here: those class names are global once inlined, so two
- * logos on one page in different tones would fight over the same rule. Colour
+ * logos on one page in different tones would fight over the same rule. Color
  * is a prop instead.
  *
  * TONE — the brand mark is two rusts, and rust on ink measures 3.3:1. WCAG
  * exempts logotypes from contrast minimums so it isn't a violation, but it
  * still reads as muddy against `--ink`. Use `tone="mono"` in dark bands and let
- * `currentColor` take the surrounding text colour.
+ * `currentColor` take the surrounding text color.
  */
 
 const RUST = "#CA3625";

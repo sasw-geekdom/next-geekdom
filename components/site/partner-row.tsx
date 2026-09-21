@@ -1,3 +1,31 @@
+/**
+ * ⚠️ NOT ON THE HOMEPAGE ANY MORE, and it should not go back.
+ *
+ * This ran pinned to the base of the hero under "Building this with us" — the
+ * most valuable proof slot on the site — and gave it to nine other
+ * organizations' logos. Four reasons it came off:
+ *
+ *   1. It inverted the brand guide's two-voice principle. "Quiet about
+ *      ourselves, loud about our people" is not a wall of other institutions'
+ *      marks; that is borrowed credibility, which is the one thing the guide's
+ *      one-line test is designed to catch.
+ *   2. A grid of civic and nonprofit logos is precisely how the "generic
+ *      community organization" the guide says Geekdom is NOT presents itself.
+ *   3. The list is provisional — see the header in data/mock/partners.ts. It
+ *      came from Startup Week's sponsor wall, and the real one still has to
+ *      come from Geekdom.
+ *   4. It competed with the actual evidence for the same job. `PortfolioWall`
+ *      now holds that slot: eighteen companies started here, with a stage and
+ *      a year each. Geekdom's own output rather than other people's marks.
+ *
+ * WHERE IT BELONGS INSTEAD: an /about or /partners page, where naming the
+ * organizations Geekdom works alongside is the subject rather than a claim
+ * being made in passing. If any of these are funders with contractual logo
+ * placement, that obligation is real and that page is how it gets met.
+ *
+ * The component is kept because it is correct and the layout maths in it
+ * (see data/mock/partners.ts) is not worth re-deriving.
+ */
 import { Container } from "@/components/site/section";
 import { MOCK_PARTNERS } from "@/data/mock/partners";
 import { cn } from "@/lib/utils";
@@ -5,7 +33,7 @@ import { cn } from "@/lib/utils";
 /**
  * The logo wall — one line, drifting.
  *
- * WHY IT MOVES rather than wraps. These marks run from 7.4:1 (Launch SA) to
+ * WHY IT MOVES rather than wraps. These marks run from 7.4:1 to
  * 0.8:1 (The Creative Futures), so no combination of height and gap fills even
  * rows — every wrap point left a lone logo stranded on a second line. A single
  * track sidesteps the arithmetic entirely, and it also lets the set grow later
@@ -37,7 +65,7 @@ export function PartnerRow() {
     <div className="w-full pb-4 pt-10 sm:pt-12 short:pt-6 short:sm:pt-6">
       <Container>
         <p className="font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground">
-          Building this <span className="text-ink">with us</span>
+          Building this <span className="text-graphite">with us</span>
         </p>
 
         {/*
@@ -75,7 +103,7 @@ export function PartnerRow() {
                 ) : (
                   // The fallback when a partner is agreed before its logo
                   // arrives — a wordmark, not a gap.
-                  <span className="font-mono text-base uppercase tracking-[0.12em] text-ink/80">
+                  <span className="font-mono text-base uppercase tracking-[0.12em] text-graphite/80">
                     {partner.name}
                   </span>
                 );

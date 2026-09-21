@@ -60,7 +60,7 @@ export default function FaqPage() {
           q: "What happens to the floors above the third floor?",
           a: (
             <>
-              Geekdom will no longer operate the Event Centre or the 6th, 7th,
+              Geekdom will no longer operate the Event Center or the 6th, 7th,
               or 8th floors. Those spaces will be managed separately by the
               property owner, {PROPERTY_OWNER}. Our full focus is on the{" "}
               {LOCATION.floor.toLowerCase()} and the community we&rsquo;re
@@ -206,7 +206,7 @@ export default function FaqPage() {
             <>
               It&rsquo;s a short online form — a handful of questions, about ten
               minutes. It was emailed to current members and it&rsquo;s{" "}
-              <Link href="/apply" className="text-rust underline">
+              <Link href="/apply" className="font-medium text-graphite underline decoration-clay decoration-2 underline-offset-2 transition-colors hover:decoration-graphite">
                 here on the site
               </Link>
               . You&rsquo;ll hear back within two weeks of applying.
@@ -256,7 +256,7 @@ export default function FaqPage() {
             <>
               Yes. Geekdom hosts and partners on events open to non-members.
               You&rsquo;ll find them in the newsletter, on social, and on the{" "}
-              <Link href="/events" className="text-rust underline">
+              <Link href="/events" className="font-medium text-graphite underline decoration-clay decoration-2 underline-offset-2 transition-colors hover:decoration-graphite">
                 public calendar
               </Link>{" "}
               — also on{" "}
@@ -264,7 +264,7 @@ export default function FaqPage() {
                 href={LUMA_CALENDAR_URL}
                 target="_blank"
                 rel="noreferrer noopener"
-                className="text-rust underline"
+                className="font-medium text-graphite underline decoration-clay decoration-2 underline-offset-2 transition-colors hover:decoration-graphite"
               >
                 Luma
               </a>
@@ -283,7 +283,7 @@ export default function FaqPage() {
                 href={LUMA_CALENDAR_URL}
                 target="_blank"
                 rel="noreferrer noopener"
-                className="text-rust underline"
+                className="font-medium text-graphite underline decoration-clay decoration-2 underline-offset-2 transition-colors hover:decoration-graphite"
               >
                 calendar
               </a>{" "}
@@ -300,7 +300,7 @@ export default function FaqPage() {
       eyebrow="Questions"
       title={
         <>
-          The practical <span className="text-rust">stuff.</span>
+          The practical <span className="text-clay">stuff.</span>
         </>
       }
       subtitle="The letter covers the why. This covers the what-happens-to-my-desk."
@@ -308,13 +308,13 @@ export default function FaqPage() {
       <div className="flex flex-col gap-14">
         {groups.map((group) => (
           <section key={group.title}>
-            <h2 className="font-mono text-xs uppercase tracking-[0.18em] text-rust">
+            <h2 className="font-mono text-xs uppercase tracking-[0.18em] text-concrete">
               {group.title}
             </h2>
             <dl className="mt-6 divide-y divide-border border-y border-border">
               {group.items.map((faq) => (
                 <div key={faq.q} className="py-7">
-                  <dt className="text-lg font-semibold text-ink">{faq.q}</dt>
+                  <dt className="text-lg font-medium text-graphite">{faq.q}</dt>
                   <dd className="mt-3 leading-relaxed text-muted-foreground">
                     {faq.a}
                   </dd>
@@ -330,7 +330,7 @@ export default function FaqPage() {
           send it to a queue and wait to be routed.
         */}
         <section>
-          <h2 className="font-mono text-xs uppercase tracking-[0.18em] text-rust">
+          <h2 className="font-mono text-xs uppercase tracking-[0.18em] text-concrete">
             Who to ask
           </h2>
           <dl className="mt-6 divide-y divide-border border-y border-border">
@@ -339,11 +339,11 @@ export default function FaqPage() {
                 key={contact.email}
                 className="py-6 sm:flex sm:items-baseline sm:justify-between sm:gap-8"
               >
-                <dt className="font-semibold text-ink">{contact.topic}</dt>
+                <dt className="font-medium text-graphite">{contact.topic}</dt>
                 <dd className="mt-1 text-muted-foreground sm:mt-0 sm:text-right">
                   <a
                     href={`mailto:${contact.email}`}
-                    className="text-rust underline"
+                    className="font-medium text-graphite underline decoration-clay decoration-2 underline-offset-2 transition-colors hover:decoration-graphite"
                   >
                     {contact.name}
                   </a>

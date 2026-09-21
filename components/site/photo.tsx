@@ -7,8 +7,8 @@ import type { Photo as PhotoData } from "@/lib/photos";
  *
  * `fill` + `object-cover` rather than letting the image set its own height, so
  * a row of photos crops to a shared shape instead of each one dictating a
- * different height and breaking the grid. The frame carries a `bg-sand-deep`
- * so the space is the right colour before the image decodes.
+ * different height and breaking the grid. The frame carries a `bg-bone-light`
+ * so the space is the right color before the image decodes.
  *
  * `aspect` is a Tailwind CLASS, not a raw ratio, specifically so it can vary by
  * breakpoint — `"aspect-[16/9] lg:aspect-[4/3]"`. An inline `aspect-ratio`
@@ -46,7 +46,7 @@ export function Photo({
         // Rounded by default; the full-bleed hero squares off its outer edge
         // with `lg:rounded-r-none`, which twMerge leaves alone because it's a
         // different breakpoint.
-        "relative overflow-hidden rounded-xl bg-sand-deep",
+        "relative overflow-hidden rounded-xl bg-bone-light",
         aspect,
         className,
       )}

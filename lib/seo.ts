@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { priceLabel } from "@/lib/membership";
-import { SITE_NAME, SITE_URL } from "@/lib/site";
+import { POSITIONING, SITE_NAME, SITE_URL } from "@/lib/site";
 
 /**
  * The default share card, `app/opengraph-image.png`, at the URL Next serves it
@@ -65,7 +65,7 @@ export function pageMetadata({
    *
    * Hence the default below: a page gets the root card unless it says it has
    * its own. Forgetting this on a new page yields the generic card, which is
-   * correct; the old behaviour yielded nothing, which was not.
+   * correct; the old behavior yielded nothing, which was not.
    */
   ownCard?: boolean;
 }): Metadata {
@@ -123,9 +123,17 @@ export function pageMetadata({
  * the homepage supplies its own openGraph description through pageMetadata().
  * One constant, so the two cannot say different things about the same page.
  */
+/**
+ * The search snippet and the default share description.
+ *
+ * It led with "A space for problem solvers" — using the one word the 2026
+ * brand guide is running from, and describing a single product on a site that
+ * now has two. A snippet is the whole of what most people ever read about
+ * Geekdom, so it carries the positioning line and both engines.
+ */
 export const SITE_DESCRIPTION = (() => {
   const price = priceLabel();
-  return `A space for problem solvers in San Antonio. ${SITE_NAME} is a membership club for founders and builders — one membership${
-    price ? `, ${price}` : ""
-  }, and a floor full of people who'll break the problem down with you.`;
+  return `${POSITIONING} A members' club on the third floor${
+    price ? ` at ${price}` : ""
+  }, a venture fund backing a few founders a year, and the work that convenes San Antonio's startup community. Since 2011.`;
 })();

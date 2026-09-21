@@ -1,7 +1,10 @@
 import Link from "next/link";
 import {
   NAV,
+  EXPLORE,
   SOCIALS,
+  RELATED,
+  LEGAL,
   LOCATION,
   CONTACT_EMAIL,
   TAGLINE,
@@ -18,7 +21,7 @@ const SECONDARY = [
 
 export function SiteFooter() {
   return (
-    <footer className="mt-auto bg-ink text-white">
+    <footer className="mt-auto bg-graphite text-bone">
       <Container className="py-16">
         <div className="flex flex-col gap-12 lg:flex-row lg:justify-between">
           <div className="max-w-sm">
@@ -38,10 +41,10 @@ export function SiteFooter() {
               it. Browsers cap contexts around 16; two is not near that.
             */}
             <CrownShader className="h-14 w-auto" />
-            <p className="mt-4 text-lg font-medium leading-snug text-white">
+            <p className="mt-4 text-lg font-medium leading-snug text-bone">
               {TAGLINE}
             </p>
-            <address className="mt-6 text-sm not-italic leading-relaxed text-white/65">
+            <address className="mt-6 text-sm not-italic leading-relaxed text-bone/65">
               {LOCATION.line1}
               <br />
               {LOCATION.street}
@@ -50,72 +53,113 @@ export function SiteFooter() {
             </address>
             <a
               href={`mailto:${CONTACT_EMAIL}`}
-              className="mt-4 inline-block text-sm text-gold hover:underline"
+              className="mt-4 inline-block text-sm text-bone underline decoration-clay decoration-2 underline-offset-2 transition-colors hover:decoration-bone"
             >
               {CONTACT_EMAIL}
             </a>
           </div>
 
-          <div className="grid grid-cols-2 gap-10 sm:grid-cols-3">
-            <FooterColumn title="Explore" links={NAV} />
+          {/*
+            Four columns, per the brand guide's footer spec: address,
+            geekdom.com, a LaunchSA reference, social, minimal legal.
+
+            `sm:grid-cols-4` rather than 3 — "Related" is the new one, and it is
+            what carries the LaunchSA reference the guide asks for. See RELATED
+            in lib/site.ts for why that is a name and not a mark.
+          */}
+          <div className="grid grid-cols-2 gap-10 sm:grid-cols-4">
+            {/*
+              The nav is two items now, so the footer stops mirroring it and
+              carries the whole site instead. Everything the nav dropped —
+              The Floor, Events, What's Changing — lives here rather than
+              being orphaned.
+            */}
+            <FooterColumn title="Geekdom" links={[...NAV, ...EXPLORE]} />
             <FooterColumn title="Members" links={SECONDARY} />
-            <div>
-              <h2 className="font-mono text-xs uppercase tracking-[0.18em] text-gold">
-                Follow
-              </h2>
-              <ul className="mt-4 flex flex-col gap-2.5">
-                {SOCIALS.map((s) => (
-                  <li key={s.href}>
-                    <a
-                      href={s.href}
-                      target="_blank"
-                      rel="noreferrer noopener"
-                      className="text-sm text-white/70 transition-colors hover:text-white"
-                    >
-                      {s.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <FooterColumn title="Related" links={RELATED} external />
+            <FooterColumn title="Follow" links={SOCIALS} external />
           </div>
         </div>
 
-        <div className="mt-14 flex flex-col gap-3 border-t border-white/12 pt-6 text-xs text-white/50 sm:flex-row sm:items-center sm:justify-between">
+        {/*
+          The utility row. Copyright, the legal pages, and the staff door.
+
+          `gap-x-6` on a wrapping flex row rather than a second nested flex:
+          on a narrow phone the four items simply wrap, and the copyright line
+          stays first in the reading order because it is the only one that is
+          not a link.
+        */}
+        <div className="mt-14 flex flex-col gap-3 border-t border-bone/12 pt-6 text-xs text-bone/50 sm:flex-row sm:items-center sm:justify-between">
           <p>
             © {FOUNDED_YEAR}–{new Date().getFullYear()} Geekdom. San Antonio,
             Texas.
           </p>
-          <Link href="/admin" className="transition-colors hover:text-white/80">
-            Staff sign in
-          </Link>
+          <nav className="flex flex-wrap items-center gap-x-6 gap-y-2">
+            {LEGAL.map((l) => (
+              <Link
+                key={l.href}
+                href={l.href}
+                className="transition-colors hover:text-bone/80"
+              >
+                {l.label}
+              </Link>
+            ))}
+            <Link
+              href="/admin"
+              className="transition-colors hover:text-bone/80"
+            >
+              Staff sign in
+            </Link>
+          </nav>
         </div>
       </Container>
     </footer>
   );
 }
 
+/**
+ * One footer column.
+ *
+ * `external` swaps next/link for a plain <a> with the rel that makes
+ * target="_blank" safe. It is a prop rather than two components because the
+ * columns are otherwise identical, and the "Follow" column used to be a
+ * hand-rolled copy of this markup for exactly that one difference — which is
+ * how it ended up the only column whose heading was written inline.
+ */
 function FooterColumn({
   title,
   links,
+  external = false,
 }: {
   title: string;
   links: readonly { href: string; label: string }[];
+  external?: boolean;
 }) {
+  const linkClass =
+    "text-sm text-bone/70 transition-colors hover:text-bone";
+
   return (
     <div>
-      <h2 className="font-mono text-xs uppercase tracking-[0.18em] text-gold">
+      <h2 className="font-mono text-xs uppercase tracking-[0.18em] text-bone">
         {title}
       </h2>
       <ul className="mt-4 flex flex-col gap-2.5">
         {links.map((l) => (
           <li key={l.href}>
-            <Link
-              href={l.href}
-              className="text-sm text-white/70 transition-colors hover:text-white"
-            >
-              {l.label}
-            </Link>
+            {external ? (
+              <a
+                href={l.href}
+                target="_blank"
+                rel="noreferrer noopener"
+                className={linkClass}
+              >
+                {l.label}
+              </a>
+            ) : (
+              <Link href={l.href} className={linkClass}>
+                {l.label}
+              </Link>
+            )}
           </li>
         ))}
       </ul>

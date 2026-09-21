@@ -5,7 +5,7 @@ Geekdom team can judge layout before the actual content is gathered.
 
 | File | Feeds | Replace with |
 | --- | --- | --- |
-| `partners.ts` | The community partner row on the homepage | Geekdom's real partner list, plus single-colour logo files |
+| `partners.ts` | The partner row — **not on the homepage**; see the note in components/site/partner-row.tsx | Geekdom's real partner list, plus single-color logo files |
 | `voices.ts` | "Hear from the people in the room" | Real quotes, names, and roles from real members |
 
 ## Removing it

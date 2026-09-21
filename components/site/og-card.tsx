@@ -16,7 +16,7 @@ import { SITE_NAME, TAGLINE } from "@/lib/site";
  *   Geist.
  *
  *   A hand-built HTML file in scripts/ could run the shader, but only by
- *   duplicating the GLSL, the mask, the colour tokens and the type scale — four
+ *   duplicating the GLSL, the mask, the color tokens and the type scale — four
  *   copies to keep in step with a design system built specifically to stop that
  *   happening.
  *
@@ -35,7 +35,7 @@ export function OgCard({ slug }: { slug: string }) {
 
   return (
     <div
-      className="relative flex flex-col justify-between overflow-hidden bg-ink"
+      className="relative flex flex-col justify-between overflow-hidden bg-graphite"
       style={{
         width: OG_SIZE.width,
         height: OG_SIZE.height,
@@ -71,15 +71,15 @@ export function OgCard({ slug }: { slug: string }) {
       </div>
 
       {/*
-        Mono, not brand rust — this is an ink ground, where the logo's two rusts
-        measure 3.3:1 and turn to mud at thumbnail size. `tone="mono"` takes
-        currentColor, so the white below drives it.
+        Mono, not Geekdom Red — this is a graphite ground, where the red
+        measures 3.3:1 and turns to mud at thumbnail size. `tone="mono"` takes
+        currentColor, so the bone below drives it.
       */}
-      <Logo tone="mono" className="relative h-[54px] w-auto self-start text-white" />
+      <Logo tone="mono" className="relative h-[54px] w-auto self-start text-bone" />
 
       <div className="relative">
         <p
-          className="font-mono uppercase text-gold"
+          className="font-mono uppercase text-bone"
           style={{ fontSize: 22, letterSpacing: "0.18em" }}
         >
           {card.eyebrow}
@@ -91,28 +91,28 @@ export function OgCard({ slug }: { slug: string }) {
           on — as size grows, both tighten.
         */}
         <p
-          className="mt-6 font-bold text-white"
-          style={{ fontSize: 76, lineHeight: 1.04, letterSpacing: "-0.035em" }}
+          className="mt-6 font-medium text-bone"
+          style={{ fontSize: 76, lineHeight: 1.04, letterSpacing: "-0.02em" }}
         >
           {card.lines[0]}
         </p>
         <p
-          className="font-bold text-gold"
-          style={{ fontSize: 76, lineHeight: 1.04, letterSpacing: "-0.035em" }}
+          className="font-medium text-clay"
+          style={{ fontSize: 76, lineHeight: 1.04, letterSpacing: "-0.02em" }}
         >
           {card.lines[1]}
         </p>
       </div>
 
       <div
-        className="relative flex items-end justify-between border-t border-white/15"
+        className="relative flex items-end justify-between border-t border-bone/15"
         style={{ paddingTop: 26 }}
       >
-        <span className="text-white/65" style={{ fontSize: 25 }}>
+        <span className="text-bone/65" style={{ fontSize: 25 }}>
           {TAGLINE}
         </span>
         <span
-          className="font-mono uppercase text-white/45"
+          className="font-mono uppercase text-bone/45"
           style={{ fontSize: 20, letterSpacing: "0.14em" }}
         >
           {SITE_NAME}.com

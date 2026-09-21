@@ -195,7 +195,7 @@ export function SiteNavbar() {
 
       <header
         className={cn(
-          "sticky top-0 z-50 border-b border-border/70 bg-sand/85 backdrop-blur supports-backdrop-filter:bg-sand/70",
+          "sticky top-0 z-50 border-b border-border/70 bg-bone/85 backdrop-blur supports-backdrop-filter:bg-bone/70",
           "transition-transform duration-300 ease-out",
           // focus-within pulls the header back when someone tabs into it — a
           // keyboard user must never be moving focus through links parked
@@ -212,7 +212,7 @@ export function SiteNavbar() {
           >
             <Link
               href="/"
-              className="shrink-0 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rust focus-visible:ring-offset-2"
+              className="shrink-0 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-offset-2"
             >
               {/*
                 Both marks are always mounted and crossfade — swapping one for the
@@ -263,45 +263,81 @@ export function SiteNavbar() {
               <span className="sr-only">Geekdom home</span>
             </Link>
 
-            <ul className="hidden items-center gap-8 md:flex">
-              {NAV.map((item) => {
-                const active =
-                  pathname === item.href || pathname.startsWith(item.href + "/");
-                return (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      aria-current={active ? "page" : undefined}
-                      className={cn(
-                        "text-sm font-medium transition-colors hover:text-rust",
-                        active ? "text-rust" : "text-ink/75",
-                      )}
-                    >
-                      {item.label}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
+            {/*
+              THE LINKS SIT WITH THE APPLY BUTTON, not in the middle of the bar.
 
-            <div className="flex items-center gap-2">
-              <ButtonLink href="/apply" size="sm" className="hidden sm:inline-flex">
-                Apply
-              </ButtonLink>
-              <button
-                type="button"
-                onClick={() => setOpen((v) => !v)}
-                aria-expanded={open}
-                aria-controls="mobile-nav"
-                aria-label={open ? "Close menu" : "Open menu"}
-                className={buttonClass("ghost", "icon", "-mr-2 md:hidden")}
-              >
-                {open ? (
-                  <X className="h-5 w-5" strokeWidth={1.75} />
-                ) : (
-                  <Menu className="h-5 w-5" strokeWidth={1.75} />
-                )}
-              </button>
+              The nav used to be three children under `justify-between` — logo,
+              links, button — which parks the links dead center. That reads as
+              a site with a lot of sections, and this one has two: the Club and
+              the Studio. Two words floating alone in the middle of a wide bar
+              look stranded rather than restrained, and the gap between them
+              and the Apply button grew with the viewport, so on a large
+              external monitor they were nowhere near the action they belong
+              to. The Club, Studio and Apply are one group — the three things
+              the Geekdom team asked the nav to say — so they are one group in
+              the markup.
+
+              Two children now, so `justify-between` puts the logo hard left
+              and this whole cluster hard right, at any width.
+
+              A SIDE EFFECT WORTH KEEPING: the links are anchored to the RIGHT
+              edge now, so the logo's width has no bearing on them at all. The
+              fixed `LOGO_BOX` above still matters for its own reasons, but the
+              reflow it was originally guarding against — the lockup/crown swap
+              shoving the links sideways mid-scroll — is now impossible by
+              construction.
+
+              `gap-8` between the links and `gap-10` before the button: a CTA
+              set at the same interval as the links reads as a third link that
+              happens to have a background. The wider step is what makes it
+              land as the end of the group rather than a member of it.
+            */}
+            <div className="flex items-center gap-10">
+              <ul className="hidden items-center gap-8 md:flex">
+                {NAV.map((item) => {
+                  const active =
+                    pathname === item.href ||
+                    pathname.startsWith(item.href + "/");
+                  return (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        aria-current={active ? "page" : undefined}
+                        className={cn(
+                          "text-sm font-medium transition-colors hover:text-graphite",
+                          active ? "text-graphite" : "text-concrete",
+                        )}
+                      >
+                        {item.label}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+
+              <div className="flex items-center gap-2">
+                <ButtonLink
+                  href="/apply"
+                  size="sm"
+                  className="hidden sm:inline-flex"
+                >
+                  Apply
+                </ButtonLink>
+                <button
+                  type="button"
+                  onClick={() => setOpen((v) => !v)}
+                  aria-expanded={open}
+                  aria-controls="mobile-nav"
+                  aria-label={open ? "Close menu" : "Open menu"}
+                  className={buttonClass("ghost", "icon", "-mr-2 md:hidden")}
+                >
+                  {open ? (
+                    <X className="h-5 w-5" strokeWidth={1.75} />
+                  ) : (
+                    <Menu className="h-5 w-5" strokeWidth={1.75} />
+                  )}
+                </button>
+              </div>
             </div>
           </nav>
         </Container>
@@ -309,7 +345,7 @@ export function SiteNavbar() {
         {open && (
           <div
             id="mobile-nav"
-            className="border-t border-border bg-sand md:hidden"
+            className="border-t border-border bg-bone md:hidden"
           >
             <Container className="py-4">
               <ul className="flex flex-col">
@@ -317,7 +353,7 @@ export function SiteNavbar() {
                   <li key={item.href}>
                     <Link
                       href={item.href}
-                      className="block py-3 text-base font-medium text-ink"
+                      className="block py-3 text-base font-medium text-graphite"
                     >
                       {item.label}
                     </Link>

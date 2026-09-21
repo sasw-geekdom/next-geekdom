@@ -37,8 +37,8 @@ export default async function AdminDashboard() {
         </div>
 
         {/* Applications over time */}
-        <section className="mt-8 rounded-xl border border-border bg-white p-6">
-          <h2 className="text-sm font-semibold text-ink">
+        <section className="mt-8 rounded-xl border border-border bg-bone-light p-6">
+          <h2 className="text-sm font-medium text-graphite">
             Applications, last 14 days
           </h2>
           {/*
@@ -55,7 +55,7 @@ export default async function AdminDashboard() {
               >
                 <div className="flex h-full items-end">
                   <div
-                    className="w-full rounded-t bg-rust/80 transition-colors group-hover:bg-rust"
+                    className="w-full rounded-t bg-clay/80 transition-colors group-hover:bg-clay"
                     style={{
                       height: `${Math.max(2, (day.count / peak) * 100)}%`,
                     }}
@@ -78,12 +78,12 @@ export default async function AdminDashboard() {
         {/* Recent applications */}
         <section className="mt-8">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-ink">
+            <h2 className="text-sm font-medium text-graphite">
               Latest applications
             </h2>
             <Link
               href="/admin/applications"
-              className="inline-flex items-center gap-1 text-sm font-medium text-rust hover:underline"
+              className="inline-flex items-center gap-1 text-sm font-medium text-graphite underline decoration-clay decoration-2 underline-offset-2 transition-colors hover:decoration-graphite"
             >
               All applications
               <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
@@ -91,19 +91,19 @@ export default async function AdminDashboard() {
           </div>
 
           {recent.length === 0 ? (
-            <p className="mt-6 rounded-xl border border-dashed border-border bg-white px-6 py-12 text-center text-sm text-muted-foreground">
+            <p className="mt-6 rounded-xl border border-dashed border-border bg-bone-light px-6 py-12 text-center text-sm text-muted-foreground">
               No applications yet.
             </p>
           ) : (
-            <ul className="mt-4 divide-y divide-border overflow-hidden rounded-xl border border-border bg-white">
+            <ul className="mt-4 divide-y divide-border overflow-hidden rounded-xl border border-border bg-bone-light">
               {recent.map((app) => (
                 <li key={app.id}>
                   <Link
                     href={`/admin/applications/${app.id}`}
-                    className="flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-sand"
+                    className="flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-bone"
                   >
                     <div className="min-w-0">
-                      <p className="truncate font-medium text-ink">
+                      <p className="truncate font-medium text-graphite">
                         {app.name}
                         {app.company && (
                           <span className="font-normal text-muted-foreground">
@@ -143,13 +143,13 @@ function Stat({
   accent?: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-white p-5">
+    <div className="rounded-xl border border-border bg-bone-light p-5">
       <p className="font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground">
         {label}
       </p>
       <p
-        className={`mt-2 text-3xl font-bold tabular-nums tracking-tight ${
-          accent ? "text-rust" : "text-ink"
+        className={`mt-2 text-3xl font-medium tabular-nums tracking-tight ${
+          accent ? "text-clay" : "text-graphite"
         }`}
       >
         {value}

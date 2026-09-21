@@ -4,7 +4,7 @@ import type { Partner } from "@/lib/site";
  * The logo wall — real marks, provisional list.
  *
  * Names and logo files are pulled from the live sasw.co "Powering the current"
- * wall, which is Startup Week's lineup. That makes them REAL organisations with
+ * wall, which is Startup Week's lineup. That makes them REAL organizations with
  * REAL marks — good enough to judge the layout honestly — but it does not make
  * them Geekdom's. Geekdom co-runs Startup Week, so the overlap is large and the
  * final list still has to come from Geekdom. Geekdom's own mark was in the
@@ -20,19 +20,30 @@ import type { Partner } from "@/lib/site";
  * Geekdom's own mark was in the source list and is dropped: nobody is their own
  * partner.
  *
+ * LAUNCH SA IS DELIBERATELY ABSENT, and must stay absent. Geekdom operates
+ * LaunchSA for the City of San Antonio, so it is not a partner of Geekdom's in
+ * the sense this wall means — and the 2026 brand guide devotes a section to
+ * keeping the two apart: "Never combine the two logos in the same lockup", and
+ * never present LaunchSA branding on Geekdom's channels as if it were
+ * Geekdom's work. A mark in this row does exactly that. The guide's own
+ * prescribed treatment is a plain text link, which is what the footer's
+ * "Related" column now carries.
+ *
  * FOUR MARKS USE AN `-on-light` VARIANT. Startup Week runs on black, so the
  * files it hosts are white artwork — The Creative Futures, Velocity TX, 80/20
  * Foundation and Students + Startups all disappear on sand. Rather than box
- * them or invert the whole row, each was recoloured to ink with its brand
+ * them or invert the whole row, each was recolored to ink with its brand
  * accent preserved: the orange in Velocity TX, the bronze in 80/20, the pink
  * in Students + Startups. Originals are kept beside them for any dark ground.
  *
  * HEIGHTS ARE AREA-BALANCED, and they are calculated rather than judged.
  *
  * One height for everything was tried and is objectively wrong for this set:
- * the aspect ratios run from 7.4:1 (Launch SA) to 0.8:1 (The Creative Futures),
- * so at a shared 48px Launch SA rendered 357px wide against 39px — a NINE-fold
- * spread. Equal heights and equal visual weight cannot both hold.
+ * the aspect ratios run from 7.4:1 down to 0.8:1 (The Creative Futures), so at
+ * a shared 48px the widest mark rendered 357px against 39px — a NINE-fold
+ * spread. Equal heights and equal visual weight cannot both hold. (The 7.4:1
+ * end of that range was Launch SA, since removed; the maths is unchanged for
+ * everything that remains, so the heights below still stand.)
  *
  * So height is derived from aspect: `h = 40 * (2.0 / aspect) ** 0.4`, clamped
  * to 28–52px and snapped to Tailwind's 4px step. The 0.4 exponent is a
@@ -54,7 +65,6 @@ export const MOCK_PARTNERS: readonly Partner[] = [
   { name: "DEVSA", logo: "/partners/devsa.png" , height: "h-9 sm:h-12" },
   { name: "80/20 Foundation", logo: "/partners/80-20-foundation-on-light.svg" , height: "h-5 sm:h-7" },
   { name: "Tech Bloc", logo: "/partners/tech-bloc.svg" , height: "h-8 sm:h-11" },
-  { name: "Launch SA", logo: "/partners/launch-sa.png" , height: "h-5 sm:h-7" },
   { name: "Velocity TX", logo: "/partners/velocity-tx-on-light.png" , height: "h-8 sm:h-11" },
   { name: "Students + Startups", logo: "/partners/students-startups-on-light.svg" , height: "h-5 sm:h-7" },
   { name: "Tech Port SA", logo: "/partners/tech-port-sa.png" , height: "h-7 sm:h-9" },

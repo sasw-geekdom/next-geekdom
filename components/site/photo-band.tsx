@@ -24,10 +24,10 @@ import { cn } from "@/lib/utils";
  * Tailwind scans source text — a composed `to-${tone}` would never be emitted.
  */
 const FADE_TO = {
-  ink: "to-ink",
-  sand: "to-sand",
-  white: "to-white",
-  "sand-deep": "to-sand-deep",
+  ink: "to-graphite",
+  sand: "to-bone",
+  white: "to-bone",
+  "sand-deep": "to-bone-light",
 } as const;
 
 export function PhotoBand({
@@ -41,10 +41,10 @@ export function PhotoBand({
   /**
    * Fades the bottom of the frame into the section that follows.
    *
-   * A full-bleed photograph meeting a coloured band edge-to-edge draws a hard
+   * A full-bleed photograph meeting a colored band edge-to-edge draws a hard
    * horizontal rule across the page, and the eye reads that line as the end of
    * the page rather than as one section becoming the next. MUST match the tone
-   * of whatever comes after it, or the fade resolves to the wrong colour and
+   * of whatever comes after it, or the fade resolves to the wrong color and
    * the seam gets worse rather than better.
    */
   fadeTo,
@@ -60,7 +60,7 @@ export function PhotoBand({
   return (
     <div
       className={cn(
-        "relative aspect-4/3 w-full overflow-hidden bg-sand-deep sm:aspect-video",
+        "relative aspect-4/3 w-full overflow-hidden bg-bone-light sm:aspect-video",
         aspect,
         className,
       )}
@@ -85,9 +85,9 @@ export function PhotoBand({
         solid by 92%.
 
         Solid BEFORE the boundary, not at it. Ending the gradient at 100% means
-        the frame only reaches the section's colour on its final row of pixels,
+        the frame only reaches the section's color on its final row of pixels,
         which leaves exactly the faint seam this exists to remove. The last 8%
-        is flat colour, so the photograph has already become the next section by
+        is flat color, so the photograph has already become the next section by
         the time it gets there.
       */}
       {fadeTo && (

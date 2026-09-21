@@ -69,28 +69,37 @@ export const OG_CARDS: Record<string, OgCard> = {
     leads with anything else invites the click that ends in "so what does it
     cost" — and the figure is the single most-asked question in the FAQ sheet.
   */
-  membership: {
-    eyebrow: "Membership",
+  club: {
+    eyebrow: "The Club",
     lines: ["One membership.", price ? `${price}.` : "No desks. No offices."],
     seed: 11.8,
-    out: "app/(site)/membership/opengraph-image.png",
+    out: "app/(site)/club/opengraph-image.png",
     alt: price
-      ? `Geekdom membership — one membership, ${price}.`
-      : "Geekdom membership — one membership, no desks, no offices.",
+      ? `The Geekdom Club — one membership, ${price}.`
+      : "The Geekdom Club — one membership, no desks, no offices.",
   },
 
-  "the-floor": {
-    eyebrow: `${LOCATION.floor} · ${LOCATION.street}`,
-    lines: ["One floor. All of it", "pointed at one thing."],
-    seed: 19.6,
-    out: "app/(site)/the-floor/opengraph-image.png",
-    alt: "The Geekdom floor — one floor, all of it pointed at one thing. Third floor, 110 E Houston St, San Antonio.",
+  /*
+    THE STUDIO'S CARD LEADS WITH THE DISQUALIFIER, which is the opposite of
+    what a card usually does and is right here. The Club's card leads with the
+    price because the price is the last objection; this one leads with
+    "invitation only" because the single most costly outcome for this page is a
+    founder clicking through, reading four screens, and discovering there is
+    nothing to apply to. Better to say it in the unfurl.
+  */
+  studio: {
+    eyebrow: "Studio · The venture layer",
+    lines: ["We go all in with", "a few founders a year."],
+    seed: 7.2,
+    out: "app/(site)/studio/opengraph-image.png",
+    alt: "Geekdom Studio — the venture layer. $20–30K SAFE checks and hands-on work for four to six San Antonio founders a year. Invitation only.",
   },
+
 
   /*
     Inherited by /events/[slug] too, which is deliberate: an event with no cover
     art on Luma unfurls as this rather than as the homepage. An event that HAS
-    cover art overrides it in generateMetadata, because the poster the organiser
+    cover art overrides it in generateMetadata, because the poster the organizer
     made is a better card than anything generic.
   */
   events: {

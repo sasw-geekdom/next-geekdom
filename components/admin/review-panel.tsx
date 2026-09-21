@@ -74,9 +74,9 @@ export function ReviewPanel({ application }: { application: Application }) {
   const sendsEmail = (s: ApplicationStatus) => s !== "reviewing";
 
   return (
-    <div className="flex flex-col gap-6 rounded-xl border border-border bg-white p-6">
+    <div className="flex flex-col gap-6 rounded-xl border border-border bg-bone-light p-6">
       <div>
-        <h2 className="text-sm font-semibold text-ink">Staff notes</h2>
+        <h2 className="text-sm font-medium text-graphite">Staff notes</h2>
         <Textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
@@ -95,7 +95,7 @@ export function ReviewPanel({ application }: { application: Application }) {
       </div>
 
       <div className="border-t border-border pt-6">
-        <h2 className="text-sm font-semibold text-ink">Decision</h2>
+        <h2 className="text-sm font-medium text-graphite">Decision</h2>
         <p className="mt-1 text-xs text-muted-foreground">
           Notes above are saved with the decision.
         </p>
@@ -147,7 +147,7 @@ export function ReviewPanel({ application }: { application: Application }) {
 
       {application.status === "approved" && (
         <div className="border-t border-border pt-6">
-          <h2 className="text-sm font-semibold text-ink">Invitation</h2>
+          <h2 className="text-sm font-medium text-graphite">Invitation</h2>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
             {application.invitedAt
               ? "An invitation has been sent. Resending mints a fresh checkout link."
@@ -168,7 +168,7 @@ export function ReviewPanel({ application }: { application: Application }) {
       {result && (
         <p
           role="status"
-          className="rounded-lg bg-sand-deep px-3 py-2 text-sm text-ink"
+          className="rounded-lg bg-bone-light px-3 py-2 text-sm text-graphite"
         >
           {result}
         </p>

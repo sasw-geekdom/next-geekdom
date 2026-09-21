@@ -29,24 +29,33 @@ type Variant =
 type Size = "sm" | "md" | "lg" | "icon";
 
 const variants: Record<Variant, string> = {
-  // Rust with a white label — 5.2:1, so the label passes AA, not just the
-  // button's boundary. The anchor CTA everywhere on light ground.
-  primary: "bg-rust text-white hover:bg-rust-deep focus-visible:ring-rust",
-  ink: "bg-ink text-white hover:bg-ink/90 focus-visible:ring-ink",
+  /*
+    GEEKDOM RED, and this is the "occasionally a single high-priority CTA"
+    the brand guide allows. It is the only place the reserved color does
+    brand work on the site — everything that used to be rust (eyebrows,
+    links, rules, hovers) is now Clay or Concrete.
+
+    White label on it measures 5.2:1, so the LABEL passes AA, not just the
+    button's boundary. The focus ring is Clay: 3.5:1 on bone, which clears
+    the 3:1 bar a non-text indicator has to meet.
+  */
+  primary:
+    "bg-geekdom-red text-bone hover:bg-geekdom-red-deep focus-visible:ring-clay",
+  ink: "bg-graphite text-bone hover:bg-graphite-soft focus-visible:ring-graphite",
   outline:
-    "border border-ink/20 text-ink hover:bg-sand-deep focus-visible:ring-rust",
-  ghost: "text-ink hover:bg-sand-deep focus-visible:ring-rust",
-  // For use inside a full-bleed ink band or over a dark scrim, where rust drops
-  // to 3.3:1 and a light-ground outline button disappears.
+    "border border-graphite/20 text-graphite hover:bg-bone-light focus-visible:ring-clay",
+  ghost: "text-graphite hover:bg-bone-light focus-visible:ring-clay",
+  // For use inside a full-bleed graphite band or over a dark scrim, where
+  // Geekdom Red drops to 3.3:1 and a light-ground outline button disappears.
   "on-ink":
-    "bg-white text-ink hover:bg-sand focus-visible:ring-gold focus-visible:ring-offset-ink",
+    "bg-bone text-graphite hover:bg-bone-light focus-visible:ring-clay focus-visible:ring-offset-graphite",
   // The secondary action beside `on-ink`. Was hand-written at three call sites
   // before it lived here, which is how the hero ended up with two solid CTAs
   // competing: an override className with no variant leaves `primary` in place,
   // and with no background of its own there is no conflict for twMerge to
-  // resolve, so bg-rust survives.
+  // resolve, so bg-geekdom-red survives.
   "on-ink-outline":
-    "border border-white/25 text-white hover:bg-white/10 focus-visible:ring-gold focus-visible:ring-offset-ink",
+    "border border-bone/25 text-bone hover:bg-bone/10 focus-visible:ring-clay focus-visible:ring-offset-graphite",
 };
 
 /**

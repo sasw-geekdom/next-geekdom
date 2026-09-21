@@ -30,7 +30,7 @@ export default async function MembersPage() {
           // eslint-disable-next-line @next/next/no-html-link-for-pages
           <a
             href="/api/admin/export/members"
-            className={buttonClass("outline", "sm", "border-border bg-white")}
+            className={buttonClass("outline", "sm", "border-border bg-bone-light")}
           >
             <Download className="h-3.5 w-3.5" strokeWidth={1.8} />
             Export CSV
@@ -40,14 +40,14 @@ export default async function MembersPage() {
 
       <AdminSection>
         {members.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border bg-white px-6 py-16 text-center">
+          <div className="rounded-xl border border-dashed border-border bg-bone-light px-6 py-16 text-center">
             <p className="text-sm text-muted-foreground">
               No members yet. A member appears here once Stripe confirms their
               first payment.
             </p>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-border bg-white">
+          <div className="overflow-hidden rounded-xl border border-border bg-bone-light">
             <ul className="divide-y divide-border">
               {members.map((member) => (
                 <li
@@ -55,12 +55,12 @@ export default async function MembersPage() {
                   className="flex flex-col gap-2 px-5 py-4 md:flex-row md:items-center md:gap-4"
                 >
                   <div className="min-w-0 md:flex-1">
-                    <p className="truncate font-medium text-ink">
+                    <p className="truncate font-medium text-graphite">
                       {member.name}
                     </p>
                     <a
                       href={`mailto:${member.email}`}
-                      className="truncate text-sm text-muted-foreground hover:text-rust"
+                      className="truncate text-sm text-muted-foreground hover:text-graphite"
                     >
                       {member.email}
                     </a>
@@ -70,7 +70,7 @@ export default async function MembersPage() {
                     <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
                       Joined
                     </p>
-                    <p className="text-sm tabular-nums text-ink">
+                    <p className="text-sm tabular-nums text-graphite">
                       {formatDate(member.joinedAt)}
                     </p>
                   </div>
@@ -79,7 +79,7 @@ export default async function MembersPage() {
                     <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
                       {member.cancelAtPeriodEnd ? "Ends" : "Renews"}
                     </p>
-                    <p className="text-sm tabular-nums text-ink">
+                    <p className="text-sm tabular-nums text-graphite">
                       {member.currentPeriodEnd
                         ? formatDate(member.currentPeriodEnd)
                         : "—"}
@@ -105,7 +105,7 @@ export default async function MembersPage() {
                       target="_blank"
                       rel="noreferrer noopener"
                       title="Open in Stripe"
-                      className="text-muted-foreground transition-colors hover:text-rust"
+                      className="text-muted-foreground transition-colors hover:text-graphite"
                     >
                       <ExternalLink className="h-4 w-4" strokeWidth={1.7} />
                       <span className="sr-only">

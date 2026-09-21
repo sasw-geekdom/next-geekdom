@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
  * The hero says "find your thinking partner… the one who breaks the problem
  * down with you, builds on your idea." So the field is TWO sources, not one:
  * they drift, their edges tendril into each other, and where they overlap the
- * colour deepens rather than muddying. That last part is the argument — the
+ * color deepens rather than muddying. That last part is the argument — the
  * overlap is more than either input.
  *
  * WHY PIGMENT AND NOT PARTICLES. Every previous attempt at WebGL on this site
@@ -93,8 +93,8 @@ void main(){
   vec3 pigment = mix(u_a, u_b, smoothstep(0.15, 0.85, mixer));
 
   /*
-    THE OVERLAP IS THE POINT. Where both drops are present the colour deepens
-    rather than averaging toward grey — two inks meeting make a denser third,
+    THE OVERLAP IS THE POINT. Where both drops are present the color deepens
+    rather than averaging toward gray — two inks meeting make a denser third,
     which is the sentence above this canvas rendered as physics.
   */
   float both = a * b;
@@ -103,12 +103,12 @@ void main(){
   float ink = clamp(max(a, b) + both * 0.25, 0.0, 1.0);
 
   /*
-    DENSITY DRIVES COLOUR, NOT TRANSPARENCY.
+    DENSITY DRIVES COLOR, NOT TRANSPARENCY.
 
     An earlier version put the density into the alpha channel, so where pigment
     was thin the mark went see-through and the crown dissolved into the page —
     a white haze around the edges rather than a mark. Inside a mask that reads
-    as a printing failure. The flow shows as the colour lifting off a dark
+    as a printing failure. The flow shows as the color lifting off a dark
     floor instead, which is exactly what the crown on /account does, and the
     shape stays solid to its own edge.
   */
@@ -153,8 +153,11 @@ function rgb(hex: string): [number, number, number] {
 export function InkField({
   className,
   maskClassName,
+  // Geekdom Red and Clay. colorB was #B4552F — a red-brown that belonged
+  // to no palette; Clay is the guide's own warm accent and sits in almost
+  // the same place, so the field keeps its depth and loses the stray hex.
   colorA = "#CA3625",
-  colorB = "#B4552F",
+  colorB = "#C8623D",
   base = [0.09, 0.028, 0.024],
   alpha = 1,
   frozenTime,
