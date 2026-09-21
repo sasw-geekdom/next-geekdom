@@ -234,6 +234,25 @@ same page runs as "15 years of Geekdom".
 - **npm, not pnpm.** There's a `package-lock.json` (the sibling `next-sasw` repo
   is pnpm — don't copy its commands over).
 
+- **Three dependencies exist for one feature each, and none of them look it.**
+  A dependency audit that goes by "is this imported from a page" will conclude
+  all three are dead. They aren't:
+
+  | package | pulled in by | reaches |
+  |---|---|---|
+  | `motion` | [memory-lane.tsx](components/site/memory-lane.tsx) | `/since-2011` only |
+  | `sharp` | [gallery-sync.ts](lib/gallery-sync.ts) | the admin server action only |
+  | `@vercel/blob` | [gallery-sync.ts](lib/gallery-sync.ts) | the admin server action only |
+
+  All three belong in `dependencies`, not `devDependencies` — `sharp` and
+  `@vercel/blob` run on the server in production, and `motion` ships to the
+  browser on that one route.
+
+  **`gallery-manager.tsx` imports `SyncResult` as `import type`, and that is
+  load-bearing.** It is a client component; a value import from
+  `gallery-sync.ts` would drag `sharp` — a native binary — at it. Keep it
+  type-only, or the admin bundle stops building.
+
 ## Design system
 
 The 2026 brand guide (`Geekdom_Brand_Guide_2026.pdf`) is the source. Tokens live

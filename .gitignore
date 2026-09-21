@@ -42,3 +42,10 @@ next-env.d.ts
 
 # Firebase Admin service account (local dev fallback)
 serviceAccountKey.json
+
+# Scratch. Image crops, contact sheets, side-by-side comparison pages — the
+# artifacts of deciding which photograph to use, which are worth keeping while
+# you decide and worth nothing after. Three of them (crop-a.png, crop-b.png,
+# crops.html, 1.6MB) reached the repo root and were only caught at commit.
+# Put them in /scratch instead; nothing in the app may import from it.
+/scratch/
