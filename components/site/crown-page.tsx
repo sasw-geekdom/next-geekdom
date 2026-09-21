@@ -12,7 +12,18 @@ import { CrownShader, type MarkShape } from "@/components/site/crown-shader";
   auto, and paired with `w-auto` the canvas has no intrinsic size and collapses
   to nothing.
 */
-const RAIL_SIZE: Record<MarkShape, string> = {
+/**
+ * The rail takes a MARK, not the lockup.
+ *
+ * `RailShape` excludes `wordmark` rather than giving it a size here. The rail
+ * is a tall, narrow column beside a column of text; the lockup is 2.6:1 and
+ * would either sit as a stripe in the middle of it or, sized to fill, run
+ * three screens tall. Excluding it makes that a compile error at the call site
+ * instead of a layout someone has to notice.
+ */
+type RailShape = Exclude<MarkShape, "wordmark">;
+
+const RAIL_SIZE: Record<RailShape, string> = {
   crown: "w-full max-w-[min(34rem,calc(100svh-10rem))]",
   "g-mark":
     "h-[32svh] w-auto lg:h-full lg:max-h-[min(40rem,calc(100svh-9rem))]",
@@ -66,7 +77,7 @@ export function CrownPage({
    * and its height gives the flow somewhere to travel; the crown alone is wide
    * and shallow, so the same shader reads as a flat wash inside it.
    */
-  shape?: MarkShape;
+  shape?: RailShape;
   fitViewport?: boolean;
 }) {
   return (

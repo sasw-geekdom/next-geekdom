@@ -15,6 +15,15 @@ export const COLLECTIONS = {
 /** Doc id in `settings` holding admin-edited email copy. */
 export const EMAIL_SETTINGS_DOC = "emails";
 
+/**
+ * The /since-2011 photo wall's thumbnail manifest, in the settings collection.
+ *
+ * ONE DOCUMENT, NOT A COLLECTION. The wall renders every photo at once, so a
+ * per-photo collection would mean one read per image on a page that is one
+ * scroll; a single array read is one read for the whole wall. See lib/gallery.ts.
+ */
+export const GALLERY_SETTINGS_DOC = "gallery";
+
 // ─── Applications ───────────────────────────────────────────────────────────
 
 /**

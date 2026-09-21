@@ -205,6 +205,23 @@ p {
   mask: url("/brand/crown-mask.svg") center / contain no-repeat;
 }
 
+/*
+  The full wordmark, same technique — for the `/since-2011` hero, where the
+  lockup is the whole picture rather than a mark in a corner.
+
+  375x142, so `aspect-[375/142]` at the call site; `contain` letterboxes
+  anything else. Points at `geekdom-mask.svg`, a flattened copy of
+  `geekdom_logo_full.svg` with its <style> block resolved to plain fills — the
+  same reason the other two masks exist. The source carries .st0 (#AA2D29) and
+  .st1 (#CA3625), the two rusts of the wordmark; a mask reads alpha only, so
+  both flatten to solid black and the shader supplies every color that ends up
+  on screen.
+*/
+.geekdom-mask {
+  -webkit-mask: url("/brand/geekdom-mask.svg") center / contain no-repeat;
+  mask: url("/brand/geekdom-mask.svg") center / contain no-repeat;
+}
+
 /* The crown-over-g lockup, same technique. Its own flattened mask file for the
    same reason: a mask consumes alpha only, so color and <style> blocks are
    dead weight inside one. */

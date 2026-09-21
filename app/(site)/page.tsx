@@ -8,19 +8,19 @@ import {
   Lede,
   Section,
   SectionTitle,
-  Subhead,
+  Standfirst,
   FIGURE,
   HEADING,
+  LINK_ARROW,
   MONO,
 } from "@/components/site/section";
 import { Editorial } from "@/components/site/editorial";
 import { EventCard } from "@/components/site/event-card";
 import { Photo } from "@/components/site/photo";
 import { TypeHero } from "@/components/site/type-hero";
-import { PhotoBand } from "@/components/site/photo-band";
 import { PortfolioWall } from "@/components/site/portfolio-wall";
-import { InkField } from "@/components/site/ink-field";
-import { GMarkShader } from "@/components/site/crown-shader";
+// GMarkShader: the hero held it until the photograph took that edge. Kept as
+// an import-less note rather than an unused import — see the hero below.
 import { MemberVoices } from "@/components/site/member-voices";
 import { PHOTOS } from "@/lib/photos";
 import { priceLabel } from "@/lib/membership";
@@ -86,6 +86,78 @@ export const revalidate = 300;
  * where they are the closing argument rather than the middle of a larger
  * story; the think/build/show rhythm to /club as well. Nothing was deleted.
  */
+/**
+ * A photograph with an editorial caption.
+ *
+ * The 2026 guide asks for these by name in its website section — "full-bleed
+ * member photography with editorial captions" — and the homepage carried none.
+ * A caption is also the cheapest way to make a picture stop reading as
+ * decoration: it says the frame was chosen rather than dropped in.
+ *
+ * `<figure>`/`<figcaption>` rather than a div and a p, because that is what
+ * the elements are for and it gives assistive tech the association for free.
+ */
+/*
+  THE BLEED, IN ONE PLACE.
+
+  `calc(544px - 50vw)` is the distance from the container's content edge to the
+  viewport edge: the container caps at max-w-6xl (1152px) with lg:px-8, so its
+  content is 1088px and half of that is 544. A negative margin of that size
+  pushes the element exactly to the edge and no further.
+
+  ONLY ABOVE 1152px. Below it the container is narrower than its max, the
+  expression goes positive, and the margin would pull the image IN rather than
+  push it out — a silent, wrong-direction bug. Same guard the hero's aside uses.
+
+  THE CAPTION HAS TO BE PUT BACK. It is a child of the figure, so it inherits
+  the negative margin and slides off the screen with the photograph — which is
+  precisely what happened the first time this shipped: "BRIAN SIERAKOWSKI,
+  WORKING A PRODUCT PROBLEM" ran off the left edge, missing its first letters.
+  The matching positive padding returns it to the text column where a caption
+  belongs.
+*/
+const BLEED = {
+  right: {
+    figure: "[@media(min-width:1152px)]:mr-[calc(544px-50vw)]",
+    photo: "[@media(min-width:1152px)]:rounded-r-none",
+    caption: "",
+  },
+  left: {
+    figure: "[@media(min-width:1152px)]:ml-[calc(544px-50vw)]",
+    photo: "[@media(min-width:1152px)]:rounded-l-none",
+    caption: "[@media(min-width:1152px)]:pl-[calc(50vw-544px)]",
+  },
+} as const;
+
+function Frame({
+  photo,
+  aspect,
+  sizes,
+  caption,
+  bleed,
+  className,
+}: {
+  photo: (typeof PHOTOS)[keyof typeof PHOTOS];
+  aspect: string;
+  sizes: string;
+  caption: string;
+  /** Run the photograph off that edge of the viewport. */
+  bleed?: keyof typeof BLEED;
+  className?: string;
+}) {
+  const b = bleed ? BLEED[bleed] : null;
+  return (
+    <figure className={cn(b?.figure, className)}>
+      <Photo photo={photo} aspect={aspect} sizes={sizes} className={b?.photo} />
+      <figcaption
+        className={cn("mt-3", MONO.label, "text-muted-foreground", b?.caption)}
+      >
+        {caption}
+      </figcaption>
+    </figure>
+  );
+}
+
 export default async function HomePage() {
   // `safeUpcomingEvents` swallows Luma failures and returns [] — a third-party
   // outage should never take the homepage down.
@@ -125,23 +197,92 @@ export default async function HomePage() {
           line if the constant is ever reworded, rather than rendering a
           half-highlighted sentence.
         */
+        /*
+          THE LINE BREAKS ARE SET HERE, NOT LEFT TO `text-balance`.
+
+          The headline is three lines at 72px and the browser was choosing
+          which three. `text-wrap: balance` equalizes line LENGTHS, which is
+          the wrong objective for a sentence with a clause in it — it will
+          happily put "founders" on a row by itself if that evens the block
+          out, and on a 1470px MacBook Air it did.
+
+          What it should break on is the sense:
+
+              San Antonio's club for
+              serious founders and
+              builders.
+
+          which is also exactly where the Clay accent starts, so the first
+          forced break costs nothing extra — it is the boundary the span was
+          already drawn on.
+
+          ONLY AT lg. Below 1024px the type steps down to 60px and then 48px
+          while the column narrows faster, so these three lines stop fitting
+          and a forced break would strand words mid-phrase. Measured in Rubik
+          500 inside the h1's `max-w-4xl`: 732 / 705 / 287 against 896px of
+          measure at 72px. It fits with room; it does not at 60.
+
+          THE SPACE GOES BEFORE THE `<br>`, both times. When the rule is
+          hidden the space is the word separator and has to be there; when it
+          renders, a space at the end of a line collapses and costs nothing.
+          Putting it after would leave a visible indent on the wrapped line.
+        */
+        /*
+          ALL BONE, NO CLAY SPAN — see the note in type-hero.tsx. On this
+          ground Clay measures 2.30:1 and the accent moves to the rule above
+          the eyebrow. POSITIONING_ACCENT still drives the LINE BREAKS, so the
+          headline breaks on its clause exactly as before and the constant
+          stays the single source for where that clause starts.
+        */
         title={
           POSITIONING.endsWith(POSITIONING_ACCENT) ? (
             <>
               {POSITIONING.slice(0, -POSITIONING_ACCENT.length)}
-              <span className="text-clay">{POSITIONING_ACCENT}</span>
+              <br className="hidden lg:block" />
+              {POSITIONING_ACCENT.slice(
+                0,
+                POSITIONING_ACCENT.lastIndexOf(" "),
+              )}{" "}
+              <br className="hidden lg:block" />
+              {POSITIONING_ACCENT.slice(
+                POSITIONING_ACCENT.lastIndexOf(" ") + 1,
+              )}
             </>
           ) : (
             POSITIONING
           )
         }
-        aside={
-          <InkField
-            maskClassName="crown-mask"
-            className="aspect-[55/41] h-auto w-[29rem] min-w-0 shrink-0 translate-x-[15%]"
-            alpha={0.95}
-          />
-        }
+        /*
+          THE PHOTOGRAPH IS THE GROUND NOW, and the g-mark that used to hold
+          this edge is off the homepage.
+
+          WHAT THE TRADE ACTUALLY IS. The mark here was a WebGL gradient
+          running through a brand mark, and the 2026 guide bans gradients on
+          the marks outright — it was the pending-sign-off exception, live on
+          the most-seen screen on the site. What replaces it is "full-bleed
+          member photography", which the guide asks for by name. On
+          brand-compliance grounds that is a gain, not a swap of like for like.
+
+          WHY THIS FRAME, of nineteen. `conversation` is the only one in the
+          library that satisfies all three things the composition needs — see
+          the note on `media` in type-hero.tsx — and it has a fourth going for
+          it that nothing else does: IT IS NATIVELY BLACK AND WHITE. The
+          reference sites reach this register by applying `grayscale`. Doing
+          that to a Geekdom photograph would flatten the warm palette the brand
+          is built on; this frame simply arrives there.
+
+          It is also the right SUBJECT, which matters more here than anywhere
+          else on the site. Two people standing in the middle of the floor,
+          talking. Not a desk, not the amenities, not a room shot. The line
+          that has to survive every rewrite is that the thinking partner is a
+          person, in a room, on the third floor — and this is the only frame
+          that is literally that sentence.
+
+          TO PUT THE MARK BACK: drop `media` and pass
+          `aside={<GMarkShader className="h-[min(32rem,56svh)] w-auto" />}`,
+          then return the Editorial below to `text-graphite/90`.
+        */
+        media={{ photo: PHOTOS.conversation }}
         tail={
           /*
             The caption the source copy asks for. Mono, because it is an
@@ -162,16 +303,30 @@ export default async function HomePage() {
           </>
         }
       >
-        <Editorial className="max-w-2xl text-2xl leading-[1.45] text-graphite/90">
+        <Editorial className="max-w-2xl text-2xl leading-[1.45] text-bone/90">
           {TAGLINE_LINE}
         </Editorial>
       </TypeHero>
 
-      <PhotoBand
-        photo={PHOTOS.welcomeHero}
-        aspect="lg:aspect-video"
-        priority
-      />
+      {/*
+        A FULL-BLEED PHOTOGRAPH USED TO SIT HERE AND HAS BEEN REMOVED.
+
+        Its own note explained the job: "what the fold gives up, the next
+        screen gets back — full width, the room, no type over it." That was
+        written when the hero was type only, with nothing but a headline above
+        the fold, and it was the right call then.
+
+        Two things have since taken the job away from it. The hero carries the
+        g-mark at full height, so the fold no longer gives anything up. And
+        every other photograph here gained an editorial caption, which left
+        this one the only SILENT image on the page — atmosphere with no
+        argument, sitting between the claim and the evidence and delaying the
+        evidence by a screen.
+
+        `welcomeHero` is now unused. It stays in lib/photos.ts: it is the
+        warmest frame in the library — two members greeting each other, a room
+        applauding around them — and /about or /club will want it.
+      */}
 
       {/* ── 2 · Built at Geekdom ─────────────────────────────────────── */}
       {/*
@@ -208,7 +363,7 @@ export default async function HomePage() {
           </div>
           <Link
             href="/studio"
-            className="inline-flex items-center gap-1.5 font-medium text-graphite underline decoration-clay decoration-2 underline-offset-2 transition-colors hover:decoration-graphite"
+            className={LINK_ARROW}
           >
             How we back them
             <ArrowRight className="h-4 w-4" strokeWidth={2} />
@@ -257,8 +412,33 @@ export default async function HomePage() {
         required and which two still need confirming.
       */}
       <Section tone="bone">
-        <div className="grid gap-12 lg:grid-cols-[1fr_1.15fr] lg:gap-16">
-          <div>
+        {/*
+          `items-start` is what makes the sticky column below work at all. A
+          grid item stretches to the row's height by default, so the left
+          column would be exactly as tall as the list beside it and would have
+          nowhere to travel — `position: sticky` on a full-height element is a
+          no-op, and it fails silently, which is why this looks like a
+          typo-level detail and isn't.
+        */}
+        <div className="grid items-start gap-12 lg:grid-cols-[1fr_1.15fr] lg:gap-16">
+          {/*
+            THE CLAIM HOLDS WHILE THE EVIDENCE SCROLLS.
+
+            The heading and the two ledes make one argument — Geekdom convenes
+            the city's startup community — and the four entries beside them are
+            what backs it up. Letting the claim scroll away means the reader
+            meets "operated by Geekdom, in partnership with the City of San
+            Antonio" with no heading in view to attach it to.
+
+            `top-24` rather than flush: the navbar is h-16 (64px) and sticky
+            itself, so anything pinned at `top-0` slides under it. 96px clears
+            it with a little air.
+
+            `lg:` only. Below that the two stack, the left column is directly
+            above the list rather than beside it, and pinning it would just
+            eat a phone's viewport.
+          */}
+          <div className="lg:sticky lg:top-24">
             <Eyebrow>What we are</Eyebrow>
             <SectionTitle>
               The institution behind San Antonio&rsquo;s startup community.
@@ -299,16 +479,27 @@ export default async function HomePage() {
                   with the City" is a different claim from "partner", and the
                   page should not let a reader skim past the difference.
 
-                  GRAPHITE, NOT CLAY, and this was caught on review rather than
-                  designed. Clay is the obvious choice for a line that wants
-                  emphasis — and it is 3.5:1 on bone, which fails AA at this
-                  size. The rule in globals.css is explicit that Clay does not
-                  carry small text on any ground in this palette, and a line
-                  stating Geekdom's relationship with the City of San Antonio
-                  is the last place to make an exception. Graphite is 15.3:1
-                  and the mono + uppercase already separates it from the prose.
+                  SENTENCE CASE, NOT TRACKED-OUT MONO — and that is a fix, not
+                  a preference. This line and the `detail` line beside the name
+                  were BOTH uppercase mono, so every entry stacked two
+                  competing labels above its prose and the section read as four
+                  rows of shouting before it read as four sentences. The
+                  strings were always written in sentence case; only the
+                  `uppercase` class was transforming them.
+
+                  Medium weight on graphite keeps it the most important line in
+                  the entry without a third type treatment. The mono is now
+                  doing one job here — the `detail` — which is what MONO is
+                  for: the thing you scan, not the thing you read.
+
+                  GRAPHITE, NOT CLAY. Clay is the obvious choice for a line
+                  that wants emphasis, and it is 3.5:1 on bone, which fails AA
+                  at this size. globals.css is explicit that Clay carries no
+                  small text on any ground in this palette, and a line stating
+                  Geekdom's relationship with the City of San Antonio is the
+                  last place to make an exception.
                 */}
-                <p className={cn("mt-2", MONO.label, "text-graphite")}>
+                <p className="mt-2 text-sm font-medium leading-snug text-graphite">
                   {entry.role}
                 </p>
                 <p className="mt-3 leading-relaxed text-muted-foreground">
@@ -332,16 +523,38 @@ export default async function HomePage() {
 
       {/* ── 4 · The Club ─────────────────────────────────────────────── */}
       <Section tone="bone-light">
-        <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
+        {/*
+          THE THREE PHOTOGRAPHS ON THIS PAGE NO LONGER RHYME, which was the
+          whole problem: Club, Studio and Since-2011 were each a rounded
+          rectangle, vertically centerd, in half a two-column grid — the same
+          move three times, and two of them at the same 4:3.
+
+          What varies now is scale, shape and alignment. This one is the
+          largest (1.15fr, ~584px) and sits at the TOP of its row; the Studio's
+          is smaller, wider and sits low; the 2011 frame is a small sharp plate.
+          Nothing is centerd in its box any more, so the eye is given a reason
+          to move down the page rather than a rhythm to fall asleep in.
+
+          THE COLUMN BLEED WAS TRIED HERE AND TAKEN BACK OUT. Running the
+          Club's and the Studio's photographs off the viewport edge made two
+          ordinary product sections shout, and neither has the pixels to do it
+          well — 1600px and 1548px against the ~1760 a 1920 display wants.
+
+          The origin section near the close was then given that band instead,
+          and it came back out too — for a different reason, written up there.
+          NO PHOTOGRAPH ON THIS PAGE IS FULL WIDTH NOW. All three are
+          contained, and what varies is size, crop and alignment: this one is
+          large 4:3 and top-aligned, the Studio's is smaller 3:2 and sits low,
+          the 2011 frame is a short wide plate.
+        */}
+        <div className="grid items-start gap-12 lg:grid-cols-[1fr_1.15fr] lg:gap-16">
           <div>
-            <p className={cn(MONO.label, "text-muted-foreground")}>
-              Community
-            </p>
-            <SectionTitle className="!mt-3">The Club</SectionTitle>
-            <p className="mt-6 text-xl leading-relaxed text-graphite">
+            <Eyebrow>Community</Eyebrow>
+            <SectionTitle>The Club</SectionTitle>
+            <Standfirst>
               Hard problems don&rsquo;t get solved alone. So we built the room
               where the right person is already sitting.
-            </p>
+            </Standfirst>
             <p className="mt-5 leading-relaxed text-muted-foreground">
               Application-based membership for founders, engineers, creators,
               operators, and the corporate and civic leaders who want a hand in
@@ -360,32 +573,72 @@ export default async function HomePage() {
               )}
             </div>
           </div>
-          <Photo
-            photo={PHOTOS.theRoom}
+          {/*
+            PICKED AT 584px, WHICH IS THE ONLY SIZE THAT MATTERS HERE.
+
+            Two frames were tried before this one and both failed at the size
+            they actually render. `theRoom` is not a room at all — it is four
+            faces at close range, and it sat here under a caption claiming an
+            ambient view of a floor the frame does not contain. `fullHouse` is
+            genuinely the room, but a laptop, a tripod and a table edge eat its
+            bottom-left quarter, so at 584px you read the clutter first and the
+            room second; it is also an APPLAUSE moment, which belongs to the
+            events section rather than to a section about membership.
+
+            `speaking` is the one that holds up small: the wall of windows and
+            downtown behind it, the floor's own colour on the right, a clear
+            focal point, and — the part that decides it — a row of listening
+            faces you can still read at 584px. The copy above says the room is
+            where the right person is already sitting. This is people sitting
+            in it, turned toward each other.
+          */}
+          <Frame
+            photo={PHOTOS.speaking}
             aspect="aspect-[4/3]"
-            sizes="(min-width: 1024px) 544px, 100vw"
+            sizes="(min-width: 1024px) 584px, 100vw"
+            caption="A session on the third floor"
           />
         </div>
       </Section>
 
       {/* ── 5 · The Studio ───────────────────────────────────────────── */}
       <Section tone="bone">
-        <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
+        {/*
+          The counterweight to the Club section above: its photograph is large
+          and top-aligned, so this one is smaller, a wider crop, and sits LOW —
+          `self-end` drops it against the bottom of the copy instead of
+          floating beside its middle. Two sections that mirror each other are
+          still a rhyme; two that answer each other are a rhythm.
+
+          0.85fr, so roughly 460px. That is also the most this source can carry
+          sharply: 1198px covers 599 CSS px at 2x and no more.
+        */}
+        <div className="grid items-start gap-12 lg:grid-cols-[1fr_0.9fr] lg:gap-16">
           {/* Photo first in source order on desktop so the two product
               sections mirror each other rather than stacking identically. */}
-          <Photo
-            photo={PHOTOS.oneOnOne}
-            aspect="aspect-[4/3]"
-            sizes="(min-width: 1024px) 544px, 100vw"
-            className="lg:order-first"
+          {/*
+            Brian at the whiteboard, not two members talking by the windows.
+
+            The frame this replaced (`oneOnOne`) is a good CLUB picture and a
+            poor Studio one: this section promises "hands-on work from our
+            Entrepreneur in Residence", and a photograph of two people in
+            conversation does not show that. This one does — the EIR, named
+            three lines away, actually doing the work the section is selling.
+          */}
+          <Frame
+            photo={PHOTOS.brianWhiteboard}
+            aspect="aspect-[3/2]"
+            sizes="(min-width: 1024px) 460px, 100vw"
+            caption="Brian Sierakowski, working a product problem"
+            className="lg:order-first lg:self-end"
           />
           <div>
-            <p className={cn(MONO.label, "text-muted-foreground")}>Venture</p>
-            <SectionTitle className="!mt-3">Studio</SectionTitle>
-            <p className="mt-6 text-xl leading-relaxed text-graphite">
+            <Eyebrow>Venture</Eyebrow>
+            <SectionTitle>Studio</SectionTitle>
+            <Standfirst>
               For the founders going all in, a check and six to twelve months
               of someone&rsquo;s undivided attention.
-            </p>
+            </Standfirst>
             <p className="mt-5 leading-relaxed text-muted-foreground">
               We back {STUDIO.foundersPerYear} founders a year with{" "}
               {STUDIO.checkRange} {STUDIO.checkTerms} checks from the{" "}
@@ -466,25 +719,72 @@ export default async function HomePage() {
         </ol>
       </Section>
 
-      {/* ── 7 · Who's in the room ────────────────────────────────────── */}
+      {/* ── 7 · Why there's an application ───────────────────────────── */}
+      {/*
+        THIS SECTION USED TO BE A SECOND "WHO'S IN THE ROOM" AND IT DUPLICATED
+        /club's, which is the page that should own that.
+
+        The overlap was not just thematic. Both carried the same eyebrow, both
+        opened on a list of the same member types, and both closed with an
+        identical three-up photo grid — two of whose three frames were the same
+        photographs. A reader going homepage → Explore the Club met the same
+        section twice in four screens, the second time in Geekdom's own source
+        copy and therefore better written.
+
+        So /club keeps the roster and the give-first culture, and this keeps
+        the one line the other never had: who is here is the whole product.
+        That is not a description of the members, it is the argument for the
+        gate — the reason an application exists at all, and the reason the
+        Studio can scout from the room. A different claim deserved a different
+        section rather than a reworded copy of one.
+
+        ONE PHOTOGRAPH, NOT THREE, for the same reason. A 3-up grid here would
+        rhyme with /club's whatever the copy above it said.
+
+        AND IT HAS TO BE FACES. This slot held `fullHouse` — the whole floor,
+        packed — which is a fine picture and the wrong argument: at 1088px
+        wide a head in it is about thirty pixels tall, so the one thing this
+        section is about, WHO, was the one thing you could not make out.
+        `theRoom` is four people at close range. Cropped to 16:7 it becomes a
+        frieze of faces rather than a room with people in it, which is the
+        difference between the claim above it and the claim below.
+
+        `makeAPoint` WAS TRIED HERE AND HELD OFF, and it is the closer call on
+        the page. It puts six readable people across the measure against this
+        frame's three, which is more "who" — but it also arrives right under
+        the Club section's `speaking`, and the two are the same photograph in
+        substance: a group in session, shot from the back of the room. This
+        one is the only CLOSE-RANGE frame on the homepage, and scale variety is
+        what stops the five photographs here from rhyming.
+
+        Its out-of-focus foreground head costs about a quarter of the frame and
+        cannot be cropped out — at 16:7 from a 3:2 source, cover crops
+        vertically and `object-position` has no horizontal slack to work with.
+        It is left in as what it is: a shallow-depth device that puts the
+        reader inside the room rather than watching it.
+      */}
       <Section tone="bone">
-        <Eyebrow>Who&rsquo;s in the room</Eyebrow>
-        <SectionTitle>Find your people.</SectionTitle>
+        <Eyebrow>Why there&rsquo;s an application</Eyebrow>
+        <SectionTitle>Who&rsquo;s here is the whole product.</SectionTitle>
         <Lede>
-          Founders, engineers, and creators. The operators and investors
-          who&rsquo;ve done it before. The corporate and civic leaders who want
-          a hand in what this city becomes.
+          Everything else on this page can be copied. A floor, a calendar, a
+          check — none of it is hard to reproduce. The room is the part that
+          isn&rsquo;t, and it stays that way only if someone is paying
+          attention to who joins it.
         </Lede>
         <Lede className="mt-5">
-          Who&rsquo;s here is the whole product — which is why there&rsquo;s an
-          application, and why a person reads every one.
+          So there is an application, and a person on the Geekdom team reads
+          every one. It takes about ten minutes to write and we answer within
+          two weeks, either way.
         </Lede>
 
-        <div className="mt-14 grid gap-6 sm:grid-cols-3">
-          <Photo photo={PHOTOS.makeAPoint} aspect="aspect-[3/2]" sizes="(min-width: 640px) 341px, 100vw" />
-          <Photo photo={PHOTOS.speaking} aspect="aspect-[3/2]" sizes="(min-width: 640px) 341px, 100vw" />
-          <Photo photo={PHOTOS.headsDown} aspect="aspect-[3/2]" sizes="(min-width: 640px) 341px, 100vw" />
-        </div>
+        <Frame
+          photo={PHOTOS.theRoom}
+          aspect="aspect-[16/7]"
+          sizes="(min-width: 1152px) 1088px, 100vw"
+          caption="Mid-session, third floor"
+          className="mt-14"
+        />
       </Section>
 
       <MemberVoices />
@@ -504,7 +804,7 @@ export default async function HomePage() {
           </div>
           <Link
             href="/events"
-            className="inline-flex items-center gap-1.5 font-medium text-graphite underline decoration-clay decoration-2 underline-offset-2 transition-colors hover:decoration-graphite"
+            className={LINK_ARROW}
           >
             All events
             <ArrowRight className="h-4 w-4" strokeWidth={2} />
@@ -518,56 +818,71 @@ export default async function HomePage() {
             ))}
           </div>
         ) : (
-          <p className="mt-10 max-w-xl text-lg leading-relaxed text-muted-foreground">
+          <Lede className="mt-10 max-w-xl">
             The full calendar lives on Luma — meetups, build sessions, office
             hours, and pitch nights, most of them open to non-members.
-          </p>
+          </Lede>
         )}
       </Section>
 
-      {/* ── 9 · Since 2011 ───────────────────────────────────────────── */}
+      {/* ── 9 · Since 2011 ─────────────────────────────────────────── */}
       {/*
-        THE ORIGIN, AS ADDITION RATHER THAN SUBTRACTION.
+        THE FULL PHOTOGRAPHIC BAND WAS TRIED HERE AND TAKEN BACK OUT, and the
+        reason is this particular photograph rather than the treatment.
 
-        This slot used to hold "The desk was never the point" — the members
-        letter's line, and the emotional peak of the old page. It is the right
-        line in the wrong place: it is about what Geekdom STOPPED doing,
-        written for someone who just lost a desk, and almost nobody arriving
-        here ever had one. To a new visitor it reads as an apology for a thing
-        they never knew existed.
+        A band needs a frame with somewhere for the copy to live — a subject
+        off to one side and dead space on the other, which is what DEVSA and
+        Startup Week are both working with. This one is the opposite: a posed,
+        symmetrical portrait with Graham and Nick centered under the old wall
+        sign and nothing spare anywhere in it. Copy over the left half lands on
+        Graham's face and on "Welcome to", and the scrim that makes the copy
+        readable is laid over the one thing in the photograph worth seeing.
 
-        "Geekdom started with an email" is Geekdom's own origin from its source
-        copy, and it does the opposite work: it says this place has always been
-        the answer to somebody asking for it. Which is exactly what the Club
-        and the Studio are — the current shape of that answer.
+        So it is contained, and it is the SHORTEST frame on the page — 16:9
+        against the Club's 4:3 and the Studio's 3:2. It is also uncropped on
+        purpose: both men and the sign above them are all load-bearing, and
+        there is no crop that keeps three subjects in a symmetrical frame.
 
-        The letter is still one click away, where it belongs.
+        The page still darkens once. It just does it at the close, one section
+        below, which is where the ask is.
+
+        THE ORIGIN AS ADDITION, NOT SUBTRACTION. This slot used to hold "The
+        desk was never the point" — the members letter's line, which is about
+        what Geekdom STOPPED doing and was written for people who had a desk
+        here. Almost nobody arriving now did. "Geekdom started with an email"
+        is the same history read forward, and it has an actual photograph of
+        the two people in it.
       */}
       <Section tone="bone">
-        <div className="grid items-center gap-12 lg:grid-cols-[1fr_14rem] lg:gap-16">
+        <div className="grid items-start gap-12 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
           <div>
             <Eyebrow>Since {FOUNDED_YEAR}</Eyebrow>
             <SectionTitle>Geekdom started with an email.</SectionTitle>
-            <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
+            <Lede>
               {years} years ago, Graham Weston received an email from a founder
               saying San Antonio was missing a startup and tech community.
               Geekdom was the answer to it.
-            </p>
-            <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
+            </Lede>
+            <Lede className="mt-5">
               The shape has changed since — a coworking floor, then programs,
               then a club and a fund. What hasn&rsquo;t is the thing being
               answered: founders need the right people around them at the right
               moment. The space changes. The people in it don&rsquo;t.
-            </p>
+            </Lede>
             <Link
               href="/whats-changing"
-              className="mt-8 inline-flex items-center gap-1.5 font-medium text-graphite underline decoration-clay decoration-2 underline-offset-2 transition-colors hover:decoration-graphite"
+              className={cn("mt-8", LINK_ARROW)}
             >
               Read the letter to our members
               <ArrowRight className="h-4 w-4" strokeWidth={2} />
             </Link>
           </div>
-          <GMarkShader className="mx-auto h-56 w-auto sm:h-72 lg:h-[26rem]" />
+          <Frame
+            photo={PHOTOS.grahamNick}
+            aspect="aspect-[16/9]"
+            sizes="(min-width: 1024px) 536px, 100vw"
+            caption="Graham Weston and Nick Longo, 2011"
+          />
         </div>
       </Section>
 
@@ -579,16 +894,27 @@ export default async function HomePage() {
         arguments before a single fact. Here it has the whole page behind it,
         which is the only place an assertion like that can actually land.
       */}
+      {/*
+        THE HEADINGS WERE THE WRONG WAY ROUND HERE. "Building something?" was
+        an <h2> at 24px and HOOK — the page's closing claim, the line that was
+        the h1 of the old site — was a <p> at 48px. To a screen reader the
+        close announced the question and not the answer.
+
+        It is now the same shape as every other section on this page: eyebrow,
+        SectionTitle, Lede, CTAs. That also retires a `!text-bone` override,
+        which was there only because `Subhead` bakes in `text-graphite` and
+        this is the one place it lands on a dark ground.
+      */}
       <Section tone="graphite">
         <div className="max-w-3xl">
-          <Subhead className="!text-bone">Building something?</Subhead>
-          <p className={cn("mt-4", HEADING.heading, "text-bone")}>
+          <Eyebrow onInk>Building something?</Eyebrow>
+          <SectionTitle className="text-bone">
             {HOOK.replace(/\.$/, "")}
             <span className="text-clay">.</span>
-          </p>
-          <p className="mt-6 text-lg leading-relaxed text-bone/70">
+          </SectionTitle>
+          <Lede className="mt-6 text-bone/70">
             Membership is by application. We respond within two weeks.
-          </p>
+          </Lede>
           <div className="mt-10 flex flex-col gap-3 sm:flex-row">
             <ButtonLink href="/apply" size="lg" variant="on-ink">
               Apply to {SITE_NAME}

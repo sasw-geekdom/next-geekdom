@@ -33,7 +33,9 @@ import { env, envOr } from "@/lib/env";
  *
  * Trailing slash stripped so `${SITE_URL}/apply` never doubles up.
  */
-const vercelProduction = env(process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL);
+const vercelProduction = env(
+  process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL,
+);
 const vercelDeployment = env(process.env.NEXT_PUBLIC_VERCEL_URL);
 
 export const SITE_URL = (
@@ -375,37 +377,389 @@ export const STUDIO_PARTNERS = [
  *
  * TRANSCRIBED, NOT ESTIMATED — same rule as MILESTONES. "Acquired 2022" is a
  * checkable claim about a real company.
+ *
+ * ── LOGOS: WHY ONLY SEVEN, AND WHY THEY WERE HAND-PICKED ───────────────────
+ *
+ * They were harvested from each company's own site (and the Wayback Machine
+ * for the dead ones), and the harvest CANNOT be trusted unreviewed. A scraper
+ * looking for logo-shaped images finds customer walls, investor badges and
+ * award seals, and it found plenty: it returned SAFRAN for Big Sun Solar,
+ * NVIDIA and Microsoft for Simmie, PayRange and CPI for ParLevel, customer.io
+ * and Baremetrics for Flightpath. Shipping that unexamined would have put
+ * NVIDIA on Geekdom's portfolio wall as a company built at Geekdom. Every
+ * logo below was looked at before it was committed, and anything added later
+ * must be too.
+ *
+ * A FILENAME FILTER IS NOT ENOUGH, which is how the first pass came up short.
+ * It only looked at assets with "logo" in the URL, and plenty of these sites
+ * don't name them that way — RentBamboo's is `svg-white.svg`, Allosense's and
+ * Changebot's are inline <svg> with no URL at all. The second pass reads the
+ * fully-rendered DOM and takes every image reference, inline SVG included.
+ *
+ * THE FIVE THAT ARE STILL MISSING, and why, because each needs a different fix:
+ *
+ * ALL EIGHTEEN HAVE ONE. The last two came out of the Wayback Machine after a
+ * first pass wrongly concluded they were unrecoverable — see their entries.
+ * The mistake was querying the availability API for a bare domain, which
+ * reports a single snapshot and nothing about assets; CDX lists every capture,
+ * and the archived HTML lists assets the domain never hosted.
+ *
+ * THREE WERE SUPPLIED BY GEEKDOM rather than found — MagenTrust, Changebot and
+ * GrantAppli — and each for a different reason worth knowing:
+ *
+ *   MagenTrust, Changebot   Circular badges filled with a gradient. Shipped as
+ *                           flat JPEGs with no alpha at all, so the mask has
+ *                           to be DERIVED from luminance. Opposite readings:
+ *                           MagenTrust's ink is the gold sphere and its paper
+ *                           is the white lattice; Changebot's ink is the black
+ *                           ring and toggle and its paper is the gradient. The
+ *                           recipe for each is on its entry below.
+ *   GrantAppli              Every logo on their own site belongs to a client.
+ *
+ * WHICH IS THE REAL LESSON HERE: for a portfolio wall, asking beats scraping.
+ * A scrape returns something for almost every company, and about half of it is
+ * somebody else's mark.
+ *
+ * VERIFY BY SILHOUETTE BEFORE COMMITTING ONE. Flatten the asset's alpha to a
+ * single color and look at it — that is precisely what the mask does, and it
+ * is what caught Changebot before it shipped as a black dot.
+ *
+ * Heights are area-balanced rather than equal, by the same formula and for
+ * the same reason as data/mock/partners.ts: these run 2.5:1 to 5.4:1, and one
+ * height for all of them makes the wide ones dominate.
  */
 export interface PortfolioCompany {
   name: string;
   /** Omit rather than guess. Several of the acquired ones have no live site. */
   href?: string;
+  /**
+   * WHAT `href` ACTUALLY POINTS AT, because it is not always the company.
+   *
+   * Four of these companies were acquired and their domains are gone or
+   * redirect to the acquirer. The best link for them is a piece of press or
+   * Geekdom's own founder interview — which is genuinely more useful than a
+   * dead domain, but only if the page SAYS so. Someone clicking "Infocyte"
+   * and landing on a news article without warning has been misled, even
+   * helpfully.
+   *
+   * The wall renders this as a small label, so the destination is declared
+   * before the click rather than discovered after it.
+   */
+  link?: "site" | "story" | "video";
   /** "Acquired 2022", "Series A", "Pre-seed", "Bootstrapped". */
   stage: string;
   founded: number;
   /** Backed by the Studio, as opposed to merely started here. */
   studio?: boolean;
+  /**
+   * One line on what the company does.
+   *
+   * SOURCED, NEVER INVENTED — the same rule MILESTONES carries, and it matters
+   * more here because these are claims about other people's companies. Every
+   * description below traces to the company's own site, its own press, or
+   * Geekdom's own founder interview. A company with no description simply
+   * renders without one; a guessed one is worse than none.
+   */
+  description?: string;
+  /**
+   * Path under /public/portfolio. OPTIONAL — without it the name renders as a
+   * wordmark, which is the same fallback `Partner` takes and for the same
+   * reason: it lets a company go up the day it is agreed rather than the day
+   * someone digs out an SVG.
+   *
+   * RENDERED THROUGH A CSS MASK, not as an <img>, so every mark comes out in
+   * one color whatever it arrived in. That is not a stylistic preference —
+   * Geekdom's source copy asks for the grid "monochrome", and a harvest of
+   * these eighteen turns up logos in every polarity there is: FloatMe, Big Sun
+   * and Treatwalk all ship WHITE wordmarks that are invisible on Bone. A mask
+   * reads alpha and ignores color, so it fixes polarity and the sponsor-wall
+   * mismatch in one move. Same technique as crown-mask in globals.css.
+   *
+   * Which means the asset has to be a TRANSPARENT SVG or PNG whose alpha is
+   * the wordmark itself. A logo on a solid plate masks to a solid rectangle.
+   */
+  logo?: string;
+  /** Tailwind height for the mark, e.g. "h-6 sm:h-7". Ignored for wordmarks. */
+  logoHeight?: string;
+  /**
+   * `symbol` means the asset is a MARK WITHOUT THE NAME IN IT, so the wall
+   * sets the name beside it rather than leaving a shape on its own.
+   *
+   * Most of these companies ship a lockup — the tick sits above "CHECKUPS",
+   * the paw sits inside "treatwalk" — and those read fine alone. A few ship
+   * only the mark: RentBamboo's bamboo stripe, Allosense's circled A. On
+   * their own sites neither appears without the name next to it, because
+   * neither is recognizable enough to carry a row by itself.
+   *
+   * RentBamboo's own header is exactly this shape and there is nothing to
+   * download that matches it — the icon is an <img> and "RentBamboo" is two
+   * <span>s of live text beside it. So the wall reproduces the composition
+   * rather than the file: their mark, our type.
+   */
+  logoMark?: "wordmark" | "symbol";
 }
 
 export const PORTFOLIO: readonly PortfolioCompany[] = [
-  { name: "ParLevel Systems", stage: "Acquired 2022", founded: 2012 },
-  { name: "Promotor.io", stage: "Acquired 2019", founded: 2013 },
-  { name: "Infocyte", stage: "Acquired 2022", founded: 2014 },
-  { name: "Flightpath Finance", stage: "Acquired 2021", founded: 2015 },
-  { name: "Big Sun Solar", href: "https://www.bigsunsolar.com/", stage: "Bootstrapped", founded: 2016 },
-  { name: "Checkups", href: "https://checkups.us/", stage: "Bootstrapped", founded: 2017 },
-  { name: "FloatMe", href: "https://floatme.com/", stage: "Series A", founded: 2018 },
-  { name: "PorchPass", href: "https://www.porchpass.com/", stage: "Series A", founded: 2020 },
-  { name: "Allosense", href: "https://www.allosense.com/", stage: "Seed", founded: 2020 },
-  { name: "Betty's Co.", href: "https://bettysco.com/", stage: "Pre-seed", founded: 2020 },
-  { name: "GrantAppli", href: "https://grantappli.com/", stage: "Pre-seed", founded: 2023 },
-  { name: "Simmie", href: "https://www.simmie.ai/", stage: "Pre-seed", founded: 2024 },
-  { name: "Openlane", href: "https://www.theopenlane.io/", stage: "Pre-seed", founded: 2024, studio: true },
-  { name: "RentBamboo", href: "https://rentbamboo.com/", stage: "Pre-seed", founded: 2024, studio: true },
-  { name: "KeepTabz", href: "https://www.keeptabz.ai/", stage: "Pre-seed", founded: 2025, studio: true },
-  { name: "MagenTrust", href: "https://magentrust.ai/", stage: "Pre-seed", founded: 2025 },
-  { name: "Treatwalk", href: "https://www.treatwalk.com/", stage: "Pre-seed", founded: 2025 },
-  { name: "Changebot", href: "https://www.changebot.ai/", stage: "Pre-seed", founded: 2025, studio: true },
+  {
+    name: "ParLevel Systems",
+    logo: "/portfolio/parlevel-systems.png",
+    logoHeight: "h-8",
+    href: "https://www.parlevelsystems.com/",
+    link: "site",
+    description:
+      "Vending management software for route operators — inventory, routes and cashless payments in one system.",
+    stage: "Acquired 2022",
+    founded: 2012,
+  },
+  {
+    /*
+      "Promoter.io", with an E. It was "Promotor.io" here for as long as this
+      list has existed, carried over from the source copy. Geekdom's own
+      YouTube channel settles it: the founder interview is titled
+      "Promoter.io | Geekdom Stories".
+    */
+    name: "Promoter.io",
+    /*
+      RECOVERED FROM THE WAYBACK MACHINE. The domain is gone, so this is the
+      mark as the site last served it.
+      The capture is from December 2017, two years before Medallia bought
+      them.
+    */
+    logo: "/portfolio/promoter-io.png",
+    logoHeight: "h-8",
+    href: "https://youtu.be/6e8ih7FNLEU",
+    link: "video",
+    description:
+      "Net Promoter Score tooling for measuring customer loyalty. One of the first companies the Geekdom Fund backed; acquired by Medallia in 2019.",
+    stage: "Acquired 2019",
+    founded: 2013,
+  },
+  {
+    name: "Infocyte",
+    /*
+      RECOVERED FROM THE WAYBACK MACHINE. The domain is gone, so this is the
+      mark as the site last served it.
+      A CDX query scoped to infocyte.com could never have found this: the
+      asset was served from their WP Engine CDN on a wholly different
+      hostname. It came out of the archived HTML instead, which is the
+      lesson — read the archived PAGE, not just the archived domain.
+    */
+    logo: "/portfolio/infocyte.png",
+    logoHeight: "h-8",
+    href: "https://www.startupssanantonio.com/infocyte-cybersecurity-startup-acquired-by-datto/",
+    link: "story",
+    description:
+      "Managed detection and response, built by two former Air Force cyber incident responders. Raised around $12M before Datto acquired it.",
+    stage: "Acquired 2022",
+    founded: 2014,
+  },
+  {
+    name: "Flightpath Finance",
+    logo: "/portfolio/flightpath-finance.svg",
+    logoHeight: "h-7",
+    href: "https://www.startupssanantonio.com/flightpath-finance-closes-515k-seed-round-wins-25k-geekdom-community-fund/",
+    link: "story",
+    description:
+      "Financial modeling wired into a company's own accounting data. Won the $25,000 Geekdom Community Fund award in 2018.",
+    stage: "Acquired 2021",
+    founded: 2015,
+  },
+  {
+    name: "Big Sun Solar",
+    logo: "/portfolio/big-sun-solar.svg",
+    logoHeight: "h-8",
+    href: "https://www.bigsunsolar.com/",
+    description:
+      "Commercial solar for Texas businesses, nonprofits and municipalities — rooftop systems and canopies.",
+    link: "site",
+    stage: "Bootstrapped",
+    founded: 2016,
+  },
+  {
+    name: "Checkups",
+    logo: "/portfolio/checkups.webp",
+    logoHeight: "h-9",
+    href: "https://checkups.us/",
+    /*
+      The only one of the eighteen whose site ships no meta description at all,
+      so this is read off the page itself rather than lifted from a tag.
+    */
+    description:
+      "Remote check-ins for community supervision — an app and dashboard that replace in-person probation visits.",
+    link: "site",
+    stage: "Bootstrapped",
+    founded: 2017,
+  },
+  {
+    name: "FloatMe",
+    href: "https://floatme.com/",
+    logo: "/portfolio/floatme.svg",
+    logoHeight: "h-6",
+    description:
+      "Cash advances before payday, with spending alerts and budgeting tools alongside them.",
+    link: "site",
+    stage: "Series A",
+    founded: 2018,
+  },
+  {
+    name: "PorchPass",
+    href: "https://www.porchpass.com/",
+    logo: "/portfolio/porchpass.svg",
+    logoHeight: "h-7",
+    description:
+      "Buys the land and the house for cash so a build can start up to 60 days sooner.",
+    link: "site",
+    stage: "Series A",
+    founded: 2020,
+  },
+  {
+    name: "Allosense",
+    logo: "/portfolio/allosense.svg",
+    logoHeight: "h-6",
+    logoMark: "symbol",
+    href: "https://www.allosense.com/",
+    description:
+      "Sensors, automation and observability for factory floors — test and measurement.",
+    link: "site",
+    stage: "Seed",
+    founded: 2020,
+  },
+  {
+    name: "Betty's Co.",
+    href: "https://bettysco.com/",
+    logo: "/portfolio/bettys-co.svg",
+    logoHeight: "h-8",
+    description: "Gynecology, mental health and wellness care for young women.",
+    link: "site",
+    stage: "Pre-seed",
+    founded: 2020,
+  },
+  {
+    name: "GrantAppli",
+    href: "https://grantappli.com/",
+    /*
+      Supplied by Geekdom, and it had to be: every logo on grantappli.com
+      belongs to one of their CLIENTS — HOPE, Black Lives Matter, FIRST DAY,
+      Hearing Thru Horses. A scrape of that page returns six real logos and
+      not one of them is GrantAppli's. Same trap as KeepTabz, whose site
+      offered up Netlify and the San Antonio Zoo.
+    */
+    logo: "/portfolio/grantappli.png",
+    logoHeight: "h-6",
+    description:
+      "Grant writing and funder research in one place, for teams that apply often.",
+    link: "site",
+    stage: "Pre-seed",
+    founded: 2023,
+  },
+  {
+    name: "Simmie",
+    href: "https://www.simmie.ai/",
+    logo: "/portfolio/simmie.png",
+    logoHeight: "h-7",
+    description:
+      "AI roleplay simulations that score sales reps against a company's own standard.",
+    link: "site",
+    stage: "Pre-seed",
+    founded: 2024,
+  },
+  {
+    name: "Openlane",
+    href: "https://www.theopenlane.io/",
+    logo: "/portfolio/openlane.svg",
+    logoHeight: "h-6",
+    description:
+      "Security and compliance — define your controls once and reuse the program across frameworks.",
+    link: "site",
+    stage: "Pre-seed",
+    founded: 2024,
+    studio: true,
+  },
+  {
+    name: "RentBamboo",
+    logo: "/portfolio/rentbamboo.svg",
+    logoHeight: "h-6",
+    logoMark: "symbol",
+    href: "https://rentbamboo.com/",
+    description:
+      "An AI leasing agent that answers inquiries and books tours for property managers.",
+    link: "site",
+    stage: "Pre-seed",
+    founded: 2024,
+    studio: true,
+  },
+  {
+    name: "KeepTabz",
+    logo: "/portfolio/keeptabz.svg",
+    logoHeight: "h-7",
+    href: "https://www.keeptabz.ai/",
+    description:
+      "Competitive intelligence — a competitor's news, pricing, campaigns and reviews in one place.",
+    link: "site",
+    stage: "Pre-seed",
+    founded: 2025,
+    studio: true,
+  },
+  {
+    name: "MagenTrust",
+    href: "https://magentrust.ai/",
+    /*
+      DERIVED FROM A JPEG, which is why this is the one asset in here that was
+      built rather than downloaded. MagenTrust ship a gold geodesic sphere with
+      no transparency anywhere on their site — masked as-is it is a solid
+      square, and their SVG icon is a filled disc that masks to a black dot.
+      The alpha here comes from the JPEG's own luminance: gold goes opaque, the
+      white lattice lines go transparent, so the lattice reads as holes rather
+      than ink. Regenerate it the same way if the source ever changes.
+    */
+    logo: "/portfolio/magentrust.png",
+    logoHeight: "h-6",
+    logoMark: "symbol",
+    description:
+      "Behavioral identity verification that re-checks who you are throughout a session. No card reader, no second device.",
+    link: "site",
+    stage: "Pre-seed",
+    founded: 2025,
+  },
+  {
+    name: "Treatwalk",
+    logo: "/portfolio/treatwalk.png",
+    logoHeight: "h-9",
+    href: "https://www.treatwalk.com/",
+    description:
+      "A mobile app for walking, running and hiking with your dog, with training and progress tracking.",
+    link: "site",
+    stage: "Pre-seed",
+    founded: 2025,
+  },
+  {
+    name: "Changebot",
+    href: "https://www.changebot.ai/",
+    /*
+      DERIVED FROM A JPEG, like MagenTrust's — but read the other way round.
+
+      There IS a wordmark on changebot.ai, in the footer, and it is live text:
+      two <span>s reading "Changebot" and ".ai", with no file behind it. So the
+      badge is the only asset there is, and masked as shipped it is a solid
+      disc.
+
+      What rescues it is that the DESIGN is the black ring and the black
+      toggle; the green-to-cyan gradient is only fill. Thresholding on
+      luminance keeps the black and drops the gradient, so the mask comes out
+      as a ring with a toggle inside it — the mark, legibly. The opposite
+      reading to MagenTrust, whose ink was the bright part and whose paper was
+      the white lattice.
+    */
+    logo: "/portfolio/changebot.png",
+    logoHeight: "h-6",
+    logoMark: "symbol",
+    description:
+      "A hosted changelog and embeddable widget, so customers and support can see what shipped.",
+    link: "site",
+    stage: "Pre-seed",
+    founded: 2025,
+    studio: true,
+  },
 ];
 
 export const GOAL =
@@ -442,7 +796,6 @@ export interface Partner {
   height?: string;
 }
 
-
 export interface MemberVoice {
   /** One or two sentences. Long quotes stop being read. */
   quote: string;
@@ -450,7 +803,6 @@ export interface MemberVoice {
   /** "Co-founder, Acme" — the role is what makes the quote weigh anything. */
   role: string;
 }
-
 
 /** Who runs the floors Geekdom is handing back. Named in the members FAQ. */
 export const PROPERTY_OWNER = "Weston Urban";
@@ -562,32 +914,23 @@ export const ECOSYSTEM: readonly EcosystemEntry[] = [
 ];
 
 /**
- * The other things Geekdom runs or convenes, as NAMES pointing off-site.
+ * The footer's "Beyond the club" column, derived from ECOSYSTEM rather than
+ * listed again.
  *
- * LAUNCHSA IS THE REASON THIS EXISTS, and the reason it is a text link rather
- * than a logo. Geekdom operates LaunchSA for the City of San Antonio, and the
- * 2026 brand guide gives that relationship a section of its own: separate
- * brands, separate audiences, separate funding, and — verbatim — "never combine
- * the two logos in the same lockup". The guide still asks for a LaunchSA
- * reference in the footer, which is the distinction it is drawing: refer to the
- * other program by name, always as a separate program, never by absorbing
- * its mark into Geekdom's own furniture. It was in the partner marquee until
- * now, which was the wrong treatment twice over — a lockup, and a claim that
- * Geekdom is its partner rather than its operator.
+ * IT USED TO BE ITS OWN ARRAY, `RELATED`, written before `ECOSYSTEM` existed —
+ * the same four organisations in a second place, already drifting ("Startup +
+ * Tech Week" here against "San Antonio Startup + Tech Week" there). Two lists
+ * of the same four things is one list that will be wrong.
  *
- * The rest are here because the footer column they share is "Related", not
- * "Ours". Startup + Tech Week and Accelerate South Texas are co-run; MIT REAP
- * is a program Geekdom takes part in.
+ * The footer needs only a name and a URL, so it takes those. Everything that
+ * makes ECOSYSTEM careful — the exact verb for each relationship, the LaunchSA
+ * separation the brand guide requires — stays on the homepage section that has
+ * room to state it.
  */
-export const RELATED = [
-  { label: "LaunchSA", href: "https://launchsa.org" },
-  { label: "Startup + Tech Week", href: "https://www.sasw.co/" },
-  {
-    label: "Accelerate South Texas",
-    href: "https://saafdn.org/accelerate-south-texas/",
-  },
-  { label: "MIT REAP", href: "https://reap.mit.edu" },
-] as const;
+export const BEYOND_THE_CLUB: NavLink[] = ECOSYSTEM.map((e) => ({
+  href: e.href,
+  label: e.name,
+}));
 
 /**
  * The utility row under the footer proper. Small, quiet, and the one part of
@@ -600,8 +943,10 @@ export const LEGAL: NavLink[] = [
 ];
 
 /** Public calendar the events page links out to when Luma isn't configured. */
-export const LUMA_CALENDAR_URL =
-  envOr(process.env.NEXT_PUBLIC_LUMA_CALENDAR_URL, "https://luma.com/geekdom");
+export const LUMA_CALENDAR_URL = envOr(
+  process.env.NEXT_PUBLIC_LUMA_CALENDAR_URL,
+  "https://luma.com/geekdom",
+);
 
 /**
  * THE TWO ENGINES, and that is the whole nav.
@@ -631,7 +976,4 @@ export const NAV: NavLink[] = [
 ];
 
 /** The rest of the site, for the footer. Not nav-worthy, not orphaned. */
-export const EXPLORE: NavLink[] = [
-  { href: "/events", label: "Events" },
-  { href: "/whats-changing", label: "What's Changing" },
-];
+export const EXPLORE: NavLink[] = [{ href: "/events", label: "Events" }];

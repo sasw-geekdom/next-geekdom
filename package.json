@@ -13,16 +13,19 @@
     "og": "node scripts/og.mjs"
   },
   "dependencies": {
+    "@vercel/blob": "^2.8.0",
     "botid": "^1.5.11",
     "clsx": "^2.1.1",
     "firebase": "^12.17.1",
     "firebase-admin": "^12.7.0",
     "lucide-react": "^1.31.0",
+    "motion": "^13.4.0",
     "next": "16.3.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "resend": "^6.20.0",
     "server-only": "^0.0.1",
+    "sharp": "^0.35.4",
     "stripe": "^22.5.0",
     "tailwind-merge": "^3.6.0",
     "zod": "^4.4.3"

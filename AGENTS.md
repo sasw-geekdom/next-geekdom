@@ -44,6 +44,22 @@ list belong on `/club`; don't move them back.
 - **`POSITIONING` is the h1**, sliced for its Clay accent so the two can't
   drift. `HOOK` closes the page.
 
+## Photography
+
+Every frame in [lib/photos.ts](lib/photos.ts) was shot on the third floor —
+**with one deliberate exception.** `brianWhiteboard` is the EIR at a whiteboard
+with a founder, and it sits in the homepage's Studio section.
+
+The "same floor" rule exists because the site's claim about the CLUB is that it
+is this specific room. **The Studio is not a room-based product** — what it
+sells is six to twelve months of one person's attention — so a photograph of
+that person working is more on-point than the floor he may not be standing on.
+Scope the rule to Club imagery; don't apply it to Studio.
+
+Two open items on that file: it may predate the Studio (it reads older and is
+1198px where the library is 1600px), and at that size it covers a 544px slot at
+2x but **not** a full-bleed `PhotoBand`.
+
 ## The two engines
 
 Geekdom runs **the Club** (an application-based members' club, `/club`) and
@@ -85,6 +101,52 @@ team asked for — everything else lives in the footer.
   earlier version of `lib/site.ts` and `/llms.txt` said all four of the
   one-pager's programs were legacy. Only the Incubator and the
   Pre-Accelerator are.
+
+## The easter egg
+
+`/since-2011` is a throwback page hiding behind the **Geekdom** word in the
+footer's copyright line. Ported from the sibling `next-sasw` repo, where the
+same page runs as "15 years of Geekdom".
+
+- **Deliberately out of the sitemap and out of the nav.** An easter egg that
+  ranks in search has stopped being one. It is still indexable and has a
+  canonical, so a link someone shares works.
+- **The count and the route are evergreen.** The heading computes from
+  `FOUNDED_YEAR`, and the path is `/since-2011` rather than `/15-years` —
+  which is true for exactly one year.
+- **The photo wall reads a Firestore manifest, not Storage.** Originals go in
+  the `since-2011/` Storage folder; the admin's **Photo wall** screen resizes
+  them to WebP and publishes to Vercel Blob
+  ([lib/gallery-sync.ts](lib/gallery-sync.ts)). A run is capped at 40 photos so
+  a first batch can't blow the request timeout — the UI says to run it again.
+  Needs `BLOB_READ_WRITE_TOKEN`; without it the page renders its empty state
+  rather than failing.
+- **`motion` is here for this page only.** It is the sole animation dependency
+  in a repo that otherwise does everything in CSS keyframes and
+  IntersectionObserver, and it earns it for one effect: a scroll-linked
+  parallax that differs per element. Don't reach for it elsewhere — check
+  whether CSS does the job first.
+- **`useReducedMotion` in [lib/use-reduced-motion.ts](lib/use-reduced-motion.ts),
+  never motion's.** Motion's reads `matchMedia` during render and returns
+  `true` on the client's first pass for anyone with the setting on, so any
+  branch on it produces a hydration mismatch. Ours uses
+  `useSyncExternalStore` with a `false` server snapshot. The full account is in
+  that file.
+- **The door wears the CLASSIC wordmark**
+  ([geekdom-classic.svg](public/brand/geekdom-classic.svg)) — Geekdom's
+  original light humanist mark with the spiky crown over the "d", not the
+  condensed slab lockup in the navbar. That is the joke: a door to a fifteen-
+  year retrospective wearing the logo those years were spent under. It is a
+  SECOND wordmark on a site whose guide has one, so it is contained
+  deliberately: one instance, 16px, in the quietest line on the page, and
+  historical by nature rather than a variant of the current mark. Don't use it
+  anywhere else. It ships flattened to Bone because an `<img>` can't take
+  `currentColor`, and it's an `<img>` because the footer renders on every route.
+- **⚠️ The wordmark shader is the largest instance of the pending brand
+  exception.** The hero masks the flow into the PRIMARY wordmark — every color
+  in it is approved, the gradient is not. It goes into the same sign-off as the
+  crown and the g-mark. `WordmarkShader` exists for this one placement; the
+  rail on `CrownPage` can't even accept it (see `RailShape`).
 
 ## Repo gotchas
 
@@ -235,9 +297,14 @@ secondary action silently renders as a second primary CTA.
 **Rubik** for everything you read, **Geist Mono** for everything you scan,
 **Fraunces italic** for the handful of editorial moments.
 
-Rubik is loaded at **400 and 500 only**, as two static cuts rather than the
-variable font — the scale needs exactly two values, and a static pair makes
-"Never Bold" enforceable rather than advisory. It replaced Geist Sans, which
+Rubik is loaded at **400 and 500 only** — the scale needs exactly two values,
+and pinning them is what makes "Never Bold" enforceable rather than advisory.
+It is the **variable font**, not two static cuts (Rubik ships no static files);
+`next/font` declares the same 300–900 file twice, once per weight, and the
+browser pins the `wght` axis per rule. **Its default instance is Light**, so
+measuring the woff2 in `.next/static/media` as-is under-reports real 500 type
+by ~4% — instantiate the axis at 500 first, or a headline that needs four
+lines will look like it fits in three. It replaced Geist Sans, which
 made the website the only Geekdom surface not in the brand's type. **Never use
 italic Rubik**; the guide sends italics to Fraunces.
 
@@ -270,6 +337,22 @@ partner marquee and was removed. Refer to it by name, as a separate program:
 the footer's "Related" column is the pattern.
 
 ## Voice
+
+**US English. The audience is San Antonio.**
+
+This has been corrected four separate times in this repo — `programme`,
+`behavioural`, `honoured`, `modelling`, `colour`, `centred`, `recognisable`,
+`cheque` — and each time it reached copy a visitor reads, once as far as the
+terms of membership (`licence`, `behaviour`). Assume any new prose needs a pass
+before it ships, and sweep on STEMS rather than whole words: the first attempts
+caught `honour` but not `honoured`, `apologise` but not `apologises`.
+
+Two proper nouns are exceptions and must survive the sweep:
+
+- **Weston Centre** — Geekdom's first home. That is the building's real name.
+- **Event Center** — Geekdom spells its own venue the American way; the FAQ
+  said "Centre" and that was the error.
+
 
 Short declaratives. Active verbs. Parallel structure. No jargon, no
 coworking-marketing filler ("vibrant ecosystem", "state-of-the-art amenities").

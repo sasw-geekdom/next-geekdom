@@ -125,6 +125,24 @@ export const LINK_ON_INK =
   "font-medium text-bone underline decoration-clay decoration-2 underline-offset-2 transition-colors hover:decoration-bone";
 
 /**
+ * A STANDALONE LINK WITH AN ARROW — "All events →", "Read the letter →".
+ *
+ * `LINK` above is for a link inside a sentence. This is the other kind: a link
+ * that IS the line, sitting at the end of a section or beside a heading, with
+ * a `<ArrowRight className="h-4 w-4" strokeWidth={2} />` after the label.
+ *
+ * It is a separate constant rather than `cn("inline-flex …", LINK)` at the
+ * call site because the flex wrapper is the part that kept getting retyped —
+ * `gap-1` and `gap-1.5` both appear in the repo for the same arrow, and an
+ * arrow half a pixel closer on one page than another is the kind of drift
+ * nobody reports and everybody feels.
+ */
+export const LINK_ARROW = `inline-flex items-center gap-1.5 ${LINK}`;
+
+/** The arrow link on a graphite ground. */
+export const LINK_ARROW_ON_INK = `inline-flex items-center gap-1.5 ${LINK_ON_INK}`;
+
+/**
  * THE TYPE SCALE.
  *
  * RETUNED FOR RUBIK AT 500. Every tier here used to be `font-bold` (700) on
@@ -157,20 +175,45 @@ export const HEADING = {
   /**
    * The claim on a page that has nothing else above the fold.
    *
-   * Caps at 7xl (72px), not 8xl. It used to run to 96px on a tall screen and
-   * step down to 72px on a laptop, which meant the headline CHANGED SIZE
-   * between displays — and on the homepage that moved its last glyph from 773
-   * to 972, squeezing the crown beside it from 336px to 220px. The proportion
-   * between the two halves of the hero was different on every machine.
+   * CAPS AT 7xl (72px). 96px was tried at `xl` and reverted, and the number
+   * that settles it is the measure:
    *
-   * One size holds that relationship steady everywhere. 72px is still display
-   * type; 96px was only ever reachable on a monitor tall enough to fit it.
+   *   Rubik 500, the homepage h1, inside `max-w-4xl` (896px)
+   *     72px   3 lines   732 / 705 / 287
+   *     96px   4 lines   826 / 477 / 594 / 383   <- "founders" alone
+   *
+   * The fourth line is what `text-balance` then shuffles, and it orphans a
+   * word every time, because there is no good four-line break in a sentence
+   * this shape. The headline cannot be given more room either: the hero's
+   * mark is absolutely positioned against the container's right edge, so
+   * widening past 896px runs the type underneath it.
+   *
+   * MEASURE AT 500, NOT AT THE FILE'S DEFAULT INSTANCE. Rubik reaches this
+   * site as a VARIABLE font whose default instance is Light (300) — the name
+   * table in .next/static/media literally reads "Rubik Light" — and next/font
+   * pins the axis per face, so what renders is wght=500. Measuring the file
+   * as it sits on disk under-reports the real line by 4%, which is exactly
+   * enough to turn this four-line break into a three-line one and make 96px
+   * look safe. It is not. Instantiate the axis first.
    */
   display:
     "text-5xl font-medium leading-[1.0] tracking-[-0.02em] sm:text-6xl lg:text-7xl",
-  /** A hero with a photograph behind it. */
+  /**
+   * A HERO THAT SHARES ITS FOLD WITH A PHOTOGRAPH, beside it or behind it.
+   *
+   * Smaller than `display` on purpose, and the constraint is the SCRIM, not
+   * the layout. A photographic hero can only hold copy where its ramp is
+   * heavy; past that the ground lightens and the type stops clearing AA. That
+   * caps the copy column at ~42rem, and the homepage headline's longest forced
+   * line measures 732px at 72px in Rubik 500 — it does not fit. At 60px it
+   * needs 610px and it does.
+   *
+   * Widening the column to buy 72px back was measured and is not available:
+   * carrying the copy to 63% of the fold drops Bone to 3.14:1 on its worst
+   * pixel. The size, the measure and the reveal are one budget.
+   */
   title:
-    "text-4xl font-medium leading-[1.04] tracking-[-0.02em] sm:text-6xl lg:text-7xl",
+    "text-4xl font-medium leading-[1.06] tracking-[-0.018em] sm:text-5xl xl:text-6xl",
   /** h1 on a task or read page, and every SectionTitle. */
   heading:
     "text-4xl font-medium leading-[1.1] tracking-[-0.015em] sm:text-5xl",
@@ -269,6 +312,37 @@ export function SectionTitle({
   return (
     <h2
       className={cn("mt-4 max-w-3xl", HEADING.heading, className)}
+      {...props}
+    />
+  );
+}
+
+/**
+ * THE LOUD LEDE — the sentence under a section title that IS the section's
+ * claim, rather than a subtitle explaining one.
+ *
+ * 20px in full-strength graphite, against `Lede`'s 18px in concrete. The
+ * difference is not decoration: a `Lede` introduces what follows, and this
+ * asserts something and lets the paragraphs under it do the explaining. The
+ * body after a Standfirst drops to 16px, because the contrast between the two
+ * is what makes the claim read as a claim.
+ *
+ * SPARINGLY, AND THE HOMEPAGE IS THE RULE: the two engine sections get it —
+ * the Club and the Studio, where the section has one thing to assert — and
+ * nothing else does. It existed unnamed at exactly those two call sites,
+ * written out as `text-xl leading-relaxed text-graphite`, which is how a tier
+ * that is meant to be rare quietly becomes a tier that is everywhere.
+ */
+export function Standfirst({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLParagraphElement>) {
+  return (
+    <p
+      className={cn(
+        "mt-6 max-w-2xl text-xl leading-relaxed text-graphite",
+        className,
+      )}
       {...props}
     />
   );

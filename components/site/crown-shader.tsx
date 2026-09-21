@@ -45,25 +45,85 @@ const SHAPES = {
     fallback: "/brand/g-mark.svg",
     aspect: "aspect-[40/127]",
   },
+  /*
+    THE FULL LOCKUP. One placement only: the /since-2011 hero, where the
+    wordmark is the whole picture rather than a mark beside something.
+
+    This is the largest the exception below gets — a gradient inside the
+    PRIMARY wordmark, which is the most protected mark in the system and the
+    one rendering flat and correct in the navbar three inches above it. It is
+    here deliberately and it needs to go into the same sign-off conversation as
+    the crown. Don't reach for it anywhere else.
+  */
+  wordmark: {
+    mask: "geekdom-mask",
+    fallback: "/brand/geekdom_logo_full.svg",
+    aspect: "aspect-[375/142]",
+  },
 } as const;
 
 export type MarkShape = keyof typeof SHAPES;
 
 export function CrownShader({
   shape = "crown",
+  onDark = false,
   className,
 }: {
   shape?: MarkShape;
+  /** The mark sits on a graphite ground. See the note below — required there. */
+  onDark?: boolean;
   className?: string;
 }) {
   const { mask, fallback, aspect } = SHAPES[shape];
+  /*
+    THE BASE HAS TO DIFFER FROM THE GROUND, and getting that wrong is what
+    broke the footer mark.
+
+    On a light ground the flow runs Graphite in the troughs, through Geekdom
+    Red, to a Bone crest — dark mark, light page. Correct on the hero and on
+    /since-2011.
+
+    The footer is Graphite. With a Graphite base, base and background were
+    rgb(27,27,27) against rgb(27,27,27) — a difference of ZERO. Every trough
+    in the mark was exactly the colour of the page behind it, so the crown
+    stopped reading as a crown and became a few disconnected red patches
+    floating in the footer. It looked broken because half of it was missing.
+
+    `onDark` keeps the mark IN RED rather than inverting it. `color` is the
+    BODY of the flow, not an accent, so the first attempt at this — Geekdom Red
+    as the base, Bone as the colour — turned most of the crown pale. Its ramp
+    ran #C93625 → #EBC8BF: red at the troughs and near-white everywhere else,
+    which is not a red mark, it is a pink one.
+
+    What runs now is a deep crimson base through Geekdom Red, with Bone held
+    to the crests at 0.26 where it reads as light falling on the mark rather
+    than as a second colour. The whole ramp stays crimson:
+
+        #5A1612 → #6C1B15 → #92261C → #BD4032 → #D36052
+
+    #5A1612 IS A SHADE OF GEEKDOM RED, not a fourth colour — the same licence
+    `--geekdom-red-deep` takes in globals.css for the button hover. The mark
+    needs a dark end to have any depth at all, Graphite is unavailable here
+    because it is the page, and the only honest place left to go is down the
+    red itself.
+
+    CHECK THE BASE AGAINST THE GROUND whenever this is placed somewhere new.
+    The failure is silent: the canvas renders perfectly and the mark simply is
+    not there.
+  */
+  /*
+    ONLY THE DARK END MOVES. Geekdom Red is the body and Bone the crest on
+    both grounds — what changes is the floor the flow starts from, because
+    that is the value that has to stay distinguishable from the page.
+  */
+  const base: [number, number, number] = onDark
+    ? [0.353, 0.086, 0.071] // #5A1612 — deep crimson, on a graphite page
+    : [0.106, 0.106, 0.106]; // #1B1B1B — Graphite, on a bone page
   return (
     <ShaderCanvas
-      // Geekdom Red, Bone, Graphite — the three colors the guide allows a
-      // mark to appear in. Base is Graphite as linear-ish 0-1 RGB (27/255).
       color="#CA3625"
       accent="#F4F1EB"
-      base={[0.106, 0.106, 0.106]}
+      base={base}
       maskClassName={mask}
       fallbackSrc={fallback}
       className={cn(aspect, className)}
@@ -78,4 +138,19 @@ export function CrownShader({
  */
 export function GMarkShader({ className }: { className?: string }) {
   return <CrownShader shape="g-mark" className={className} />;
+}
+
+/**
+ * The full wordmark, same flow. /since-2011 only — see the note on the shape.
+ *
+ * IT WORKS ON A LIGHT GROUND UNCHANGED, which is worth stating because it
+ * looks like it shouldn't. The flow runs Graphite in the troughs through
+ * Geekdom Red to a Bone crest, and the mask paints only the glyphs — so on
+ * bone the mark reads as dark red catching light, and the page behind it never
+ * shows through. The crest is held at 0.26 for exactly this reason: any
+ * stronger and the highlights approach the page color and punch holes in the
+ * letterforms.
+ */
+export function WordmarkShader({ className }: { className?: string }) {
+  return <CrownShader shape="wordmark" className={className} />;
 }

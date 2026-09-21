@@ -5,6 +5,7 @@ import {
   Inbox,
   Users,
   CalendarDays,
+  Images,
   type LucideIcon,
 } from "lucide-react";
 
@@ -19,6 +20,7 @@ export const NAV: NavItem[] = [
   { href: "/admin/applications", label: "Applications", icon: Inbox },
   { href: "/admin/members", label: "Members", icon: Users },
   { href: "/admin/events", label: "Events", icon: CalendarDays },
+  { href: "/admin/gallery", label: "Photo wall", icon: Images },
 ];
 
 /**

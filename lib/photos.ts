@@ -11,6 +11,8 @@ import dropIn from "@/public/photos/drop-in.jpg";
 import makeAPoint from "@/public/photos/make-a-point.jpg";
 import pitch from "@/public/photos/pitch.jpg";
 import oneOnOne from "@/public/photos/one-on-one.jpg";
+import brianWhiteboard from "@/public/photos/brian-whiteboard.jpg";
+import grahamNick from "@/public/photos/graham-nick-2011.jpg";
 import conversation from "@/public/photos/conversation.jpg";
 import headsDown from "@/public/photos/heads-down.jpg";
 import programming from "@/public/photos/programming.jpg";
@@ -86,6 +88,13 @@ export const PHOTOS = {
    * Note it puts a SECOND identifiable person on the homepage, so the release
    * question in the header comment applies to them too.
    */
+  /*
+    CURRENTLY UNUSED. It led the homepage as a full-bleed band under the hero
+    until that band was removed — see the note in app/(site)/page.tsx. Kept
+    because it is the warmest frame in the library and /about or /club will
+    want it: two members greeting each other with a room applauding around
+    them, which is the site's whole argument in one picture.
+  */
   welcomeHero: {
     src: welcomeHero,
     alt: "Two Geekdom members greeting each other on the third floor, with a room of seated members applauding around them.",
@@ -207,6 +216,96 @@ export const PHOTOS = {
   fireside: {
     src: fireside,
     alt: "Two speakers laughing during a fireside chat on the third floor, members watching from close by.",
+  },
+
+  /**
+   * 2011. GRAHAM WESTON AND NICK LONGO, under the original wall.
+   *
+   * The two people in the origin story, photographed in the place the story
+   * happened: Nick emailed Graham to say San Antonio was missing a startup
+   * community, and Geekdom was the answer. It runs in the homepage's "Geekdom
+   * started with an email" section, where it replaced a shader g-mark — a
+   * decorative mark standing in for a story that has an actual photograph.
+   *
+   * THE WALL BEHIND THEM IS THE POINT AS MUCH AS THEY ARE. It carries the
+   * ORIGINAL logo — the light wordmark with the spiky crown, the same mark the
+   * footer's easter-egg door wears — and the first tagline, "The Place Where
+   * Startups Are Born." A brand's own history, legible in the background of
+   * its founding photograph, is exactly the "vintage… throwback" frame the
+   * 2026 guide asks the library for and had none of.
+   *
+   * ⚠️ THIS FILE IS AN AI UPSCALE, AND IT SAYS SO ITSELF. It is 2730x1536,
+   * generated from the original 800x450 web export, and it carries an
+   * embedded C2PA manifest signed by Google:
+   *
+   *     c2pa.opened    "Opened by Google Generative AI"
+   *     c2pa.resized   "Resized by Google Generative AI"
+   *     digitalSourceType: …/digitalsourcetype/trainedAlgorithmicMedia
+   *
+   * No EXIF, no camera make or model, no ICC profile — a camera original
+   * carries all three. Shipped on an explicit decision after the tradeoff was
+   * put in writing; recorded here so nobody later mistakes it for a negative
+   * scan.
+   *
+   * WHAT SURVIVED AND WHAT DIDN'T. Checked against the original before
+   * install: the crown's five points and their spacing, the glasses frame, the
+   * shirt buttons and the lapel all correspond, so the composition and both
+   * faces are structurally the real photograph. What the model invented is the
+   * table — the business card and the printed strip are an illegible blur in
+   * the source and crisp, readable-looking text here. That text is fiction.
+   * Any future crop should prefer the upper two thirds.
+   *
+   * THE REAL FIX IS STILL THE ORIGINAL. The 800px file was plainly a web
+   * export of something larger, and Geekdom took the photograph — the camera
+   * file exists somewhere. Swapping it in needs nothing but this constant.
+   */
+  grahamNick: {
+    src: grahamNick,
+    alt: "Graham Weston and Nick Longo sitting together in 2011 beneath Geekdom's original wall sign, which reads \"Welcome to geekdom — The Place Where Startups Are Born.\"",
+  },
+
+  /**
+   * THE ONE PHOTOGRAPH NOT SHOT ON THE THIRD FLOOR, and the exception is
+   * deliberate.
+   *
+   * Every other frame in this file is from the Rand, because the site's claim
+   * about the CLUB is that it is this specific room. The Studio is not a
+   * room-based product — what it sells is six to twelve months of one person's
+   * attention — so a photograph of that person doing the work is more on-point
+   * than a photograph of the floor he isn't necessarily on.
+   *
+   * It replaced `oneOnOne` in the homepage's Studio section, which showed two
+   * members talking by the windows. That frame illustrates the CLUB well and
+   * the Studio hardly at all: the section's promise is "hands-on work from our
+   * Entrepreneur in Residence", and this is literally that — Brian at a
+   * whiteboard with a founder, both holding markers, mid-argument about a
+   * product.
+   *
+   * ⚠️ AN AI UPSCALE, AND CROPPED FOR A REASON. Like `grahamNick`, this file
+   * carries a C2PA manifest signed by Google — "Opened by Google Generative
+   * AI", "Resized by Google Generative AI", digitalSourceType
+   * trainedAlgorithmicMedia. It was generated from the 1198x799 original.
+   *
+   * THE UPSCALER REWROTE BRIAN'S NAME. The whiteboard in the original reads
+   * "Brian Sierakowski"; in the upscale it reads "Brian Siiewkowski" — and
+   * because the upscale is sharper, the misspelling is MORE legible than the
+   * correct spelling ever was. On the one section of the site that names him
+   * in the copy three lines away, a photograph spelling him wrong is not a
+   * subtle provenance worry, it is a visible error about a real person.
+   *
+   * So the file here is cropped right of it: `extract` at 980,380 for
+   * 1548x1032, which keeps both men, the marker, the gesture and the real
+   * board text ("Maryland", "USA") and excludes the fabricated surname
+   * entirely. DO NOT RE-CROP LEFTWARD without checking what the handwriting
+   * says — everything upstream of x=1180 in the source is suspect.
+   *
+   * Also still worth confirming: the styling reads older than the Geekdom
+   * shoots, so this may date from Brian's TeamPassword years rather than the
+   * Studio.
+   */
+  brianWhiteboard: {
+    src: brianWhiteboard,
+    alt: "Two men working at a whiteboard covered in a hand-drawn product wireframe, one sketching with a marker while the other points at the screen layout.",
   },
 
   /** A talk in progress — the programming frame in /club's clubhouse grid. */

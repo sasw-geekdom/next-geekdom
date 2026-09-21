@@ -328,7 +328,7 @@ export default function ClubPage() {
             {/*
               The address as an <address>, not a paragraph — it is the one
               block on this page a browser, a screen reader or a phone should
-              be able to recognise as contact information.
+              be able to recognize as contact information.
             */}
             <address className="mt-8 not-italic leading-relaxed text-muted-foreground">
               <span className="font-medium text-graphite">
@@ -434,13 +434,50 @@ export default function ClubPage() {
             aspect="aspect-[3/2]"
             sizes="(min-width: 640px) 341px, 100vw"
           />
+          {/*
+            `fullHouse` took this slot when `speaking` went to the homepage's
+            Club section, where it had to carry a 584px frame on its own. It
+            is the better trade in both directions: this is a three-up of small
+            tiles under "Builders of all breeds", and a packed room reads as a
+            crowd here without needing any single face to be legible.
+          */}
           <Photo
-            photo={PHOTOS.speaking}
+            photo={PHOTOS.fullHouse}
             aspect="aspect-[3/2]"
             sizes="(min-width: 640px) 341px, 100vw"
           />
+          {/*
+            `welcomeHero`, and the reason this slot has now changed twice is
+            worth writing down: it keeps colliding with the homepage.
+
+            It held `theRoom` while the homepage's Club section did, then
+            `conversation` — which was free at the time and is now the
+            homepage's full-bleed HERO. That made the collision worse than the
+            one the swap was meant to fix: a reader clicking "Explore the Club"
+            met the same two men, at 341px, one screen after meeting them at
+            full width.
+
+            `welcomeHero` had never been placed anywhere. Two members greeting
+            each other with a room applauding around them is the most literal
+            "builders of all breeds" frame in the library, and nothing else
+            competes for it.
+
+            THE BLACK-AND-WHITE QUOTA STILL NEEDS ANSWERING. The 2026 guide
+            asks for roughly 30% of the photography in black and white,
+            "reserved for editorial gravity". `conversation` was carrying that
+            here; it now carries it on the homepage hero instead, which is a
+            more prominent home for it but leaves this page without one. Worth
+            a look when the /club photography gets its own pass.
+
+            It is also the library's only BLACK AND WHITE frame, and it had
+            never been placed. The 2026 guide asks for roughly 30% of the
+            photography in black and white, "reserved for editorial gravity —
+            member spotlights, ceremonial moments"; two people in close
+            conversation, under a heading about who is in the room, is the
+            closest thing on this site to a member spotlight.
+          */}
           <Photo
-            photo={PHOTOS.theRoom}
+            photo={PHOTOS.welcomeHero}
             aspect="aspect-[3/2]"
             sizes="(min-width: 640px) 341px, 100vw"
           />

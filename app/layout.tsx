@@ -17,14 +17,25 @@ import "./globals.css";
   decks, the newsletter, the print and the signage all go Rubik. A house face
   that stops at the front door isn't a house face.
 
-  TWO STATIC CUTS, NOT THE VARIABLE FONT, and that inverts the reasoning that
-  used to live here. Geist was loaded without a `weight` because the scale ran
-  400 → 700 and a variable axis covers that in one file. This scale does not:
-  the guide allows Regular (400) and Medium (500) and says "Never Bold", so the
-  whole site needs exactly two values. Two static cuts are smaller than the
-  300–900 axis Rubik ships, and — more usefully — a static pair makes the rule
-  enforceable. A stray `font-bold` can't quietly resolve to 700 against a
-  weight that was never downloaded; it falls back to 500, which is visible.
+  TWO WEIGHTS, 400 AND 500, because the guide allows Regular and Medium and
+  says "Never Bold" — so the whole site needs exactly two values, and pinning
+  them is what makes that rule enforceable rather than advisory. A stray
+  `font-bold` finds no face at 700, matches down to the 500 descriptor, and
+  renders at 500, which is visible rather than silently fine.
+
+  WHAT ACTUALLY SHIPS IS THE VARIABLE FONT, and this comment used to claim the
+  opposite — "two static cuts". Rubik has no static files on Google Fonts, so
+  `weight: ["400", "500"]` gets you the 300–900 variable file declared TWICE,
+  once per weight, both @font-face rules pointing at the same `src`. The
+  browser pins the `wght` axis to each rule's descriptor, so the rendering is
+  right; only the description was wrong.
+
+  IT MATTERS WHEN YOU MEASURE. The file's default instance is Light (300) and
+  its name table says "Rubik Light", so reading advance widths straight off
+  `.next/static/media` under-reports real 500 type by about 4% — enough to
+  make a headline look like it fits in three lines when it needs four. See the
+  `display` tier in components/site/section.tsx, which got caught by exactly
+  this. Instantiate the axis at 500 before trusting a number.
 
   NO ITALIC CUT HERE, deliberately. The guide bans italics in the sans outright
   ("If you need italics, switch to Fraunces"), so an italic Rubik would only
