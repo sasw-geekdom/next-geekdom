@@ -185,6 +185,31 @@ export const LOCATION = {
 export const CONTRACTS_END = new Date(2026, 8, 25); // Sept 25
 export const CLUB_OPENS = new Date(2026, 9, 5); // October 5
 
+/**
+ * WHERE THE TRANSITION IS RIGHT NOW. Three windows, and copy on /whats-changing
+ * reads differently in each.
+ *
+ *   before      coworking still running, the change is announced
+ *   between     contracts ended Sept 25, club not open until Oct 5
+ *   after       the club is operating
+ *
+ * THE GAP IS NOT AN EDGE CASE — it is ten days long and San Antonio Startup +
+ * Tech Week (Sept 28 – Oct 2) sits inside it. That is the highest-traffic week
+ * of Geekdom's year, and a page that says "we'll be in touch this week" about
+ * contracts that ended three days earlier would be saying it to more first-time
+ * visitors than any other week.
+ *
+ * Read through this rather than comparing dates at the call site, so the pages
+ * cannot disagree with each other about which window it is.
+ */
+export type TransitionPhase = "before" | "between" | "after";
+
+export function transitionPhase(now: Date = new Date()): TransitionPhase {
+  if (now >= CLUB_OPENS) return "after";
+  if (now >= CONTRACTS_END) return "between";
+  return "before";
+}
+
 /** Years since Geekdom opened — "Fifteen years ago…" in the letter. */
 export const FOUNDED_YEAR = 2011;
 

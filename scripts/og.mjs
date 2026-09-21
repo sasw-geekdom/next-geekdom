@@ -158,7 +158,32 @@ async function main() {
       // middle of the <head>.
       writeFileSync(out.replace(/\.png$/, ".alt.txt"), card.alt);
 
-      const kb = Math.round(statSync(out).size / 1024);
+      /*
+        A CROWNLESS CARD IS A SUCCESSFUL RUN THAT PRODUCED THE WRONG PICTURE,
+        which is the only failure mode this script has that does not throw.
+
+        The crown is a WebGL canvas. If the screenshot lands before it has
+        painted, Chrome hands back a perfectly valid PNG of the type on a flat
+        graphite ground — no error, no warning, a green tick, and a share card
+        with the artwork missing. It happened once during a real run here: the
+        apply card came out at 39 KB against its usual 80.
+
+        THE SIZE IS THE TELL. The pigment is most of the file; without it a
+        card is roughly half its normal weight. 55 KB sits clear of both — well
+        under every good card (73–81 KB) and well over a flat one — so it
+        catches the empty canvas without tripping on ordinary variation between
+        seeds. Re-running fixes it; the point is to find out before a commit
+        does.
+      */
+      const bytes = statSync(out).size;
+      const kb = Math.round(bytes / 1024);
+      if (bytes < 55 * 1024) {
+        throw new Error(
+          `${slug}: rendered ${kb} KB, which is too small to contain the crown — ` +
+            `the WebGL canvas almost certainly had not painted when the shot was ` +
+            `taken. Re-run \`npm run og\`.`,
+        );
+      }
       console.log(`✓ ${slug.padEnd(16)} ${String(kb).padStart(4)} KB  ${card.out}`);
     }
   } finally {

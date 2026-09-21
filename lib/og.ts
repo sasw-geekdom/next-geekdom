@@ -167,10 +167,23 @@ export const OG_CARDS: Record<string, OgCard> = {
 
   faq: {
     eyebrow: "Questions",
-    lines: ["The ones members", "actually asked."],
+    /*
+      MATCHES THE PAGE'S OWN <h1>, the same rule the home card follows: a card
+      and a title show up together in a search result and an unfurl, so they
+      should not make two different claims.
+
+      It read "The ones members actually asked", which was true when the page
+      was the transition sheet and is not any more. The lease, refund and
+      prorated-credit questions have been retired — every member they were
+      written for was spoken to directly — and what is there now includes the
+      Studio and downtown parking, which no member asked for in that sheet.
+    */
+    lines: ["The practical", "stuff."],
     seed: 42.5,
     out: "app/(site)/faq/opengraph-image.png",
-    alt: "Geekdom FAQ — what happens to desks and offices, what the membership includes, what it costs, and how to apply.",
+    // Was "what happens to desks and offices". See the note on the page's own
+    // description — the desk belongs to the letter, not to the FAQ.
+    alt: "Geekdom FAQ — what club membership costs and includes, how to apply, how the Studio works, and where to park downtown.",
   },
 
   apply: {

@@ -97,7 +97,7 @@ Goal: ${GOAL}
 - [Studio](${url("/studio")}): The venture layer. Invitation-only; there is no application.
 - [Events](${url("/events")}): The public calendar. Some events are members-only; many are open to anyone.
 - [What's Changing](${url("/whats-changing")}): The letter from ${LETTER_AUTHOR.name}, ${LETTER_AUTHOR.role}, announcing the move from coworking to a club. Reproduced in full.
-- [FAQ](${url("/faq")}): The questions members asked about the transition, answered.
+- [FAQ](${url("/faq")}): The practical answers — what club membership costs and includes, how to apply, how the Studio works, and where to park downtown.
 - [Apply](${url("/apply")}): The membership application.
 
 ## Membership
