@@ -13,7 +13,7 @@ import { SITE_NAME, TAGLINE } from "@/lib/site";
  *   cannot draw the pigment crown at all — its version of the card was a flat
  *   white logo on ink. It also can't reach next/font, so the type was whatever
  *   system grotesk the renderer had, on a site whose whole type argument is
- *   Geist.
+ *   that it is set in the brand's own face.
  *
  *   A hand-built HTML file in scripts/ could run the shader, but only by
  *   duplicating the GLSL, the mask, the color tokens and the type scale — four
@@ -22,8 +22,13 @@ import { SITE_NAME, TAGLINE } from "@/lib/site";
  *
  * Rendering inside the app costs one dev-only route and duplicates nothing: the
  * crown below is the same InkField the homepage hero runs, masked by the same
- * crown-mask.svg, over the same --ink, in Geist. What ships is what the browser
- * saw.
+ * crown-mask.svg, over the same Graphite, IN RUBIK — this route sits under the
+ * root layout, so it inherits `--font-rubik` with no work. What ships is what
+ * the browser saw.
+ *
+ * (Two lines above used to say Geist and one said `--ink`. Both predate the
+ * 2026 palette and the Rubik switch; the cards have rendered Rubik on Graphite
+ * since, so the comments were describing a card that no longer existed.)
  *
  * FIXED PIXELS THROUGHOUT, and no responsive variants. The canvas is 1200×630
  * on every machine that will ever see it; a `sm:` here would be a breakpoint

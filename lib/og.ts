@@ -1,5 +1,11 @@
 import { priceLabel } from "@/lib/membership";
-import { LOCATION } from "@/lib/site";
+import {
+  FOUNDED_YEAR,
+  LOCATION,
+  POSITIONING,
+  PROMISE,
+  SITE_NAME,
+} from "@/lib/site";
 
 /**
  * The share cards, one per page.
@@ -16,9 +22,14 @@ import { LOCATION } from "@/lib/site";
  * before they have decided whether to click, so the seven headlines below want
  * to be compared side by side, not hunted for across seven files.
  *
- * EVERY CARD IS TWO LINES, and the second is the gold one. Satori isn't
+ * EVERY CARD IS TWO LINES, and the second carries the accent. Satori isn't
  * involved so this is real CSS, but the constraint stays: the break is chosen
  * rather than measured, and a third line collides with the crown.
+ *
+ * THE ACCENT IS CLAY, NOT GOLD. This file said gold in three places and the
+ * cards have not rendered gold since the 2026 palette landed — there is no
+ * gold in the brand at all now. The comments were describing a colour the
+ * renderer had already stopped using.
  *
  * KEEP EACH LINE UNDER ROUGHLY 21 CHARACTERS. At 76px the type reaches the
  * crown's left edge at about that point and the last letter of the line
@@ -28,9 +39,9 @@ import { LOCATION } from "@/lib/site";
  * will run out sooner. Render the set and look at it: `npm run og`.
  */
 export interface OgCard {
-  /** Mono kicker. Gold — this is an ink ground. */
+  /** Mono kicker. Bone on the graphite ground — Clay fails at this size. */
   eyebrow: string;
-  /** Exactly two lines. The second renders in gold. */
+  /** Exactly two lines. The second renders in Clay. */
   lines: readonly [string, string];
   /**
    * Where in the shader's timeline this card's pigment is frozen.
@@ -50,6 +61,16 @@ export interface OgCard {
 
 const price = priceLabel();
 
+/*
+  "Find your thinking partner." -> ["Find your", "thinking partner."]
+  Two words, then the rest. Both halves land under the 21-character ceiling.
+*/
+const PROMISE_WORDS = PROMISE.split(" ");
+const PROMISE_LINES: readonly [string, string] = [
+  PROMISE_WORDS.slice(0, 2).join(" "),
+  PROMISE_WORDS.slice(2).join(" "),
+];
+
 export const OG_CARDS: Record<string, OgCard> = {
   /*
     The root card, so it also covers any page without one of its own —
@@ -58,10 +79,28 @@ export const OG_CARDS: Record<string, OgCard> = {
   */
   home: {
     eyebrow: `${LOCATION.city} · Since 2011`,
-    lines: ["Make people your", "unfair advantage."],
+    /*
+      THE CARD AND THE <title> HAVE TO AGREE, because a search result and a
+      Slack unfurl show them together.
+
+      This card read "Make people your unfair advantage." — HOOK, which was
+      the h1 for the life of the old site and is now the line that CLOSES the
+      homepage. The rebuild moved it there deliberately: as an opening claim it
+      competed with the positioning line. The card kept making the demoted
+      argument, directly above a title making the other one.
+
+      POSITIONING is the h1 and would be the obvious fix, but it is 52
+      characters against the ~21-per-line limit above and there is no honest
+      two-line break in it. PROMISE is what the title already uses, it splits
+      cleanly, and it is the forward-facing claim.
+
+      SPLIT FROM THE CONSTANT rather than retyped, so a reworded PROMISE cannot
+      leave the old words sitting on the card.
+    */
+    lines: PROMISE_LINES,
     seed: 3.4,
     out: "app/opengraph-image.png",
-    alt: "Geekdom — Make people your unfair advantage. A membership club for founders and builders in San Antonio.",
+    alt: `Geekdom — ${PROMISE} ${POSITIONING}`,
   },
 
   /*
@@ -140,6 +179,32 @@ export const OG_CARDS: Record<string, OgCard> = {
     seed: 50.1,
     out: "app/(site)/apply/opengraph-image.png",
     alt: "Apply for membership at Geekdom — a club for founders and builders in San Antonio.",
+  },
+
+  /*
+    THE EASTER EGG GETS A CARD, because a hidden page is the one most likely to
+    arrive as a bare link — somebody finds it behind the footer wordmark and
+    pastes it. Without this it unfurled the root card, which says "Find your
+    thinking partner" and gives no hint you are being shown fifteen years of
+    photographs.
+
+    NO YEAR COUNT ON IT, and this is the trap the page itself avoids. The page
+    computes `years` from FOUNDED_YEAR precisely so the heading never goes
+    stale — but a share card is a STATIC PNG. Baking "15 years" into it means
+    that in January the card says fifteen while the page it links to says
+    sixteen, and nothing would catch it because nothing re-renders. The eyebrow
+    carries `Since 2011`, which is a fixed fact, and the lines are drawn from
+    the page's own editorial line instead.
+
+    It stays out of the sitemap regardless — a card is for a link somebody
+    chose to share, not an invitation to crawl it.
+  */
+  "since-2011": {
+    eyebrow: `Since ${FOUNDED_YEAR} · ${LOCATION.city}`,
+    lines: ["The people who", "showed up."],
+    seed: 58.6,
+    out: "app/(site)/since-2011/opengraph-image.png",
+    alt: `${SITE_NAME} — the photo wall. The people, the pitches, the late nights, and the community that showed up. Since ${FOUNDED_YEAR}.`,
   },
 };
 

@@ -11,6 +11,9 @@ import { FOUNDED_YEAR, SITE_NAME } from "@/lib/site";
 const years = new Date().getFullYear() - FOUNDED_YEAR;
 
 export const metadata: Metadata = pageMetadata({
+  // Its own card. See the note in lib/og.ts — the card deliberately carries no
+  // year count, because it is a static PNG and `years` above is not.
+  ownCard: true,
   title: `${years} years of ${SITE_NAME}`,
   path: "/since-2011",
   description: `${years} years of Geekdom — the people, the pitches, the late nights, and the community that showed up. A photo wall from the third floor and everywhere else it happened.`,

@@ -11,6 +11,7 @@ import {
   POSITIONING,
   SITE_NAME,
   SITE_URL,
+  PORTFOLIO,
   STUDIO,
   TAGLINE,
 } from "@/lib/site";
@@ -32,9 +33,14 @@ import { IS_PREVIEW } from "@/lib/preview";
  * Ask a model what Geekdom is today and the honest answer, drawn from the open
  * web, is "a coworking space in San Antonio" — true until this year, wrong from
  * October. The pages say otherwise but they say it in marketing prose spread
- * over seven routes. This states it once, flatly, including the two parts no
- * page has a natural place for: the Studio, which has no page yet, and the
- * programs that no longer run.
+ * over seven routes. This states it once, flatly, including the parts no page
+ * has a natural place for: the programs that no longer run, and the portfolio
+ * as a plain list rather than a wall of logos.
+ *
+ * KEEP IT CONSISTENT WITH ITSELF. This file linked /studio in its Pages list
+ * and then said, four sections later, that the Studio had no page — true when
+ * it was written and false once /studio shipped. A model reading top to bottom
+ * gets the contradiction, not the correction.
  *
  * GENERATED, NOT WRITTEN. Every fact below reads from lib/site.ts and
  * lib/membership.ts, so the price, the dates and the milestones cannot drift
@@ -119,8 +125,8 @@ ${LOCATION.full}
 
 ## The Studio
 
-${SITE_NAME} runs a second thing alongside the club, and this site does not yet
-have a page for it. It is the venture layer, not a club benefit.
+${SITE_NAME} runs a second thing alongside the club. It is the venture layer,
+not a club benefit, and it has its own page at ${url("/studio")}.
 
 - The Studio backs ${STUDIO.foundersPerYear} local founders a year with a
   ${STUDIO.checkRange} ${STUDIO.checkTerms} check from the ${STUDIO.fund}, plus
@@ -133,6 +139,22 @@ have a page for it. It is the venture layer, not a club benefit.
 - Open to the wider community, not only Studio companies:
   ${STUDIO.openPrograms.join(", ")}.
 - Contact: ${STUDIO.email}.
+
+## What came out of the room
+
+The answer to "what has ${SITE_NAME} actually produced", and the reason the
+claim above is checkable rather than a slogan. ${PORTFOLIO.length} companies
+started here. Stage is each company's own, not a ${SITE_NAME} holding — these
+are businesses that came out of the room, not a fund's positions.
+
+${PORTFOLIO.map((c) => {
+  // LABEL WHAT THE LINK IS. Four of these companies were acquired and their
+  // domains are gone, so the best link is press or a video — and an unlabelled
+  // URL here would be cited as the company's homepage, which it is not.
+  const label = { site: "Site", story: "Press", video: "Video" } as const;
+  const link = c.href ? ` [${label[c.link ?? "site"]}: ${c.href}]` : "";
+  return `- ${c.name} — ${c.stage}${c.description ? `. ${c.description}` : ""}${link}`;
+}).join("\n")}
 
 ## What ${SITE_NAME} no longer runs
 

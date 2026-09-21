@@ -1,8 +1,8 @@
+import { SITE_DESCRIPTION } from "@/lib/seo";
 import {
   CONTACT_EMAIL,
   FOUNDED_YEAR,
   LOCATION,
-  PROMISE,
   SITE_NAME,
   SITE_URL,
   SOCIALS,
@@ -42,7 +42,21 @@ export function SiteJsonLd() {
       "@id": `${SITE_URL}/#organization`,
       name: SITE_NAME,
       url: SITE_URL,
-      description: `A membership club for founders and builders in ${LOCATION.city}. ${PROMISE}`,
+      /*
+        SITE_DESCRIPTION, NOT A SECOND HAND-WRITTEN ONE.
+
+        This read "A membership club for founders and builders in San Antonio"
+        — which describes the Club and stops there, and flattening Geekdom to
+        a membership product is the one thing AGENTS.md says never to do. It
+        runs the Club and the Studio, operates LaunchSA for the City, produces
+        Startup + Tech Week and sits on MIT REAP's regional team.
+
+        It also meant the entity description and the meta description were two
+        different strings maintained in two places, which is how one of them
+        ends up a year behind. SITE_DESCRIPTION already derives its price from
+        Stripe; this now inherits that.
+      */
+      description: SITE_DESCRIPTION,
       email: CONTACT_EMAIL,
       foundingDate: String(FOUNDED_YEAR),
       logo: `${SITE_URL}/brand/geekdom_logo_full.svg`,
