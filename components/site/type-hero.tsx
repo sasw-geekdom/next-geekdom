@@ -215,7 +215,24 @@ export function TypeHero({
               src={media.photo.src}
               alt={media.photo.alt}
               fill
-              sizes="100vw"
+              /*
+                62vw AT xl, BECAUSE THE BOX IS INSET THERE — not 100vw.
+
+                This said `100vw` from before the image was moved right, and
+                the mismatch cost bytes on exactly the displays where they are
+                expensive: told the picture is full width, a retina MacBook
+                asks for the 3840w variant to fill a box that is 911 CSS px
+                wide. `sizes` describes the BOX, not the viewport, and the box
+                is `xl:left-[38%]`.
+
+                THIS IS THE LCP ELEMENT — full-bleed, above the fold, and
+                `priority`, so it is preloaded and nothing renders around it
+                first. Bytes here are the number that moves the metric.
+              */
+              sizes="(min-width: 1280px) 62vw, 100vw"
+              /* See the note in next.config.ts — this needs `images.qualities`
+                 to contain 55, or Next 16 silently rounds it back to 75. */
+              quality={55}
               priority
               placeholder="blur"
               className={cn(

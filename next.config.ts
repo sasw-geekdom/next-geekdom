@@ -3,6 +3,22 @@ import { withBotId } from "botid/next/config";
 
 const nextConfig: NextConfig = {
   images: {
+    /*
+      NEXT 16 NARROWED THIS TO [75] AND IT FAILS SILENTLY.
+
+      `images.qualities` used to allow any value; it now defaults to [75]
+      alone, and a `quality` prop outside the list is COERCED to the nearest
+      allowed value rather than erroring. So `quality={55}` on the homepage
+      hero renders at 75, the bytes never drop, and nothing anywhere says why.
+
+      55 is here for one image: the hero photograph sits under a graphite ramp
+      running 0.97 to 0.45 across its whole width, so most of the detail q75
+      pays to encode is destroyed by the scrim before anyone sees it. Measured
+      difference between q75 and q45 on that frame is 2.08/255 per channel
+      BEFORE the ramp is applied. It is not a general licence to drop quality —
+      an unscrimmed photograph at 55 looks like an unscrimmed photograph at 55.
+    */
+    qualities: [55, 75],
     remotePatterns: [
       // Luma event cover art, served off their CDN.
       { protocol: "https", hostname: "images.lumacdn.com" },
