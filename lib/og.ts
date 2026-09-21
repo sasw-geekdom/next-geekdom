@@ -193,11 +193,16 @@ export const OG_CARDS: Record<string, OgCard> = {
   },
 
   apply: {
-    eyebrow: "Apply for membership",
-    lines: ["Tell us what you're", "working on."],
+    eyebrow: "Apply to the Club",
+    /*
+      THE PAGE'S OWN H1. It said "working on." while the h1 said "building." —
+      the same sentence ending two different ways, shown side by side in every
+      unfurl and search result. Neither was wrong; having both was.
+    */
+    lines: ["Tell us what you're", "building."],
     seed: 50.1,
     out: "app/(site)/apply/opengraph-image.png",
-    alt: "Apply for membership at Geekdom — a club for founders and builders in San Antonio.",
+    alt: "Apply to the Club at Geekdom — one membership, by application, on the third floor in San Antonio.",
   },
 
   /*

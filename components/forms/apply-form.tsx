@@ -18,6 +18,67 @@ type Errors = Record<string, string>;
 const AUDIENCE_OPTIONS = AUDIENCES.map((a) => ({ value: a, label: a }));
 const STAGE_OPTIONS = STAGES.map((s) => ({ value: s, label: s }));
 
+/*
+  THE THREE SECTIONS, AND WHAT SEPARATES THEM.
+
+  Fourteen fields in one column need a break the eye can find. It had gap
+  alone — forty pixels of nothing between a text input and a mono legend,
+  which at a glance reads as one long form rather than three parts.
+
+  A HAIRLINE, WHICH IS THE SITE'S OWN ANSWER. The design notes say it plainly:
+  where the rhythm needs a break and the tone cannot change, use a `border-rule`
+  hairline. Sections two and three open with one; the first does not need it,
+  because the page header already ends above it.
+
+  CLAY AS THE RULE, NOT THE WORDS. The accent cannot touch a 12px legend —
+  Clay is 3.5:1 on bone and fails AA for anything at body size, which is the
+  most-repeated rule in this palette. But a RULE only has to clear 3:1, and
+  Clay does. So the colour goes into a 40px marker above each legend and the
+  legend itself stays Concrete. That is the guide's own prescribed fix, and
+  the same marker already sits above the eyebrow on the homepage hero.
+*/
+/*
+  `space-y-5`, NOT `flex flex-col gap-5`, AND THE LEGEND IS WHY.
+
+  A <legend> inside a FLEX fieldset is not laid out like a normal block. The
+  spec pulls the rendered legend out of the flow and into the fieldset's border
+  area, and the rest of the children become an anonymous flex container — so a
+  `display: block` child inside the legend does not reliably stack above the
+  legend's text. The Clay marker came out sitting beside the words rather than
+  over them.
+
+  Normal block flow puts the legend back in the ordinary layout, where a block
+  child does what a block child does. `space-y-5` spaces the fields
+  identically: margin on every child after the first, and the legend is first,
+  so it takes none — the same result `gap` was giving.
+*/
+const SECTION = "space-y-5";
+
+/*
+  THE RULE RUNS THROUGH THE HEADING, not above the section.
+
+  It was a `border-t` on the fieldset: a full-width line sitting 40px clear of
+  the legend, which reads as a lid on the section rather than as part of its
+  title. Beside the words and centred on them, the same hairline becomes the
+  heading itself — the editorial convention for exactly this, and it separates
+  the sections just as well because a ruled heading is unmistakably a new one
+  starting.
+
+  ALL THREE CARRY IT NOW. Only sections two and three had the border, since the
+  first needs nothing separating it from the page header. As a heading
+  treatment that inconsistency has nowhere to hide, and uniform is right: this
+  is what a section title looks like on this form.
+
+  CLAY OPENS, CONCRETE SPEAKS, THE RULE FINISHES. The accent is a 40px tick
+  before the words, never the words — Clay is 3.5:1 on bone and fails AA at
+  12px, while a rule only has to clear 3:1. `items-center` is what the whole
+  row is for: it puts both hairlines on the text's optical centre instead of
+  its top.
+*/
+const LEGEND =
+  "flex w-full items-center gap-3 font-mono text-xs uppercase tracking-[0.18em] text-concrete";
+
+
 export function ApplyForm() {
   const router = useRouter();
   const [errors, setErrors] = React.useState<Errors>({});
@@ -81,11 +142,27 @@ export function ApplyForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} noValidate className="flex flex-col gap-10">
+    <form onSubmit={onSubmit} noValidate className="flex flex-col gap-12">
       {/* ── You ────────────────────────────────────────────────────── */}
-      <fieldset className="flex flex-col gap-5">
-        <legend className="font-mono text-xs uppercase tracking-[0.18em] text-concrete">
-          You
+      <fieldset className={SECTION}>
+        <legend className={LEGEND}>
+          <span aria-hidden="true" className="h-px w-10 shrink-0 bg-clay" />
+          {/*
+            "WHO YOU ARE", NOT "YOU".
+
+            The three legends run You / Your company / The part we actually
+            read. The third has a voice; the first two were labels, and "You"
+            on its own is the thinnest of them — a pronoun where the others are
+            phrases.
+
+            "Who you are" is the question the fields actually ask, it is
+            parallel with the section that follows it, and it echoes the line
+            the rest of the site is built on: who's here is the whole product.
+            It also sets up the field inside it, "What you are", as a genuine
+            distinction rather than a near-repeat of its own heading.
+          */}
+          <span className="shrink-0">Who you are</span>
+          <span aria-hidden="true" className="h-px flex-1 bg-border" />
         </legend>
 
         <div className="grid gap-5 sm:grid-cols-2">
@@ -134,9 +211,11 @@ export function ApplyForm() {
       </fieldset>
 
       {/* ── Your company ───────────────────────────────────────────── */}
-      <fieldset className="flex flex-col gap-5">
-        <legend className="font-mono text-xs uppercase tracking-[0.18em] text-concrete">
-          Your company
+      <fieldset className={SECTION}>
+        <legend className={LEGEND}>
+          <span aria-hidden="true" className="h-px w-10 shrink-0 bg-clay" />
+          <span className="shrink-0">Your company</span>
+          <span aria-hidden="true" className="h-px flex-1 bg-border" />
         </legend>
 
         <div className="grid gap-5 sm:grid-cols-2">
@@ -186,9 +265,11 @@ export function ApplyForm() {
       </fieldset>
 
       {/* ── The part we actually read ──────────────────────────────── */}
-      <fieldset className="flex flex-col gap-5">
-        <legend className="font-mono text-xs uppercase tracking-[0.18em] text-concrete">
-          The part we actually read
+      <fieldset className={SECTION}>
+        <legend className={LEGEND}>
+          <span aria-hidden="true" className="h-px w-10 shrink-0 bg-clay" />
+          <span className="shrink-0">The part we actually read</span>
+          <span aria-hidden="true" className="h-px flex-1 bg-border" />
         </legend>
 
         <Field
@@ -239,9 +320,19 @@ export function ApplyForm() {
             name="formerMember"
             className="mt-0.5 h-4 w-4 rounded border-border text-clay focus-visible:ring-2 focus-visible:ring-clay"
           />
-          <span>
-            I was a Geekdom coworking member before the transition.
-          </span>
+          {/*
+            NO "BEFORE THE TRANSITION". The field is right and stays — the
+            letter asks every current member to apply as part of the new
+            onboarding, and `formerMember` is what tells the team which
+            applications those are. It reaches the admin detail view, the CSV
+            export and the team notification email.
+
+            The WORDING dated itself. "The transition" is clear this month, to
+            people living through it; to somebody applying next year it is a
+            reference to an event nobody explained on this page. Dropping the
+            clause asks exactly the same question and stops it expiring.
+          */}
+          <span>I was a Geekdom coworking member.</span>
         </label>
       </fieldset>
 

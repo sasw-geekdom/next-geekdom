@@ -483,15 +483,22 @@ export default function FaqPage() {
       NO MARK IN A RAIL HERE EITHER, and between this page and the letter there
       is now a rule rather than two separate judgement calls:
 
-        THE RAIL IS FOR SHORT TASK PAGES. /apply, /account, the admin login and
-        the 404 are a screen or two of form, where the left column would
-        otherwise be empty and a mark gives it something to be.
+        THE RAIL IS FOR PAGES YOU GLANCE AT. The 404, /account and the admin
+        login are looked at and left; a mark in an otherwise empty column
+        costs nobody anything there.
 
-        LONG READS DON'T NEED SCENERY. This is fourteen questions and the
-        second-longest scroll on the site. A sticky animated gradient sits in
-        peripheral vision for the whole of it, and every instance of it is
-        borrowed against a sign-off the 2026 guide has not given — the guide
-        bans gradients on the marks outright.
+        IT COMES OFF PAGES THAT HOLD YOU. This is seventeen questions and the
+        second-longest scroll on the site, and the shader is a
+        requestAnimationFrame loop — it never settles, so it sits moving in
+        peripheral vision for the whole read.
+
+        (This first said "the rail is for short task pages" and named /apply
+        among them. /apply is fourteen fields and promises five minutes —
+        short in scroll, long in attention, and the one page on the site where
+        that attention converts. Length was the wrong axis.)
+
+        Every instance of it is also borrowed against a sign-off the 2026
+        guide has not given: it bans gradients on the marks outright.
 
       Measures match the letter: header at max-w-3xl, body at max-w-2xl, both
       starting on the container's left edge so they line up with the wordmark
