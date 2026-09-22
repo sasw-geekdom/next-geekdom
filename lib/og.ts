@@ -119,12 +119,20 @@ export const OG_CARDS: Record<string, OgCard> = {
   },
 
   /*
-    THE STUDIO'S CARD LEADS WITH THE DISQUALIFIER, which is the opposite of
-    what a card usually does and is right here. The Club's card leads with the
-    price because the price is the last objection; this one leads with
-    "invitation only" because the single most costly outcome for this page is a
-    founder clicking through, reading four screens, and discovering there is
-    nothing to apply to. Better to say it in the unfurl.
+    THE DISQUALIFIER RIDES IN THE UNFURL, though NOT in these two lines —
+    worth being precise about, because this note used to claim the card led
+    with it and the card plainly does not.
+
+    An unfurl is the image plus the title plus the description, and the
+    description here is the page's own metadata, which ends "Not an
+    accelerator. No cohorts. No open application." That is where it lands, and
+    it is deliberate: the most costly outcome for this page is a founder
+    clicking through, reading four screens and discovering there is nothing to
+    apply to. The alt text carries it too.
+
+    THE LINES ECHO THE h1 INSTEAD, and "a few founders a year" does the
+    scarcity work in the image without making the card read as a rejection
+    before anyone has heard the offer.
   */
   studio: {
     eyebrow: "Studio · The venture layer",

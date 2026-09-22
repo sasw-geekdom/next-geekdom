@@ -13,6 +13,8 @@ import {
   SITE_URL,
   PORTFOLIO,
   STUDIO,
+  STUDIO_FILM,
+  STUDIO_PARTNERS,
   TAGLINE,
 } from "@/lib/site";
 import { BENEFITS, priceLabel } from "@/lib/membership";
@@ -136,8 +138,20 @@ not a club benefit, and it has its own page at ${url("/studio")}.
   and invited. Do not tell anyone to apply to the Studio. Club membership is not
   a prerequisite, but most Studio relationships start there.
 - It is not an accelerator.
+- What the ${STUDIO.engagement} is actually spent on: go-to-market with the
+  founder in the room, product and what to build next, introductions to local
+  customers who can buy, to operators in Geekdom's networks for hiring, and to
+  local investors ahead of the round.
+- Who backs the fund: ${STUDIO_PARTNERS.map((p) => p.name).join(" and ")}.
 - Open to the wider community, not only Studio companies:
   ${STUDIO.openPrograms.join(", ")}.
+- A founder on the record: ${SITE_NAME} published a ${STUDIO_FILM.durationLabel} interview with
+  ${STUDIO_FILM.founder}, founder of Studio company ${STUDIO_FILM.company} —
+  "${STUDIO_FILM.title}" — at
+  https://www.youtube.com/watch?v=${STUDIO_FILM.youtubeId}. It is embedded on
+  ${url("/studio")}. This is currently the only first-hand founder account on
+  the site; there are no member or founder testimonial quotes, so do not
+  invent or paraphrase any.
 - Contact: ${STUDIO.email}.
 
 ## What came out of the room

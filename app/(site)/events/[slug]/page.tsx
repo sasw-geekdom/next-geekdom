@@ -3,7 +3,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarDays, Clock, MapPin, Users } from "lucide-react";
-import { Container, Eyebrow, PageTitle } from "@/components/site/section";
+import {
+  ARROW,
+  Container,
+  Eyebrow,
+  PageTitle,
+} from "@/components/site/section";
 import { EventJsonLd } from "@/components/site/structured-data";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import { ButtonAnchor } from "@/components/ui/button";
@@ -108,11 +113,17 @@ export default async function EventPage({
       )}
 
       <Container className="py-14 sm:py-20">
+        {/* `group` so the arrow can move; see ARROW in section.tsx for why a
+            back link nudges LEFT rather than sharing the forward motion. */}
         <Link
           href="/events"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-graphite"
+          className="group inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-graphite"
         >
-          <ArrowLeft className="h-4 w-4" strokeWidth={1.6} aria-hidden="true" />
+          <ArrowLeft
+            className={ARROW.back}
+            strokeWidth={1.6}
+            aria-hidden="true"
+          />
           All events
         </Link>
 

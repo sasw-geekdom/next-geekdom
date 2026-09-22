@@ -119,6 +119,24 @@ export function TypeHero({
      * inset from the left — see the note on the image.
      */
     objectPosition?: string;
+    /**
+     * Where the left-edge mask finishes, as a percentage of the image box.
+     *
+     * 22% is right for a frame whose left side is soft. It is wrong for one
+     * with a straight architectural line in it: /studio's hero has a wall
+     * corner 140px into the box, and at 22% the mask is already fully opaque
+     * there, so a 9-level luminance step lands with nothing around it to
+     * compete — which reads as the edge of a panel rather than a photograph.
+     *
+     * Pushing the finish past the line is what fixes it. The step scales with
+     * the alpha, so at 48% the corner arrives at 0.33 and the step falls to
+     * about 3 levels, which is under what the eye picks out of a gradient.
+     *
+     * A KNOB RATHER THAN A NEW DEFAULT, because the value depends on the
+     * photograph. Widening it for every hero would dim the subjects in
+     * `conversation` and `makeAPoint`, which are measured where they are.
+     */
+    fadeTo?: string;
   };
   side?: React.ReactNode;
   /**
@@ -220,12 +238,12 @@ export function TypeHero({
               -webkit- included: Safari only dropped the prefix in 15.4, and an
               unprefixed-only mask degrades to NO mask, which is the seam back.
             */
-            style={{
-              maskImage:
-                "linear-gradient(to right, transparent 0%, #000 22%)",
-              WebkitMaskImage:
-                "linear-gradient(to right, transparent 0%, #000 22%)",
-            }}
+            style={(() => {
+              const mask = `linear-gradient(to right, transparent 0%, #000 ${
+                media.fadeTo ?? "22%"
+              })`;
+              return { maskImage: mask, WebkitMaskImage: mask };
+            })()}
           >
             <Image
               src={media.photo.src}

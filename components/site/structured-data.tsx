@@ -6,6 +6,7 @@ import {
   SITE_NAME,
   SITE_URL,
   SOCIALS,
+  STUDIO_FILM,
 } from "@/lib/site";
 import { MEMBERSHIP_PRICE_CENTS } from "@/lib/membership";
 import { IS_PREVIEW } from "@/lib/preview";
@@ -201,6 +202,50 @@ function JsonLd({ data }: { data: Record<string, unknown> }) {
       // close the script tag early. The rest of the payload is constants.
       dangerouslySetInnerHTML={{
         __html: JSON.stringify(data).replace(/</g, "\\u003c"),
+      }}
+    />
+  );
+}
+
+/**
+ * THE STUDIO FILM, as a VideoObject.
+ *
+ * /studio embeds a Geekdom-published interview with the founder of one of the
+ * four Studio companies, and a page that carries a video and says nothing
+ * about it in its markup gets no video result and no thumbnail in search. This
+ * is the only page on the site with a video, so this is the only place it goes.
+ *
+ * EVERY FIELD IS TRANSCRIBED, not estimated — see `STUDIO_FILM` in lib/site.ts
+ * for where each one came from. `uploadDate` is required for the rich result
+ * and it is a claim about when Geekdom published something, so it is read off
+ * the watch page rather than guessed; `duration` has to be ISO 8601, which is
+ * why it is stored pre-formatted rather than as seconds.
+ *
+ * `thumbnailUrl` POINTS AT YOUTUBE AND THAT COSTS THE VISITOR NOTHING. It is a
+ * string in a script tag that only crawlers dereference — the page itself
+ * still requests nothing from Google until somebody presses play, which is the
+ * whole design of `VideoCard`. Don't "fix" this by self-hosting the poster:
+ * that thumbnail is off-palette and there is a note about it in that file.
+ *
+ * `embedUrl` is the nocookie host, matching what the player actually loads.
+ */
+export function StudioFilmJsonLd() {
+  if (IS_PREVIEW) return null;
+
+  return (
+    <JsonLd
+      data={{
+        "@context": "https://schema.org",
+        "@type": "VideoObject",
+        name: STUDIO_FILM.title,
+        description: STUDIO_FILM.description,
+        uploadDate: STUDIO_FILM.uploadDate,
+        duration: STUDIO_FILM.duration,
+        thumbnailUrl: [STUDIO_FILM.thumbnailUrl],
+        embedUrl: `https://www.youtube-nocookie.com/embed/${STUDIO_FILM.youtubeId}`,
+        url: `${SITE_URL}/studio`,
+        publisher: { "@id": `${SITE_URL}/#organization` },
+        about: STUDIO_FILM.company,
       }}
     />
   );

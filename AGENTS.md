@@ -47,18 +47,34 @@ list belong on `/club`; don't move them back.
 ## Photography
 
 Every frame in [lib/photos.ts](lib/photos.ts) was shot on the third floor —
-**with one deliberate exception.** `brianWhiteboard` is the EIR at a whiteboard
-with a founder, and it sits in the homepage's Studio section.
+**except the three Studio ones, deliberately.** `brianWhiteboard` is the EIR at
+a whiteboard with a founder (homepage Studio section), `brianPortrait` is his
+headshot, and `openlaneTeam` is a backed company's founders at their own
+whiteboard — the `/studio` hero.
 
 The "same floor" rule exists because the site's claim about the CLUB is that it
 is this specific room. **The Studio is not a room-based product** — what it
 sells is six to twelve months of one person's attention — so a photograph of
-that person working is more on-point than the floor he may not be standing on.
-Scope the rule to Club imagery; don't apply it to Studio.
+that person working, or of a company he backed, is more on-point than the floor
+neither of them may be standing on. Scope the rule to Club imagery; don't apply
+it to Studio.
 
-Two open items on that file: it may predate the Studio (it reads older and is
-1198px where the library is 1600px), and at that size it covers a 544px slot at
-2x but **not** a full-bleed `PhotoBand`.
+**`brianWhiteboard` cannot be a full-bleed hero, and it has been tried.** The
+camera original is 1200x802 where the library is 1600px, so it covers a 600px
+slot at 2x and nothing near the ~2380 device px a bleed wants. `openlaneTeam`
+won that comparison on resolution — the numbers are in
+[lib/photos.ts](lib/photos.ts). It is the right frame for the homepage's
+~460px Studio slot, where its 1.496 aspect is the 3:2 to within a rounding
+error.
+
+**Use the camera original, never an upscale.** An AI upscale of this frame
+shipped for a while and rewrote the whiteboard behind him from "Brian
+Sierakowski" to "Brian Siiewkowski" — more legible than the real handwriting,
+on the one section that names him in copy three lines away. It also carried a
+C2PA manifest from Google on the homepage of a brand whose guide says "Real
+people, named. No stock." The original (NIKON D3100, 2 February 2015) is in
+the repo now. `grahamNick` is the other upscale in this file; treat it the
+same way if an original turns up.
 
 ## The two engines
 

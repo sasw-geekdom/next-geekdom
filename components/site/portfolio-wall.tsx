@@ -1,5 +1,6 @@
+import { ArrowUpRight } from "lucide-react";
 import { PORTFOLIO, type PortfolioCompany } from "@/lib/site";
-import { MONO } from "@/components/site/section";
+import { ARROW, MONO } from "@/components/site/section";
 import { cn } from "@/lib/utils";
 
 /**
@@ -238,8 +239,38 @@ function Company({ company }: { company: PortfolioCompany }) {
           likely to be surprised by it.
         */}
         {company.link && (
-          <p className={cn("mt-2", MONO.micro, "text-muted-foreground transition-colors group-hover:text-graphite")}>
-            {DESTINATION[company.link]} ↗
+          <p
+            className={cn(
+              "mt-2 flex items-center gap-1",
+              MONO.micro,
+              "text-muted-foreground transition-colors group-hover:text-graphite",
+            )}
+          >
+            {DESTINATION[company.link]}
+            {/*
+              AN ICON, NOT THE "↗" CHARACTER, and the swap is what buys the
+              movement. U+2197 is a glyph inside the text run: it cannot
+              transform on its own, it inherits the line's metrics rather than
+              sitting on the cap height, and it renders differently in every
+              font that has it — Geist Mono's is noticeably lighter than the
+              uppercase beside it.
+
+              PORTED FROM THE SIBLING next-sasw REPO, where the same mark and
+              the same nudge run down the days of the week on the schedule.
+              Up and right by 2px each on hover, 200ms — the arrow moves the
+              way the destination does. `lucide-react` is already a dependency
+              here and ships per icon, so this costs one path.
+
+              CLAY ON HOVER while the label goes Graphite. The guide gives
+              Clay markers, rules and borders but not small text; an arrow is
+              a marker, so the accent lands on the one part of this line that
+              is allowed to carry it. 3.5:1 on bone against a 3:1 bar for
+              non-text.
+            */}
+            <ArrowUpRight
+              aria-hidden="true"
+              className={ARROW.external}
+            />
           </p>
         )}
       </a>

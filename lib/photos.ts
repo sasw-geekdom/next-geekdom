@@ -12,6 +12,10 @@ import makeAPoint from "@/public/photos/make-a-point.jpg";
 import pitch from "@/public/photos/pitch.jpg";
 import oneOnOne from "@/public/photos/one-on-one.jpg";
 import brianWhiteboard from "@/public/photos/brian-whiteboard.jpg";
+import brianPortrait from "@/public/photos/brian-sierakowski.jpg";
+import franklinMorris from "@/public/photos/franklin-morris.jpg";
+import workshopWednesday from "@/public/photos/workshop-wednesday.jpg";
+import openlaneTeam from "@/public/photos/openlane-team.jpg";
 import grahamNick from "@/public/photos/graham-nick-2011.jpg";
 import conversation from "@/public/photos/conversation.jpg";
 import headsDown from "@/public/photos/heads-down.jpg";
@@ -279,6 +283,99 @@ export const PHOTOS = {
    * export of something larger, and Geekdom took the photograph — the camera
    * file exists somewhere. Swapping it in needs nothing but this constant.
    */
+  /*
+    THE TWO STUDIO FRAMES THAT ARE NOT THE THIRD FLOOR.
+
+    The "same floor" rule in the note at the top of this file is scoped to CLUB
+    imagery on purpose, and these are why. The Studio does not sell a room — it
+    sells six to twelve months of one person's attention — so a photograph of
+    that person, and of a company he backed, is more on-point than a floor
+    neither of them may be standing on.
+
+    `brianPortrait` came from the sibling next-sasw repo, where he is a Startup
+    Week speaker; it is the headshot his speaker page serves, at 1080x1350. Its
+    alpha is flattened onto Bone here rather than kept, because a transparent
+    PNG punches a hole in any section whose ground is not bone.
+
+    `openlaneTeam` is the Openlane founders at their own whiteboard, lifted out
+    of a composed SVG Geekdom supplied — two tilted, white-bordered, drop-
+    shadowed frames layered over each other. The composition was left behind
+    deliberately: rotation and paper borders are not in this design system, and
+    the photograph inside it is the part with the value. It twins with
+    `brianWhiteboard` on the homepage, which is the same act one company over.
+
+    IT IS THE /studio HERO NOW, under the same ramp the homepage and /club use,
+    and it won that slot on measurement. In the real treatment at 1440x760 with
+    the image box inset to 38%, it holds Bone at 15.3:1 median and 6.0:1 at the
+    single worst pixel across the copy column — AA for body with room. Centred,
+    not left-anchored: `object-left` cuts the man on the right in half at the
+    frame edge.
+
+    `brianWhiteboard` LOST THAT COMPARISON ON RESOLUTION. It is the more
+    on-message frame and it measures well, but the camera original is 1200px
+    against the ~2380 device px a full-bleed fold wants at 2x — half of what
+    the slot needs, where this frame's 1600 is merely short. That is the whole
+    of it now: the other two objections at the time, a crop that decapitated
+    both men and an upscaler that misspelled Brian's name, were properties of
+    the AI upscale that used to stand in for it and are gone with it.
+  */
+  brianPortrait: {
+    src: brianPortrait,
+    alt: "Brian Sierakowski, Geekdom's Entrepreneur in Residence, photographed in portrait.",
+  },
+
+  /**
+   * THE FOUNDER IN THE FILM, so the one first-hand account on the site has a
+   * face attached to its name.
+   *
+   * Same source and same treatment as `brianPortrait`: the sibling next-sasw
+   * repo, where its speaker data names this file as Franklin Morris, and the
+   * alpha flattened onto Bone because a transparent PNG punches a hole in any
+   * section whose ground is not bone. 1080x1350, so 4:5, and it is cropped to
+   * a circle at 64px in the film row.
+   *
+   * ⚠️ HIS HAIR IS SHORTER HERE THAN IN THE FILM, which is worth knowing
+   * before somebody re-opens it as a mismatch. Checked side by side against
+   * the film's own frame: same brow, nose and beard, hair pushed back and
+   * longer on camera. The naming comes from next-sasw's speaker data rather
+   * than from that comparison — a Geekdom-adjacent source rather than a guess.
+   */
+  franklinMorris: {
+    src: franklinMorris,
+    alt: "Franklin Morris, founder of KeepTabz, photographed in portrait.",
+  },
+
+  /**
+   * THE OPEN PROGRAMMING, ACTUALLY HAPPENING — and it is the same man as
+   * `franklinMorris`, which is the point rather than a coincidence.
+   *
+   * /studio claims a Studio company's founder teaches sessions that anyone
+   * can walk into. This is that claim photographed: Franklin mid-sentence, a
+   * slide reading "The right time", and a whiteboard that says WORKSHOP
+   * WEDNESDAY, his name, and MARKETING STRATEGY / STARTUPS.
+   *
+   * IT IS ALSO WHAT CONFIRMED HIS IDENTITY. The portrait came from next-sasw's
+   * speaker data and his hair is shorter there than in the film; this frame
+   * names him on the wall behind his own face, so the three are tied together
+   * by something better than a resemblance.
+   *
+   * 1280x1706, a 0.75 portrait, cropped to 16:9 — and the crop lands almost
+   * exactly on `object-center`: the frame that keeps him, the screen and the
+   * seated row starts at y 470 and centre starts at 493 of 1706. So it needs
+   * no `objectPosition`, which is the only reason a 0.75 source is safe in a
+   * landscape slot here.
+   */
+  workshopWednesday: {
+    src: workshopWednesday,
+    alt: "Franklin Morris mid-sentence at a Geekdom workshop, a whiteboard behind him reading Workshop Wednesday, marketing strategy for startups, with founders seated at tables.",
+  },
+
+  openlaneTeam: {
+    src: openlaneTeam,
+    alt: "Two of Openlane's founders working at a glass whiteboard, one sketching a diagram while the other holds a marker.",
+  },
+
+
   grahamNick: {
     src: grahamNick,
     alt: "Graham Weston and Nick Longo sitting together in 2011 beneath Geekdom's original wall sign, which reads \"Welcome to geekdom — The Place Where Startups Are Born.\"",
@@ -301,27 +398,45 @@ export const PHOTOS = {
    * whiteboard with a founder, both holding markers, mid-argument about a
    * product.
    *
-   * ⚠️ AN AI UPSCALE, AND CROPPED FOR A REASON. Like `grahamNick`, this file
-   * carries a C2PA manifest signed by Google — "Opened by Google Generative
-   * AI", "Resized by Google Generative AI", digitalSourceType
-   * trainedAlgorithmicMedia. It was generated from the 1198x799 original.
+   * IT IS BRIAN, ELEVEN YEARS YOUNGER — and the file's own EXIF settles it:
+   * NIKON D3100, 2 February 2015. Worth writing down because the comparison
+   * invites doubt. Put this frame beside `brianPortrait` and they read as two
+   * different men: the portrait has darker, slicked hair, a trimmed goatee
+   * and a sharper jaw, this has brown hair and a full beard. Geekdom
+   * confirmed it. Don't reopen it, and don't let it cast doubt on the
+   * homepage caption that names him.
    *
-   * THE UPSCALER REWROTE BRIAN'S NAME. The whiteboard in the original reads
-   * "Brian Sierakowski"; in the upscale it reads "Brian Siiewkowski" — and
-   * because the upscale is sharper, the misspelling is MORE legible than the
-   * correct spelling ever was. On the one section of the site that names him
-   * in the copy three lines away, a photograph spelling him wrong is not a
-   * subtle provenance worry, it is a visible error about a real person.
+   * THIS IS THE CAMERA ORIGINAL. An AI upscale of it sat here for a while and
+   * caused enough trouble to be worth recording, because the same shortcut
+   * will look tempting again:
    *
-   * So the file here is cropped right of it: `extract` at 980,380 for
-   * 1548x1032, which keeps both men, the marker, the gesture and the real
-   * board text ("Maryland", "USA") and excludes the fabricated surname
-   * entirely. DO NOT RE-CROP LEFTWARD without checking what the handwriting
-   * says — everything upstream of x=1180 in the source is suspect.
+   *   - It carried a C2PA manifest signed by Google — "Opened by Google
+   *     Generative AI", digitalSourceType trainedAlgorithmicMedia — on the
+   *     homepage of a brand whose guide says "Real people, named. No stock."
+   *   - IT REWROTE HIS NAME. The whiteboard here reads "Brian Sierakowski";
+   *     the upscale rendered it "Brian Siiewkowski", and because the upscale
+   *     was sharper the misspelling was MORE legible than the real writing.
+   *     On the one section that names him in copy three lines away, that is a
+   *     visible error about a real person, not a subtle provenance worry.
+   *   - Avoiding it forced a crop that threw away most of the frame, and the
+   *     crop is what made the photograph look cramped.
    *
-   * Also still worth confirming: the styling reads older than the Geekdom
-   * shoots, so this may date from Brian's TeamPassword years rather than the
-   * Studio.
+   * The original needs none of that. 1200x802 — a 1.496 aspect, which is the
+   * homepage slot's 3:2 to within a rounding error, so it drops in with
+   * essentially no crop — and the whole sketch is legible: a profile wireframe
+   * with Connections and Experience, "Cable Installer Salesman", "Hard Rock
+   * Guitarist", "API = from LI". That legibility is what makes the caption
+   * "working a product problem" literally true rather than a description of a
+   * gesture.
+   *
+   * ⚠️ 1200px IS ITS CEILING, and that has not changed. It covers 600 CSS px
+   * at 2x, which is fine for the homepage's ~460px slot and nowhere near the
+   * ~2380 device px a full-bleed hero wants. See the note beside
+   * `openlaneTeam` for the hero comparison this lost.
+   *
+   * The 2015 date also answers a question this file used to carry open: the
+   * styling reads older than the Geekdom shoots because it IS older — this is
+   * Brian's TeamPassword years, not the Studio.
    */
   brianWhiteboard: {
     src: brianWhiteboard,

@@ -137,10 +137,54 @@ export const LINK_ON_INK =
  * arrow half a pixel closer on one page than another is the kind of drift
  * nobody reports and everybody feels.
  */
-export const LINK_ARROW = `inline-flex items-center gap-1.5 ${LINK}`;
+export const LINK_ARROW = `group inline-flex items-center gap-1.5 ${LINK}`;
 
 /** The arrow link on a graphite ground. */
-export const LINK_ARROW_ON_INK = `inline-flex items-center gap-1.5 ${LINK_ON_INK}`;
+export const LINK_ARROW_ON_INK = `group inline-flex items-center gap-1.5 ${LINK_ON_INK}`;
+
+/**
+ * WHICH ARROW, AND HOW IT MOVES.
+ *
+ * ── THE GLYPH CARRIES MEANING, SO THERE IS NO SINGLE DEFAULT ──────────────
+ *
+ * `→` means the reader stays on this site. `↗` means they leave it. That is
+ * the ordinary web convention and this repo already followed it by accident:
+ * every ArrowRight here is on an in-app `<Link>` (/studio, /events,
+ * /whats-changing) and the only ArrowUpRight is on the portfolio wall's
+ * `target="_blank"` links out to companies' own sites.
+ *
+ * Collapsing the two into one mark would be a real loss. `↗` is how somebody
+ * knows a click opens a new tab and hands them to someone Geekdom does not
+ * control, and it is the only warning they get. Using it on "All events"
+ * would say that about a link to this site's own page.
+ *
+ * ── THE MOTION IS THE PART THAT SHOULD BE SHARED ──────────────────────────
+ *
+ * Ported from the sibling next-sasw repo, where it runs down the days of the
+ * week on the schedule. Each arrow nudges 2px along its OWN axis over 200ms —
+ * a right arrow travels right, a back arrow travels left, and the external
+ * one goes up and right the way its head points. An arrow that drifts in a
+ * direction it is not pointing reads as a wobble rather than as movement.
+ *
+ * The wrapper supplies the `group`; `LINK_ARROW` above carries it now, and
+ * the portfolio wall's row already did.
+ *
+ * `transition-transform` for the two that only move, `transition-all` for the
+ * external one, which also changes colour — Clay on hover, where the arrow is
+ * a marker rather than text and so is allowed to take the accent that the
+ * label beside it cannot.
+ */
+export const ARROW = {
+  /** `ArrowRight`, on an in-app route. */
+  internal:
+    "size-4 shrink-0 transition-transform duration-200 group-hover:translate-x-0.5",
+  /** `ArrowUpRight`, on a link that leaves the site. */
+  external:
+    "size-3.5 shrink-0 transition-all duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-clay",
+  /** `ArrowLeft`, on a back link. */
+  back:
+    "size-4 shrink-0 transition-transform duration-200 group-hover:-translate-x-0.5",
+} as const;
 
 /**
  * THE TYPE SCALE.

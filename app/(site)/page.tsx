@@ -11,6 +11,7 @@ import {
   Standfirst,
   FIGURE,
   HEADING,
+  ARROW,
   LINK_ARROW,
   MONO,
 } from "@/components/site/section";
@@ -367,7 +368,7 @@ export default async function HomePage() {
             className={LINK_ARROW}
           >
             How we back them
-            <ArrowRight className="h-4 w-4" strokeWidth={2} />
+            <ArrowRight className={ARROW.internal} strokeWidth={2} />
           </Link>
         </div>
 
@@ -612,7 +613,8 @@ export default async function HomePage() {
           still a rhyme; two that answer each other are a rhythm.
 
           0.85fr, so roughly 460px. That is also the most this source can carry
-          sharply: 1198px covers 599 CSS px at 2x and no more.
+          sharply: the camera original is 1200px, which covers 600 CSS px at 2x
+          and no more.
         */}
         <div className="grid items-start gap-12 lg:grid-cols-[1fr_0.9fr] lg:gap-16">
           {/* Photo first in source order on desktop so the two product
@@ -625,6 +627,15 @@ export default async function HomePage() {
             Entrepreneur in Residence", and a photograph of two people in
             conversation does not show that. This one does — the EIR, named
             three lines away, actually doing the work the section is selling.
+
+            IT IS THE CAMERA ORIGINAL NOW, not the AI upscale, and the swap
+            settled an argument rather than just improving a file. For a while
+            this slot held `brianOpenlane` — Brian posed with a backed team at
+            Geekdom — on the grounds that an ordinary photograph beat
+            generative media on the homepage of a brand that publishes "Real
+            people, named. No stock.", even though nobody in it was doing
+            anything. The original turning up removes the trade entirely: it
+            is a real photograph AND it shows the work. See lib/photos.ts.
           */}
           <Frame
             photo={PHOTOS.brianWhiteboard}
@@ -808,7 +819,7 @@ export default async function HomePage() {
             className={LINK_ARROW}
           >
             All events
-            <ArrowRight className="h-4 w-4" strokeWidth={2} />
+            <ArrowRight className={ARROW.internal} strokeWidth={2} />
           </Link>
         </div>
 
@@ -875,7 +886,7 @@ export default async function HomePage() {
               className={cn("mt-8", LINK_ARROW)}
             >
               Read the letter to our members
-              <ArrowRight className="h-4 w-4" strokeWidth={2} />
+              <ArrowRight className={ARROW.internal} strokeWidth={2} />
             </Link>
           </div>
           <Frame

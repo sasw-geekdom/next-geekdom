@@ -31,3 +31,28 @@ import type { MemberVoice } from "@/lib/site";
  * here temporarily — but do not commit them.
  */
 export const MOCK_MEMBER_VOICES: readonly MemberVoice[] = [];
+
+/**
+ * What Studio FOUNDERS say — EMPTY UNTIL THE QUOTES ARE REAL, for exactly the
+ * reasons written out above.
+ *
+ * This slot exists because /studio had no founder voice at all. Every claim on
+ * that page is Geekdom's: the check, the terms, the six to twelve months, the
+ * EIR's track record. The one thing a founder deciding whether Geekdom is
+ * worth a conversation wants is another founder's account of what those months
+ * were actually like, and the page had none — it even carried a pull quote
+ * from the person selling the thing, flagged in the source copy as not yet his
+ * words, which is worse than silence.
+ *
+ * FOUR BACKED COMPANIES MEANS FOUR PEOPLE WHO CAN FILL THIS. `PORTFOLIO` in
+ * lib/site.ts names them. Two real quotes are worth more than four, and the
+ * layout survives an odd number — it is a two-column grid of hairlined cells,
+ * not a carousel that needs feeding.
+ *
+ * TO FILL IT: the role should name the company, e.g. "Co-founder, Openlane",
+ * because that is what makes the quote evidence rather than a compliment. Ask
+ * for the specific thing that changed — a first enterprise customer, a
+ * pricing decision, a hire — not how great the experience was. A quote that
+ * could have been written by Geekdom reads as though it was.
+ */
+export const MOCK_FOUNDER_VOICES: readonly MemberVoice[] = [];

@@ -1,5 +1,7 @@
+import type { MemberVoice } from "@/lib/site";
 import { Container, Eyebrow, SectionTitle } from "@/components/site/section";
-import { MOCK_MEMBER_VOICES as MEMBER_VOICES } from "@/data/mock/voices";
+import { MOCK_MEMBER_VOICES } from "@/data/mock/voices";
+import { cn } from "@/lib/utils";
 
 /**
  * What members say, in their own words and under their own names.
@@ -9,15 +11,38 @@ import { MOCK_MEMBER_VOICES as MEMBER_VOICES } from "@/data/mock/voices";
  * role beneath it. It works because it is unglamorous — no cards, no portraits,
  * no carousel. The quote is the content and the attribution is the proof.
  *
- * Renders nothing when MEMBER_VOICES is empty. The quotes there are mock
- * content for layout review — see the note in lib/site.ts.
+ * Renders nothing when the list is empty. The quotes live in
+ * data/mock/voices.ts and both lists there are empty until they are real —
+ * see the note in that file.
+ *
+ * TAKES ITS LIST AND ITS HEADING AS PROPS, because /studio needs the same
+ * grid for founder quotes. It was hardwired to the member list and its own
+ * two lines of copy; the alternative was a second component that is this one
+ * with three strings changed, and the strings are not the part with the
+ * value. Defaults keep the homepage's call a bare <MemberVoices />.
  *
  * Two columns rather than three: these are sentences, and a third column drops
  * the measure to about forty characters, at which point a two-line quote breaks
  * across four lines and stops reading as speech.
  */
-export function MemberVoices() {
-  if (MEMBER_VOICES.length === 0) return null;
+export function MemberVoices({
+  voices = MOCK_MEMBER_VOICES,
+  eyebrow = "In their words",
+  title = "Hear from the people in the room.",
+  /**
+   * Bone by default, for the homepage's neighbour. A caller whose preceding
+   * section is already Bone passes `bone-light` — six points of luminance
+   * will not separate two same-tone bands, and this one draws its own top
+   * border, which is not enough on its own.
+   */
+  tone = "bone",
+}: {
+  voices?: readonly MemberVoice[];
+  eyebrow?: string;
+  title?: string;
+  tone?: "bone" | "bone-light";
+}) {
+  if (voices.length === 0) return null;
 
   return (
     /*
@@ -26,10 +51,15 @@ export function MemberVoices() {
       between them is — the page loses a beat exactly where it should be
       changing subject.
     */
-    <section className="border-y border-border bg-bone py-20 sm:py-28">
+    <section
+      className={cn(
+        "border-y border-border py-20 sm:py-28",
+        tone === "bone" ? "bg-bone" : "bg-bone-light",
+      )}
+    >
       <Container>
-        <Eyebrow>In their words</Eyebrow>
-        <SectionTitle>Hear from the people in the room.</SectionTitle>
+        <Eyebrow>{eyebrow}</Eyebrow>
+        <SectionTitle>{title}</SectionTitle>
 
         {/*
           The dividers are drawn on the CELLS, not the grid, because a CSS grid
@@ -45,7 +75,7 @@ export function MemberVoices() {
           basis; the section padding is what provides air, not a bespoke gap.
         */}
         <ul className="mt-6 grid sm:grid-cols-2">
-          {MEMBER_VOICES.map((voice, i) => (
+          {voices.map((voice, i) => (
             <li
               key={voice.quote}
               className={[

@@ -432,9 +432,172 @@ export const STUDIO_CRITERIA = [
  * is the kind of unfalsifiable claim the brand guide's voice section exists to
  * stop.
  */
-export const STUDIO_PARTNERS = [
-  "Jockey Ventures",
-  "Bexar County Economic Development Innovation Fund",
+export interface StudioPartner {
+  name: string;
+  /**
+   * Path under /public/partners. Trimmed of transparent padding on import.
+   *
+   * MUST HAVE AN ALPHA CHANNEL. `jockey-ventures.png` arrived as RGB flattened
+   * onto white and rendered as a white box on Bone Light — the grounds here are
+   * #FAF8F3 and #F4F1EB, so any white rectangle shows. It was keyed rather than
+   * recomposited onto the section colour: alpha ramps from the distance to
+   * white over the anti-aliased band only (min-channel 255 to 195, which is
+   * 2.5% of that file's pixels), then the colour is unpremultiplied from white
+   * so edge pixels carry no light fringe. The mark is NOT monochrome —
+   * "VENTURES" is blue and the tagline grey — so the usual luminance-to-alpha
+   * shortcut would have made the blue semi-transparent.
+   */
+  logo: string;
+  /**
+   * Rendered height, balanced on INK rather than on box area.
+   *
+   * These two happen to land on the same value, and that is a measurement
+   * rather than laziness — don't collapse the field, the next logo will need
+   * its own. Jockey is 8.3:1 at 21% ink coverage, Bexar 5.6:1 at 29%, and the
+   * lower coverage almost exactly offsets the wider aspect: at 40px they are
+   * 2804px2 and 2600px2 of ink, within 8%.
+   *
+   * THE EARLIER PAIRING BALANCED NEITHER. Jockey sat at h-7 against Bexar's
+   * h-10 on the reasoning that a single height makes the wide one dominate.
+   * On ink that put Bexar 89% ahead — it has a seal and two lines of bold
+   * type where Jockey has a thin wordmark — so the fix was making the county
+   * mark *stop* dominating, not shrinking the other one further. It also left
+   * Jockey's "BUILD WITH US" about 4px tall.
+   */
+  logoHeight: string;
+  /**
+   * A short line under the mark, and it must NOT be the name again.
+   *
+   * This slot used to render `name`, which on a wordmark is an echo — at h-10
+   * "JOCKEY VENTURES" sets at about a 15px cap height and reads perfectly
+   * well, so the caption under it said nothing twice.
+   *
+   * IT CANNOT SIMPLY GO, because the two marks are not equally self-naming.
+   * Bexar's is a 5.6:1 lockup whose top line, "BEXAR COUNTY TX", sets at
+   * about 4.8px — an unreadable smudge at h-10 and still 5.8px at the h-12
+   * the container caps at. Without a caption the row is a government seal
+   * over "ECONOMIC & COMMUNITY DEVELOPMENT", which a San Antonio reader will
+   * most likely take for the CITY. Geekdom operates LaunchSA for the City;
+   * the County backs the fund. Those are different claims and the site is
+   * careful about them everywhere else.
+   *
+   * So the line stays and carries what the mark can't. Same reasoning as the
+   * required `role` on ECOSYSTEM entries: what a body IS to Geekdom is the
+   * information, and a name that is already set in 40px of artwork is not.
+   */
+  role: string;
+  href?: string;
+}
+
+/**
+ * THE ONE FILM, and it is the closest thing this site has to a founder voice.
+ *
+ * Geekdom's own channel (@Geekdomsa) published a feature on KeepTabz, one of
+ * the four companies in `PORTFOLIO` marked `studio: true`, with its founder on
+ * camera. That is evidence of a kind /studio had none of: every other claim on
+ * that page is Geekdom describing its own offer, and `MOCK_FOUNDER_VOICES` is
+ * still empty because inventing a quote is not an option.
+ *
+ * TITLE TRANSCRIBED FROM THE oEMBED ENDPOINT, not retyped — same rule the
+ * figures carry. `https://www.youtube.com/oembed?url=...&format=json` returns
+ * it, needs no key, and is the only authority on somebody else's headline.
+ *
+ * IT NAMES ONE OF FOUR COMPANIES, which the Studio-companies section is
+ * otherwise careful not to do — the photograph that used to lead that section
+ * was moved to the hero partly for that reason. A film is a different case
+ * from a photograph: it is Geekdom's own published work about a named company
+ * rather than a stand-in for "a backed team", and it is captioned with whose
+ * it is. If films appear for the others, this becomes a list.
+ */
+export const STUDIO_FILM = {
+  youtubeId: "YAw8bMeLlQU",
+  title:
+    "The Smarter, Cheaper Way to Track Your Competition | KeepTabz Founder",
+  company: "KeepTabz",
+  /**
+   * THE FOUNDER, NAMED. The guide's loudest rule is "Real people, named. No
+   * stock.", and until this was transcribed the row said "KeepTabz" and left
+   * the person in it anonymous — on the page whose whole gap is that no
+   * founder speaks on it.
+   */
+  founder: "Franklin Morris",
+  /**
+   * EVERYTHING BELOW IS FOR `VideoObject`, and every field is transcribed
+   * from YouTube rather than estimated — same rule the fund's figures carry.
+   * `uploadDate` and `duration` are required and recommended respectively for
+   * the rich result, and a wrong date is a wrong claim about when Geekdom
+   * published something.
+   *
+   * Source: the watch page's own JSON (`uploadDate`, `lengthSeconds`) and the
+   * oEmbed endpoint for the title. 2289 seconds is 38m09s.
+   */
+  uploadDate: "2026-05-04",
+  /** ISO 8601, because that is what `VideoObject` requires. */
+  duration: "PT38M9S",
+  /** The same figure in prose, for llms.txt. Kept beside the ISO one rather
+      than parsed out of it — two fields cannot disagree if both are read off
+      the same source at the same time, and a parser here would be four lines
+      to avoid a duplicated 38. */
+  durationLabel: "38-minute",
+  /** Referenced by URL in JSON-LD only. The page itself requests nothing from
+      YouTube until somebody presses play — see components/site/video-card. */
+  thumbnailUrl: "https://i.ytimg.com/vi/YAw8bMeLlQU/maxresdefault.jpg",
+  /** One sentence, from the film's own description. */
+  description:
+    "Franklin Morris spent years as a VP of Marketing watching companies get blindsided by competitors, so he built something about it.",
+} as const;
+
+/*
+  WHO CAPITALISES THE FUND, and these are logos rather than names now because
+  a backer is a verifiable fact about the money, not borrowed credibility.
+
+  THAT DISTINCTION MATTERS HERE. The homepage's partner marquee was removed for
+  exactly the reason a logo wall is usually wrong on this site — nine other
+  organizations' marks in the most valuable proof slot, which is how the
+  "generic community organization" the guide says Geekdom is NOT presents
+  itself. These two are different: they are on the page about the fund they
+  back, there are two of them, and who funds a fund is material. Don't read
+  this as licence to reopen the marquee.
+
+  THE BEXAR COUNTY NAME CHECKS OUT. This list once called it the "Economic
+  Development Innovation Fund" and the logo Geekdom supplied reads "Economic &
+  Community Development"; the county's own site settles it — the department is
+  Economic & Community Development (ECD), and Economic Development is one of
+  its four divisions. The logo's wording was already the right call. What is
+  still worth asking Geekdom is whether a named FUND inside the department is
+  the actual counterparty, because that would be the more specific caption.
+
+  ⚠️ ONE THING FOR GEEKDOM TO CONFIRM. The documented Jockey relationship is
+  with the PRE-ACCELERATOR, which this repo lists as legacy — Geekdom's own
+  newsroom has "Geekdom Pre-Accelerator launches with Jockey Ventures as lead
+  sponsor", a $100K sponsorship — and that post describes their founder Ben
+  Jones as a Geekdom entrepreneur in residence, while the Studio's EIR is
+  Brian Sierakowski. Both can be true, a sponsor who stayed on and a former
+  EIR, but they are listed here as a STUDIO backer and that wants checking.
+*/
+export const STUDIO_PARTNERS: readonly StudioPartner[] = [
+  {
+    name: "Jockey Ventures",
+    role: "Venture studio",
+    logo: "/partners/jockey-ventures.png",
+    logoHeight: "h-10",
+    /*
+      THEIR LINKEDIN, NOT jockeyvc.com, and the choice is deliberate. That
+      domain is the one their LinkedIn lists, but it currently serves "Jockey
+      Delivery", a same-day retail delivery service — so a reader clicking
+      Geekdom's backers list lands somewhere that looks like a mistake.
+      LinkedIn is unambiguously the firm and is stable. Swap it the day the
+      domain points back at the studio.
+    */
+    href: "https://www.linkedin.com/company/jockeyvc",
+  },
+  {
+    name: "Bexar County Economic & Community Development",
+    role: "Bexar County, Texas",
+    logo: "/partners/bexar-county-ecd.png",
+    logoHeight: "h-10",
+    href: "https://www.bexar.org/682/Economic-Community-Development",
+  },
 ] as const;
 
 /**
