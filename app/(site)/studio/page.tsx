@@ -11,7 +11,7 @@ import {
   Subhead,
   MONO,
 } from "@/components/site/section";
-import { Editorial } from "@/components/site/editorial";
+import { Editorial, PullQuote } from "@/components/site/editorial";
 import { MemberVoices } from "@/components/site/member-voices";
 import { TypeHero } from "@/components/site/type-hero";
 import { PortfolioWall } from "@/components/site/portfolio-wall";
@@ -100,7 +100,7 @@ export default function StudioPage() {
       */}
       <TypeHero
         size="compact"
-        eyebrow="Studio · The venture layer"
+        eyebrow="Studio"
         media={{ photo: PHOTOS.openlaneTeam, fadeTo: "48%" }}
         title="Where we go all in with the founders we believe in."
       >
@@ -114,62 +114,63 @@ export default function StudioPage() {
           More than a check. More than mentorship.
         </Editorial>
 
+        {/*
+          THE SOURCE DOC'S THREE OPENING PARAGRAPHS, VERBATIM.
+
+          Geekdom's feedback is that the site should carry the exact copy from
+          `Geekdom Website — Source Copy v1`, and this section had drifted from
+          it in three ways, all introduced here rather than inherited:
+
+            1. Paragraph 1 lost its second sentence — "The focus is on
+               go-to-market, product, and getting founders connected to the
+               local customers, operators, and investors who make growth
+               possible" — trimmed for measure when this hero took the bleed.
+               It is the only line on the page that says what the six to
+               twelve months are actually spent ON.
+            2. Paragraph 2 lost the Club sentence, which moved to the bottom
+               of the page. The doc keeps it here, where the disqualifier is.
+            3. Paragraph 3 did not exist. It is what tells a reader who is not
+               getting invited that there is still a way in.
+
+          The figures still interpolate from `STUDIO` rather than being typed,
+          so a number cannot drift from the fund; the SENTENCES around them are
+          the doc's. Where the doc says "our Community Fund" and the Capital
+          section says "The Geekdom Community Fund", both are reproduced as
+          written — that variation is the doc's, not an inconsistency to fix.
+        */}
         <p className="mt-8 text-lg leading-relaxed text-bone/80">
           The Studio backs a small number of local founders each year with a{" "}
-          {STUDIO.checkRange} {STUDIO.checkTerms} check from our {STUDIO.fund}{" "}
+          {STUDIO.checkRange} {STUDIO.checkTerms} check from our Community Fund
           and {STUDIO.engagement} of intensive, hands-on work with our{" "}
-          {STUDIO.eir.role}, {STUDIO.eir.name}.
+          {STUDIO.eir.role}, {STUDIO.eir.name}. The focus is on go-to-market,
+          product, and getting founders connected to the local customers,
+          operators, and investors who make growth possible.
         </p>
 
-        {/*
-          THE DISQUALIFIER, HIGH UP. Someone who came here to apply should find
-          out in the first screen that there is nothing to apply to, not after
-          scrolling past the investment criteria.
-        */}
         <p className="mt-5 text-lg leading-relaxed text-bone">
           There&rsquo;s no open application and no cohorts. Founders are
-          scouted and invited.
+          scouted and invited. Club membership isn&rsquo;t a prerequisite, but
+          most Studio relationships start there.
+        </p>
+
+        <p className="mt-5 text-lg leading-relaxed text-bone/80">
+          Beyond the portfolio, the Studio also runs open programming
+          throughout the year — Office Hours, Startup Bootcamp, and select
+          workshops — for the broader community.
         </p>
       </TypeHero>
 
       {/*
-        THE TERMS, IN A BAND OF THEIR OWN — they were a side panel in the hero,
-        and the bleed cannot hold both. `media` caps the copy block at 42rem so
-        it stays inside the heavy end of the ramp; a 20rem side column inside
-        that leaves the headline about 22rem to set in.
+        THE TERMS BAND CAME OUT, and it was mine rather than the doc's.
 
-        Moving them out cost nothing and gained the full measure. A founder
-        reading this page is asking four questions — how much, on what terms,
-        for how long, how many of us — and six rows across three columns
-        answers all of them in one screen, where the panel answered them in a
-        column narrow enough to wrap every value.
-
-        Directly under the fold, before the person and before the criteria,
-        because it is the cheapest possible way for the wrong-stage founder to
-        find out and leave.
+        It lifted the check size, the terms, the engagement length and the
+        founders-a-year out of the opening paragraph and set them as six
+        scannable rows. That read well and it is not what `Source Copy v1`
+        says: those facts live in the opening paragraph, and "Pre-seed" and
+        "At least $500 MRR" live in the "Who we invest in" list further down.
+        Restoring paragraph 1 in full puts them back where the doc has them,
+        and a band that restates them is the same figures twice.
       */}
-      <Section tone="bone">
-        <Eyebrow>The terms</Eyebrow>
-        <dl className="mt-10 grid gap-x-12 sm:grid-cols-2 lg:grid-cols-3">
-          {[
-            ["Check", `${STUDIO.checkRange} on ${STUDIO.checkTerms} terms`],
-            ["From", STUDIO.fund],
-            ["Founders a year", STUDIO.foundersPerYear],
-            ["Engagement", "6–12 months, hands-on"],
-            ["Stage", "Pre-seed, $500+ MRR"],
-            ["How you get in", "Scouted and invited"],
-          ].map(([term, value]) => (
-            <div key={term} className="border-t border-border py-5">
-              <dt className={cn(MONO.label, "text-muted-foreground")}>
-                {term}
-              </dt>
-              <dd className="mt-2 text-lg font-medium leading-snug text-graphite">
-                {value}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      </Section>
 
       {/* ── The EIR ──────────────────────────────────────────────────── */}
       {/*
@@ -223,6 +224,29 @@ export default function StudioPage() {
               up, on the specific work that turns early traction into real
               scale.
             </p>
+
+            {/*
+              ⚠️ THE PLACEHOLDER PULL QUOTE IS BACK, AND IT IS STILL A
+              PLACEHOLDER.
+
+              I deleted it, on the reasoning that `data/mock/voices.ts` had
+              already settled that a fabricated sentence under a real person's
+              name should not ship. `Source Copy v1` carries it — "Pull quote
+              is a placeholder. Get a real one from Brian before launch." —
+              and Geekdom's instruction is that the site follows the doc, so
+              deleting it was a decision that was not mine to make.
+
+              THE FLAG IS THE POINT. The doc says replace it before launch, so
+              the job is to get a real one from Brian, not to quietly remove
+              the slot and let the page look finished. If it must not ship as
+              his words, that is a conversation with Leslie rather than a
+              silent edit — see the note in data/mock/voices.ts for the case
+              against it.
+            */}
+            <PullQuote className="mt-8 lg:text-xl">
+              Early stage startups need two things: customers and capital. I
+              personally love to go after both.
+            </PullQuote>
           </div>
 
           {/*
@@ -244,12 +268,15 @@ export default function StudioPage() {
               className="max-w-[19rem]"
             />
             {/*
-              ", Geekdom Studio" came off with the move. In a 19rem rail it
-              wrapped to a second line to say something the eyebrow beside it
-              ("Leading the Studio") and the URL have both already said.
+              THE DOC'S ROLE LINE, IN FULL. I had cut ", Geekdom Studio" on
+              the grounds that the eyebrow above already said it and the
+              string wrapped to two lines in a 19rem rail. `Source Copy v1`
+              writes it out — "Entrepreneur in Residence, Geekdom Studio" — so
+              it is written out. The wrap is a layout problem to solve in the
+              layout, not by editing Geekdom's copy.
             */}
             <p className={cn("mt-5", MONO.label, "text-muted-foreground")}>
-              {STUDIO.eir.role}
+              {STUDIO.eir.role}, Geekdom Studio
             </p>
           </div>
         </div>
@@ -257,8 +284,15 @@ export default function StudioPage() {
 
       {/* ── Who we invest in ─────────────────────────────────────────── */}
       <Section tone="bone">
+        {/*
+          NO INVENTED HEADLINE. `Source Copy v1` gives this section an Eyebrow
+          and an intro and no Headline element, so "The shape of a Studio
+          company." — which was written here, not by Geekdom — comes out. The
+          h2 stays for document structure and carries the doc's own section
+          name; it is visually hidden because the eyebrow already shows it.
+        */}
         <Eyebrow>Who we invest in</Eyebrow>
-        <SectionTitle>The shape of a Studio company.</SectionTitle>
+        <h2 className="sr-only">Who we invest in</h2>
         <Lede>
           We focus on local founders and startups well positioned to sell into
           local corporate partners, work with senior operator talent in our
@@ -333,56 +367,25 @@ export default function StudioPage() {
         </div>
 
         {/*
-          THE ITEMIZATION OF THAT COLON, and it started life two sections up.
+          THE "WHAT COMES WITH IT" LIST CAME OUT. It itemized the paragraph
+          above into five rows — go-to-market, product, local customers,
+          operators, investors — which is a reshaping of the doc's sentence
+          rather than the doc's copy. `Source Copy v1` writes it as prose:
+          "The value is in what comes with it: Brian's time, the network, and
+          the local corporate, operator, and investor relationships that make
+          the next round possible." That sentence is above, verbatim.
 
-          It was "What the work is" in the EIR section, filling the column the
-          placeholder pull quote had left — words the source copy flags as not
-          yet Brian's ("Get a real one from Brian before launch"), which a
-          fabricated sentence under a real person's name had no business being
-          (see data/mock/voices.ts).
-
-          It reads better here. The paragraph above ends "the value is in what
-          comes with it: his time, the network, and the local corporate,
-          operator, and investor relationships" — a sentence that names four
-          things and leaves a founder to work out what any of them means in
-          practice. These five rows are that sentence, itemized, and every one
-          of them is lifted from the page's own hero copy rather than invented.
-
-          FULL WIDTH BELOW THE GRID rather than inside a column. The grid is
-          two columns of roughly 500px; five rows inside one of them sets a
-          second column of the same list beside a paragraph, and the reading
-          order stops being obvious. Across the measure it is 3 + 2, which is
-          the shape `STUDIO_CRITERIA` already uses further up.
-
-          bone/15 for the rules, not `border-border` — that token is #d9d3c5,
-          a light-ground hairline, and on graphite it reads as a bright line
-          rather than a division.
+          The same five things now sit where the doc puts them — in the
+          opening paragraph's "The focus is on go-to-market, product, and
+          getting founders connected to the local customers, operators, and
+          investors who make growth possible."
         */}
-        <p className={cn("mt-16", MONO.label, "text-bone/60")}>
-          What comes with it
-        </p>
-        <ul className="mt-5 grid gap-x-12 sm:grid-cols-2">
-          {[
-            "Go-to-market, with you in the room",
-            "Product, and what to build next",
-            "Local customers who can actually buy",
-            "Operators in our networks, when you need to hire",
-            "Local investors, ahead of the round",
-          ].map((item) => (
-            <li
-              key={item}
-              className="border-t border-bone/15 py-4 text-lg leading-snug text-bone"
-            >
-              {item}
-            </li>
-          ))}
-        </ul>
       </Section>
 
       {/* ── Studio companies ─────────────────────────────────────────── */}
       <Section tone="bone-light">
-        <Eyebrow>Studio companies</Eyebrow>
-        <SectionTitle>Who we&rsquo;re in with.</SectionTitle>
+        <Eyebrow>Studio Companies</Eyebrow>
+        <h2 className="sr-only">Studio Companies</h2>
 
         {/*
           LOGOS ONLY, AND NO FAVOURITE.
@@ -445,7 +448,7 @@ export default function StudioPage() {
       {/* ── Open programming ─────────────────────────────────────────── */}
       <Section tone="bone">
         <Eyebrow>Open to the community</Eyebrow>
-        <SectionTitle>Not everything here is invitation-only.</SectionTitle>
+        <h2 className="sr-only">Open programming</h2>
         {/*
           THE CLAIM, PHOTOGRAPHED. This section asserted that anyone can walk
           into some of this and then showed nothing, on a page where every
@@ -501,7 +504,7 @@ export default function StudioPage() {
       {/* ── Built with ───────────────────────────────────────────────── */}
       <Section tone="bone-light">
         <Eyebrow>Built with</Eyebrow>
-        <SectionTitle>Who backs the Studio.</SectionTitle>
+        <h2 className="sr-only">Built with</h2>
         <Lede>
           The Studio is supported by partners who believe San Antonio&rsquo;s
           founder community is worth investing in.
@@ -594,7 +597,7 @@ export default function StudioPage() {
       */}
       <Section tone="bone">
         <Eyebrow>How to get involved</Eyebrow>
-        <SectionTitle>Two doors, both real.</SectionTitle>
+        <h2 className="sr-only">How to get involved</h2>
 
         {/*
           NOT TWO COLUMNS, BECAUSE THEY ARE NOT TWO EQUAL DOORS.

@@ -52,6 +52,24 @@ export function priceLabel(): string | null {
     : `${formatPrice(MEMBERSHIP_PRICE_CENTS)}/${MEMBERSHIP_INTERVAL}`;
 }
 
+/**
+ * The price as a SENTENCE — "$100 per month" — rather than a rate.
+ *
+ * `Source Copy v1` writes /club's Membership headline as "$100 per month.
+ * Application-based.", and "$100/month. Application-based." is a different
+ * line: a slash reads as a rate card, which is the register that page spends
+ * seven sections avoiding.
+ *
+ * Still derived from `MEMBERSHIP_PRICE_CENTS` rather than typed, so the
+ * figure cannot drift from Stripe — the rule the rest of this file carries.
+ * Returns null on the same terms as `priceLabel`.
+ */
+export function priceSentence(): string | null {
+  return MEMBERSHIP_PRICE_CENTS === null
+    ? null
+    : `${formatPrice(MEMBERSHIP_PRICE_CENTS)} per ${MEMBERSHIP_INTERVAL}`;
+}
+
 export interface Benefit {
   title: string;
   description: string;

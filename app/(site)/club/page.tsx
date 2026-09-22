@@ -20,6 +20,7 @@ import {
   BENEFITS,
   NOT_INCLUDED,
   priceLabel,
+  priceSentence,
   EXTRAS,
   GENEROSITY_BAR,
   GOOD_FIT,
@@ -77,27 +78,13 @@ export const metadata: Metadata = pageMetadata({
  * holding rather than the opening bid.
  */
 
-/**
- * How the room works. Three modes, in the order a problem actually moves
- * through them. Lifted from the homepage with the section that renders it.
- */
-const MODES = [
-  {
-    title: "Think it through",
-    body: "Bring the thing you're stuck on. Office hours with mentors who've hit the same wall, fireside chats about the unglamorous middle, and the hallway conversation that reframes the whole problem.",
-    photo: PHOTOS.byTheWindows,
-  },
-  {
-    title: "Build it",
-    body: "Heads down, together. Build sessions where the goal is to ship something before you leave, and drop-in workspace for the days you just need to focus.",
-    photo: PHOTOS.headsDown,
-  },
-  {
-    title: "Put it in front of people",
-    body: "Say it out loud to a room that will tell you the truth. Pitch nights, demos, and the honest read you can't get from people who already agree with you.",
-    photo: PHOTOS.pitch,
-  },
-];
+/*
+  `MODES` IS GONE. It held three invented captions — Think it through, Build
+  it, Put it in front of people — for a grid that stood where the doc's "A
+  month in the Club" section goes. Removed with that section; see the note
+  there. The photographs are still in lib/photos.ts.
+*/
+
 
 export default function ClubPage() {
   // null while pricing is unannounced — see lib/membership.ts. The page reads
@@ -251,11 +238,38 @@ export default function ClubPage() {
             founders and builders find their room.
           </>
         }
-      >
-        <p className="text-xl leading-relaxed text-bone">{CLUB.claim}</p>
-        <p className="mt-5 text-lg leading-relaxed text-bone/80">{CLUB.who}</p>
-        <p className="mt-5 text-lg leading-relaxed text-bone">{CLUB.isnt}</p>
-      </TypeHero>
+      />
+
+      {/*
+        THE DOC SPLITS THE HEADER FROM THE OPENING, and this page did not.
+
+        `Source Copy v1` gives /club a "Page header" of an eyebrow and a
+        headline and nothing else, then a separate "Opening" section of three
+        paragraphs. The hero carried all of it, which put five blocks of copy
+        over a photograph and made the fold do the job of two sections.
+
+        The three paragraphs below are the doc's, verbatim, and they are not
+        the three the hero used to show: those were `claim` / `who` / `isnt`,
+        shared with the homepage's Club section. The doc writes the two
+        placements differently on purpose — see CLUB and CLUB_HOME in
+        lib/site.ts.
+      */}
+      <Section tone="bone">
+        <h2 className="sr-only">Opening</h2>
+        <div className="max-w-2xl">
+          {CLUB.opening.map((para, i) => (
+            <p
+              key={para}
+              className={cn(
+                "text-lg leading-relaxed text-muted-foreground",
+                i > 0 && "mt-5",
+              )}
+            >
+              {para}
+            </p>
+          ))}
+        </div>
+      </Section>
 
 
 
@@ -274,33 +288,56 @@ export default function ClubPage() {
         tell you the truth.
       */}
       <Section tone="bone-light">
-        <Eyebrow>The rhythm</Eyebrow>
-        <SectionTitle>Break the problem down together.</SectionTitle>
-        <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-          Every hard thing you&rsquo;re building moves through the same three
-          stages. The room is built for all of them.
-        </p>
+        {/*
+          "A MONTH IN THE CLUB", AS THE DOC WRITES IT.
 
-        <ul className="mt-14 grid gap-x-10 gap-y-12 lg:grid-cols-3">
-          {MODES.map((mode, i) => (
-            <li key={mode.title}>
-              <Photo
-                photo={mode.photo}
-                aspect="aspect-[3/2]"
-                sizes="(min-width: 1024px) 341px, (min-width: 640px) 50vw, 100vw"
-              />
-              <p className={cn("mt-5", MONO.label, "text-muted-foreground")}>
-                {String(i + 1).padStart(2, "0")}
-              </p>
-              <h3 className={cn("mt-2", HEADING.subhead, "text-graphite")}>
-                {mode.title}
-              </h3>
-              <p className="mt-3 leading-relaxed text-muted-foreground">
-                {mode.body}
-              </p>
-            </li>
-          ))}
-        </ul>
+          This section was an invented one standing in the doc's slot. It ran
+          under "Break the problem down together." with a three-up grid —
+          Think it through / Build it / Put it in front of people — none of
+          which appears in `Source Copy v1`. The doc's version is an eyebrow,
+          three paragraphs, and a note asking for one full-width third-floor
+          photograph after them.
+
+          ⚠️ THE THREE MODE PHOTOGRAPHS AND THEIR CAPTIONS ARE GONE WITH IT.
+          `MODES` is no longer rendered anywhere. The frames are still in
+          lib/photos.ts and the copy is in this file's history if Geekdom
+          wants that treatment back — but it was written here rather than by
+          them, which is the thing the feedback is about.
+
+          The second paragraph names a real recurring event with a real time,
+          so it is transcribed rather than paraphrased: Creme Coffee and
+          Social, Tuesdays 8 to 9:30.
+        */}
+        <Eyebrow>The rhythm</Eyebrow>
+        <h2 className="sr-only">A month in the Club</h2>
+        <div className="max-w-2xl">
+          <p className="text-lg leading-relaxed text-muted-foreground">
+            The Club runs on a monthly rhythm of programming — socials,
+            meetups, office hours, build sessions — plus special events open to
+            members first.
+          </p>
+          <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
+            Every Tuesday, Open Coffee Club meets at Creme Coffee and Social
+            from 8 to 9:30. Public, free, no agenda. Just founders and builders
+            finding each other over coffee.
+          </p>
+          <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
+            Beyond the space, we&rsquo;re building the online layer too: a
+            member Slack, a directory, and a portal so the community keeps
+            working when you&rsquo;re not in the building.
+          </p>
+        </div>
+
+        {/*
+          The doc's note for this section: "Full-width placeholder image from
+          the third floor after this section." One frame, not three.
+        */}
+        <Photo
+          photo={PHOTOS.theFloorWide}
+          aspect="aspect-[16/7]"
+          sizes="(min-width: 1152px) 1088px, 100vw"
+          className="mt-12"
+        />
       </Section>
 
       {/* ── Who the Club is for ──────────────────────────────────────── */}
@@ -324,16 +361,37 @@ export default function ClubPage() {
         >
           {GENEROSITY_BAR}
         </Editorial>
+        {/*
+          BOTH PARAGRAPHS ARE THE DOC'S NOW, VERBATIM, and they come from two
+          different sections of it.
+
+          `Source Copy v1` has "Who's in the room" (the roster) and "WHO THE
+          CLUB IS FOR" (the bar) as separate sections. This page merged them
+          — a deliberate call made with Jesse earlier, because two eyebrows
+          both starting "Who…" were not telling the reader them apart. The
+          COPY had been paraphrased in the merge: "engineers, tinkerers,
+          investors, students, senior operators" dropped founders and tech
+          workers, and "a give-first habit" rewrote "we lean into a give first
+          culture".
+
+          ⚠️ THE MERGE ITSELF IS STILL A DEPARTURE FROM THE DOC. Flagged for
+          Leslie rather than reversed here, since splitting them back is
+          undoing a decision that was made on purpose and for a stated reason.
+
+          The first line below is the doc's intro line for "WHO THE CLUB IS
+          FOR", minus its opening two sentences, which `GENEROSITY_BAR` sets
+          in Fraunces directly above.
+        */}
         <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
           We&rsquo;re looking for people who show up for the community, not
-          just for themselves. Our members are eclectic — engineers, tinkerers,
-          investors, students, senior operators — and what they have in common
-          is a give-first habit: everyone is willing to help the person next to
-          them.
+          just for themselves.
         </p>
-        <p className="mt-5 max-w-2xl text-lg leading-relaxed text-graphite">
-          We show up with curiosity, ambition, and a belief that no good idea
-          gets built alone.
+        <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground">
+          Our members are eclectic. Engineers, tinkerers, founders, investors,
+          tech workers, students, senior operators—builders of all breeds. We
+          lean into a give first culture where everyone is willing to help the
+          person next to them. We show up with curiosity, ambition, and a
+          belief that no good idea gets built alone.
         </p>
 
       <div className="mt-14 grid gap-6 sm:grid-cols-3">
@@ -681,10 +739,22 @@ export default function ClubPage() {
       */}
       <Section tone="bone">
         <Eyebrow>Membership</Eyebrow>
+        {/*
+          "$100 per month. Application-based." — the doc's headline, and the
+          preposition matters. This read "$100/month.", which is a rate card;
+          `priceSentence()` spells it out and still derives the figure from
+          `MEMBERSHIP_PRICE_CENTS`, so it cannot drift from Stripe.
+
+          THE LEDE UNDER IT IS GONE. "One membership. No tiers to compare, no
+          desk to rent, no contract to negotiate." was written here. The doc
+          gives this section an eyebrow, a headline, the includes list, and
+          one closing line — which now sits after the list, where the doc puts
+          it.
+        */}
         <SectionTitle>
-          {price ? (
+          {priceSentence() ? (
             <>
-              <span className="tabular-nums">{price}</span>.{" "}
+              <span className="tabular-nums">{priceSentence()}</span>.{" "}
               <span className="text-clay">Application-based.</span>
             </>
           ) : (
@@ -694,11 +764,6 @@ export default function ClubPage() {
             </>
           )}
         </SectionTitle>
-        <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-          One membership. No tiers to compare, no desk to rent, no contract to
-          negotiate. The application takes about ten minutes and we respond
-          within two weeks.
-        </p>
 
         <div className="mt-16 grid gap-12 lg:grid-cols-[1fr_360px] lg:gap-16">
           {/* What you get */}
@@ -755,6 +820,17 @@ export default function ClubPage() {
                 </li>
               ))}
             </ul>
+
+            {/*
+              The doc's closing line for this section, in its place — after
+              the includes list, not before it. It used to be folded into a
+              lede above the list alongside three sentences that were written
+              here rather than by Geekdom.
+            */}
+            <p className="mt-10 text-lg leading-relaxed text-muted-foreground">
+              The application takes about ten minutes. We respond within two
+              weeks.
+            </p>
           </div>
 
           {/* Price / apply card */}

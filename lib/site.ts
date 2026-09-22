@@ -99,29 +99,51 @@ export const TAGLINE_LINE =
   "The best things get built because someone sat down next to the right person in the right room.";
 
 /**
- * THE CLUB, IN THE THREE BEATS THE HOMEPAGE USES.
+ * THE CLUB'S COPY, SPLIT THE WAY `Source Copy v1` SPLITS IT.
  *
- * These were typed into the homepage's Club section and typed again, differently,
- * into /club's hero — the same argument in two places, which is how one of them
- * ends up a year behind the other. They are here so both read from one source.
+ * This was one shared object — claim / who / isnt — read by BOTH the
+ * homepage's Club section and /club's hero, on the reasoning that one
+ * argument typed in two places is how one of them ends up a year behind the
+ * other. That reasoning still holds in general and it was the wrong call
+ * here: Geekdom's source doc gives the two placements DIFFERENT copy on
+ * purpose. The homepage gets a subhead and one paragraph that introduce the
+ * Club to someone who has not met it; /club gets three paragraphs that
+ * describe it to someone who has already clicked.
  *
- * The order is the story, and it is the order the source copy tells it in:
+ * So they are two constants rather than one, and the thing that stops them
+ * drifting is no longer a shared object — it is that both are transcribed
+ * from the same document and neither is written here.
  *
- *   claim  the PROBLEM, then the answer. Not "here is a club" — "hard problems
- *          don't get solved alone", and only then the room. A feature list that
- *          opens with the feature has skipped the reason anyone wants it.
- *   who    who is in the room, and what the month looks like. Concrete, and
- *          deliberately a broad list: the room only works if it is mixed.
- *   isnt   the DISQUALIFIER, and it is load-bearing. Fifteen years of public
- *          record says Geekdom is a coworking space; somebody who wants a desk
- *          should find out before a ten-minute application, not after. The
- *          brand guide names both of these in its "What we're not".
+ * ⚠️ DO NOT MERGE THEM BACK. The overlap is real ("It's not coworking. It's
+ * not an accelerator." appears in both), and deduplicating it would quietly
+ * re-impose a structure the doc does not have.
+ */
+export const CLUB_HOME = {
+  /** Home › The Club section › Subhead. */
+  subhead:
+    "A community and social layer for the people building San Antonio\u2019s future.",
+  /** Home › The Club section › Body. */
+  body: "Application-based membership for the people building what\u2019s next in San Antonio. Founders, engineers, creators, operators, and the corporate and civic leaders who want a hand in what the city becomes. Anchored by monthly rituals, build sessions, meetups, member-only events, and 24/7 access to the third-floor clubhouse.",
+} as const;
+
+/**
+ * /club › Page header and Opening, verbatim.
+ *
+ * The doc separates the two: the header is an eyebrow and a headline and
+ * nothing else, and the Opening is its own section of three paragraphs below
+ * it. The hero used to carry all of it, which is why /club's fold ran to five
+ * blocks of copy over a photograph.
  */
 export const CLUB = {
-  claim:
-    "Hard problems don\u2019t get solved alone. So we built the room where the right person is already sitting.",
-  who: "Application-based membership for founders, engineers, creators, operators, and the corporate and civic leaders who want a hand in what the city becomes. Monthly rituals, build sessions, office hours, member-only events, and 24/7 access to the third floor.",
-  isnt: "It\u2019s not coworking. It\u2019s not an accelerator.",
+  /** Page header › Headline. */
+  headline:
+    "Where San Antonio\u2019s founders and builders find their room.",
+  /** Opening › Body, paragraphs 1–3. */
+  opening: [
+    "Geekdom\u2019s Club is a members-only community for the people building San Antonio\u2019s next generation of companies and technologies. Ritual activities like build sessions, tech talks, fireside chats, and socials create new connections. Member-only channels keep the community connected beyond the room.",
+    "Our downtown San Antonio clubhouse offers space to drop-in for focused work, meetings, coffee chats, and events in the historic Rand Building on Houston Street.",
+    "It\u2019s not coworking. It\u2019s not an accelerator. It\u2019s a community powered by its mix of people, activities, and a clubhouse on the third floor of the Rand.",
+  ],
 } as const;
 
 /**
@@ -405,7 +427,9 @@ export const STUDIO = {
   },
   email: "studio@geekdom.com",
   /** Open to the wider community, not only Studio companies. */
-  openPrograms: ["Office Hours", "Startup Bootcamp", "Select workshops"],
+  /* "or events" is the doc's wording on /studio's open-programming
+     paragraph; the homepage and llms.txt join this list with commas. */
+  openPrograms: ["Office Hours", "Startup Bootcamp", "Select workshops or events"],
 } as const;
 
 /**
@@ -559,13 +583,25 @@ export const STUDIO_FILM = {
   back, there are two of them, and who funds a fund is material. Don't read
   this as licence to reopen the marquee.
 
-  THE BEXAR COUNTY NAME CHECKS OUT. This list once called it the "Economic
-  Development Innovation Fund" and the logo Geekdom supplied reads "Economic &
-  Community Development"; the county's own site settles it — the department is
-  Economic & Community Development (ECD), and Economic Development is one of
-  its four divisions. The logo's wording was already the right call. What is
-  still worth asking Geekdom is whether a named FUND inside the department is
-  the actual counterparty, because that would be the more specific caption.
+  THE DOC SETTLES THE BEXAR COUNTY NAME, AND IT IS THE FUND.
+
+  This entry has been three different strings. It started as "Economic
+  Development Innovation Fund", was changed to "Economic & Community
+  Development" because that is what the supplied logo reads and what the
+  county's own site calls the DEPARTMENT, and is now back to the first one —
+  because `Geekdom Website — Source Copy v1` writes "Bexar County Economic
+  Development Innovation Fund", and the doc is the source of truth for copy.
+
+  Both are real, which is why this kept moving: Economic & Community
+  Development is the department, and the Economic Development Innovation Fund
+  is a fund inside it. The fund is the counterparty — it is the money that
+  backs the Studio — so the doc is naming the right thing and the mark on the
+  logo is the department that houses it.
+
+  ⚠️ THE LOGO THEREFORE CONTRADICTS THE CAPTION. The artwork reads "ECONOMIC
+  & COMMUNITY DEVELOPMENT" above a name that says Innovation Fund. Worth
+  asking Geekdom for the fund's own mark, or confirming they are happy with
+  the department's logo over the fund's name.
 
   ⚠️ ONE THING FOR GEEKDOM TO CONFIRM. The documented Jockey relationship is
   with the PRE-ACCELERATOR, which this repo lists as legacy — Geekdom's own
@@ -592,7 +628,7 @@ export const STUDIO_PARTNERS: readonly StudioPartner[] = [
     href: "https://www.linkedin.com/company/jockeyvc",
   },
   {
-    name: "Bexar County Economic & Community Development",
+    name: "Bexar County Economic Development Innovation Fund",
     role: "Bexar County, Texas",
     logo: "/partners/bexar-county-ecd.png",
     logoHeight: "h-10",

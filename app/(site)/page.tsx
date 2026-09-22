@@ -30,7 +30,7 @@ import { safeUpcomingEvents } from "@/lib/luma";
 import { SASW, saswIsCurrent } from "@/lib/sasw";
 import { pageMetadata, SITE_DESCRIPTION } from "@/lib/seo";
 import {
-  CLUB,
+  CLUB_HOME,
   ECOSYSTEM,
   FOUNDED_YEAR,
   GOAL,
@@ -162,6 +162,28 @@ function Frame({
   );
 }
 
+/**
+ * "Fifteen" rather than "15", without pinning the number.
+ *
+ * The source doc spells this count out in prose and a numeral reads wrong
+ * mid-sentence, but hardcoding the word makes the line false the year after
+ * next. Covers the range Geekdom will plausibly be in during this site's
+ * life and falls back to the numeral outside it, which is wrong-looking
+ * rather than wrong.
+ */
+const YEAR_WORDS: Record<number, string> = {
+  14: "Fourteen",
+  15: "Fifteen",
+  16: "Sixteen",
+  17: "Seventeen",
+  18: "Eighteen",
+  19: "Nineteen",
+  20: "Twenty",
+};
+function spellYears(n: number): string {
+  return YEAR_WORDS[n] ?? String(n);
+}
+
 export default async function HomePage() {
   // `safeUpcomingEvents` swallows Luma failures and returns [] — a third-party
   // outage should never take the homepage down.
@@ -174,6 +196,35 @@ export default async function HomePage() {
 
   return (
     <>
+      {/*
+        ── SECTION ORDER FOLLOWS `Geekdom Website — Source Copy v1` ──────────
+
+        The doc's homepage spine is: Hero, The Club, Studio, This month in the
+        Club, Since 2011, In the Studio, Portfolio wall, Field Notes teaser,
+        Apply CTA. This page ran a different one — portfolio and the convening
+        section ahead of the two engines — which was a deliberate call written
+        up in AGENTS.md and is not the one Geekdom asked for.
+
+        THREE SECTIONS HERE ARE NOT IN THE DOC and are kept, flagged, for
+        Leslie to rule on rather than deleted:
+
+          · "What Geekdom is in 2026" — the ECOSYSTEM block. It carries the
+            convening claim and the `role` verb on each entry, which AGENTS.md
+            treats as load-bearing. Moved to sit after the portfolio, where
+            "the institution behind" reads against its own evidence.
+          · "How they connect" — the Club → Studio pipeline. Kept directly
+            after the two engines, which is where it makes sense and where it
+            does not interrupt the doc's Hero → Club → Studio opening.
+          · "Why there's an application" — kept ahead of the Apply CTA it
+            leads into.
+
+        TWO OF THE DOC'S SECTIONS DO NOT EXIST YET: "In the Studio" (rotating
+        founder cards — the doc's example is Kelsey Waters of Openlane) and
+        the "Field Notes teaser", which needs the /field-notes page. Both are
+        marked in the doc as CMS-backed and Field Notes is flagged there as
+        "hide section and page until we populate with several articles".
+      */}
+
       {/* ── 1 · Hero ─────────────────────────────────────────────────── */}
       {/*
         ONE CLAIM, from Geekdom's own source copy, which specifies this hero
@@ -306,7 +357,14 @@ export default async function HomePage() {
             browser silently reparents.
           */
           <>
-            {LOCATION.floor}, {LOCATION.building}. Houston Street.
+            {/*
+              "Third floor, Rand Building. Houston Street." — the doc's
+              caption, and `LOCATION.building` is "The Rand Building", so the
+              article is trimmed here rather than changed at the constant,
+              which the address line elsewhere needs in full.
+            */}
+            {LOCATION.floor}, {LOCATION.building.replace(/^The /, "")}. Houston
+            Street.
           </>
         }
       >
@@ -334,199 +392,6 @@ export default async function HomePage() {
         warmest frame in the library — two members greeting each other, a room
         applauding around them — and /about or /club will want it.
       */}
-
-      {/* ── 2 · Built at Geekdom ─────────────────────────────────────── */}
-      {/*
-        EVIDENCE BEFORE ARGUMENT, and this slot is why the partner marquee is
-        gone.
-
-        That strip ran nine other organizations' logos under the headline
-        "Building this with us", pinned to the base of the hero — the most
-        valuable proof slot on the site, given away to borrowed credibility. It
-        inverted the brand guide's two-voice principle ("quiet about ourselves,
-        loud about our people"), a wall of civic and nonprofit marks is exactly
-        how the "generic community organization" the guide says Geekdom is NOT
-        presents itself, and the list was provisional anyway — pulled from
-        Startup Week's sponsor wall, with a note in its own file saying the
-        real one still had to come from Geekdom.
-
-        This says the same thing honestly. Eighteen companies started here,
-        oldest first, 2012 through 2025 unbroken, four of them acquired. It is
-        checkable, which is what the guide's voice section asks for and what
-        "$422.7M raised" can never be on its own.
-
-        Reference: Brickyard runs its portfolio as a plain numbered list with
-        no logos at all, and it is the most credible page on their site for
-        exactly that reason. A grid of wordmarks with a stage and a year reads
-        as a record; a grid of logos reads as a sponsor wall.
-      */}
-      <Section tone="bone-light">
-        <div className="flex flex-wrap items-end justify-between gap-6">
-          <div>
-            <Eyebrow>Built at {SITE_NAME}</Eyebrow>
-            <SectionTitle>
-              {PORTFOLIO.length} companies, {years} years.
-            </SectionTitle>
-          </div>
-          <Link
-            href="/studio"
-            className={LINK_ARROW}
-          >
-            How we back them
-            <ArrowRight className={ARROW.internal} strokeWidth={2} />
-          </Link>
-        </div>
-
-        <PortfolioWall className="mt-12" />
-
-        {/*
-          The milestones sit UNDER the companies, not above them. They are the
-          aggregate of the list you just read rather than a free-floating brag,
-          and a figure placed after its evidence is an argument where the same
-          figure placed before it is a claim.
-        */}
-        <dl className="mt-16 grid grid-cols-2 gap-x-8 gap-y-10 border-t border-border pt-12 sm:grid-cols-3">
-          {MILESTONES.map((m) => (
-            <div key={m.label}>
-              <dt className={cn(FIGURE.md, "text-graphite")}>{m.figure}</dt>
-              <dd className={cn("mt-2", MONO.label, "leading-relaxed text-muted-foreground")}>
-                {m.label}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      </Section>
-
-      {/* ── 3 · What Geekdom is in 2026 ──────────────────────────────── */}
-      {/*
-        THE SECTION THE SITE HAS NEVER HAD.
-
-        A visitor could read every page and conclude Geekdom is a nice floor
-        with a small fund attached. It operates the city's open-access
-        entrepreneurship hub for the City of San Antonio, produces the region's
-        startup week, and sits on the team that put San Antonio into MIT's
-        regional program. Geekdom's own Media boilerplate says so; none of it
-        was in page copy anywhere, only as four link labels in a footer column
-        called "Related".
-
-        This is what makes the two membership products mean anything. The Club
-        and the Studio are how you participate; this is why there is something
-        to participate in.
-
-        THE VERBS ARE THE CONTENT. Each entry states the exact relationship —
-        operated, run, backed by, sits on — rather than flattening all four
-        into "partner". See ECOSYSTEM in lib/site.ts for why that field is
-        required and which two still need confirming.
-      */}
-      <Section tone="bone">
-        {/*
-          `items-start` is what makes the sticky column below work at all. A
-          grid item stretches to the row's height by default, so the left
-          column would be exactly as tall as the list beside it and would have
-          nowhere to travel — `position: sticky` on a full-height element is a
-          no-op, and it fails silently, which is why this looks like a
-          typo-level detail and isn't.
-        */}
-        <div className="grid items-start gap-12 lg:grid-cols-[1fr_1.15fr] lg:gap-16">
-          {/*
-            THE CLAIM HOLDS WHILE THE EVIDENCE SCROLLS.
-
-            The heading and the two ledes make one argument — Geekdom convenes
-            the city's startup community — and the four entries beside them are
-            what backs it up. Letting the claim scroll away means the reader
-            meets "operated by Geekdom, in partnership with the City of San
-            Antonio" with no heading in view to attach it to.
-
-            `top-24` rather than flush: the navbar is h-16 (64px) and sticky
-            itself, so anything pinned at `top-0` slides under it. 96px clears
-            it with a little air.
-
-            `lg:` only. Below that the two stack, the left column is directly
-            above the list rather than beside it, and pinning it would just
-            eat a phone's viewport.
-          */}
-          <div className="lg:sticky lg:top-24">
-            <Eyebrow>What we are</Eyebrow>
-            <SectionTitle>
-              The institution behind San Antonio&rsquo;s startup community.
-            </SectionTitle>
-            <Lede>
-              {SITE_NAME} runs a members&rsquo; club and a venture fund. It also
-              convenes the wider community — founders, capital, universities,
-              industry and government — so the city&rsquo;s efforts reinforce
-              each other instead of running in parallel.
-            </Lede>
-            <Lede className="mt-5">{GOAL}</Lede>
-          </div>
-
-          <ul>
-            {ECOSYSTEM.map((entry) => (
-              <li key={entry.name} className="border-t border-border py-6">
-                <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-                  <a
-                    href={entry.href}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    className={cn(
-                      HEADING.item,
-                      "text-graphite decoration-clay decoration-2 underline-offset-4 hover:underline",
-                    )}
-                  >
-                    {entry.name}
-                  </a>
-                  {entry.detail && (
-                    <span className={cn(MONO.label, "text-muted-foreground")}>
-                      {entry.detail}
-                    </span>
-                  )}
-                </div>
-                {/*
-                  The role line is set apart from the description because it is
-                  the load-bearing half: "operated by Geekdom, in partnership
-                  with the City" is a different claim from "partner", and the
-                  page should not let a reader skim past the difference.
-
-                  SENTENCE CASE, NOT TRACKED-OUT MONO — and that is a fix, not
-                  a preference. This line and the `detail` line beside the name
-                  were BOTH uppercase mono, so every entry stacked two
-                  competing labels above its prose and the section read as four
-                  rows of shouting before it read as four sentences. The
-                  strings were always written in sentence case; only the
-                  `uppercase` class was transforming them.
-
-                  Medium weight on graphite keeps it the most important line in
-                  the entry without a third type treatment. The mono is now
-                  doing one job here — the `detail` — which is what MONO is
-                  for: the thing you scan, not the thing you read.
-
-                  GRAPHITE, NOT CLAY. Clay is the obvious choice for a line
-                  that wants emphasis, and it is 3.5:1 on bone, which fails AA
-                  at this size. globals.css is explicit that Clay carries no
-                  small text on any ground in this palette, and a line stating
-                  Geekdom's relationship with the City of San Antonio is the
-                  last place to make an exception.
-                */}
-                <p className="mt-2 text-sm font-medium leading-snug text-graphite">
-                  {entry.role}
-                </p>
-                <p className="mt-3 leading-relaxed text-muted-foreground">
-                  {entry.description}
-                </p>
-                {/*
-                  Carried from the data, not written here. The brand guide
-                  requires the LaunchSA separation to appear wherever the two
-                  are mentioned together — see ECOSYSTEM in lib/site.ts.
-                */}
-                {entry.boundary && (
-                  <p className="mt-3 border-l-2 border-border pl-4 text-sm leading-relaxed text-muted-foreground">
-                    {entry.boundary}
-                  </p>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </Section>
 
       {/* ── 4 · The Club ─────────────────────────────────────────────── */}
       <Section tone="bone-light">
@@ -559,17 +424,19 @@ export default async function HomePage() {
             <Eyebrow>Community</Eyebrow>
             <SectionTitle>The Club</SectionTitle>
             {/*
-              FROM `CLUB` IN lib/site.ts, not typed here. The same three beats
-              open /club's hero, and they were written out separately in both
-              places — which is how two pages drift into describing the same
-              thing slightly differently.
+              `CLUB_HOME`, NOT `CLUB` — and the split is the doc's.
+
+              This read the same three beats as /club's hero, from one shared
+              constant, so the two could not drift. `Source Copy v1` writes
+              them differently on purpose: the homepage gets a Subhead and one
+              Body paragraph for a reader meeting the Club for the first time,
+              /club gets three paragraphs for a reader who has already
+              clicked. Both are transcribed from the doc, which is now what
+              keeps them honest.
             */}
-            <Standfirst>{CLUB.claim}</Standfirst>
+            <Standfirst>{CLUB_HOME.subhead}</Standfirst>
             <p className="mt-5 leading-relaxed text-muted-foreground">
-              {CLUB.who}
-            </p>
-            <p className="mt-5 leading-relaxed text-muted-foreground">
-              {CLUB.isnt}
+              {CLUB_HOME.body}
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <ButtonLink href="/club">Explore the Club</ButtonLink>
@@ -652,18 +519,28 @@ export default async function HomePage() {
           <div>
             <Eyebrow>Venture</Eyebrow>
             <SectionTitle>Studio</SectionTitle>
+            {/*
+              THE DOC'S SUBHEAD AND BODY. The Standfirst read "For the
+              founders going all in, a check and six to twelve months of
+              someone's undivided attention." — a good line, and written here
+              rather than by Geekdom. `Source Copy v1` gives this section a
+              Subhead of "A venture layer for the founders going all in." and
+              one Body paragraph, which is now one paragraph.
+
+              The figures still interpolate from `STUDIO`, so they cannot
+              drift from the fund; the doc says "the Community Fund" in this
+              placement and "The Geekdom Community Fund" on /studio's Capital
+              section, and both are reproduced as written.
+            */}
             <Standfirst>
-              For the founders going all in, a check and six to twelve months
-              of someone&rsquo;s undivided attention.
+              A venture layer for the founders going all in.
             </Standfirst>
             <p className="mt-5 leading-relaxed text-muted-foreground">
               We back {STUDIO.foundersPerYear} founders a year with{" "}
-              {STUDIO.checkRange} {STUDIO.checkTerms} checks from the{" "}
-              {STUDIO.fund} and hands-on work from our {STUDIO.eir.role}.
-            </p>
-            <p className="mt-5 leading-relaxed text-muted-foreground">
-              Not an accelerator. Not a cohort. No open application — founders
-              are scouted and invited.
+              {STUDIO.checkRange} {STUDIO.checkTerms} checks from the Community
+              Fund and hands-on work from our EIR. Not an accelerator. Not a
+              cohort. A serious commitment to a small number of founders
+              building toward scale.
             </p>
             <div className="mt-8">
               <ButtonLink href="/studio" variant="outline">
@@ -900,10 +777,28 @@ export default async function HomePage() {
           <div>
             <Eyebrow>Since {FOUNDED_YEAR}</Eyebrow>
             <SectionTitle>Geekdom started with an email.</SectionTitle>
+            {/*
+              THE DOC'S BODY, WITH THE COUNT STILL COMPUTED.
+
+              `Source Copy v1` writes "Fifteen years ago, Graham Weston
+              received an email from a founder that said San Antonio was
+              missing a startup and tech community. Geekdom was born as the
+              answer. Today, it powers the next generation of venture
+              companies in San Antonio and the builders behind them."
+
+              Every word of that is here. The one thing not taken literally is
+              "Fifteen": hardcoding it makes the sentence wrong on 1 January,
+              so it spells the number computed from `FOUNDED_YEAR`. Same
+              reasoning /since-2011 uses for its heading — the doc is the
+              source of truth for the words, not for a figure that changes
+              while nobody is looking.
+            */}
             <Lede>
-              {years} years ago, Graham Weston received an email from a founder
-              saying San Antonio was missing a startup and tech community.
-              Geekdom was the answer to it.
+              {spellYears(years)} years ago, Graham Weston received an email
+              from a founder that said San Antonio was missing a startup and
+              tech community. Geekdom was born as the answer. Today, it powers
+              the next generation of venture companies in San Antonio and the
+              builders behind them.
             </Lede>
             <Lede className="mt-5">
               The shape has changed since — a coworking floor, then programs,
@@ -925,6 +820,199 @@ export default async function HomePage() {
             sizes="(min-width: 1024px) 536px, 100vw"
             caption="Graham Weston and Nick Longo, 2011"
           />
+        </div>
+      </Section>
+
+      {/* ── 2 · Built at Geekdom ─────────────────────────────────────── */}
+      {/*
+        EVIDENCE BEFORE ARGUMENT, and this slot is why the partner marquee is
+        gone.
+
+        That strip ran nine other organizations' logos under the headline
+        "Building this with us", pinned to the base of the hero — the most
+        valuable proof slot on the site, given away to borrowed credibility. It
+        inverted the brand guide's two-voice principle ("quiet about ourselves,
+        loud about our people"), a wall of civic and nonprofit marks is exactly
+        how the "generic community organization" the guide says Geekdom is NOT
+        presents itself, and the list was provisional anyway — pulled from
+        Startup Week's sponsor wall, with a note in its own file saying the
+        real one still had to come from Geekdom.
+
+        This says the same thing honestly. Eighteen companies started here,
+        oldest first, 2012 through 2025 unbroken, four of them acquired. It is
+        checkable, which is what the guide's voice section asks for and what
+        "$422.7M raised" can never be on its own.
+
+        Reference: Brickyard runs its portfolio as a plain numbered list with
+        no logos at all, and it is the most credible page on their site for
+        exactly that reason. A grid of wordmarks with a stage and a year reads
+        as a record; a grid of logos reads as a sponsor wall.
+      */}
+      <Section tone="bone-light">
+        <div className="flex flex-wrap items-end justify-between gap-6">
+          <div>
+            <Eyebrow>Built at {SITE_NAME}</Eyebrow>
+            <SectionTitle>
+              {PORTFOLIO.length} companies, {years} years.
+            </SectionTitle>
+          </div>
+          <Link
+            href="/studio"
+            className={LINK_ARROW}
+          >
+            How we back them
+            <ArrowRight className={ARROW.internal} strokeWidth={2} />
+          </Link>
+        </div>
+
+        <PortfolioWall className="mt-12" />
+
+        {/*
+          The milestones sit UNDER the companies, not above them. They are the
+          aggregate of the list you just read rather than a free-floating brag,
+          and a figure placed after its evidence is an argument where the same
+          figure placed before it is a claim.
+        */}
+        <dl className="mt-16 grid grid-cols-2 gap-x-8 gap-y-10 border-t border-border pt-12 sm:grid-cols-3">
+          {MILESTONES.map((m) => (
+            <div key={m.label}>
+              <dt className={cn(FIGURE.md, "text-graphite")}>{m.figure}</dt>
+              <dd className={cn("mt-2", MONO.label, "leading-relaxed text-muted-foreground")}>
+                {m.label}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </Section>
+
+      {/* ── 3 · What Geekdom is in 2026 ──────────────────────────────── */}
+      {/*
+        THE SECTION THE SITE HAS NEVER HAD.
+
+        A visitor could read every page and conclude Geekdom is a nice floor
+        with a small fund attached. It operates the city's open-access
+        entrepreneurship hub for the City of San Antonio, produces the region's
+        startup week, and sits on the team that put San Antonio into MIT's
+        regional program. Geekdom's own Media boilerplate says so; none of it
+        was in page copy anywhere, only as four link labels in a footer column
+        called "Related".
+
+        This is what makes the two membership products mean anything. The Club
+        and the Studio are how you participate; this is why there is something
+        to participate in.
+
+        THE VERBS ARE THE CONTENT. Each entry states the exact relationship —
+        operated, run, backed by, sits on — rather than flattening all four
+        into "partner". See ECOSYSTEM in lib/site.ts for why that field is
+        required and which two still need confirming.
+      */}
+      <Section tone="bone">
+        {/*
+          `items-start` is what makes the sticky column below work at all. A
+          grid item stretches to the row's height by default, so the left
+          column would be exactly as tall as the list beside it and would have
+          nowhere to travel — `position: sticky` on a full-height element is a
+          no-op, and it fails silently, which is why this looks like a
+          typo-level detail and isn't.
+        */}
+        <div className="grid items-start gap-12 lg:grid-cols-[1fr_1.15fr] lg:gap-16">
+          {/*
+            THE CLAIM HOLDS WHILE THE EVIDENCE SCROLLS.
+
+            The heading and the two ledes make one argument — Geekdom convenes
+            the city's startup community — and the four entries beside them are
+            what backs it up. Letting the claim scroll away means the reader
+            meets "operated by Geekdom, in partnership with the City of San
+            Antonio" with no heading in view to attach it to.
+
+            `top-24` rather than flush: the navbar is h-16 (64px) and sticky
+            itself, so anything pinned at `top-0` slides under it. 96px clears
+            it with a little air.
+
+            `lg:` only. Below that the two stack, the left column is directly
+            above the list rather than beside it, and pinning it would just
+            eat a phone's viewport.
+          */}
+          <div className="lg:sticky lg:top-24">
+            <Eyebrow>What we are</Eyebrow>
+            <SectionTitle>
+              The institution behind San Antonio&rsquo;s startup community.
+            </SectionTitle>
+            <Lede>
+              {SITE_NAME} runs a members&rsquo; club and a venture fund. It also
+              convenes the wider community — founders, capital, universities,
+              industry and government — so the city&rsquo;s efforts reinforce
+              each other instead of running in parallel.
+            </Lede>
+            <Lede className="mt-5">{GOAL}</Lede>
+          </div>
+
+          <ul>
+            {ECOSYSTEM.map((entry) => (
+              <li key={entry.name} className="border-t border-border py-6">
+                <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+                  <a
+                    href={entry.href}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className={cn(
+                      HEADING.item,
+                      "text-graphite decoration-clay decoration-2 underline-offset-4 hover:underline",
+                    )}
+                  >
+                    {entry.name}
+                  </a>
+                  {entry.detail && (
+                    <span className={cn(MONO.label, "text-muted-foreground")}>
+                      {entry.detail}
+                    </span>
+                  )}
+                </div>
+                {/*
+                  The role line is set apart from the description because it is
+                  the load-bearing half: "operated by Geekdom, in partnership
+                  with the City" is a different claim from "partner", and the
+                  page should not let a reader skim past the difference.
+
+                  SENTENCE CASE, NOT TRACKED-OUT MONO — and that is a fix, not
+                  a preference. This line and the `detail` line beside the name
+                  were BOTH uppercase mono, so every entry stacked two
+                  competing labels above its prose and the section read as four
+                  rows of shouting before it read as four sentences. The
+                  strings were always written in sentence case; only the
+                  `uppercase` class was transforming them.
+
+                  Medium weight on graphite keeps it the most important line in
+                  the entry without a third type treatment. The mono is now
+                  doing one job here — the `detail` — which is what MONO is
+                  for: the thing you scan, not the thing you read.
+
+                  GRAPHITE, NOT CLAY. Clay is the obvious choice for a line
+                  that wants emphasis, and it is 3.5:1 on bone, which fails AA
+                  at this size. globals.css is explicit that Clay carries no
+                  small text on any ground in this palette, and a line stating
+                  Geekdom's relationship with the City of San Antonio is the
+                  last place to make an exception.
+                */}
+                <p className="mt-2 text-sm font-medium leading-snug text-graphite">
+                  {entry.role}
+                </p>
+                <p className="mt-3 leading-relaxed text-muted-foreground">
+                  {entry.description}
+                </p>
+                {/*
+                  Carried from the data, not written here. The brand guide
+                  requires the LaunchSA separation to appear wherever the two
+                  are mentioned together — see ECOSYSTEM in lib/site.ts.
+                */}
+                {entry.boundary && (
+                  <p className="mt-3 border-l-2 border-border pl-4 text-sm leading-relaxed text-muted-foreground">
+                    {entry.boundary}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
         </div>
       </Section>
 
@@ -972,6 +1060,7 @@ export default async function HomePage() {
           </div>
         </div>
       </Section>
+
     </>
   );
 }
