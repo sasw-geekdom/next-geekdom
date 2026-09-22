@@ -158,7 +158,7 @@ export const OG_CARDS: Record<string, OgCard> = {
     lines: ["Come see how", "the room feels."],
     seed: 27.2,
     out: "app/(site)/events/opengraph-image.png",
-    alt: "Geekdom events — meetups, build sessions, office hours and pitch nights on the third floor. Come see how the room feels.",
+    alt: "Geekdom events — meetups, build sessions, office hours and pitch nights, most of them open to non-members. Come see how the room feels.",
   },
 
   "whats-changing": {

@@ -12,6 +12,7 @@ import {
   FIGURE,
   HEADING,
   ARROW,
+  LINK,
   LINK_ARROW,
   MONO,
 } from "@/components/site/section";
@@ -26,6 +27,7 @@ import { MemberVoices } from "@/components/site/member-voices";
 import { PHOTOS } from "@/lib/photos";
 import { priceLabel } from "@/lib/membership";
 import { safeUpcomingEvents } from "@/lib/luma";
+import { SASW, saswIsCurrent } from "@/lib/sasw";
 import { pageMetadata, SITE_DESCRIPTION } from "@/lib/seo";
 import {
   CLUB,
@@ -164,6 +166,9 @@ export default async function HomePage() {
   // `safeUpcomingEvents` swallows Luma failures and returns [] — a third-party
   // outage should never take the homepage down.
   const events = await safeUpcomingEvents(3);
+
+  // The same entry the convening section renders, reused rather than retyped.
+  const ecosystemWeek = ECOSYSTEM.find((e) => e.href.startsWith(SASW.href));
   const price = priceLabel();
   const years = new Date().getFullYear() - FOUNDED_YEAR;
 
@@ -829,6 +834,31 @@ export default async function HomePage() {
               <EventCard key={event.id} event={event} />
             ))}
           </div>
+        ) : saswIsCurrent() ? (
+          /*
+            POINT AT OUR OWN PAGE WHILE THERE IS SOMETHING ON IT.
+
+            Luma is not connected, so this section renders its fallback in
+            production — and the fallback sent the reader to Luma, which has
+            nothing, while /events carries a full week. "This month" promising
+            nothing on the page that introduces Geekdom is the worst version
+            of this: the section exists for the visitor who is not ready to
+            apply, and it was handing them a dead end.
+
+            THE WEEK IS NAMED FROM `ECOSYSTEM`, not retyped. Its name and
+            dates are already transcribed there for the convening section
+            higher up this same page, and a second copy here is how the two
+            drift. Goes back to the Luma line on its own once the week ends.
+          */
+          <Lede className="mt-10 max-w-xl">
+            {ecosystemWeek?.name ?? SASW.name} runs{" "}
+            {ecosystemWeek?.detail ?? "this month"} — the week&rsquo;s bill is
+            on{" "}
+            <Link href="/events" className={LINK}>
+              the calendar
+            </Link>
+            , alongside everything else coming up.
+          </Lede>
         ) : (
           <Lede className="mt-10 max-w-xl">
             The full calendar lives on Luma — meetups, build sessions, office
