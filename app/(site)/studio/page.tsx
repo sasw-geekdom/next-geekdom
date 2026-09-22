@@ -5,6 +5,7 @@ import { ButtonLink, ButtonAnchor } from "@/components/ui/button";
 import {
   Eyebrow,
   Lede,
+  LINK,
   Section,
   SectionTitle,
   Subhead,
@@ -595,63 +596,95 @@ export default function StudioPage() {
         <Eyebrow>How to get involved</Eyebrow>
         <SectionTitle>Two doors, both real.</SectionTitle>
 
-        <div className="mt-14 grid gap-12 lg:grid-cols-2 lg:gap-16">
-          <div>
-            <Subhead>If you&rsquo;re a founder</Subhead>
-            <p className="mt-4 leading-relaxed text-muted-foreground">
-              The Studio isn&rsquo;t something you apply to directly. We scout
-              founders and companies to be invited in. The best Studio
-              investments start as relationships.
-            </p>
-            {/*
-              THE CAVEAT BELONGS BESIDE THE BUTTON, not in the hero.
+        {/*
+          NOT TWO COLUMNS, BECAUSE THEY ARE NOT TWO EQUAL DOORS.
 
-              It was in the hero's disqualifier paragraph, which the bleed
-              trimmed for measure. Losing it here is worse than losing it
-              there: the button under this paragraph says "Apply to the Club",
-              and without the caveat a founder reads that as the route in —
-              i.e. that $100 a month buys a shot at a check. It doesn't, and
-              /club carries the same rule in the other direction.
-            */}
-            <p className="mt-4 leading-relaxed text-muted-foreground">
-              Club membership isn&rsquo;t a prerequisite, but most Studio
-              relationships start there.
-            </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <ButtonLink href="/apply">Apply to the Club</ButtonLink>
-              <ButtonAnchor
-                external
-                href={LUMA_CALENDAR_URL}
-                variant="outline"
-              >
-                See upcoming events
-              </ButtonAnchor>
-            </div>
-            <p className="mt-6 text-muted-foreground">
-              Or introduce yourself — send your deck to{" "}
-              <a
-                href={`mailto:${STUDIO.email}`}
-                className="font-medium text-graphite underline decoration-clay decoration-2 underline-offset-2 transition-colors hover:decoration-graphite"
-              >
-                {STUDIO.email}
-              </a>
-              .
-            </p>
+          This was `lg:grid-cols-2` with a door in each, and the layout argued
+          against the heading above it. The founder side carries two
+          paragraphs, a red primary CTA, a secondary and a mailto line; the
+          corporate side carried one sentence and a lone outline button, which
+          landed 40px above the founder buttons because the column above it is
+          shorter. Side by side that reads as an afterthought someone parked
+          in the spare column — "both real" undercut by its own grid.
+
+          MAKING THEM MATCH WOULD BE THE WRONG FIX. This is a page for
+          founders; a corporate partner is a second, smaller audience, and
+          giving that ask equal visual weight — or a dark panel, which on a
+          Bone section would make it the loudest thing here — overstates it in
+          the other direction.
+
+          SO THE FOUNDER PATH RUNS AT A READING MEASURE and the corporate ask
+          gets a FRAME rather than a column: full width, hairline-bordered,
+          the copy and the button on one baseline. It is contained and
+          deliberate instead of stray, it sits after the primary path rather
+          than beside it, and there is no second column left for its button to
+          fail to line up with.
+        */}
+        <div className="mt-14 max-w-2xl">
+          <Subhead>If you&rsquo;re a founder</Subhead>
+          <p className="mt-4 leading-relaxed text-muted-foreground">
+            The Studio isn&rsquo;t something you apply to directly. We scout
+            founders and companies to be invited in. The best Studio
+            investments start as relationships.
+          </p>
+          {/*
+            THE CAVEAT BELONGS BESIDE THE BUTTON, not in the hero.
+
+            It was in the hero's disqualifier paragraph, which the bleed
+            trimmed for measure. Losing it here is worse than losing it there:
+            the button under this paragraph says "Apply to the Club", and
+            without the caveat a founder reads that as the route in — i.e.
+            that $100 a month buys a shot at a check. It doesn't, and /club
+            carries the same rule in the other direction.
+          */}
+          <p className="mt-4 leading-relaxed text-muted-foreground">
+            Club membership isn&rsquo;t a prerequisite, but most Studio
+            relationships start there.
+          </p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <ButtonLink href="/apply">Apply to the Club</ButtonLink>
+            <ButtonAnchor external href={LUMA_CALENDAR_URL} variant="outline">
+              See upcoming events
+            </ButtonAnchor>
           </div>
+          <p className="mt-6 text-muted-foreground">
+            Or introduce yourself — send your deck to{" "}
+            <a href={`mailto:${STUDIO.email}`} className={LINK}>
+              {STUDIO.email}
+            </a>
+            .
+          </p>
+        </div>
 
-          <div>
-            <Subhead>If you&rsquo;re a corporate partner</Subhead>
-            <p className="mt-4 leading-relaxed text-muted-foreground">
-              We work with a small number of corporate partners each year to
-              support Studio companies with pilots, talent access, and
-              follow-on introductions. If that sounds like a fit, we&rsquo;d
-              like to talk.
-            </p>
-            <div className="mt-8">
-              <ButtonAnchor href={`mailto:${STUDIO.email}`} variant="outline">
-                Start a conversation
-              </ButtonAnchor>
+        {/*
+          Bone Light on a Bone section — a step UP, which is the direction the
+          two tones are built to travel. The hairline is what separates them;
+          six points of luminance on their own would not.
+
+          `items-center` rather than a bottom-aligned CTA: there is only one
+          button here and one block of copy, so the button belongs on the
+          copy's optical centre. That is also what makes it impossible for
+          this to drift out of alignment again — nothing else is being aligned
+          to.
+        */}
+        <div className="mt-12 rounded-xl border border-border bg-bone-light p-8 sm:p-10">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-12">
+            <div>
+              <Subhead>If you&rsquo;re a corporate partner</Subhead>
+              <p className="mt-4 max-w-2xl leading-relaxed text-muted-foreground">
+                We work with a small number of corporate partners each year to
+                support Studio companies with pilots, talent access, and
+                follow-on introductions. If that sounds like a fit, we&rsquo;d
+                like to talk.
+              </p>
             </div>
+            <ButtonAnchor
+              href={`mailto:${STUDIO.email}`}
+              variant="outline"
+              className="shrink-0"
+            >
+              Start a conversation
+            </ButtonAnchor>
           </div>
         </div>
       </Section>
