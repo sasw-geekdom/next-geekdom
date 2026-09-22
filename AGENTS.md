@@ -89,14 +89,28 @@ team asked for — everything else lives in the footer.
   stopgap.** They belong on `/contact`, which the source copy specifies and
   nobody has built. Move them when it exists; `/club` keeps the photography.
 - **`/club` does not lead with the price.** The order is the source copy's —
-  the rhythm, the clubhouse, who's in the room, who it's for, then Membership
-  eighth of nine, where `priceLabel()` is the section headline. Don't move the
-  figure back into the hero: leading with the fee makes it a pricing page, and
-  a pricing page asks "is it worth $100?" before the reader has anything to
-  weigh it against.
-- **`BENEFITS` renders twice on `/club` on purpose** — titles in the hero side
-  panel, titles plus descriptions lower down. That is summary and detail, not
-  duplication. A third render anywhere is a bug.
+  the rhythm, the clubhouse, who's in the room, who it's for, then Membership,
+  where `priceLabel()` is the section headline. Don't move the figure back into
+  the hero: leading with the fee makes it a pricing page, and a pricing page
+  asks "is it worth $100?" before the reader has anything to weigh it against.
+
+  **The page tells a story and the order is the story**: the problem, the room,
+  the rhythm, the clubhouse, who is in it, the bar, the price, WHERE IT LEADS,
+  how to start. The hero opens on `CLUB` in [lib/site.ts](lib/site.ts) — the
+  same three beats the homepage's Club section reads, so the two cannot drift.
+
+- **`/club` names the Studio, and has to.** It went a long time without
+  mentioning it once — no word, no link — on the page most likely to be
+  somebody's entry point from search. The homepage says "Geekdom runs a
+  members' club and a venture fund" and spends a section on the pipeline
+  between them; without that, from this side, the club is the whole company.
+  The section must never imply membership buys a check: it doesn't, and there
+  is nothing to apply to.
+- **`BENEFITS` renders ONCE on `/club`**, under "What's included", with titles
+  and descriptions. It used to render twice — titles in a hero side panel,
+  detail lower down — and this file said so; the side panel went when the hero
+  was rebuilt to open on the claim rather than the feature list. A second
+  render is now the thing to question, not the third.
 - **Startup Bootcamp and the Community Fund are LIVE**, under the Studio. An
   earlier version of `lib/site.ts` and `/llms.txt` said all four of the
   one-pager's programs were legacy. Only the Incubator and the

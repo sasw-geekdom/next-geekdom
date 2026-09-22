@@ -27,6 +27,7 @@ import { priceLabel } from "@/lib/membership";
 import { safeUpcomingEvents } from "@/lib/luma";
 import { pageMetadata, SITE_DESCRIPTION } from "@/lib/seo";
 import {
+  CLUB,
   ECOSYSTEM,
   FOUNDED_YEAR,
   GOAL,
@@ -551,18 +552,18 @@ export default async function HomePage() {
           <div>
             <Eyebrow>Community</Eyebrow>
             <SectionTitle>The Club</SectionTitle>
-            <Standfirst>
-              Hard problems don&rsquo;t get solved alone. So we built the room
-              where the right person is already sitting.
-            </Standfirst>
+            {/*
+              FROM `CLUB` IN lib/site.ts, not typed here. The same three beats
+              open /club's hero, and they were written out separately in both
+              places — which is how two pages drift into describing the same
+              thing slightly differently.
+            */}
+            <Standfirst>{CLUB.claim}</Standfirst>
             <p className="mt-5 leading-relaxed text-muted-foreground">
-              Application-based membership for founders, engineers, creators,
-              operators, and the corporate and civic leaders who want a hand in
-              what the city becomes. Monthly rituals, build sessions, office
-              hours, member-only events, and 24/7 access to the third floor.
+              {CLUB.who}
             </p>
             <p className="mt-5 leading-relaxed text-muted-foreground">
-              It&rsquo;s not coworking. It&rsquo;s not an accelerator.
+              {CLUB.isnt}
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <ButtonLink href="/club">Explore the Club</ButtonLink>
@@ -593,7 +594,7 @@ export default async function HomePage() {
             in it, turned toward each other.
           */}
           <Frame
-            photo={PHOTOS.speaking}
+            photo={PHOTOS.theCrowd}
             aspect="aspect-[4/3]"
             sizes="(min-width: 1024px) 584px, 100vw"
             caption="A session on the third floor"

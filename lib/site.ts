@@ -99,6 +99,32 @@ export const TAGLINE_LINE =
   "The best things get built because someone sat down next to the right person in the right room.";
 
 /**
+ * THE CLUB, IN THE THREE BEATS THE HOMEPAGE USES.
+ *
+ * These were typed into the homepage's Club section and typed again, differently,
+ * into /club's hero — the same argument in two places, which is how one of them
+ * ends up a year behind the other. They are here so both read from one source.
+ *
+ * The order is the story, and it is the order the source copy tells it in:
+ *
+ *   claim  the PROBLEM, then the answer. Not "here is a club" — "hard problems
+ *          don't get solved alone", and only then the room. A feature list that
+ *          opens with the feature has skipped the reason anyone wants it.
+ *   who    who is in the room, and what the month looks like. Concrete, and
+ *          deliberately a broad list: the room only works if it is mixed.
+ *   isnt   the DISQUALIFIER, and it is load-bearing. Fifteen years of public
+ *          record says Geekdom is a coworking space; somebody who wants a desk
+ *          should find out before a ten-minute application, not after. The
+ *          brand guide names both of these in its "What we're not".
+ */
+export const CLUB = {
+  claim:
+    "Hard problems don\u2019t get solved alone. So we built the room where the right person is already sitting.",
+  who: "Application-based membership for founders, engineers, creators, operators, and the corporate and civic leaders who want a hand in what the city becomes. Monthly rituals, build sessions, office hours, member-only events, and 24/7 access to the third floor.",
+  isnt: "It\u2019s not coworking. It\u2019s not an accelerator.",
+} as const;
+
+/**
  * The hook — the hero H1 and the share card.
  *
  * A claim, not an invitation, and pointed on purpose: every tool pitch this

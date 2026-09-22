@@ -19,6 +19,8 @@ import programming from "@/public/photos/programming.jpg";
 import fireside from "@/public/photos/fireside.jpg";
 import fullHouse from "@/public/photos/full-house.jpg";
 import theCrowd from "@/public/photos/the-crowd.jpg";
+import pysaTalk from "@/public/photos/pysa.jpg";
+import pysaTables from "@/public/photos/pysa4.jpg";
 
 /**
  * The photography.
@@ -169,7 +171,25 @@ export const PHOTOS = {
 
   theCafe: {
     src: theCafe,
-    alt: "The Geekdom cafe counter, tiled wall behind it, members standing and talking over coffee.",
+    /*
+      THE FRAME CHANGED TWICE AND THE SECOND ONE IS WHY IT IS HERE.
+
+      It was a 1600px shot of the tile wall with members standing at the
+      counter — handsome, but the people were secondary and the lower third
+      was out-of-focus heads. The archive's 2180px original of that same frame
+      replaced it, and then this did: two members in a one-to-one across the
+      counter, a drink and a pizza box between them, the kitchen and the tiled
+      wall through the doorway behind.
+
+      IT MATCHES WHAT THE CAFE IS SOLD AS. `BENEFITS` calls it "for your coffee
+      chats — the conversation that turns into a co-founder, a customer". A
+      photograph of the counter is the furniture; this is the conversation.
+
+      Natively 1.69, not the 1.50 most of the archive is, so a 4:5 tile crop
+      leaves 1033px against the tile's ~1064 at 2x. Three percent under, and
+      still more than the 854 the first file could give.
+    */
+    alt: "Two members talking across the cafe counter on Geekdom's third floor, a pizza box and a drink between them, the tiled wall and kitchen visible through the doorway behind.",
   },
 
   dropIn: {
@@ -318,6 +338,44 @@ export const PHOTOS = {
   fullHouse: {
     src: fullHouse,
     alt: "A full room on the third floor applauding, people at every table and standing along the cafe counter.",
+  },
+
+  /*
+    FROM THE PySA MEETUP — Python San Antonio, on the third floor, and a
+    different evening and a different crowd from everything else here.
+
+    Named for what it shows rather than for the file it arrived as. `pysa7`
+    tells a future reader nothing, and the lesson from `theRoom` — which is
+    not a room, it is four faces — is that a name people trust describes the
+    frame.
+
+    ONE OF FIVE WAS KEPT. The set is good and it is the only photography here
+    of the floor genuinely PACKED, but the other four had no slot that got
+    better by forcing them into it: the clubhouse grid is four captioned
+    activities and a fifth orphans the row, and the rhythm section is
+    deliberately type-led. Registering frames nothing renders is how
+    `theFloorWide` ended up sitting in this file unused. The originals are in
+    the Downloads directory when a slot wants them.
+
+    NOT FOR A FULL-BLEED HERO. At 1603px it is the same class as the rest of
+    the library, well under the 2180px frames — and tested under the hero ramp
+    the whole set goes murky, because the warmth that makes it good is the
+    first thing a heavy scrim takes.
+  */
+  pysaTalk: {
+    src: pysaTalk,
+    alt: "Two speakers presenting to a seated audience at a meetup on Geekdom's third floor, the room's reclaimed-wood wall and string lights behind them.",
+  },
+
+  /*
+    THE ONLY EVENING FRAME IN THE LIBRARY, which is why it is here rather than
+    one of the other three that were tried in the same slot. Everything else is
+    daylight, so in a row of tiles it is the one that does not blend into its
+    neighbours.
+  */
+  pysaTables: {
+    src: pysaTables,
+    alt: "Long tables on Geekdom's third floor filled with people at a evening meetup, one person in the foreground with a hand raised, downtown visible through the windows behind.",
   },
 
   theCrowd: {

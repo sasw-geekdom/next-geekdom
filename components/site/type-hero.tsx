@@ -149,7 +149,23 @@ export function TypeHero({
         // fit above the fold there.
         size === "full"
           ? "min-h-[calc(100svh-4rem)] py-20 short:py-10"
-          : "pt-20 pb-14 sm:pt-24",
+          : /*
+              A PHOTOGRAPHIC BAND TAKES BALANCED PADDING; a type-led hero does
+              not, and this is why they differ.
+
+              `pt-20 pb-14 sm:pt-24` is 96px above the content and 56 below. On
+              BONE that asymmetry is invisible and useful — the extra top is
+              breathing room under the sticky navbar, and the short bottom
+              lets the next section come up.
+
+              Behind a PHOTOGRAPH the same 96px is 96px of empty scrimmed
+              image above the eyebrow, which reads as the content having been
+              pushed down rather than as air. The band wants to look like a
+              deliberate block, so it gets equal padding and less of it.
+            */
+            media
+            ? "py-14 sm:py-16"
+            : "pt-20 pb-14 sm:pt-24",
         // `fill` is independent of the type scale — see the prop's note.
         fill && size !== "full" && "min-h-[calc(100svh-4rem)] py-20 short:py-10",
       )}
