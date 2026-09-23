@@ -109,7 +109,7 @@ export default function TermsPage() {
         </p>
       </LegalSection>
 
-      <LegalSection heading="What membership is, and isn't">
+      <LegalSection heading="What membership is, and isn’t">
         <p>
           Membership is access to the third floor and to what happens on it —
           the room, the programming, the cafe, drop-in workspace, reservable
@@ -144,7 +144,7 @@ export default function TermsPage() {
           items={[
             "Treat other members, their guests, and Geekdom staff with respect.",
             "What a member tells you about their company in confidence stays with you.",
-            "The room is not a lead list. Don't work it, and don't sell into it.",
+            "The room is not a lead list. Don’t work it, and don’t sell into it.",
             "Look after the space and the people in it.",
           ]}
         />

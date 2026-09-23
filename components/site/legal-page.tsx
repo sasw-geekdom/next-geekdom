@@ -76,7 +76,12 @@ export function LegalSection({
   return (
     <section>
       <h2 className="text-xl font-medium leading-snug text-graphite">{heading}</h2>
-      <div className="mt-4 flex flex-col gap-4 leading-relaxed text-muted-foreground [&_a]:font-medium [&_a]:text-graphite [&_a]:underline [&_a]:decoration-clay [&_a]:decoration-2 [&_a]:underline-offset-2 [&_a:hover]:decoration-graphite">
+      {/*
+        34rem, NARROWER than the header's 2xl. This body is 16px where the
+        rest of the site reads at 18, so the shared 672px measure ran 82–90
+        characters a line — past the guide's "caps around 65–75".
+      */}
+      <div className="mt-4 flex max-w-[34rem] flex-col gap-4 leading-relaxed text-muted-foreground [&_a]:font-medium [&_a]:text-graphite [&_a]:underline [&_a]:decoration-clay [&_a]:decoration-2 [&_a]:underline-offset-2 [&_a:hover]:decoration-graphite">
         {children}
       </div>
     </section>

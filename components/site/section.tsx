@@ -211,9 +211,17 @@ export const ARROW = {
  *   tier      size ramp                 weight  leading   tracking
  *   display   5xl → 6xl → 7xl           500     1.00      -0.02em
  *   title     4xl → 6xl → 7xl           500     1.04      -0.02em
- *   heading   4xl → 5xl                 500     1.10      -0.015em
- *   subhead   2xl                       500     1.22      -0.01em
+ *   heading   4xl → 5xl                 400     1.10      -0.015em
+ *   subhead   2xl                       400     1.22      -0.01em
  *   item      lg                        500     snug       0
+ *
+ * TWO WEIGHTS, AND THE GUIDE SAYS WHICH GOES WHERE. Its type specimen (p. 9)
+ * sets Display and H3 in Rubik Medium and Section H1 and Sub H2 in Rubik
+ * Regular. This scale had every tier at 500, which flattened that hierarchy:
+ * section titles shouted at the same weight as the hero. `heading` (section
+ * titles and page titles) and `subhead` are 400 now; `display`, `title` and
+ * `item` stay 500 — the hero and the small item headings carry the weight,
+ * and the section titles between them read calmer and more editorial.
  *
  * Sizes live here rather than at the call site so a heading cannot be nudged
  * one step on one page and left everywhere else.
@@ -263,9 +271,9 @@ export const HEADING = {
     "text-4xl font-medium leading-[1.06] tracking-[-0.018em] sm:text-5xl xl:text-6xl",
   /** h1 on a task or read page, and every SectionTitle. */
   heading:
-    "text-4xl font-medium leading-[1.1] tracking-[-0.015em] sm:text-5xl",
+    "text-4xl font-normal leading-[1.1] tracking-[-0.015em] sm:text-5xl",
   /** The tier under a section title — "What's included", "Recently". */
-  subhead: "text-2xl font-medium leading-[1.22] tracking-[-0.01em]",
+  subhead: "text-2xl font-normal leading-[1.22] tracking-[-0.01em]",
   /**
    * An item title: one benefit in a list, one card in a grid, one step.
    *
@@ -283,7 +291,7 @@ export const HEADING = {
 /**
  * MONO LABELS — the scanned text, as opposed to the read text.
  *
- * Geist Mono is scoped to things you scan rather than read: eyebrows, stat
+ * IBM Plex Mono is scoped to things you scan rather than read: eyebrows, stat
  * labels, dates, micro-copy. Two tiers, and the difference is deliberate —
  *
  *   eyebrow  text-xs  0.18em   a section kicker, standing alone above a heading

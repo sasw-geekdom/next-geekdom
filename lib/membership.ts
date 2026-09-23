@@ -168,7 +168,7 @@ export const NOT_INCLUDED = [
  * section rather than sitting under it.
  */
 export const GENEROSITY_BAR =
-  "The bar isn't impressiveness. It's generosity.";
+  "The bar isn’t impressiveness. It’s generosity.";
 
 /**
  * Who the Club is for, and — the half that was missing — who it isn't.
@@ -186,7 +186,7 @@ export const GOOD_FIT = [
   "Operators and investors working with scalable, high-growth companies",
   "Startup service providers whose work is oriented around startups",
   "Innovators looking to up their game with other ambitious and interesting people",
-  "Corporate and civic leaders who want a hand in San Antonio's innovation economy",
+  "Corporate and civic leaders who want a hand in San Antonio’s innovation economy",
 ] as const;
 
 export const NOT_FIT = [
@@ -196,7 +196,7 @@ export const NOT_FIT = [
 
 /** What we do instead of just declining. Said out loud, because it's true. */
 export const NOT_FIT_CLOSING =
-  "If the Club isn't the right fit, we'll point you toward free community events and refer you to spaces or resources that fit better.";
+  "If the Club isn’t the right fit, we’ll point you toward free community events and refer you to spaces or resources that fit better.";
 
 /**
  * Who this is for. The letter names these groups directly; the apply form

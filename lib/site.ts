@@ -1008,7 +1008,7 @@ export const PORTFOLIO: readonly PortfolioCompany[] = [
     founded: 2020,
   },
   {
-    name: "Betty's Co.",
+    name: "Betty’s Co.",
     href: "https://bettysco.com/",
     logo: "/portfolio/bettys-co.svg",
     logoHeight: "h-8",

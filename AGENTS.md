@@ -447,9 +447,12 @@ the constant:
 
 - **`HEADING`** in [section.tsx](components/site/section.tsx) — `display` /
   `title` / `heading` / `subhead` / `item`. One rule runs through it: as size
-  grows, tracking and leading both tighten. **Everything is 500.** The guide
-  says "Never Bold", and only 400 and 500 are loaded — a stray `font-bold`
-  falls back to 500 rather than synthesising a fake weight.
+  grows, tracking and leading both tighten. **Weights follow the guide's
+  specimen (p. 9): `display`, `title` and `item` are Medium (500); `heading`
+  and `subhead` — Section H1 and Sub H2 in the guide — are Regular (400).**
+  This used to be "everything is 500", which flattened the hierarchy the guide
+  draws. The guide says "Never Bold", and only 400 and 500 are loaded — a
+  stray `font-bold` falls back to 500 rather than synthesising a fake weight.
 - **`FIGURE`** — numerals only (milestones, the price). `tabular-nums` on every
   tier, because proportional digits make a column of figures wander.
 - **`MONO`** — `eyebrow` (0.18em, a kicker standing alone) vs `label` (0.14em,
@@ -478,7 +481,7 @@ secondary action silently renders as a second primary CTA.
 
 ### Type
 
-**Rubik** for everything you read, **Geist Mono** for everything you scan,
+**Rubik** for everything you read, **IBM Plex Mono** for everything you scan,
 **Fraunces italic** for the handful of editorial moments.
 
 Rubik is loaded at **400 and 500 only** — the scale needs exactly two values,
@@ -495,8 +498,13 @@ italic Rubik**; the guide sends italics to Fraunces.
 Mono is scoped to eyebrows, stat labels, dates, and micro-copy — it is not a
 body face and not a heading face. `<Eyebrow>` already applies it; prefer that
 component over hand-rolling `font-mono text-xs uppercase tracking-[0.18em]`.
-The guide names IBM Plex Mono for this slot and Geist Mono is standing in;
-they are interchangeable at 12px tracked-out uppercase.
+It is IBM Plex Mono, Regular only — the face the guide names. Geist Mono stood
+in for a while on the grounds that the two are interchangeable at 12px; they
+are close, not identical, and the guide is specific.
+
+Keep prose inside the guide's 65–75 characters a line: 16px body wants a
+narrower column than 18px (the legal pages cap at 34rem for that reason), and
+Rubik prose doesn't go below 13px — only tracked mono holds 12.
 
 **Fraunces is declared on [editorial.tsx](components/site/editorial.tsx), never
 on the root layout** — next/font preloads a face for every route whose layout

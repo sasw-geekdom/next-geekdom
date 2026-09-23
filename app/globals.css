@@ -24,7 +24,7 @@
   explicit that five colors do almost all the work and that "the discipline of
   not reaching for a sixth is what keeps the brand feeling considered".
 
-  Type is Rubik for prose and display, Geist Mono for anything read as data.
+  Type is Rubik for prose and display, IBM Plex Mono for anything read as data.
   See the note in app/layout.tsx.
 
   The site is light by default and uses graphite as a full-bleed ground for the
@@ -149,7 +149,7 @@
   --color-ring: var(--ring);
 
   --font-sans: var(--font-rubik);
-  --font-mono: var(--font-geist-mono);
+  --font-mono: var(--font-plex-mono);
 }
 
 body {

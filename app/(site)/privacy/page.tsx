@@ -40,7 +40,7 @@ export default function PrivacyPage() {
   return (
     <LegalPage
       eyebrow="Privacy"
-      title="What we collect, and what we don't."
+      title="What we collect, and what we don’t."
       updated={UPDATED}
       intro={
         <>
@@ -71,7 +71,7 @@ export default function PrivacyPage() {
         </p>
       </LegalSection>
 
-      <LegalSection heading="What we don't collect">
+      <LegalSection heading="What we don’t collect">
         <p>
           There is no analytics on this site. No Google Analytics, no advertising
           pixels, no session recording, no third-party trackers of any kind. We

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Rubik, Geist_Mono } from "next/font/google";
+import { Rubik, IBM_Plex_Mono } from "next/font/google";
 import { SITE_URL, SITE_NAME, PROMISE } from "@/lib/site";
 import { IS_PREVIEW } from "@/lib/preview";
 import { PreviewBadge } from "@/components/site/preview-badge";
@@ -8,7 +8,7 @@ import { SITE_DESCRIPTION } from "@/lib/seo";
 import "./globals.css";
 
 /*
-  Rubik for everything you read. Geist Mono for everything you scan.
+  Rubik for everything you read. IBM Plex Mono for everything you scan.
 
   RUBIK REPLACES GEIST SANS, reversing the call this file used to document. The
   2026 brand guide names Rubik as the workhorse — headlines, subheads, body, UI
@@ -54,15 +54,17 @@ const rubik = Rubik({
 // rather than prose. Its tabular figures are why the dashboard numbers and the
 // member roster's dates line up in a column.
 //
-// The guide names IBM Plex Mono for this slot. Geist Mono stays for now: the
-// two are interchangeable at the sizes this site uses mono (12px, tracked out,
-// uppercase), Plex has no tabular-figure advantage over it, and swapping the
-// face that carries the brand's *reading* voice is the change worth making
-// first. Revisit when the Canva kit and the site are being checked side by
-// side.
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+// IBM PLEX MONO, the face the 2026 guide names for this slot — "metadata,
+// timestamps, eyebrows, small technical details". Geist Mono stood in for it
+// on the reasoning that the two are interchangeable at 12px tracked-out
+// uppercase; they are close, but Plex's slab-serifed i, l and 1 are visibly
+// its own, every eyebrow on every page is set in it, and it is free through
+// Google Fonts like the other two families. The guide specifies Regular only,
+// so 400 is the one weight loaded.
+const plexMono = IBM_Plex_Mono({
+  variable: "--font-plex-mono",
   subsets: ["latin"],
+  weight: ["400"],
 });
 
 /*
@@ -133,7 +135,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${rubik.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${rubik.variable} ${plexMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
         {children}

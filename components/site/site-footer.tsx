@@ -84,7 +84,13 @@ export function SiteFooter() {
           stays first in the reading order because it is the only one that is
           not a link.
         */}
-        <div className="mt-14 flex flex-col gap-3 border-t border-bone/12 pt-6 text-xs text-bone/50 sm:flex-row sm:items-center sm:justify-between">
+        {/*
+          13px, not 12. This is Rubik — read, not scanned — and at 12px in
+          dimmed Bone on Graphite it was the smallest prose on the site. Mono
+          holds 12px because it is tracked out; a proportional face needs the
+          extra pixel.
+        */}
+        <div className="mt-14 flex flex-col gap-3 border-t border-bone/12 pt-6 text-[0.8125rem] text-bone/50 sm:flex-row sm:items-center sm:justify-between">
           {/*
             THE EASTER EGG'S DOOR, and it wears the OLD LOGO.
 
