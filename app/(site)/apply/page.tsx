@@ -7,7 +7,7 @@ import {
 } from "@/components/site/section";
 import { cn } from "@/lib/utils";
 import { ApplyForm } from "@/components/forms/apply-form";
-import { isPriceAnnounced, priceLabel } from "@/lib/membership";
+import { Editorial } from "@/components/site/editorial";
 
 export const metadata: Metadata = pageMetadata({
   ownCard: true,
@@ -20,48 +20,32 @@ export const metadata: Metadata = pageMetadata({
 export default function ApplyPage() {
   return (
     /*
-      NO MARK BESIDE THE FORM, and /apply is the page that corrected the rule
-      rather than the page that follows it.
-
-      The rule as first written was "the rail is for short task pages", and it
-      named this one. Two measurements say otherwise. The form is FOURTEEN
-      FIELDS, and the page's own subtitle promises it takes five minutes. The
-      shader was a requestAnimationFrame loop — it never settled. (The rail
-      is a flat mark now, but a form still wants the full width.)
-
-      SO THE DISTINCTION IS NOT LENGTH, IT IS WHETHER A PAGE HOLDS YOU. The 404
-      and the admin login are glanced at and left; a mark in dead space there
-      costs nobody anything. A form keeps somebody STATIONARY for minutes,
-      typing, with an animation looping in the corner of their eye — and this
-      is the one page on the site where that attention converts. It is the
-      worst possible place to put a competing moving object.
-
-      MOVING IT RIGHT WOULD NOT HELP, for the same reason it did not on the
-      letter. A right rail interrupts reading less because it falls after the
-      text, but nothing about peripheral motion over five minutes changes by
-      swapping which side it loops on.
-
-      And every instance of it is still borrowed against a sign-off the 2026
-      guide has not given: it bans gradients on the marks outright.
-
-      THE EYEBROW NAMES THE CLUB, because the page never did. The nav lists The
-      Club, Studio and Apply as peers, and /studio sends people here by name —
-      "come to a public event and apply to the Club" — while the word "Club"
-      appeared once in the rendered page, in the navbar. The Studio has no
-      application at all, so somebody arriving from it needs confirming they
-      are in the right place rather than inferring it from the price.
+      NO MARK BESIDE THE FORM. The 404, /account and the staff sign-in carry
+      a mark in a side rail; this page doesn't, because a fourteen-field form
+      keeps somebody here for ten minutes and wants the whole width and
+      nothing else in view.
     */
     <Section tone="bone">
+      {/*
+        THE SOURCE COPY'S HEADER AND OPENING, VERBATIM: eyebrow "APPLY",
+        headline "Apply to Geekdom.", the Fraunces sub-headline, and one
+        paragraph. It had been replaced with lines written here — "Tell us what
+        you're building", an explanation of why there's an application (which
+        Geekdom asked not to give), "about five minutes" (the doc and /club
+        say ten), and the price, which now lives only on /club.
+      */}
       <header className="mb-12 max-w-3xl">
-        <Eyebrow>Apply to the Club</Eyebrow>
+        <Eyebrow>Apply</Eyebrow>
         <h1 className={cn("mt-4", HEADING.heading, "text-graphite")}>
-          Tell us what you&rsquo;re <span className="text-clay">building.</span>
+          Apply to <span className="text-clay">Geekdom.</span>
         </h1>
-        <p className="mt-5 max-w-lg text-lg leading-relaxed text-muted-foreground">
-          Who&rsquo;s in the room is the whole point, so we read every
-          application properly. This takes about five minutes.
-          {isPriceAnnounced() &&
-            ` Membership is ${priceLabel()} — nothing is charged until you're accepted.`}
+        <Editorial className="mt-5 text-2xl leading-[1.4] text-graphite">
+          Membership is by application. We respond within two weeks.
+        </Editorial>
+        <p className="mt-6 max-w-lg text-lg leading-relaxed text-muted-foreground">
+          Geekdom is a members&rsquo; club for serious founders and builders
+          in San Antonio. The application takes about ten minutes. Our team
+          reads every application. We reply personally either way.
         </p>
       </header>
 

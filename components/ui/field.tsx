@@ -13,7 +13,9 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 const control = cn(
-  "w-full rounded-lg border border-border bg-bone-light px-3.5 text-base text-graphite",
+  // Square, like the buttons beside them — Geekdom: "No rounded corners...
+  // 90 degrees." A rounded field over a square submit read as two systems.
+  "w-full rounded-none border border-border bg-bone-light px-3.5 text-base text-graphite",
   "placeholder:text-muted-foreground",
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-offset-1",
   "disabled:cursor-not-allowed disabled:opacity-50",

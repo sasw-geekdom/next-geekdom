@@ -196,7 +196,7 @@ export function Combobox({
         onClick={() => (open ? close() : openList())}
         onKeyDown={onKeyDown}
         className={cn(
-          "flex h-11 w-full items-center justify-between rounded-lg border border-border bg-bone-light px-3.5 text-left text-base",
+          "flex h-11 w-full items-center justify-between rounded-none border border-border bg-bone-light px-3.5 text-left text-base",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-offset-1",
           "disabled:cursor-not-allowed disabled:opacity-50",
           invalid && "border-clay ring-1 ring-clay",
@@ -213,7 +213,7 @@ export function Combobox({
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-border bg-bone-light shadow-lg">
+        <div className="absolute z-50 mt-1 w-full overflow-hidden border border-border bg-bone-light shadow-lg">
           {showSearch && (
             <div className="border-b border-border p-2">
               <input
@@ -226,7 +226,7 @@ export function Combobox({
                 onKeyDown={onKeyDown}
                 placeholder={searchPlaceholder}
                 aria-label={searchPlaceholder}
-                className="h-9 w-full rounded-md bg-transparent px-2 text-sm outline-none placeholder:text-muted-foreground"
+                className="h-9 w-full bg-transparent px-2 text-sm outline-none placeholder:text-muted-foreground"
               />
             </div>
           )}
@@ -258,7 +258,7 @@ export function Combobox({
                     onPointerEnter={() => setActive(i)}
                     onClick={() => commit(option)}
                     className={cn(
-                      "flex cursor-pointer items-center justify-between gap-3 rounded-md px-3 py-2 text-sm",
+                      "flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-sm",
                       i === active && "bg-bone-light",
                       isSelected && "font-medium text-graphite",
                     )}

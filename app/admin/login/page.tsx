@@ -1,4 +1,6 @@
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
+import { getSessionUser } from "@/lib/auth/session";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -10,7 +12,16 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function LoginPage() {
+/*
+  A VERIFIED SESSION SKIPS THE FORM; A STALE ONE SEES IT. This check used to
+  live in proxy.ts, which can only see that a cookie exists — so an expired
+  cookie bounced between here and /admin forever. `getSessionUser()` verifies
+  it (and returns null rather than throwing when it can't), so only a real
+  session is sent inside. Signing in again overwrites the stale cookie.
+*/
+export default async function LoginPage() {
+  if (await getSessionUser()) redirect("/admin");
+
   return (
     <main className="flex-1 bg-bone">
       {/*

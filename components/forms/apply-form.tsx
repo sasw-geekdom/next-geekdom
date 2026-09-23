@@ -150,9 +150,8 @@ export function ApplyForm() {
           {/*
             "WHO YOU ARE", NOT "YOU".
 
-            The three legends run You / Your company / The part we actually
-            read. The third has a voice; the first two were labels, and "You"
-            on its own is the thinnest of them — a pronoun where the others are
+            The legends run Who you are / Your company / Your work. "You" on
+            its own was the thinnest of them — a pronoun where the others are
             phrases.
 
             "Who you are" is the question the fields actually ask, it is
@@ -264,11 +263,16 @@ export function ApplyForm() {
         </Field>
       </fieldset>
 
-      {/* ── The part we actually read ──────────────────────────────── */}
+      {/* ── Your work ──────────────────────────────────────────────── */}
       <fieldset className={SECTION}>
         <legend className={LEGEND}>
           <span aria-hidden="true" className="h-px w-10 shrink-0 bg-clay" />
-          <span className="shrink-0">The part we actually read</span>
+          {/*
+            "Your work", not "The part we actually read" — that had a voice,
+            and it implied the other sections go unread. Plain and parallel:
+            Who you are / Your company / Your work.
+          */}
+          <span className="shrink-0">Your work</span>
           <span aria-hidden="true" className="h-px flex-1 bg-border" />
         </legend>
 
@@ -276,7 +280,7 @@ export function ApplyForm() {
           label="What are you building?"
           htmlFor="building"
           error={errors.building}
-          hint="A couple of sentences is plenty. Plain language beats a pitch."
+          hint="A couple of sentences is plenty."
           required
         >
           <Textarea
@@ -294,7 +298,6 @@ export function ApplyForm() {
           label="What do you need from the room?"
           htmlFor="needs"
           error={errors.needs}
-          hint="Who would you want to be sitting next to, and why now?"
           required
         >
           <Textarea
@@ -302,7 +305,7 @@ export function ApplyForm() {
             name="needs"
             required
             aria-invalid={Boolean(errors.needs)}
-            aria-describedby={errors.needs ? "needs-error" : "needs-hint"}
+            aria-describedby={errors.needs ? "needs-error" : undefined}
           />
         </Field>
 
@@ -318,7 +321,7 @@ export function ApplyForm() {
           <input
             type="checkbox"
             name="formerMember"
-            className="mt-0.5 h-4 w-4 rounded border-border text-clay focus-visible:ring-2 focus-visible:ring-clay"
+            className="mt-0.5 h-4 w-4 rounded-none border-border text-clay focus-visible:ring-2 focus-visible:ring-clay"
           />
           {/*
             NO "BEFORE THE TRANSITION". The field is right and stays — the
@@ -362,7 +365,7 @@ export function ApplyForm() {
       {formError && (
         <p
           role="alert"
-          className="rounded-lg border border-geekdom-red/30 bg-geekdom-red/5 px-4 py-3 text-sm text-geekdom-red-deep"
+          className="border border-geekdom-red/30 bg-geekdom-red/5 px-4 py-3 text-sm text-geekdom-red-deep"
         >
           {formError}
         </p>

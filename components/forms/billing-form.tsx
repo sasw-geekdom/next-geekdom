@@ -48,7 +48,7 @@ export function BillingForm() {
     return (
       <div
         role="status"
-        className="rounded-xl border border-border bg-bone-light p-7"
+        className="border border-border bg-bone-light p-7"
       >
         <h2 className="text-xl font-medium text-graphite">Check your inbox.</h2>
         <p className="mt-3 leading-relaxed text-muted-foreground">

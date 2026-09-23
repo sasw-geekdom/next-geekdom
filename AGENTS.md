@@ -238,6 +238,20 @@ same page runs as "15 years of Geekdom".
   token. It was a WebGL shader flowing color through the mark, which the guide
   bans; see the marks rule under Design system.
 
+## /apply
+
+- **The header and opening are the source copy, verbatim:** "Apply to
+  Geekdom.", the Fraunces line "Membership is by application. We respond
+  within two weeks.", and one paragraph ("about ten minutes"). No price and no
+  explanation of why there's an application — Geekdom asked for neither.
+- **The form is custom, and the doc asks for Typeform + Airtable.** It stays
+  custom pending Geekdom's call, because it feeds the whole membership
+  pipeline: admin review → acceptance email → Stripe checkout → the webhook
+  that creates the member. A Typeform embed sits outside all of that.
+- **`formerMember` ("I was a Geekdom coworking member.") is load-bearing** —
+  it reaches the admin detail view, the CSV export and the team email. Don't
+  drop the checkbox without replacing that signal.
+
 ## Share cards and metadata
 
 - **Cards are Bone, type-led, and carry no shader.** `npm run og` photographs
@@ -288,6 +302,12 @@ easing in or the page gliding, wanted both. They are two separate mechanisms:
   lives in [proxy.ts](proxy.ts) **and** is re-verified in the admin layout, in
   every admin route handler, and in every server action — the proxy only checks
   that a cookie *exists*, never that it's valid. Don't treat it as the gate.
+
+  **And never let it redirect on the cookie's presence alone.** It used to
+  send `/admin/login` to `/admin` whenever a cookie existed; with an expired
+  or revoked cookie that looped with the layout's redirect forever, and
+  "Staff sign in" looked like a page that wouldn't load. The login page now
+  verifies the session itself before skipping the form.
 
 - **Every third-party client is constructed lazily, on purpose.** Firebase
   Admin, the Firebase browser SDK, Stripe, and Resend each **throw at

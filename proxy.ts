@@ -26,10 +26,16 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Already signed in and hitting the login page — send them inside.
-  if (hasSession && isLogin) {
-    return NextResponse.redirect(new URL("/admin", request.url));
-  }
+  /*
+    NO "ALREADY SIGNED IN? GO INSIDE" RULE HERE, and there must not be one.
+    This redirected /admin/login to /admin whenever a cookie EXISTED — but
+    existing is all the proxy can see. An expired or revoked cookie passed
+    here, failed real verification in the admin layout, got sent to
+    /admin/login, and bounced straight back: an infinite redirect loop that
+    the browser reports as a page that won't load, for exactly the staff who
+    had signed in before. The login page now makes that call itself, after
+    verifying the session (app/admin/login/page.tsx).
+  */
 
   return NextResponse.next();
 }

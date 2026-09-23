@@ -119,15 +119,12 @@ export const OG_CARDS: Record<string, OgCard> = {
 
 
   apply: {
-    eyebrow: "Apply to the Club",
-    /*
-      THE PAGE'S OWN H1. It said "working on." while the h1 said "building." —
-      the same sentence ending two different ways, shown side by side in every
-      unfurl and search result. Neither was wrong; having both was.
-    */
-    lines: ["Tell us what you\u2019re", "building."],
+    eyebrow: "Apply",
+    // The source copy's headline, then its sub-headline cut to fit. The card
+    // and the page must not make two different claims side by side.
+    lines: ["Apply to Geekdom.", "We reply either way."],
     out: "app/(site)/apply/opengraph-image.png",
-    alt: "Apply to the Club at Geekdom — one membership, by application, on the third floor in San Antonio.",
+    alt: "Apply to Geekdom — membership is by application, and we respond within two weeks.",
   },
 
 
