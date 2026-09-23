@@ -14,7 +14,7 @@ import {
 import { Editorial } from "@/components/site/editorial";
 import { Photo } from "@/components/site/photo";
 import { ButtonAnchor } from "@/components/ui/button";
-import { TypeHero } from "@/components/site/type-hero";
+import { ClubHero } from "@/components/site/club-hero";
 import { PHOTOS } from "@/lib/photos";
 import {
   BENEFITS,
@@ -102,140 +102,29 @@ export default function ClubPage() {
       <MembershipJsonLd />
 
       {/*
-        Type-led, with the PRICE as the visual anchor rather than a photograph.
+        THE HERO IS A SPREAD: the source copy's eyebrow and headline at display
+        size on Bone, the photograph full-bleed beneath, no gradient. Geekdom
+        found the gradient band before it "too basic, not editorial enough";
+        ClubHero records what was tried and why this won.
 
-        That's the whole difference from the homepage, which uses the same
-        component: home anchors on a citation because its job is to make a
-        claim, and this page anchors on the number because its job is to remove
-        the last reason to hesitate. Both are type on sand; neither competes
-        with the other for the same device.
+        NO PRICE HERE, deliberately. Leading with the fee makes the page a
+        pricing page — "is it worth $100?" before the reader has anything to
+        weigh — so the figure lives in the Membership section, eighth of nine,
+        where the source copy puts it.
 
-        The figure is built from MEMBERSHIP_PRICE_CENTS, never typed. A literal
-        here would drift from Stripe silently, and this is now the largest
-        rendering of the price anywhere on the site.
+        `makeAPoint`: someone mid-sentence with people listening at close
+        range, which is the claim rather than an illustration of it, and a
+        different set of faces from the homepage hero. Anchored at 35% down so
+        the crop keeps the back row's heads and the speaker's hands.
       */}
-      {/*
-        THE PRICE IS NOT IN THIS HERO ANY MORE, and that reverses the call this
-        page used to document.
-
-        The old hero anchored on $100 at FIGURE.lg — the largest rendering of
-        the number anywhere on the site — with the nine benefit titles beside
-        it. The argument was that the page's job is conversion and the price is
-        the last objection, so lead with it.
-
-        That is the wrong first move for a club. Leading with the fee makes the
-        page a pricing page, and a pricing page invites exactly one question —
-        is it worth $100? — before the reader has been given a single thing to
-        weigh it against. Geekdom's own source copy puts membership eighth of
-        nine sections, after the rhythm, the clubhouse, who is in the room and
-        who it's for. It is right: by the time the number appears, it should be
-        the answer to a question the reader is already asking rather than the
-        opening bid.
-
-        THE SIDE PANEL WENT WITH IT. It existed because the price needed
-        company — a lone figure in half a hero reads as a price tag. Without
-        the number there is nothing to balance, and a type-led hero with the
-        crown in its empty right is the same shape the homepage uses.
-
-        The price now lives in the Membership section, with the full list of
-        what it buys directly beside it.
-      */}
-      {/*
-        THE HERO OPENS ON THE PROBLEM, NOT THE ROOM.
-
-        It used to lead with what the club HAS — a members-only community,
-        build sessions, tech talks, the clubhouse — which is a feature list
-        that has skipped the reason anyone wants the features. The three beats
-        now come from `CLUB` in lib/site.ts, the same source the homepage's
-        Club section reads: hard problems don't get solved alone, SO we built
-        the room; here is who is in it and what a month looks like; here is
-        what it is not.
-
-        The disqualifier stays in the first screen and stays last of the three,
-        which is where the source copy puts it. It is the most load-bearing
-        sentence on the page: fifteen years of public record says Geekdom is a
-        coworking space, and somebody who wants a desk should learn otherwise
-        before a ten-minute application rather than after it.
-
-        THE CROWN IS GONE AND A PHOTOGRAPH TOOK THE FOLD. The aside ran an
-        InkField masked to the crown — the gradient-on-a-mark exception the
-        2026 guide has not signed off — which came off the homepage hero, the
-        letter, the FAQ and the form earlier. This was the last public page
-        leading with it.
-
-        `makeAPoint` HOLDS IT, AND A FACE DECIDED IT.
-
-        Two frames were tried first. `theCrowd` was the PhotoBand that used to
-        sit directly below — placed when the hero led with the PRICE, and left
-        answering a number that had since moved to the Membership section. It
-        works, but it shows a presenter addressing a room, while the claim
-        above it is that the right person is ALREADY SITTING there.
-
-        `welcomeHero` fixed the subject and had the pixels — 2180px against
-        everything else in the library at 1600 or under. It lost on a detail no
-        measurement catches: THE MAN IN IT IS THE MAN IN THE HOMEPAGE HERO. He
-        is on the right of `conversation` and again in `fullHouse`. Homepage,
-        click "Explore the Club", same face at full-bleed scale twice in two
-        screens — which is the collision that pushed `conversation` off this
-        page's three-up in the first place, returned at the largest size the
-        site has.
-
-        `makeAPoint` is someone mid-sentence with three people listening at
-        close range. It is the claim rather than an illustration of it, the
-        faces are different people entirely, and it MEASURED BEST BY A MARGIN:
-        8.1:1 on the worst pixel in the copy zone, against 6.3 for `theCrowd`,
-        6.2 for `welcomeHero` and 4.9 for `oneOnOne`.
-
-        The cost is resolution — 1600px, where a retina 1920 panel wants about
-        2380. That is the trade, taken knowingly: a frame that says the wrong
-        thing sharply is worse than one that says the right thing softly, and
-        the ramp hides softness better than it hides a repeated face.
-
-        NO CLAY IN THE HEADLINE, same as the homepage and for the same measured
-        reason: the ramp leaves residual image luminance under the copy, the
-        ground rises, and Clay — lighter than graphite — loses contrast as it
-        does. It measures 3.07:1 at p95 and 1.81:1 on the worst pixel against a
-        3:1 bar. The accent moves to the rule above the eyebrow, which TypeHero
-        draws whenever `media` is set. Bone is 10.9:1 and 6.4:1 on the same
-        ground.
-
-        BODY AT bone/80, WHICH IS THE FLOOR. The worst pixel in the copy zone
-        is rgb(88,88,88); bone/70 lands at 4.11:1 and bone/75 at 4.44:1, both
-        under AA. 80 clears it at 4.80:1.
-      */}
-      <TypeHero
-        size="compact"
+      <ClubHero
         eyebrow="The Club · Members only"
-        media={{ photo: PHOTOS.makeAPoint }}
-        /*
-          THE CITY DROPS ON A PHONE, which is the call the homepage eyebrow
-          already makes — "the city is the first thing to go when the line
-          gets tight".
-
-          IT COMES DOWN TO TWO PIXELS. At 36px on a 390px phone the measure is
-          342px and "Where San Antonio\u2019s" needs 344. Missing by that much
-          pushes "Where" onto a line of its own and costs the headline a whole
-          extra line, so it sets five where it should set three.
-
-          Hiding the city is better than the alternatives. A non-breaking space
-          alone keeps the name together and still orphans "Where". Dropping to
-          text-3xl fixes the rag but quietens the homepage hero too, since both
-          read the same tier. This changes nothing above sm, and on a phone the
-          city is the least load-bearing part of the line: the page is /club,
-          the homepage has already said where Geekdom is, and the body copy
-          names the third floor twice.
-
-          THE NON-BREAKING SPACE STAYS for the widths that do show it. A place
-          name split across two lines is a typographic error at any size, and
-          at sm the line has room to spare.
-        */
+        photo={PHOTOS.makeAPoint}
+        objectPosition="object-[60%_35%]"
         title={
           <>
-            Where{" "}
-            <span className="hidden sm:inline">
-              {"San\u00A0Antonio\u2019s "}
-            </span>
-            founders and builders find their room.
+            Where {"San\u00A0Antonio\u2019s"} founders and builders find their
+            room.
           </>
         }
       />
@@ -254,15 +143,30 @@ export default function ClubPage() {
         placements differently on purpose — see CLUB and CLUB_HOME in
         lib/site.ts.
       */}
+      {/*
+        THE TRANSITION OUT OF THE HERO IS TYPOGRAPHIC. The photograph ends on
+        a clean edge and the first paragraph picks up as a lede — larger,
+        Graphite — before the other two drop to body size, so the eye steps
+        down photograph → lede → body instead of hitting a wall of grey text.
+
+        Two things were tried and taken out: a gradient (Geekdom rules those
+        out) and a Bone panel pulled up over the photograph's lower edge,
+        which Geekdom didn't like cutting into the picture. Keep the image
+        whole.
+
+        The three paragraphs are the source copy's Opening, verbatim.
+      */}
       <Section tone="bone">
         <h2 className="sr-only">Opening</h2>
-        <div className="max-w-2xl">
+        <div className="max-w-3xl">
           {CLUB.opening.map((para, i) => (
             <p
               key={para}
               className={cn(
-                "text-lg leading-relaxed text-muted-foreground",
-                i > 0 && "mt-5",
+                i === 0
+                  ? "text-2xl leading-snug text-graphite sm:text-[1.75rem]"
+                  : "mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground",
+                i === 1 && "mt-8",
               )}
             >
               {para}

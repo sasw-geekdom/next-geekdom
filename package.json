@@ -10,7 +10,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "og": "node scripts/og.mjs"
+    "og": "node scripts/og.mjs",
+    "photos:grade": "node scripts/grade-photos.mjs"
   },
   "dependencies": {
     "@vercel/blob": "^2.8.0",

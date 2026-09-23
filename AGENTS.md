@@ -76,6 +76,26 @@ list for cards, because some entries aren't Geekdom-hosted.
 
 ## Photography
 
+**Every photograph goes through the brand grade — never add one to
+`public/photos/` directly.** Geekdom asked for "the same treatment for
+cohesion based on the Photography section of the brand guide" (section 06:
+slightly warm, slightly desaturated, Bone highlights, Graphite shadows, ~30%
+black and white). [scripts/grade-photos.mjs](scripts/grade-photos.mjs) does
+it per photograph toward one shared target:
+
+- **Originals live in `photos/originals/`** (not served, never edited).
+  `npm run photos:grade` writes the graded copy to `public/photos/` under the
+  same name, which is what `lib/photos.ts` imports. A new photo: drop the
+  original in, run the script, import it as usual.
+- **Tune the constants and re-grade everything from source**; never grade a
+  graded file. The script's header says which guide line each constant is.
+- **Black and white is a list in the script** (`BLACK_AND_WHITE`), chosen by
+  the guide's criteria — spotlights, ceremonial moments, profiles. Keep it
+  near 30% of the library as photos are added.
+- Before it existed the library's saturation ranged 7x and its warmth from
+  cool to very warm; after, the color frames' saturation spread fell from
+  0.08 to 0.03 and warmth from 16 to 5 (standard deviation).
+
 **Photos have square corners — no rounding, 90 degrees, Geekdom's request.**
 `Photo` carries none, and neither does any other image frame (video poster,
 event cards, the memory-lane wall, admin thumbnails). Don't add `rounded-*`
@@ -108,7 +128,7 @@ Sierakowski" to "Brian Siiewkowski" — more legible than the real handwriting,
 on the one section that names him in copy three lines away. It also carried a
 C2PA manifest from Google on the homepage of a brand whose guide says "Real
 people, named. No stock." The original (NIKON D3100, 2 February 2015) is in
-the repo now. `grahamNick` is the other upscale in this file; treat it the
+the repo now, in `photos/originals/`. `grahamNick` is the other upscale in this file; treat it the
 same way if an original turns up.
 
 ## The two engines
