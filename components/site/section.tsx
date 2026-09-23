@@ -62,7 +62,10 @@ export function Section({
       className={cn("py-20 sm:py-28", tones[tone], className)}
       {...props}
     >
-      <Container>{children}</Container>
+      {/* Every direct child eases in as it scrolls into view — see
+          `reveal-children` in globals.css. CSS only; a no-op without
+          support or with reduced motion. */}
+      <Container className="reveal-children">{children}</Container>
     </section>
   );
 }
@@ -149,8 +152,8 @@ export const LINK_ARROW_ON_INK = `group inline-flex items-center gap-1.5 ${LINK_
  *
  * `→` means the reader stays on this site. `↗` means they leave it. That is
  * the ordinary web convention and this repo already followed it by accident:
- * every ArrowRight here is on an in-app `<Link>` (/studio, /events,
- * /whats-changing) and the only ArrowUpRight is on the portfolio wall's
+ * every ArrowRight here is on an in-app `<Link>` (/studio, /events) and
+ * the only ArrowUpRight is on the portfolio wall's
  * `target="_blank"` links out to companies' own sites.
  *
  * Collapsing the two into one mark would be a real loss. `↗` is how somebody

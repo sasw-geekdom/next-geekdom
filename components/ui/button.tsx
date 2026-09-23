@@ -82,7 +82,10 @@ export function buttonClass(
   className?: string,
 ) {
   return cn(
-    "inline-flex items-center justify-center gap-2 rounded-lg font-medium",
+    // SQUARE CORNERS, per Geekdom: "No rounded corners on buttons. 90 degrees."
+    // Explicit rather than omitted, so the rule is visible here and a
+    // `rounded-*` in an override className shows up in a diff as a violation.
+    "inline-flex items-center justify-center gap-2 rounded-none font-medium",
     "transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
     "disabled:pointer-events-none disabled:opacity-50",
     variants[variant],

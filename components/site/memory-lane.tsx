@@ -66,7 +66,7 @@ function Photo({ img, priority }: { img: GalleryImage; priority: boolean }) {
         whileInView={{ opacity: 1, y: 0, scale: 1, rotate: reduce ? 0 : rot }}
         viewport={{ once: true, amount: 0.15 }}
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        className="overflow-hidden rounded-xl border border-border bg-bone-light shadow-sm"
+        className="overflow-hidden border border-border bg-bone-light shadow-sm"
       >
         {/*
           `alt=""`, deliberately. These are decorative in the accessibility

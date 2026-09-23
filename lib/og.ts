@@ -143,35 +143,6 @@ export const OG_CARDS: Record<string, OgCard> = {
   },
 
 
-  /*
-    Inherited by /events/[slug] too, which is deliberate: an event with no cover
-    art on Luma unfurls as this rather than as the homepage. An event that HAS
-    cover art overrides it in generateMetadata, because the poster the organizer
-    made is a better card than anything generic.
-  */
-  events: {
-    eyebrow: "The calendar",
-    // "The best conversations / happen in the room." is the page's own closing
-    // line and it is the better sentence, but at 22 characters the first line
-    // ran into the crown. This says the same thing in the events page's other
-    // voice — the invitation it makes to people who aren't members yet.
-    lines: ["Come see how", "the room feels."],
-    seed: 27.2,
-    out: "app/(site)/events/opengraph-image.png",
-    alt: "Geekdom events — meetups, build sessions, office hours and pitch nights, most of them open to non-members. Come see how the room feels.",
-  },
-
-  "whats-changing": {
-    eyebrow: "A letter to our members",
-    // The letter's other famous line, because "The space changes. / The people
-    // in it don't." overflows at 23 characters. Both are load-bearing sentences
-    // from the same paragraph and neither can be paraphrased to fit — so this
-    // takes the one that already fits rather than editing a real letter.
-    lines: ["The desk was", "never the point."],
-    seed: 34.9,
-    out: "app/(site)/whats-changing/opengraph-image.png",
-    alt: "What's changing at Geekdom — the desk was never the point. The letter to members, in full.",
-  },
 
   faq: {
     eyebrow: "Questions",

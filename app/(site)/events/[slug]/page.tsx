@@ -148,7 +148,7 @@ export default async function EventPage({
             )}
 
             {event.cover_url && (
-              <div className="relative mt-10 aspect-16/9 w-full overflow-hidden rounded-xl bg-bone-light">
+              <div className="relative mt-10 aspect-16/9 w-full overflow-hidden bg-bone-light">
                 <Image
                   src={event.cover_url}
                   alt=""

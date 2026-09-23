@@ -681,13 +681,13 @@ export default function StudioPage() {
                 like to talk.
               </p>
             </div>
-            <ButtonAnchor
-              href={`mailto:${STUDIO.email}`}
-              variant="outline"
-              className="shrink-0"
-            >
-              Start a conversation
-            </ButtonAnchor>
+            {/*
+              "Contact us → /contact" is the doc's link for this block. It had
+              been a mailto because /contact did not exist; it does now.
+            */}
+            <ButtonLink href="/contact" variant="outline" className="shrink-0">
+              Contact us
+            </ButtonLink>
           </div>
         </div>
       </Section>

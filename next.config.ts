@@ -51,6 +51,13 @@ const nextConfig: NextConfig = {
       // wayfinding moved. Same reasoning as /membership above — this was
       // a live page on THIS site, indexed, with its own share card.
       { source: "/the-floor", destination: "/club", permanent: true },
+      // /whats-changing held the members letter announcing the move from
+      // coworking to a club. Geekdom asked for the letter and its page to
+      // come out. Same class as the two above — a live page on THIS site,
+      // in the sitemap, with its own share card, and linked from the
+      // homepage, /since-2011 and the 404 — so it 308s rather than 404s for
+      // anyone holding the URL.
+      { source: "/whats-changing", destination: "/club", permanent: true },
 
       // Coworking is sunsetting. Anyone landing on the old membership or
       // pricing pages should get the club's story, not a 404.

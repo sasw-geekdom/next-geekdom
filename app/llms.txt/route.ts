@@ -3,7 +3,6 @@ import {
   CONTACT_EMAIL,
   CONTRACTS_END,
   GOAL,
-  LETTER_AUTHOR,
   LOCATION,
   LUMA_CALENDAR_URL,
   MILESTONES,
@@ -98,7 +97,6 @@ Goal: ${GOAL}
 - [The Club](${url("/club")}): The members' club — what it costs, what it includes, who it is and isn't for, and the third-floor clubhouse itself.
 - [Studio](${url("/studio")}): The venture layer. Invitation-only; there is no application.
 - [Events](${url("/events")}): The public calendar. Some events are members-only; many are open to anyone.
-- [What's Changing](${url("/whats-changing")}): The letter from ${LETTER_AUTHOR.name}, ${LETTER_AUTHOR.role}, announcing the move from coworking to a club. Reproduced in full.
 - [FAQ](${url("/faq")}): The practical answers — what club membership costs and includes, how to apply, how the Studio works, and where to park downtown.
 - [Apply](${url("/apply")}): The membership application.
 

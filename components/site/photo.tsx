@@ -43,10 +43,9 @@ export function Photo({
   return (
     <div
       className={cn(
-        // Rounded by default; the full-bleed hero squares off its outer edge
-        // with `lg:rounded-r-none`, which twMerge leaves alone because it's a
-        // different breakpoint.
-        "relative overflow-hidden rounded-xl bg-bone-light",
+        // SQUARE CORNERS, per Geekdom: "Get rid of all rounded edges of
+        // photos. Hard 90 degrees." Don't pass a `rounded-*` override.
+        "relative overflow-hidden bg-bone-light",
         aspect,
         className,
       )}

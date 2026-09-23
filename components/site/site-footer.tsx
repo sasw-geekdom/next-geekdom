@@ -1,113 +1,82 @@
 import Link from "next/link";
 import {
-  NAV,
-  EXPLORE,
   SOCIALS,
   BEYOND_THE_CLUB,
+  FOOTER_EXPLORE,
+  FOOTER_PROGRAMS,
+  live,
   LEGAL,
   LOCATION,
-  CONTACT_EMAIL,
-  TAGLINE,
   FOUNDED_YEAR,
 } from "@/lib/site";
 import { Container } from "@/components/site/section";
-import { CrownShader } from "@/components/site/crown-shader";
 
 /*
-  The Membership column, in the order someone actually meets these: apply,
-  then questions about applying, then the letter explaining what they are
-  joining, then billing once they have joined.
+  THE MEMBERSHIP COLUMN IS GONE, at Geekdom's request, and two of its four
+  links went with it:
+
+    · "The letter" pointed at /whats-changing, which has been deleted.
+    · "Manage membership" pointed at /account, which is hidden for now. The
+      route still exists and the Stripe portal still works — it is unlinked,
+      not removed, so a member who has the URL is not stranded.
+
+  Apply and FAQ moved into Programs, which is where the doc's own column
+  structure puts Apply.
 */
-const SECONDARY = [
-  { href: "/apply", label: "Apply" },
-  { href: "/faq", label: "FAQ" },
-  { href: "/whats-changing", label: "The letter" },
-  { href: "/account", label: "Manage membership" },
-];
 
 export function SiteFooter() {
   return (
     <footer className="mt-auto bg-graphite text-bone">
       <Container className="py-16">
         <div className="flex flex-col gap-12 lg:flex-row lg:justify-between">
-          <div className="max-w-sm">
-            {/*
-              The crown, running the flow, in place of the wordmark.
+          {/*
+            THE STATIC CROWN, NOT THE SHADER — Geekdom's call, and it settles
+            part of a question this repo had open.
 
-              Crown and not the g-mark, for two reasons. The slot is wide and
-              shallow — it sits above the tagline in a narrow column — and the
-              crown's 1.34 fills that where the g-mark's 0.31 is a 25px hairline.
-              And the navbar already carries the full wordmark: a crown here
-              bookends it instead of repeating it.
+            `CrownShader` ran a WebGL flow through the mark. Every colour in it
+            was approved but the gradient was not, and AGENTS.md carried it as
+            "a known, deliberate exception pending sign-off". Taking it out of
+            the footer removes it from every page on the site; the remaining
+            instances are the CrownPage rail and the /since-2011 wordmark, so
+            the sign-off is now about two placements rather than all of them.
 
-              This puts a second WebGL context on every page (the first being
-              the rail on the CrownPage routes). Affordable because ShaderCanvas
-              pauses on an IntersectionObserver, and a footer is off screen for
-              almost the whole visit — it costs nothing until someone scrolls to
-              it. Browsers cap contexts around 16; two is not near that.
-            */}
-            <CrownShader onDark className="h-14 w-auto" />
-            <p className="mt-4 text-lg font-medium leading-snug text-bone">
-              {TAGLINE}
-            </p>
-            <address className="mt-6 text-sm not-italic leading-relaxed text-bone/65">
-              {LOCATION.line1}
-              <br />
-              {LOCATION.street}
-              <br />
-              {LOCATION.city}, {LOCATION.state} {LOCATION.zip}
-            </address>
-            <a
-              href={`mailto:${CONTACT_EMAIL}`}
-              className="mt-4 inline-block text-sm text-bone underline decoration-clay decoration-2 underline-offset-2 transition-colors hover:decoration-bone"
-            >
-              {CONTACT_EMAIL}
-            </a>
-          </div>
+            THE MASK, NOT `crown.svg`. The asset ships two-tone — #CA3625 and
+            #AA2D29 — and the second is not one of the five brand colours, so
+            dropping it straight onto graphite would put an off-palette red in
+            the footer of every page. `.crown-mask` in globals.css already
+            exists for the shader, consumes only the alpha, and lets the fill
+            be a real token: Bone, which the guide permits for the marks and
+            which is what everything else in this footer is.
+
+            Aspect is the source viewBox, 55 x 41.
+          */}
+          <div
+            aria-hidden="true"
+            className="crown-mask h-14 w-[4.7rem] shrink-0 bg-bone"
+          />
 
           {/*
-            Four columns, per the brand guide's footer spec: address,
-            geekdom.com, a LaunchSA reference, social, minimal legal.
+            FOUR COLUMNS, NAMED AS `Source Copy v1` NAMES THEM. This was
+            Explore / Membership / Beyond the club / Follow; the doc's columns
+            are Explore / Programs / Related / Social, and Geekdom asked for
+            the footer to match.
 
-            `sm:grid-cols-4` rather than 3 — "Related" is the new one, and it is
-            what carries the LaunchSA reference the guide asks for. See ECOSYSTEM
-            in lib/site.ts for why that is a name and not a mark.
+            "Beyond the club" is kept over the doc's "Related" — the doc's own
+            word, but it is the label AGENTS.md argues against at length: it
+            holds the four things Geekdom operates, runs, is funded by and
+            sits on the team for, and "Related" is the word you reach for when
+            you have not decided what a group is. Flagged for Leslie rather
+            than changed, since it is her document.
           */}
           <div className="grid grid-cols-2 gap-10 sm:grid-cols-4">
-            {/*
-              The nav is two items now, so the footer stops mirroring it and
-              carries the whole site instead. Everything the nav dropped —
-              The Floor, Events, What's Changing — lives here rather than
-              being orphaned.
-            */}
-            {/*
-              EVERY ONE OF THESE HEADINGS USED TO SAY NOTHING.
-
-              "Geekdom" labelled a column inside Geekdom's own footer.
-              "Members" sat above Apply, which is for people who are not
-              members yet. And "Related" — related to what? It held LaunchSA,
-              Startup + Tech Week, Accelerate South Texas and MIT REAP: the
-              four things Geekdom operates, runs, is funded by and sits on the
-              team for. "Related" is the word you reach for when you have not
-              decided what a group is.
-
-              "Beyond the club" is Geekdom's own phrase for it, straight out of
-              its Media boilerplate: "Beyond the club, Geekdom convenes the
-              broader startup community." It is also the one framing that
-              stays true across all four relationships without claiming any of
-              them — which "Also from Geekdom" would, wrongly, for two.
-
-              NOT "ECOSYSTEM", which is the obvious label and is on the brand
-              guide's banned list by name.
-            */}
-            <FooterColumn title="Explore" links={[...NAV, ...EXPLORE]} />
-            <FooterColumn title="Membership" links={SECONDARY} />
+            <FooterColumn title="Explore" links={live(FOOTER_EXPLORE)} />
+            <FooterColumn title="Programs" links={live(FOOTER_PROGRAMS)} />
             <FooterColumn
               title="Beyond the club"
               links={BEYOND_THE_CLUB}
               external
             />
-            <FooterColumn title="Follow" links={SOCIALS} external />
+            <FooterColumn title="Social" links={SOCIALS} external />
           </div>
         </div>
 
@@ -151,10 +120,46 @@ export function SiteFooter() {
             (#F4F1EB) for that reason — an <img> can't take `currentColor`, so
             the palette color is baked in and the hover runs on opacity.
           */}
+          {/*
+            THE ADDRESS MOVED HERE, at Geekdom's request. It used to sit in
+            the left block under the tagline; the tagline and the membership
+            email came out with this change, which left that block holding
+            one mark and nothing else.
+
+            `Source Copy v1` writes the location as its own line — "110 E
+            Houston St, 3rd Floor · San Antonio, TX 78205" — and its utility
+            row as copyright, Privacy, Terms. Geekdom asked for all four on
+            one line, so the location line's own middle dot is reused as the
+            separator and the whole row reads as one utility strip.
+
+            Built from `LOCATION` rather than typed, so the street and the
+            floor cannot drift from the address /club and the email templates
+            render. Note `floorShort` — "3rd Floor", the form the doc uses and
+            the one an address block wants; lib/site.ts has a note about not
+            reconciling it with "Third floor" in prose.
+          */}
           <p className="flex flex-wrap items-center gap-x-1.5">
+            <span>
+              {LOCATION.street}, {LOCATION.floorShort} · {LOCATION.city},{" "}
+              {LOCATION.state} {LOCATION.zip}
+            </span>
+            <span aria-hidden="true">·</span>
             <span>
               © {FOUNDED_YEAR}–{new Date().getFullYear()}
             </span>
+            {/*
+              THE EASTER EGG'S DOOR, and it wears the OLD LOGO.
+
+              The copyright line is the one place the founding year already
+              appears, so the throwback hangs off it rather than taking a nav
+              slot or a footer column — which is what makes it an easter egg
+              rather than a page. The years are computed, so the label is
+              still true in 2031.
+
+              An <img> rather than an inline SVG: the footer renders on every
+              route. The file is flattened to Bone because an <img> cannot
+              take `currentColor`, so the hover runs on opacity.
+            */}
             <Link
               href="/since-2011"
               aria-label={`${new Date().getFullYear() - FOUNDED_YEAR} years of Geekdom`}
@@ -169,7 +174,6 @@ export function SiteFooter() {
                 className="h-4 w-auto opacity-55 transition-opacity group-hover:opacity-100"
               />
             </Link>
-            <span>· San Antonio, Texas.</span>
           </p>
           <nav className="flex flex-wrap items-center gap-x-6 gap-y-2">
             {LEGAL.map((l) => (
@@ -181,6 +185,11 @@ export function SiteFooter() {
                 {l.label}
               </Link>
             ))}
+            {/*
+              Not in the doc's utility row, kept deliberately: it is the only
+              signposted way to the admin sign-in, and the doc does not cover
+              staff routes at all. Flagged rather than dropped.
+            */}
             <Link
               href="/admin"
               className="transition-colors hover:text-bone/80"

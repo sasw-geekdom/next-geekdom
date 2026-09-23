@@ -195,7 +195,11 @@ export function SiteNavbar() {
 
       <header
         className={cn(
-          "sticky top-0 z-50 border-b border-border/70 bg-bone/85 backdrop-blur supports-backdrop-filter:bg-bone/70",
+          // SOLID BONE, not a translucent blur. `bg-bone/70` + backdrop-blur
+          // mixed with whatever scrolled beneath it: over the graphite hero it
+          // rendered #B3B1AD, a grey that isn't in the palette, and Geekdom
+          // flagged it as off-brand. A solid ground is #F4F1EB everywhere.
+          "sticky top-0 z-50 border-b border-border/70 bg-bone",
           "transition-transform duration-300 ease-out",
           // focus-within pulls the header back when someone tabs into it — a
           // keyboard user must never be moving focus through links parked

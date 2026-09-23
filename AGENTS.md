@@ -25,14 +25,42 @@ different claims, and two of the four verbs still need confirming from Geekdom.
 
 **The homepage answers "what is Geekdom in 2026", not "what replaced
 coworking."** Its old spine argued one point — that one membership is worth
-$100 — across seven of ten sections. The current spine is: one claim → the
-portfolio → the convening work → the Club → the Studio → **how they connect** →
-who's in it → what's on → the 2011 origin → one ask. The price and the benefit
-list belong on `/club`; don't move them back.
+$100 — across seven of ten sections. The current spine, in
+the source copy's order, is: one claim → the Club → the Studio → this month
+in the Club → the 2011 origin → the portfolio → one ask. The price and the
+benefit list belong on `/club`; don't move them back.
 
-- **The pipeline section is the thesis.** Club → Studio (membership is the
-  on-ramp) and Studio → Club (the portfolio is the proof). Without it the two
-  engines read as a landlord with a side fund.
+**The convening section ("What we are", rendering `ECOSYSTEM`) is off the
+homepage at Geekdom's request.** Don't put it back unasked. `ECOSYSTEM` still
+feeds the footer's "Beyond the club" column and `/events`, so the `role`
+rule above still applies.
+
+**"Why there's an application" is off the homepage too**, and Geekdom was
+explicit: "I definitely don't want to talk about why an application." They
+may want something else in that slot — ask, don't fill it.
+
+**"This month in the Club" is the source copy's list, in `THIS_MONTH`
+([lib/site.ts](lib/site.ts)), maintained by hand monthly.** Luma isn't
+connected. When it is, merge its events into the list instead of swapping the
+list for cards, because some entries aren't Geekdom-hosted.
+
+- **The Club and the Studio sit side by side as two panels, with no
+  photographs** — `Offering` in the homepage. Geekdom found the old
+  copy-beside-photo sections "too standard and basic" and too photo-heavy, and
+  asked for the two offerings next to each other so the split reads at a
+  glance. The grounds carry it (Bone with a hairline / Graphite). On hover
+  the opposite ground wipes in from whichever edge the pointer entered and
+  out through the edge it leaves (`OfferWipe`, 700ms), carrying an inverted
+  copy of the type so the text changes color exactly on the wipe line —
+  never time the text separately, that left the heading invisible mid-wipe.
+  The other panel's type recedes. Don't put photographs back in these panels.
+- **Never imply a pathway from the Club to the Studio.** The homepage had a
+  "How the two fit together" section arguing exactly that — membership as the
+  on-ramp, the Studio as where it leads — and Geekdom removed it: "We don't
+  want to ever indicate that there is some clear pathway from Club to
+  Studio." Don't rebuild it or fold its argument into another section.
+  `/club` and `/studio` still carry versions of the claim ("One is the
+  on-ramp…", "most Studio relationships start there") and are pending review.
 - **The origin is "Geekdom started with an email"** (Graham Weston, 2011), not
   "the desk was never the point." The second is the members letter's line — it
   is about what Geekdom *stopped* doing, and it belongs on `/whats-changing`,
@@ -42,13 +70,20 @@ list belong on `/club`; don't move them back.
   of [partner-row.tsx](components/site/partner-row.tsx). `PortfolioWall` holds
   that slot now: Geekdom's own output rather than borrowed logos.
 - **`POSITIONING` is the h1**, sliced for its Clay accent so the two can't
-  drift. `HOOK` closes the page.
+  drift. The close is "Building something?" and Apply, nothing else —
+  Geekdom asked for it that way, retiring `HOOK` from the page and the
+  second "Come to an event first" CTA.
 
 ## Photography
 
+**Photos have square corners — no rounding, 90 degrees, Geekdom's request.**
+`Photo` carries none, and neither does any other image frame (video poster,
+event cards, the memory-lane wall, admin thumbnails). Don't add `rounded-*`
+to anything that holds a photograph.
+
 Every frame in [lib/photos.ts](lib/photos.ts) was shot on the third floor —
 **except the three Studio ones, deliberately.** `brianWhiteboard` is the EIR at
-a whiteboard with a founder (homepage Studio section), `brianPortrait` is his
+a whiteboard with a founder (currently unused — see below), `brianPortrait` is his
 headshot, and `openlaneTeam` is a backed company's founders at their own
 whiteboard — the `/studio` hero.
 
@@ -117,9 +152,8 @@ team asked for — everything else lives in the footer.
 
 - **`/club` names the Studio, and has to.** It went a long time without
   mentioning it once — no word, no link — on the page most likely to be
-  somebody's entry point from search. The homepage says "Geekdom runs a
-  members' club and a venture fund" and spends a section on the pipeline
-  between them; without that, from this side, the club is the whole company.
+  somebody's entry point from search. The homepage gives the Club and the
+  Studio a section each; without that, from this side, the club is the whole company.
   The section must never imply membership buys a check: it doesn't, and there
   is nothing to apply to.
 - **`BENEFITS` renders ONCE on `/club`**, under "What's included", with titles
@@ -151,9 +185,10 @@ same page runs as "15 years of Geekdom".
   a first batch can't blow the request timeout — the UI says to run it again.
   Needs `BLOB_READ_WRITE_TOKEN`; without it the page renders its empty state
   rather than failing.
-- **`motion` is here for this page only.** It is the sole animation dependency
-  in a repo that otherwise does everything in CSS keyframes and
-  IntersectionObserver, and it earns it for one effect: a scroll-linked
+- **`motion` is here for this page only.** Besides `lenis` (the site-wide
+  scroll glide, below), it is the only animation dependency in a repo that
+  otherwise does everything in CSS keyframes and IntersectionObserver, and it
+  earns it for one effect: a scroll-linked
   parallax that differs per element. Don't reach for it elsewhere — check
   whether CSS does the job first.
 - **`useReducedMotion` in [lib/use-reduced-motion.ts](lib/use-reduced-motion.ts),
@@ -177,6 +212,31 @@ same page runs as "15 years of Geekdom".
   in it is approved, the gradient is not. It goes into the same sign-off as the
   crown and the g-mark. `WordmarkShader` exists for this one placement; the
   rail on `CrownPage` can't even accept it (see `RailShape`).
+
+## Scroll motion
+
+Geekdom asked for "soft scrolling", and when asked whether that meant content
+easing in or the page gliding, wanted both. They are two separate mechanisms:
+
+- **Reveals are CSS only.** `Section`'s container carries `reveal-children`,
+  so every direct child of every section rises and fades in on its own
+  `animation-timeline: view()`. `.reveal` opts in a single element elsewhere.
+  Unsupported browsers (Firefox, today), print and reduced motion get the
+  content, fully visible, with no animation. Don't rebuild this with
+  IntersectionObserver or `motion` — nothing here can get stuck hidden, and
+  that property is the point.
+- **The glide is Lenis**, mounted once in the `(site)` layout
+  ([smooth-scroll.tsx](components/site/smooth-scroll.tsx)). Wheel and
+  trackpad only — touch scrolls natively — never for reduced motion, never in
+  admin. It still scrolls the real window, so scroll listeners, the navbar,
+  `motion`'s `useScroll` and view timelines need nothing from it. A new
+  scrollable panel works because of `allowNestedScroll`; if one ever glides
+  the page behind it instead, add `data-lenis-prevent` to it.
+- **A running transform animation makes its element a stacking context.**
+  Every revealed block is one. Tested: the /apply combobox dropdown still
+  paints over what follows it. A future `position: fixed` element placed
+  INSIDE a section would be positioned against its block, not the viewport —
+  portal it out, or give its block `.reveal`-free markup.
 
 ## Repo gotchas
 
@@ -273,8 +333,9 @@ same page runs as "15 years of Geekdom".
   | `motion` | [memory-lane.tsx](components/site/memory-lane.tsx) | `/since-2011` only |
   | `sharp` | [gallery-sync.ts](lib/gallery-sync.ts) | the admin server action only |
   | `@vercel/blob` | [gallery-sync.ts](lib/gallery-sync.ts) | the admin server action only |
+  | `lenis` | [smooth-scroll.tsx](components/site/smooth-scroll.tsx) | every public page, from the `(site)` layout |
 
-  All three belong in `dependencies`, not `devDependencies` — `sharp` and
+  All four belong in `dependencies`, not `devDependencies` — `sharp` and
   `@vercel/blob` run on the server in production, and `motion` ships to the
   browser on that one route.
 
@@ -335,6 +396,10 @@ the constant:
   absence caused thirteen hand-rolled `<a className="inline-flex h-13 ...">` to
   accumulate**, several already missing the focus ring or the size's own
   `text-*`. If a button shape is missing, add a variant — don't hand-roll it.
+
+**Buttons have square corners — no rounding, 90 degrees.** That is Geekdom's
+own feedback, and `buttonClass` sets `rounded-none` at the base. Don't pass a
+`rounded-*` override, and don't hand-roll a button that skips `buttonClass`.
 
 Passing an override `className` to a button WITHOUT a `variant` leaves
 `primary` in place, and if the override carries no background of its own

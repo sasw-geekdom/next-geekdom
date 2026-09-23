@@ -262,8 +262,13 @@ export const CONTRACTS_END = new Date(2026, 8, 25); // Sept 25
 export const CLUB_OPENS = new Date(2026, 9, 5); // October 5
 
 /**
- * WHERE THE TRANSITION IS RIGHT NOW. Three windows, and copy on /whats-changing
- * reads differently in each.
+ * WHERE THE TRANSITION IS RIGHT NOW. Three windows.
+ *
+ * ⚠️ CURRENTLY UNUSED. Its only consumer was /whats-changing, which has been
+ * removed at Geekdom's request. Kept rather than deleted because
+ * `CONTRACTS_END` and `CLUB_OPENS` are both still live elsewhere and the Club
+ * opens on 5 October — a page that needs to read differently before and after
+ * that date is plausible enough that the helper is worth its ten lines.
  *
  *   before      coworking still running, the change is announced
  *   between     contracts ended Sept 25, club not open until Oct 5
@@ -292,17 +297,89 @@ export const FOUNDED_YEAR = 2011;
 export const CONTACT_EMAIL = "members@geekdom.com";
 
 /**
- * Who wrote the letter.
+ * /contact's routing table, from `Source Copy v1`.
  *
- * The letter on /whats-changing is a real document that really went out, and an
- * unsigned letter reads as a corporate announcement rather than as someone
- * putting their name to a decision.
+ * The doc's Contact page is four blocks, each naming the address for one kind
+ * of question. Same reasoning `TEAM_CONTACTS` carries: "email us" on a page
+ * about billing sends the anxious question to a shared inbox and adds a hop.
+ *
+ * ⚠️ TWO OF THESE ADDRESSES ARE NEW TO THIS REPO — `mm@geekdom.com` and
+ * `hello@geekdom.com` appear in the doc and nowhere in the codebase before
+ * now, and `press@geekdom.com` comes from the Media page's spec. Worth
+ * confirming all three are real mailboxes before launch; a contact page that
+ * routes to an address nobody reads is worse than one that does not exist.
+ * `CONTACT_EMAIL` (members@) is the one already in use for membership.
  */
-export const LETTER_AUTHOR = {
-  name: "Charles Woodin",
-  role: "CEO",
-  email: "charles@geekdom.com",
-} as const;
+/**
+ * THE MEDIA BOILERPLATE, verbatim from `Source Copy v1`.
+ *
+ * Three paragraphs a journalist can paste without editing. It is a constant
+ * rather than page markup because /media offers a copy button over it — the
+ * button and the rendered prose have to be the same string or the clipboard
+ * quietly ships something the page does not say.
+ *
+ * Note the third paragraph names LaunchSA as operated "in partnership with
+ * the City of San Antonio", which is the exact verb `ECOSYSTEM` protects.
+ */
+export const BOILERPLATE_SHORT = [
+  "Geekdom is San Antonio\u2019s club for serious founders and builders in tech and tech-enabled industries. It\u2019s a curated community of the people creating the city\u2019s next generation of scalable companies, along with the operators, investors, and mentors who invest in their success. Since 2011, Geekdom has helped serious founders grow companies that hire, scale, and stay rooted in San Antonio.",
+  "Beyond the club, Geekdom convenes the broader startup community, including founders, capital, universities, industry, and government, so San Antonio\u2019s efforts reinforce each other and great companies come from here.",
+  "Geekdom also operates LaunchSA, the city\u2019s open-access entrepreneurship hub, in partnership with the City of San Antonio.",
+] as const;
+
+/**
+ * The fact sheet rows that are actually known.
+ *
+ * ⚠️ THE DOC'S FACT SHEET HAS FIVE MORE AND ALL FIVE ARE `[TBD]`: current
+ * members, companies started by members since founding, capital raised by
+ * member companies, jobs created, and companies acquired since 2020. Those
+ * are the numbers a journalist quotes, so they are the ones that must not be
+ * guessed — and a press page is the last place on the site to publish an
+ * estimate. They slot in here the moment Geekdom supplies them.
+ */
+export const FACT_SHEET = [
+  { label: "Founded", value: "2011" },
+  { label: "Location", value: "Downtown San Antonio, Texas" },
+] as const;
+
+/** Programs operated, from the doc's fact sheet. */
+export const PROGRAMS_OPERATED = [
+  "Geekdom Club",
+  "Geekdom Studio",
+  "Community Fund",
+  "LaunchSA (in partnership with the City of San Antonio)",
+  "San Antonio Startup + Tech Week",
+] as const;
+
+/** Press inbox, from /media's spec. */
+export const PRESS_EMAIL = "press@geekdom.com";
+
+export const CONTACT_BLOCKS = [
+  {
+    heading: "Membership questions",
+    body: "For questions about applying, current membership, billing, or the Club:",
+    email: "mm@geekdom.com",
+  },
+  {
+    heading: "Partnerships and Studio",
+    body: "For corporate partnership inquiries or Studio-related conversations:",
+    email: "lesliechasnoff@geekdom.com",
+    alsoEmail: "studio@geekdom.com",
+  },
+  {
+    heading: "General",
+    body: "For anything else:",
+    email: "hello@geekdom.com",
+  },
+] as const;
+
+/*
+  `LETTER_AUTHOR` IS GONE with the letter. It held Charles Woodin's name, role
+  and email so /whats-changing could be signed rather than read as a corporate
+  announcement. Geekdom asked for the letter and its page to be removed, so
+  the signature has nothing left to sign.
+*/
+
 
 /**
  * Named contacts from the members FAQ, by what they actually own.
@@ -1227,6 +1304,35 @@ export const LUMA_CALENDAR_URL = envOr(
 );
 
 /**
+ * "THIS MONTH IN THE CLUB" on the homepage — Geekdom's source copy, verbatim.
+ *
+ * HAND-MAINTAINED, AND MONTHLY. The source copy's note: "This list should be
+ * maintained monthly. Ideal state: pulls from Luma via API or other tracking
+ * source. Interim: editable CMS field or mixture of both." There is no CMS
+ * yet, so this array is the interim field. When Luma is connected, merge its
+ * events in rather than replacing this — some entries (Open Coffee Club at
+ * Creme) are not Geekdom-hosted and won't be on the calendar.
+ *
+ * `date` is display text exactly as the source writes it ("Sept 23"), not a
+ * Date: the source abbreviates September as "Sept", which no locale format
+ * produces, and nothing sorts or filters on it. Keep entries in date order.
+ */
+export const THIS_MONTH: { date: string; title: string }[] = [
+  { date: "Sept 23", title: "Open Coffee Club at Creme Coffee & Social" },
+  { date: "Sept 28", title: "San Antonio Startup + Tech Week kicks off" },
+  {
+    date: "Sept 28",
+    title: "The Model — a half-day summit at the intersection of AI and creative",
+  },
+  {
+    date: "Sept 30",
+    title: "Access Granted — a half-day summit for security and cyber",
+  },
+  { date: "Oct 2", title: "PySanAntonio II" },
+  { date: "Oct 2", title: "Final day of San Antonio Startup + Tech Week" },
+];
+
+/**
  * THE TWO ENGINES, and that is the whole nav.
  *
  * Geekdom does two things: it runs a members' club, and it runs a venture
@@ -1243,7 +1349,7 @@ export const LUMA_CALENDAR_URL = envOr(
  *
  * EVERYTHING DROPPED IS STILL REACHABLE, from the footer and from inside the
  * two pages — the clubhouse from the Club page itself, /events from the
- * month-in-the-Club module on both, /faq and /whats-changing from the footer.
+ * month-in-the-Club module on both, and /faq from the footer.
  * The brand guide caps the nav at 4-5 items; the argument for two is that a
  * visitor's first question is which of the two things Geekdom does applies to
  * them, and a four-item nav answered a question nobody was asking.
@@ -1255,3 +1361,57 @@ export const NAV: NavLink[] = [
 
 /** The rest of the site, for the footer. Not nav-worthy, not orphaned. */
 export const EXPLORE: NavLink[] = [{ href: "/events", label: "Events" }];
+
+/*
+  THE FOOTER'S COLUMNS, AS `Source Copy v1` SPECIFIES THEM.
+
+  The doc gives four: Explore (About, Media, Contact), Programs (The Club,
+  Studio, Field Notes, Apply), Related, Social. Geekdom's feedback is that the
+  footer should match it, that the Membership column should go, and that "The
+  letter" and "Manage membership" come out.
+
+  ⚠️ FOUR OF THE DOC'S SEVEN INTERNAL LINKS HAVE NO PAGE YET — /about, /media,
+  /contact and /field-notes. They are listed here with `pending: true` and the
+  footer does not render them, because shipping four dead links to fix a
+  footer is a worse footer. Build the page, drop the flag, and the link
+  appears; nothing else has to change.
+
+  Field Notes is the one that should stay pending longest: the doc's own note
+  says "hide section and page until we populate with several articles".
+*/
+interface FooterLink extends NavLink {
+  /** No page behind it yet. Rendered only once this is gone. */
+  pending?: boolean;
+}
+
+export const FOOTER_EXPLORE: FooterLink[] = [
+  { href: "/about", label: "About" },
+  { href: "/media", label: "Media" },
+  { href: "/contact", label: "Contact" },
+  /*
+    Not in the doc's Explore column, and kept anyway: /events is a real page
+    carrying the week, and the doc has no column that houses it. Flagged for
+    Leslie rather than orphaned.
+  */
+  { href: "/events", label: "Events" },
+];
+
+export const FOOTER_PROGRAMS: FooterLink[] = [
+  { href: "/club", label: "The Club" },
+  { href: "/studio", label: "Studio" },
+  { href: "/field-notes", label: "Field Notes", pending: true },
+  { href: "/apply", label: "Apply" },
+  /*
+    Also not in the doc, also kept: the FAQ answers the questions Apply
+    provokes, and deleting the only route to it because a column spec does not
+    list it would lose a real page.
+  */
+  { href: "/faq", label: "FAQ" },
+];
+
+/** Drops anything with no page behind it. */
+export function live(links: FooterLink[]): NavLink[] {
+  return links
+    .filter((l) => !l.pending)
+    .map(({ href, label }) => ({ href, label }));
+}

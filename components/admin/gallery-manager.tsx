@@ -112,7 +112,7 @@ export function GalleryManager({
           {thumbs.slice(0, 24).map((t) => (
             <div
               key={t.name}
-              className="relative aspect-square overflow-hidden rounded-md border border-border bg-muted"
+              className="relative aspect-square overflow-hidden border border-border bg-muted"
             >
               <Image
                 src={t.url}

@@ -1,5 +1,6 @@
 import { SiteNavbar } from "@/components/site/site-navbar";
 import { SiteFooter } from "@/components/site/site-footer";
+import { SmoothScroll } from "@/components/site/smooth-scroll";
 
 export default function SiteLayout({ children }: LayoutProps<"/">) {
   return (
@@ -10,6 +11,7 @@ export default function SiteLayout({ children }: LayoutProps<"/">) {
       >
         Skip to content
       </a>
+      <SmoothScroll />
       <SiteNavbar />
       <main id="main" className="flex-1">
         {children}

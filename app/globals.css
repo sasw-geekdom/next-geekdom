@@ -178,7 +178,7 @@ h3 {
 
 /*
   `text-wrap: pretty` on paragraphs prevents single-word last lines in the long
-  prose on /whats-changing, which is the page most likely to be read start to
+  long-form prose, which is what is most likely to be read start to
   finish.
 */
 p {
@@ -418,6 +418,108 @@ p {
   then the new mark would pop in. Collapsing both is what turns the animation
   into a clean instant swap instead of a flicker.
 */
+/*
+  THE SOFT SCROLL-IN. An element rises 24px and fades in as it enters the
+  viewport, driven by its own scroll position rather than a timer — so it
+  moves exactly as fast as the reader scrolls and never replays.
+
+  SITE-WIDE THROUGH `Section`, whose container carries `reveal-children`:
+  each DIRECT child (eyebrow, heading, paragraph, grid) reveals on its own
+  timeline, so a section arrives in pieces as you reach them rather than as
+  one slab. `.reveal` opts a single element in anywhere else.
+
+  THE RANGE IS A DISTANCE, NOT A PERCENTAGE. `entry 0% entry 70%` was the
+  first version, and on a tall element — the portfolio grid, a long list —
+  70% of its entry is most of a screen, so its top half sat washed out while
+  you were already reading it. `entry 0% → entry 22vh` finishes once the
+  element's top edge is ~a fifth of the way up the screen, whatever its
+  height.
+
+  CSS ONLY, and progressive on purpose. Where `animation-timeline: view()`
+  is unsupported (Firefox, today) the rule never applies and everything sits
+  there, fully visible; there is no JS, no observer, and no hidden-until-
+  hydrated state to get stuck in. `screen` keeps it out of print, and it is
+  gated on motion preference rather than relying on the blanket reduce rule
+  below, which would freeze a scroll-linked animation mid-frame.
+
+  An element already on screen at load is past its range, so it renders
+  complete — nothing above the fold ever flashes in.
+
+  A child that CONTAINS its own `.reveal` (the Club/Studio panels) is
+  skipped, so the panels stagger instead of riding in on a grid that is
+  itself fading.
+*/
+@keyframes reveal-rise {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@supports (animation-timeline: view()) {
+  @media screen and (prefers-reduced-motion: no-preference) {
+    .reveal,
+    .reveal-children > :not(:has(.reveal)) {
+      animation: reveal-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 22vh;
+    }
+    .reveal.reveal-late {
+      animation-range: entry 3vh entry 26vh;
+    }
+  }
+}
+
+/*
+  THE OFFERING FILL (`OfferWipe`). Collapsed against the bottom edge at rest.
+  700ms on an ease-out curve: fast enough to feel like a response to the
+  cursor, slow enough to read as a wipe rather than a flash — the first
+  version ran 500ms and Geekdom asked for it slower.
+
+  With the script attached (`data-wipe`), the fill's direction and state are
+  inline styles set from the pointer. Without it — before hydration, or if
+  JS fails — plain :hover opens it bottom-up. Keyboard focus always opens it
+  fully, overriding whatever the pointer last did.
+*/
+.offer-wipe {
+  clip-path: inset(100% 0 0 0);
+  transition: clip-path 700ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.offer:not([data-wipe]):hover .offer-wipe,
+.offer:has(a:focus-visible) .offer-wipe {
+  clip-path: inset(0) !important;
+}
+
+/*
+  THE PANEL YOU'RE NOT ON RECEDES. The homepage's Club/Studio pair: hovering
+  or focusing one fades the other's TYPE, so the two read as a choice rather
+  than as two boxes. See `Offering` in the homepage.
+
+  THE TYPE, NEVER THE PANEL. Fading the whole Studio panel let the Bone Light
+  band show through its Graphite and rendered #8A8986 — the same off-palette
+  grey Geekdom flagged on the translucent navbar. Dimming `.offer-content`
+  leaves both grounds at their true values.
+
+  `filter: opacity()` rather than `opacity` so it can never collide with the
+  scroll-in animation's filling `opacity`. Hover-capable pointers only; on
+  touch there is nothing to recede from.
+*/
+.offer-content {
+  transition: filter 500ms;
+}
+@media (hover: hover) {
+  .offer-pair:has(.offer:hover) .offer:not(:hover) .offer-content {
+    filter: opacity(0.4);
+  }
+}
+.offer-pair:has(.offer :focus-visible) .offer:not(:has(:focus-visible)) .offer-content {
+  filter: opacity(0.4);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

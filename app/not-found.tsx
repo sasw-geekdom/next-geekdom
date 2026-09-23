@@ -51,8 +51,10 @@ export default function NotFound() {
             <ButtonLink href="/" size="lg">
               Back home
             </ButtonLink>
-            <ButtonLink href="/whats-changing" size="lg" variant="outline">
-              What changed
+            {/* Was "What changed" → /whats-changing, removed with that page.
+                The Club is the thing a lost visitor is most likely after. */}
+            <ButtonLink href="/club" size="lg" variant="outline">
+              Explore the Club
             </ButtonLink>
           </div>
         </CrownPage>

@@ -47,7 +47,7 @@ import { cn } from "@/lib/utils";
  * brand; the reason that mattered is that a film with no image is a black
  * rectangle. A photograph of the person doing the talking is neither — it is
  * on palette, it is a real named person, and for an interview it is a more
- * honest poster than a still of a chair. It is cropped to a circle at 64px
+ * honest poster than a still of a chair. It is cropped to a square at 64px
  * with a Clay play badge, so the row still reads as something to press.
  *
  * SO IT STOPPED BEING A CARD. This page's dominant idiom is the hairline row:
@@ -118,9 +118,9 @@ export function VideoCard({
           46rem, not the full measure. A 16:9 player across 1088px is 612px
           tall and turns a supporting link into the tallest thing in the
           section; at 736px it is 414px, which sits under the logo wall
-          without outranking it. rounded-xl matches `Photo`.
+          without outranking it. Square corners, like `Photo`.
         */
-        <div className="relative mb-8 aspect-video overflow-hidden rounded-xl bg-graphite lg:max-w-[46rem]">
+        <div className="relative mb-8 aspect-video overflow-hidden bg-graphite lg:max-w-[46rem]">
           <iframe
             src={`https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`}
             title={title}
@@ -158,10 +158,10 @@ export function VideoCard({
                 alt=""
                 fill
                 sizes="64px"
-                className="rounded-full object-cover object-top ring-1 ring-clay/40"
+                className="object-cover object-top ring-1 ring-clay/40"
               />
               {/*
-                The badge sits ON the circle's lower-right, offset out by a
+                The badge sits ON the portrait's lower-right, offset out by a
                 few pixels so it reads as attached rather than contained.
                 Bone triangle on Clay: at 10px a Clay glyph on any ground
                 fails, and this is the one place the accent carries something

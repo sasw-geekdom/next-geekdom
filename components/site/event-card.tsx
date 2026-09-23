@@ -28,7 +28,7 @@ export function EventCard({ event }: { event: LumaEvent }) {
   return (
     <Link
       href={`/events/${eventSlug(event)}`}
-      className="group flex flex-col overflow-hidden rounded-xl border border-border bg-bone-light shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-offset-2"
+      className="group flex flex-col overflow-hidden border border-border bg-bone-light shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-offset-2"
     >
       <div className="relative aspect-16/10 w-full overflow-hidden bg-bone-light">
         {event.cover_url && (

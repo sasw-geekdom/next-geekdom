@@ -32,8 +32,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: "/studio", priority: 0.9, changeFrequency: "weekly" },
     { path: "/apply", priority: 0.9, changeFrequency: "monthly" },
     { path: "/events", priority: 0.8, changeFrequency: "daily" },
-    { path: "/whats-changing", priority: 0.7, changeFrequency: "monthly" },
     { path: "/faq", priority: 0.6, changeFrequency: "monthly" },
+    { path: "/about", priority: 0.7, changeFrequency: "monthly" },
+    { path: "/contact", priority: 0.6, changeFrequency: "monthly" },
+    { path: "/media", priority: 0.5, changeFrequency: "monthly" },
     // Listed, but bottom of the pile. They're indexable — a legal page that
     // can't be found is no use to the person looking for it — and nothing on
     // the site should ever rank on them.

@@ -1,50 +1,40 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { ArrowRight } from "lucide-react";
-import { ButtonLink, ButtonAnchor } from "@/components/ui/button";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
+import { ButtonLink } from "@/components/ui/button";
 import {
   Eyebrow,
   Lede,
   Section,
   SectionTitle,
-  Standfirst,
-  FIGURE,
   HEADING,
   ARROW,
-  LINK,
   LINK_ARROW,
   MONO,
 } from "@/components/site/section";
 import { Editorial } from "@/components/site/editorial";
-import { EventCard } from "@/components/site/event-card";
 import { Photo } from "@/components/site/photo";
 import { TypeHero } from "@/components/site/type-hero";
 import { PortfolioWall } from "@/components/site/portfolio-wall";
+import { OfferWipe } from "@/components/site/offer-wipe";
 // GMarkShader: the hero held it until the photograph took that edge. Kept as
 // an import-less note rather than an unused import — see the hero below.
 import { MemberVoices } from "@/components/site/member-voices";
 import { PHOTOS } from "@/lib/photos";
-import { priceLabel } from "@/lib/membership";
-import { safeUpcomingEvents } from "@/lib/luma";
-import { SASW, saswIsCurrent } from "@/lib/sasw";
 import { pageMetadata, SITE_DESCRIPTION } from "@/lib/seo";
 import {
   CLUB_HOME,
-  ECOSYSTEM,
   FOUNDED_YEAR,
-  GOAL,
-  HOOK,
   LOCATION,
-  LUMA_CALENDAR_URL,
-  MILESTONES,
-  PORTFOLIO,
   POSITIONING,
   POSITIONING_ACCENT,
   PROMISE,
   SITE_NAME,
   STUDIO,
   TAGLINE_LINE,
+  LUMA_CALENDAR_URL,
+  THIS_MONTH,
 } from "@/lib/site";
 
 export const metadata: Metadata = pageMetadata({
@@ -53,7 +43,6 @@ export const metadata: Metadata = pageMetadata({
   description: SITE_DESCRIPTION,
 });
 
-export const revalidate = 300;
 
 /**
  * THE HOMEPAGE, REBUILT AROUND THE QUESTION IT WAS ACTUALLY BEING ASKED.
@@ -75,14 +64,21 @@ export const revalidate = 300;
  *   2  Built here      EVIDENCE BEFORE ARGUMENT. Eighteen companies, 2012 to
  *                      2025, four acquired. This slot used to hold a marquee
  *                      of other organizations' logos.
- *   3  What Geekdom is The convening work — LaunchSA, Startup Week, the fund,
- *                      MIT REAP. None of it was anywhere in page copy.
+ *   3  (removed)       "What Geekdom is in 2026", the ECOSYSTEM block. Taken
+ *                      off at Geekdom's request. The four entries are still
+ *                      linked from the footer's "Beyond the club" column.
  *   4  The Club        One door.
  *   5  The Studio      The other door.
- *   6  How they connect THE SECTION THAT DIDN'T EXIST. The pipeline is the
- *                      whole thesis and it was a parenthetical on /studio.
- *   7  Who's in it     People.
- *   8  What's on       Something to turn up to without joining anything.
+ *   6  (removed)       "How the two fit together", the Club → Studio pipeline.
+ *                      Geekdom: "We don't want to ever indicate that there is
+ *                      some clear pathway from Club to Studio." Don't rebuild
+ *                      it, and don't move its argument into another section.
+ *   7  (removed)       "Why there's an application". Geekdom: "I definitely
+ *                      don't want to talk about why an application." The slot
+ *                      is held open for them to decide what fits; member
+ *                      voices render here when there are any.
+ *   8  This month      Source copy verbatim: a dated list from THIS_MONTH
+ *                      and a link to the public Luma calendar.
  *   9  Since 2011      The origin as ADDITION, not subtraction.
  *   10 Close           One ask.
  *
@@ -123,15 +119,164 @@ export const revalidate = 300;
 const BLEED = {
   right: {
     figure: "[@media(min-width:1152px)]:mr-[calc(544px-50vw)]",
-    photo: "[@media(min-width:1152px)]:rounded-r-none",
     caption: "",
   },
   left: {
     figure: "[@media(min-width:1152px)]:ml-[calc(544px-50vw)]",
-    photo: "[@media(min-width:1152px)]:rounded-l-none",
     caption: "[@media(min-width:1152px)]:pl-[calc(50vw-544px)]",
   },
 } as const;
+
+/**
+ * One of the two offerings, as a panel. The whole panel is the link.
+ *
+ * STRETCHED LINK, not an <a> wrapping the panel: the link is the CTA text,
+ * and its `::after` covers the panel, so the hit area is the whole box while
+ * the accessible name stays "Explore the Club" rather than every word inside.
+ * The padding lives on the inner wrapper, which is the link's positioning
+ * context, so the `::after` reaches all four edges.
+ *
+ * THE HOVER INVERTS THE PANEL. The first version drew a Clay rule across the
+ * top and stepped the ground one tone; it read as timid. Now the opposite
+ * ground wipes in — Graphite into the Club, Bone into the Studio — from
+ * whichever edge the pointer entered by, and back out through the edge it
+ * leaves by (`OfferWipe`). The type inverts along the wipe edge, so the two panels trade places in
+ * the palette as you move between them. Meanwhile the type on the panel you
+ * are NOT on recedes (`offer-pair` in globals.css), so the pair reads as a choice
+ * between two things, one at a time.
+ *
+ * Flat, square, brand colors only: no gradient, no shadow, no lift. Keyboard
+ * focus triggers exactly the same state plus a Clay ring. On touch there is
+ * no hover, so a tap simply follows the link.
+ *
+ * `reveal` is the scroll-in in globals.css.
+ */
+function Offering({
+  ink = false,
+  href,
+  eyebrow,
+  title,
+  subhead,
+  body,
+  cta,
+  className,
+}: {
+  /** Graphite at rest, wiping to Bone on hover. */
+  ink?: boolean;
+  href: string;
+  eyebrow: string;
+  title: string;
+  subhead: string;
+  body: string;
+  cta: string;
+  className?: string;
+}) {
+  const copy = { eyebrow, title, subhead, body, cta };
+  return (
+    <article
+      className={cn(
+        "offer reveal group relative isolate overflow-hidden border transition-[border-color] duration-500",
+        "has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-clay has-[a:focus-visible]:ring-offset-2 has-[a:focus-visible]:ring-offset-bone-light",
+        ink
+          ? "border-graphite bg-graphite"
+          : "border-border bg-bone hover:border-graphite has-[a:focus-visible]:border-graphite",
+        className,
+      )}
+    >
+      <OfferCopy tone={ink ? "dark" : "light"} href={href} {...copy} />
+      {/*
+        THE FILL CARRIES ITS OWN COPY OF THE TYPE, in the inverted colors,
+        clipped by the same edge. The first cut flipped the text color on a
+        timer while the ground wiped, so mid-wipe the heading sat dark on the
+        incoming Graphite — for a moment the one word that matters was
+        invisible. With the type inside the clip, it changes color exactly
+        along the wipe line and is never unreadable.
+
+        Laid out identically (same padding, same width, same wraps), so the
+        two layers register. `aria-hidden` and no link: the panel reads and
+        clicks once, through the layer underneath.
+      */}
+      <OfferWipe className={ink ? "bg-bone" : "bg-graphite"}>
+        <OfferCopy tone={ink ? "light" : "dark"} {...copy} />
+      </OfferWipe>
+    </article>
+  );
+}
+
+/**
+ * The type inside an `Offering`, in one of two color sets. With `href` it is
+ * the real layer — the link, and the thing a screen reader reads. Without,
+ * it is the inverted copy riding inside the fill: the CTA becomes a span.
+ */
+function OfferCopy({
+  tone,
+  href,
+  eyebrow,
+  title,
+  subhead,
+  body,
+  cta,
+}: {
+  tone: "light" | "dark";
+  href?: string;
+  eyebrow: string;
+  title: string;
+  subhead: string;
+  body: string;
+  cta: string;
+}) {
+  // Literal class strings, so Tailwind can see every one.
+  const c =
+    tone === "dark"
+      ? { eyebrow: "text-bone", strong: "text-bone", body: "text-bone/70" }
+      : {
+          eyebrow: "text-concrete",
+          strong: "text-graphite",
+          body: "text-muted-foreground",
+        };
+  const ctaClass = cn(
+    "mt-auto inline-flex items-center gap-1.5 self-start pt-10 font-medium underline decoration-clay decoration-2 underline-offset-2",
+    c.strong,
+  );
+  const ctaInner = (
+    <>
+      {cta}
+      <ArrowRight className={ARROW.internal} strokeWidth={2} />
+    </>
+  );
+
+  return (
+    <div
+      className={cn(
+        "flex h-full flex-col p-8 sm:p-10 lg:p-12",
+        // Only the real layer recedes when the other panel is hovered.
+        href && "offer-content",
+      )}
+    >
+      <p className={cn(MONO.eyebrow, c.eyebrow)}>{eyebrow}</p>
+      {/* The inverted copy is not a second heading in the outline. */}
+      {href ? (
+        <h2 className={cn("mt-4", HEADING.heading, c.strong)}>{title}</h2>
+      ) : (
+        <p className={cn("mt-4", HEADING.heading, c.strong)}>{title}</p>
+      )}
+      <p className={cn("mt-6 max-w-2xl text-xl leading-relaxed", c.strong)}>
+        {subhead}
+      </p>
+      <p className={cn("mt-5 max-w-xl leading-relaxed", c.body)}>{body}</p>
+      {href ? (
+        <Link
+          href={href}
+          className={cn(ctaClass, "after:absolute after:inset-0 focus-visible:outline-none")}
+        >
+          {ctaInner}
+        </Link>
+      ) : (
+        <span className={ctaClass}>{ctaInner}</span>
+      )}
+    </div>
+  );
+}
 
 function Frame({
   photo,
@@ -144,7 +289,8 @@ function Frame({
   photo: (typeof PHOTOS)[keyof typeof PHOTOS];
   aspect: string;
   sizes: string;
-  caption: string;
+  /** Optional — the Club's photograph runs without one, at Geekdom's request. */
+  caption?: string;
   /** Run the photograph off that edge of the viewport. */
   bleed?: keyof typeof BLEED;
   className?: string;
@@ -152,12 +298,14 @@ function Frame({
   const b = bleed ? BLEED[bleed] : null;
   return (
     <figure className={cn(b?.figure, className)}>
-      <Photo photo={photo} aspect={aspect} sizes={sizes} className={b?.photo} />
-      <figcaption
-        className={cn("mt-3", MONO.label, "text-muted-foreground", b?.caption)}
-      >
-        {caption}
-      </figcaption>
+      <Photo photo={photo} aspect={aspect} sizes={sizes} />
+      {caption && (
+        <figcaption
+          className={cn("mt-3", MONO.label, "text-muted-foreground", b?.caption)}
+        >
+          {caption}
+        </figcaption>
+      )}
     </figure>
   );
 }
@@ -184,14 +332,7 @@ function spellYears(n: number): string {
   return YEAR_WORDS[n] ?? String(n);
 }
 
-export default async function HomePage() {
-  // `safeUpcomingEvents` swallows Luma failures and returns [] — a third-party
-  // outage should never take the homepage down.
-  const events = await safeUpcomingEvents(3);
-
-  // The same entry the convening section renders, reused rather than retyped.
-  const ecosystemWeek = ECOSYSTEM.find((e) => e.href.startsWith(SASW.href));
-  const price = priceLabel();
+export default function HomePage() {
   const years = new Date().getFullYear() - FOUNDED_YEAR;
 
   return (
@@ -205,18 +346,10 @@ export default async function HomePage() {
         section ahead of the two engines — which was a deliberate call written
         up in AGENTS.md and is not the one Geekdom asked for.
 
-        THREE SECTIONS HERE ARE NOT IN THE DOC and are kept, flagged, for
-        Leslie to rule on rather than deleted:
-
-          · "What Geekdom is in 2026" — the ECOSYSTEM block. It carries the
-            convening claim and the `role` verb on each entry, which AGENTS.md
-            treats as load-bearing. Moved to sit after the portfolio, where
-            "the institution behind" reads against its own evidence.
-          · "How they connect" — the Club → Studio pipeline. Kept directly
-            after the two engines, which is where it makes sense and where it
-            does not interrupt the doc's Hero → Club → Studio opening.
-          · "Why there's an application" — kept ahead of the Apply CTA it
-            leads into.
+        EVERY SECTION HERE IS NOW IN THE DOC. Three that weren't were ruled on
+        and are off at Geekdom's request — "What Geekdom is in 2026" (the
+        ECOSYSTEM block), "How the two fit together" (the Club → Studio
+        pipeline) and "Why there's an application". Don't bring any back.
 
         TWO OF THE DOC'S SECTIONS DO NOT EXIST YET: "In the Studio" (rotating
         founder cards — the doc's example is Kelsey Waters of Openlane) and
@@ -393,355 +526,92 @@ export default async function HomePage() {
         applauding around them — and /about or /club will want it.
       */}
 
-      {/* ── 4 · The Club ─────────────────────────────────────────────── */}
+      {/* ── 4 · The Club and the Studio ──────────────────────────────── */}
+      {/*
+        TWO PANELS, SIDE BY SIDE, NO PHOTOGRAPHS — Geekdom's brief. The two
+        sections used to run one after the other, each a copy column beside a
+        photograph, and Geekdom found it "too standard and basic" and too
+        photo-heavy. What they asked for instead: the Club and the Studio
+        "more clearly next to each other to communicate the split between
+        them" as the two main offerings, in clean bordered boxes with
+        different grounds, a hover effect, and a soft transition on scroll.
+
+        THE GROUNDS CARRY THE SPLIT. The Club is Bone with a hairline on this
+        Bone Light band; the Studio is Graphite. Nothing between them says one
+        leads to the other — Geekdom has ruled that out explicitly — they are
+        two offerings, shown as two.
+
+        COPY IS THE SOURCE COPY, unchanged: `CLUB_HOME` for the Club, the doc's
+        Subhead and Body for the Studio, figures from `STUDIO`.
+      */}
       <Section tone="bone-light">
-        {/*
-          THE THREE PHOTOGRAPHS ON THIS PAGE NO LONGER RHYME, which was the
-          whole problem: Club, Studio and Since-2011 were each a rounded
-          rectangle, vertically centerd, in half a two-column grid — the same
-          move three times, and two of them at the same 4:3.
-
-          What varies now is scale, shape and alignment. This one is the
-          largest (1.15fr, ~584px) and sits at the TOP of its row; the Studio's
-          is smaller, wider and sits low; the 2011 frame is a small sharp plate.
-          Nothing is centerd in its box any more, so the eye is given a reason
-          to move down the page rather than a rhythm to fall asleep in.
-
-          THE COLUMN BLEED WAS TRIED HERE AND TAKEN BACK OUT. Running the
-          Club's and the Studio's photographs off the viewport edge made two
-          ordinary product sections shout, and neither has the pixels to do it
-          well — 1600px and 1548px against the ~1760 a 1920 display wants.
-
-          The origin section near the close was then given that band instead,
-          and it came back out too — for a different reason, written up there.
-          NO PHOTOGRAPH ON THIS PAGE IS FULL WIDTH NOW. All three are
-          contained, and what varies is size, crop and alignment: this one is
-          large 4:3 and top-aligned, the Studio's is smaller 3:2 and sits low,
-          the 2011 frame is a short wide plate.
-        */}
-        <div className="grid items-start gap-12 lg:grid-cols-[1fr_1.15fr] lg:gap-16">
-          <div>
-            <Eyebrow>Community</Eyebrow>
-            <SectionTitle>The Club</SectionTitle>
-            {/*
-              `CLUB_HOME`, NOT `CLUB` — and the split is the doc's.
-
-              This read the same three beats as /club's hero, from one shared
-              constant, so the two could not drift. `Source Copy v1` writes
-              them differently on purpose: the homepage gets a Subhead and one
-              Body paragraph for a reader meeting the Club for the first time,
-              /club gets three paragraphs for a reader who has already
-              clicked. Both are transcribed from the doc, which is now what
-              keeps them honest.
-            */}
-            <Standfirst>{CLUB_HOME.subhead}</Standfirst>
-            <p className="mt-5 leading-relaxed text-muted-foreground">
-              {CLUB_HOME.body}
-            </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <ButtonLink href="/club">Explore the Club</ButtonLink>
-              {price && (
-                <span className="inline-flex items-center text-muted-foreground">
-                  {price}, by application
-                </span>
-              )}
-            </div>
-          </div>
-          {/*
-            PICKED AT 584px, WHICH IS THE ONLY SIZE THAT MATTERS HERE.
-
-            Two frames were tried before this one and both failed at the size
-            they actually render. `theRoom` is not a room at all — it is four
-            faces at close range, and it sat here under a caption claiming an
-            ambient view of a floor the frame does not contain. `fullHouse` is
-            genuinely the room, but a laptop, a tripod and a table edge eat its
-            bottom-left quarter, so at 584px you read the clutter first and the
-            room second; it is also an APPLAUSE moment, which belongs to the
-            events section rather than to a section about membership.
-
-            `speaking` is the one that holds up small: the wall of windows and
-            downtown behind it, the floor's own colour on the right, a clear
-            focal point, and — the part that decides it — a row of listening
-            faces you can still read at 584px. The copy above says the room is
-            where the right person is already sitting. This is people sitting
-            in it, turned toward each other.
-          */}
-          <Frame
-            photo={PHOTOS.theCrowd}
-            aspect="aspect-[4/3]"
-            sizes="(min-width: 1024px) 584px, 100vw"
-            caption="A session on the third floor"
+        <div className="offer-pair grid gap-5 lg:grid-cols-2 lg:gap-6">
+          <Offering
+            href="/club"
+            eyebrow="Community"
+            title="The Club"
+            subhead={CLUB_HOME.subhead}
+            body={CLUB_HOME.body}
+            cta="Explore the Club"
+          />
+          <Offering
+            ink
+            href="/studio"
+            eyebrow="Venture"
+            title="Studio"
+            subhead="A venture layer for the founders going all in."
+            body={`We back ${STUDIO.foundersPerYear} founders a year with ${STUDIO.checkRange} ${STUDIO.checkTerms} checks from the Community Fund and hands-on work from our EIR. Not an accelerator. Not a cohort. A serious commitment to a small number of founders building toward scale.`}
+            cta="Explore Studio"
+            className="reveal-late"
           />
         </div>
       </Section>
 
-      {/* ── 5 · The Studio ───────────────────────────────────────────── */}
-      <Section tone="bone">
-        {/*
-          The counterweight to the Club section above: its photograph is large
-          and top-aligned, so this one is smaller, a wider crop, and sits LOW —
-          `self-end` drops it against the bottom of the copy instead of
-          floating beside its middle. Two sections that mirror each other are
-          still a rhyme; two that answer each other are a rhythm.
-
-          0.85fr, so roughly 460px. That is also the most this source can carry
-          sharply: the camera original is 1200px, which covers 600 CSS px at 2x
-          and no more.
-        */}
-        <div className="grid items-start gap-12 lg:grid-cols-[1fr_0.9fr] lg:gap-16">
-          {/* Photo first in source order on desktop so the two product
-              sections mirror each other rather than stacking identically. */}
-          {/*
-            Brian at the whiteboard, not two members talking by the windows.
-
-            The frame this replaced (`oneOnOne`) is a good CLUB picture and a
-            poor Studio one: this section promises "hands-on work from our
-            Entrepreneur in Residence", and a photograph of two people in
-            conversation does not show that. This one does — the EIR, named
-            three lines away, actually doing the work the section is selling.
-
-            IT IS THE CAMERA ORIGINAL NOW, not the AI upscale, and the swap
-            settled an argument rather than just improving a file. For a while
-            this slot held `brianOpenlane` — Brian posed with a backed team at
-            Geekdom — on the grounds that an ordinary photograph beat
-            generative media on the homepage of a brand that publishes "Real
-            people, named. No stock.", even though nobody in it was doing
-            anything. The original turning up removes the trade entirely: it
-            is a real photograph AND it shows the work. See lib/photos.ts.
-          */}
-          <Frame
-            photo={PHOTOS.brianWhiteboard}
-            aspect="aspect-[3/2]"
-            sizes="(min-width: 1024px) 460px, 100vw"
-            caption="Brian Sierakowski, working a product problem"
-            className="lg:order-first lg:self-end"
-          />
-          <div>
-            <Eyebrow>Venture</Eyebrow>
-            <SectionTitle>Studio</SectionTitle>
-            {/*
-              THE DOC'S SUBHEAD AND BODY. The Standfirst read "For the
-              founders going all in, a check and six to twelve months of
-              someone's undivided attention." — a good line, and written here
-              rather than by Geekdom. `Source Copy v1` gives this section a
-              Subhead of "A venture layer for the founders going all in." and
-              one Body paragraph, which is now one paragraph.
-
-              The figures still interpolate from `STUDIO`, so they cannot
-              drift from the fund; the doc says "the Community Fund" in this
-              placement and "The Geekdom Community Fund" on /studio's Capital
-              section, and both are reproduced as written.
-            */}
-            <Standfirst>
-              A venture layer for the founders going all in.
-            </Standfirst>
-            <p className="mt-5 leading-relaxed text-muted-foreground">
-              We back {STUDIO.foundersPerYear} founders a year with{" "}
-              {STUDIO.checkRange} {STUDIO.checkTerms} checks from the Community
-              Fund and hands-on work from our EIR. Not an accelerator. Not a
-              cohort. A serious commitment to a small number of founders
-              building toward scale.
-            </p>
-            <div className="mt-8">
-              <ButtonLink href="/studio" variant="outline">
-                Explore Studio
-              </ButtonLink>
-            </div>
-          </div>
-        </div>
-      </Section>
-
-      {/* ── 6 · How they connect ─────────────────────────────────────── */}
       {/*
-        THE THESIS, AND IT WAS A PARENTHETICAL.
-
-        Naming two products does not explain them. The sentence that does lives
-        on /studio in a subordinate clause — "Club membership isn't a
-        prerequisite, but most Studio relationships start there" — and it is
-        the single most important sentence on the site, because it is the only
-        thing that makes the two halves one business rather than a landlord
-        with a side fund.
-
-        It runs both directions, and both are load-bearing:
-          Club → Studio   membership is the on-ramp. That is what makes it
-                          worth more than rent on a nice floor.
-          Studio → Club   the portfolio is the proof the room works. Eighteen
-                          companies is the reason to believe the membership is
-                          worth having.
-
-        On the ink band because it is the argument, not a feature — the same
-        weight the mission statement used to carry here.
+        EMPTY TODAY, so it renders nothing and the Club/Studio band (Bone
+        Light) meets "This month" (Bone) directly. The day real voices land, this band sits
+        between two different tones and matches one of them whichever it
+        takes — retone "This month" and the sections below it when that
+        happens, rather than letting two same-tone bands touch.
       */}
-      <Section tone="graphite">
-        <Eyebrow onInk>How the two fit together</Eyebrow>
-        <SectionTitle className="text-bone">
-          One is the on-ramp. The other is where it leads.
-        </SectionTitle>
-        <Lede className="text-bone/70">
-          Most Studio relationships start in the Club. Not because
-          membership buys you a check — it doesn&rsquo;t, and there&rsquo;s
-          nothing to apply to — but because the work is easier to see up close.
-        </Lede>
-
-        <ol className="mt-14 grid gap-x-10 gap-y-12 lg:grid-cols-3">
-          {[
-            {
-              title: "You join the room",
-              body: "Apply to the Club. A person reads it. If it's a fit, you're on the third floor with everyone else building something here.",
-            },
-            {
-              title: "You get known for the work",
-              body: "Office hours, build sessions, pitch nights. Over months, the people around you learn what you're building and how you handle the hard part of it.",
-            },
-            {
-              title: "Sometimes we go all in",
-              body: `Four to six times a year, the Studio backs one. ${STUDIO.checkRange}, ${STUDIO.engagement} of hands-on work, and the local customers and investors who make the next round possible.`,
-            },
-          ].map((step, i) => (
-            <li key={step.title}>
-              {/* Bone, not clay: on a graphite ground Clay is 4.3:1, which
-                  clears AA for large text only and this is 12px. */}
-              <p className={cn(MONO.label, "text-bone/70")}>
-                {String(i + 1).padStart(2, "0")}
-              </p>
-              <h3 className={cn("mt-3", HEADING.subhead, "text-bone")}>
-                {step.title}
-              </h3>
-              <p className="mt-3 leading-relaxed text-bone/70">{step.body}</p>
-            </li>
-          ))}
-        </ol>
-      </Section>
-
-      {/* ── 7 · Why there's an application ───────────────────────────── */}
-      {/*
-        THIS SECTION USED TO BE A SECOND "WHO'S IN THE ROOM" AND IT DUPLICATED
-        /club's, which is the page that should own that.
-
-        The overlap was not just thematic. Both carried the same eyebrow, both
-        opened on a list of the same member types, and both closed with an
-        identical three-up photo grid — two of whose three frames were the same
-        photographs. A reader going homepage → Explore the Club met the same
-        section twice in four screens, the second time in Geekdom's own source
-        copy and therefore better written.
-
-        So /club keeps the roster and the give-first culture, and this keeps
-        the one line the other never had: who is here is the whole product.
-        That is not a description of the members, it is the argument for the
-        gate — the reason an application exists at all, and the reason the
-        Studio can scout from the room. A different claim deserved a different
-        section rather than a reworded copy of one.
-
-        ONE PHOTOGRAPH, NOT THREE, for the same reason. A 3-up grid here would
-        rhyme with /club's whatever the copy above it said.
-
-        AND IT HAS TO BE FACES. This slot held `fullHouse` — the whole floor,
-        packed — which is a fine picture and the wrong argument: at 1088px
-        wide a head in it is about thirty pixels tall, so the one thing this
-        section is about, WHO, was the one thing you could not make out.
-        `theRoom` is four people at close range. Cropped to 16:7 it becomes a
-        frieze of faces rather than a room with people in it, which is the
-        difference between the claim above it and the claim below.
-
-        `makeAPoint` WAS TRIED HERE AND HELD OFF, and it is the closer call on
-        the page. It puts six readable people across the measure against this
-        frame's three, which is more "who" — but it also arrives right under
-        the Club section's `speaking`, and the two are the same photograph in
-        substance: a group in session, shot from the back of the room. This
-        one is the only CLOSE-RANGE frame on the homepage, and scale variety is
-        what stops the five photographs here from rhyming.
-
-        Its out-of-focus foreground head costs about a quarter of the frame and
-        cannot be cropped out — at 16:7 from a 3:2 source, cover crops
-        vertically and `object-position` has no horizontal slack to work with.
-        It is left in as what it is: a shallow-depth device that puts the
-        reader inside the room rather than watching it.
-      */}
-      <Section tone="bone">
-        <Eyebrow>Why there&rsquo;s an application</Eyebrow>
-        <SectionTitle>Who&rsquo;s here is the whole product.</SectionTitle>
-        <Lede>
-          Everything else on this page can be copied. A floor, a calendar, a
-          check — none of it is hard to reproduce. The room is the part that
-          isn&rsquo;t, and it stays that way only if someone is paying
-          attention to who joins it.
-        </Lede>
-        <Lede className="mt-5">
-          So there is an application, and a person on the Geekdom team reads
-          every one. It takes about ten minutes to write and we answer within
-          two weeks, either way.
-        </Lede>
-
-        <Frame
-          photo={PHOTOS.theRoom}
-          aspect="aspect-[16/7]"
-          sizes="(min-width: 1152px) 1088px, 100vw"
-          caption="Mid-session, third floor"
-          className="mt-14"
-        />
-      </Section>
-
       <MemberVoices />
 
-      {/* ── 8 · What's on ────────────────────────────────────────────── */}
+      {/* ── 8 · This month in the Club ──────────────────────────────── */}
       {/*
-        The one section addressed to someone who is not going to join today.
-        Most of the calendar is open, and an event is the only no-commitment
-        way into any of this — which is also, per /studio, how a founder who
-        isn't ready to apply gets on the radar.
+        GEEKDOM'S SOURCE COPY, IN ITS LIST LAYOUT: a header, dated one-line
+        entries, one link out to the public calendar. It replaced a Luma card
+        grid under "Come see how the room feels" — Luma isn't connected, so in
+        production that grid never rendered and the section was a fallback
+        sentence. The list lives in `THIS_MONTH` in lib/site.ts, which is
+        maintained by hand monthly until there's a CMS or a Luma feed.
       */}
-      <Section tone="bone-light">
-        <div className="flex flex-wrap items-end justify-between gap-6">
-          <div>
-            <Eyebrow>This month</Eyebrow>
-            <SectionTitle>Come see how the room feels.</SectionTitle>
-          </div>
-          <Link
-            href="/events"
-            className={LINK_ARROW}
-          >
-            All events
-            <ArrowRight className={ARROW.internal} strokeWidth={2} />
-          </Link>
-        </div>
-
-        {events.length > 0 ? (
-          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {events.map((event) => (
-              <EventCard key={event.id} event={event} />
-            ))}
-          </div>
-        ) : saswIsCurrent() ? (
-          /*
-            POINT AT OUR OWN PAGE WHILE THERE IS SOMETHING ON IT.
-
-            Luma is not connected, so this section renders its fallback in
-            production — and the fallback sent the reader to Luma, which has
-            nothing, while /events carries a full week. "This month" promising
-            nothing on the page that introduces Geekdom is the worst version
-            of this: the section exists for the visitor who is not ready to
-            apply, and it was handing them a dead end.
-
-            THE WEEK IS NAMED FROM `ECOSYSTEM`, not retyped. Its name and
-            dates are already transcribed there for the convening section
-            higher up this same page, and a second copy here is how the two
-            drift. Goes back to the Luma line on its own once the week ends.
-          */
-          <Lede className="mt-10 max-w-xl">
-            {ecosystemWeek?.name ?? SASW.name} runs{" "}
-            {ecosystemWeek?.detail ?? "this month"} — the week&rsquo;s bill is
-            on{" "}
-            <Link href="/events" className={LINK}>
-              the calendar
-            </Link>
-            , alongside everything else coming up.
-          </Lede>
-        ) : (
-          <Lede className="mt-10 max-w-xl">
-            The full calendar lives on Luma — meetups, build sessions, office
-            hours, and pitch nights, most of them open to non-members.
-          </Lede>
-        )}
+      <Section tone="bone">
+        <SectionTitle>This month in the Club</SectionTitle>
+        <ul className="mt-10 border-b border-border">
+          {THIS_MONTH.map((item) => (
+            <li
+              key={`${item.date}-${item.title}`}
+              className="grid gap-1 border-t border-border py-5 sm:grid-cols-[8rem_1fr] sm:gap-6"
+            >
+              <span className={cn(MONO.label, "pt-1 text-muted-foreground")}>
+                {item.date}
+              </span>
+              <span className="text-lg leading-snug text-graphite">
+                {item.title}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <a
+          href={LUMA_CALENDAR_URL}
+          target="_blank"
+          rel="noreferrer noopener"
+          className={cn("mt-10", LINK_ARROW)}
+        >
+          Explore our public events calendar
+          <ArrowUpRight aria-hidden="true" className={ARROW.external} />
+          <span className="sr-only"> (opens in a new tab)</span>
+        </a>
       </Section>
 
       {/* ── 9 · Since 2011 ─────────────────────────────────────────── */}
@@ -772,7 +642,7 @@ export default async function HomePage() {
         is the same history read forward, and it has an actual photograph of
         the two people in it.
       */}
-      <Section tone="bone">
+      <Section tone="bone-light">
         <div className="grid items-start gap-12 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
           <div>
             <Eyebrow>Since {FOUNDED_YEAR}</Eyebrow>
@@ -786,7 +656,9 @@ export default async function HomePage() {
               answer. Today, it powers the next generation of venture
               companies in San Antonio and the builders behind them."
 
-              Every word of that is here. The one thing not taken literally is
+              That is the whole body — Geekdom asked for the source copy and
+              nothing added after it ("weird extra stuff and AI edits"), so
+              don't append a second paragraph. The one thing not taken literally is
               "Fifteen": hardcoding it makes the sentence wrong on 1 January,
               so it spells the number computed from `FOUNDED_YEAR`. Same
               reasoning /since-2011 uses for its heading — the doc is the
@@ -800,17 +672,15 @@ export default async function HomePage() {
               the next generation of venture companies in San Antonio and the
               builders behind them.
             </Lede>
-            <Lede className="mt-5">
-              The shape has changed since — a coworking floor, then programs,
-              then a club and a fund. What hasn&rsquo;t is the thing being
-              answered: founders need the right people around them at the right
-              moment. The space changes. The people in it don&rsquo;t.
-            </Lede>
-            <Link
-              href="/whats-changing"
-              className={cn("mt-8", LINK_ARROW)}
-            >
-              Read the letter to our members
+            {/*
+              "Read our story → /about" — the doc's CTA for this section. It
+              was "Read the letter to our members" pointing at
+              /whats-changing, which Geekdom asked to remove along with the
+              page; /about now exists, so the slot has the destination the doc
+              always gave it.
+            */}
+            <Link href="/about" className={cn("mt-8", LINK_ARROW)}>
+              Read our story
               <ArrowRight className={ARROW.internal} strokeWidth={2} />
             </Link>
           </div>
@@ -848,199 +718,23 @@ export default async function HomePage() {
         exactly that reason. A grid of wordmarks with a stage and a year reads
         as a record; a grid of logos reads as a sponsor wall.
       */}
-      <Section tone="bone-light">
-        <div className="flex flex-wrap items-end justify-between gap-6">
-          <div>
-            <Eyebrow>Built at {SITE_NAME}</Eyebrow>
-            <SectionTitle>
-              {PORTFOLIO.length} companies, {years} years.
-            </SectionTitle>
-          </div>
-          <Link
-            href="/studio"
-            className={LINK_ARROW}
-          >
-            How we back them
-            <ArrowRight className={ARROW.internal} strokeWidth={2} />
-          </Link>
-        </div>
-
-        <PortfolioWall className="mt-12" />
-
-        {/*
-          The milestones sit UNDER the companies, not above them. They are the
-          aggregate of the list you just read rather than a free-floating brag,
-          and a figure placed after its evidence is an argument where the same
-          figure placed before it is a claim.
-        */}
-        <dl className="mt-16 grid grid-cols-2 gap-x-8 gap-y-10 border-t border-border pt-12 sm:grid-cols-3">
-          {MILESTONES.map((m) => (
-            <div key={m.label}>
-              <dt className={cn(FIGURE.md, "text-graphite")}>{m.figure}</dt>
-              <dd className={cn("mt-2", MONO.label, "leading-relaxed text-muted-foreground")}>
-                {m.label}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      </Section>
-
-      {/* ── 3 · What Geekdom is in 2026 ──────────────────────────────── */}
-      {/*
-        THE SECTION THE SITE HAS NEVER HAD.
-
-        A visitor could read every page and conclude Geekdom is a nice floor
-        with a small fund attached. It operates the city's open-access
-        entrepreneurship hub for the City of San Antonio, produces the region's
-        startup week, and sits on the team that put San Antonio into MIT's
-        regional program. Geekdom's own Media boilerplate says so; none of it
-        was in page copy anywhere, only as four link labels in a footer column
-        called "Related".
-
-        This is what makes the two membership products mean anything. The Club
-        and the Studio are how you participate; this is why there is something
-        to participate in.
-
-        THE VERBS ARE THE CONTENT. Each entry states the exact relationship —
-        operated, run, backed by, sits on — rather than flattening all four
-        into "partner". See ECOSYSTEM in lib/site.ts for why that field is
-        required and which two still need confirming.
-      */}
       <Section tone="bone">
-        {/*
-          `items-start` is what makes the sticky column below work at all. A
-          grid item stretches to the row's height by default, so the left
-          column would be exactly as tall as the list beside it and would have
-          nowhere to travel — `position: sticky` on a full-height element is a
-          no-op, and it fails silently, which is why this looks like a
-          typo-level detail and isn't.
-        */}
-        <div className="grid items-start gap-12 lg:grid-cols-[1fr_1.15fr] lg:gap-16">
-          {/*
-            THE CLAIM HOLDS WHILE THE EVIDENCE SCROLLS.
-
-            The heading and the two ledes make one argument — Geekdom convenes
-            the city's startup community — and the four entries beside them are
-            what backs it up. Letting the claim scroll away means the reader
-            meets "operated by Geekdom, in partnership with the City of San
-            Antonio" with no heading in view to attach it to.
-
-            `top-24` rather than flush: the navbar is h-16 (64px) and sticky
-            itself, so anything pinned at `top-0` slides under it. 96px clears
-            it with a little air.
-
-            `lg:` only. Below that the two stack, the left column is directly
-            above the list rather than beside it, and pinning it would just
-            eat a phone's viewport.
-          */}
-          <div className="lg:sticky lg:top-24">
-            <Eyebrow>What we are</Eyebrow>
-            <SectionTitle>
-              The institution behind San Antonio&rsquo;s startup community.
-            </SectionTitle>
-            <Lede>
-              {SITE_NAME} runs a members&rsquo; club and a venture fund. It also
-              convenes the wider community — founders, capital, universities,
-              industry and government — so the city&rsquo;s efforts reinforce
-              each other instead of running in parallel.
-            </Lede>
-            <Lede className="mt-5">{GOAL}</Lede>
-          </div>
-
-          <ul>
-            {ECOSYSTEM.map((entry) => (
-              <li key={entry.name} className="border-t border-border py-6">
-                <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-                  <a
-                    href={entry.href}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    className={cn(
-                      HEADING.item,
-                      "text-graphite decoration-clay decoration-2 underline-offset-4 hover:underline",
-                    )}
-                  >
-                    {entry.name}
-                  </a>
-                  {entry.detail && (
-                    <span className={cn(MONO.label, "text-muted-foreground")}>
-                      {entry.detail}
-                    </span>
-                  )}
-                </div>
-                {/*
-                  The role line is set apart from the description because it is
-                  the load-bearing half: "operated by Geekdom, in partnership
-                  with the City" is a different claim from "partner", and the
-                  page should not let a reader skim past the difference.
-
-                  SENTENCE CASE, NOT TRACKED-OUT MONO — and that is a fix, not
-                  a preference. This line and the `detail` line beside the name
-                  were BOTH uppercase mono, so every entry stacked two
-                  competing labels above its prose and the section read as four
-                  rows of shouting before it read as four sentences. The
-                  strings were always written in sentence case; only the
-                  `uppercase` class was transforming them.
-
-                  Medium weight on graphite keeps it the most important line in
-                  the entry without a third type treatment. The mono is now
-                  doing one job here — the `detail` — which is what MONO is
-                  for: the thing you scan, not the thing you read.
-
-                  GRAPHITE, NOT CLAY. Clay is the obvious choice for a line
-                  that wants emphasis, and it is 3.5:1 on bone, which fails AA
-                  at this size. globals.css is explicit that Clay carries no
-                  small text on any ground in this palette, and a line stating
-                  Geekdom's relationship with the City of San Antonio is the
-                  last place to make an exception.
-                */}
-                <p className="mt-2 text-sm font-medium leading-snug text-graphite">
-                  {entry.role}
-                </p>
-                <p className="mt-3 leading-relaxed text-muted-foreground">
-                  {entry.description}
-                </p>
-                {/*
-                  Carried from the data, not written here. The brand guide
-                  requires the LaunchSA separation to appear wherever the two
-                  are mentioned together — see ECOSYSTEM in lib/site.ts.
-                */}
-                {entry.boundary && (
-                  <p className="mt-3 border-l-2 border-border pl-4 text-sm leading-relaxed text-muted-foreground">
-                    {entry.boundary}
-                  </p>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
+        <Eyebrow>Built at {SITE_NAME}</Eyebrow>
+        <PortfolioWall className="mt-8" />
       </Section>
 
       {/* ── 10 · Close ───────────────────────────────────────────────── */}
       {/*
-        HOOK gets the last word. It was the h1 for the life of the old site and
-        it is too good to retire — but as an opening claim it competed with the
-        positioning line and with the tagline, and a visitor met three
-        arguments before a single fact. Here it has the whole page behind it,
-        which is the only place an assertion like that can actually land.
-      */}
-      {/*
-        THE HEADINGS WERE THE WRONG WAY ROUND HERE. "Building something?" was
-        an <h2> at 24px and HOOK — the page's closing claim, the line that was
-        the h1 of the old site — was a <p> at 48px. To a screen reader the
-        close announced the question and not the answer.
-
-        It is now the same shape as every other section on this page: eyebrow,
-        SectionTitle, Lede, CTAs. That also retires a `!text-bone` override,
-        which was there only because `Subhead` bakes in `text-graphite` and
-        this is the one place it lands on a dark ground.
+        One question, one answer, one button. The close used to carry HOOK as
+        its heading under a "Building something?" eyebrow, plus a second CTA
+        to the Luma calendar; Geekdom asked for the question alone as the
+        heading and Apply as the only action. The calendar link isn't lost —
+        "This month in the Club" carries it.
       */}
       <Section tone="graphite">
         <div className="max-w-3xl">
-          <Eyebrow onInk>Building something?</Eyebrow>
           <SectionTitle className="text-bone">
-            {HOOK.replace(/\.$/, "")}
-            <span className="text-clay">.</span>
+            Building something<span className="text-clay">?</span>
           </SectionTitle>
           <Lede className="mt-6 text-bone/70">
             Membership is by application. We respond within two weeks.
@@ -1049,14 +743,6 @@ export default async function HomePage() {
             <ButtonLink href="/apply" size="lg" variant="on-ink">
               Apply to {SITE_NAME}
             </ButtonLink>
-            <ButtonAnchor
-              external
-              href={LUMA_CALENDAR_URL}
-              variant="on-ink-outline"
-              size="lg"
-            >
-              Come to an event first
-            </ButtonAnchor>
           </div>
         </div>
       </Section>

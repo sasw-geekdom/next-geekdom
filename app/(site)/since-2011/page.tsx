@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { pageMetadata } from "@/lib/seo";
 import { getGalleryImages } from "@/lib/gallery";
 import { SinceHero } from "@/components/site/since-hero";
@@ -93,12 +92,7 @@ export default async function SincePage() {
             <ButtonLink href="/apply" size="lg" variant="on-ink">
               Apply to {SITE_NAME}
             </ButtonLink>
-            <Link
-              href="/whats-changing"
-              className="font-medium text-bone underline decoration-clay decoration-2 underline-offset-2 transition-colors hover:decoration-bone"
-            >
-              Read the letter
-            </Link>
+            {/* "Read the letter" came out with /whats-changing. */}
           </div>
         </div>
       </Section>
