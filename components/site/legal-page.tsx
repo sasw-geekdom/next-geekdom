@@ -7,9 +7,8 @@ import { cn } from "@/lib/utils";
  * The shell the privacy policy and the terms share.
  *
  * A PLAIN SECTION, not `CrownPage`. Every other read page on this site gets the
- * sticky shader rail, and these two deliberately don't: the rail is a second
- * WebGL context whose whole job is to give a long scroll something to travel
- * past, and nobody is enjoying the scroll on a privacy policy. The page is also
+ * sticky mark rail, and these two deliberately don't: the rail exists to
+ * give a page some presence, and nobody needs that on a privacy policy. The page is also
  * the one place on the site where being visibly plain is the correct register —
  * a legal page that looks art-directed reads as something being sold rather
  * than something being disclosed.

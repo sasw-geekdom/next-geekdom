@@ -26,7 +26,8 @@ export default function ApplyPage() {
       The rule as first written was "the rail is for short task pages", and it
       named this one. Two measurements say otherwise. The form is FOURTEEN
       FIELDS, and the page's own subtitle promises it takes five minutes. The
-      shader is a requestAnimationFrame loop — it never settles.
+      shader was a requestAnimationFrame loop — it never settled. (The rail
+      is a flat mark now, but a form still wants the full width.)
 
       SO THE DISTINCTION IS NOT LENGTH, IT IS WHETHER A PAGE HOLDS YOU. The 404
       and the admin login are glanced at and left; a mark in dead space there

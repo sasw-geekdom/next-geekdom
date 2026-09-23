@@ -1,4 +1,3 @@
-import { WordmarkShader } from "@/components/site/crown-shader";
 import { Container, Eyebrow, HEADING, MONO } from "@/components/site/section";
 import { Editorial } from "@/components/site/editorial";
 import { FOUNDED_YEAR, SITE_NAME } from "@/lib/site";
@@ -23,11 +22,9 @@ import { cn } from "@/lib/utils";
  * homepage's origin section uses, so the page is still correct in 2031 — and
  * the route is /since-2011 rather than /15-years for the same reason.
  *
- * ⚠️ THE SHADER INSIDE THE WORDMARK IS A KNOWN BRAND EXCEPTION. The guide
- * allows the marks in Geekdom Red, Graphite or Bone and bans gradients on
- * them outright. Every color here is approved; the gradient is not. This is
- * the largest instance of an exception that already exists on the crown and
- * the g-mark, and it goes into the same sign-off. See crown-shader.tsx.
+ * THE WORDMARK IS FLAT GEEKDOM RED. It carried a WebGL shader — color
+ * flowing through the mark — which the guide bans ("Never in other colors,
+ * gradients, or effects"). The shader is gone from the site.
  */
 export function SinceHero() {
   const years = new Date().getFullYear() - FOUNDED_YEAR;
@@ -40,7 +37,7 @@ export function SinceHero() {
         {/*
           The real heading is screen-reader-only and the visible type is
           decorative — because the mark below is half the sentence and a
-          canvas cannot be read. "15 years of Geekdom" reaches assistive tech
+          mask cannot be read. "15 years of Geekdom" reaches assistive tech
           as one string rather than as a fragment followed by an image.
         */}
         <h1 className="sr-only">
@@ -63,7 +60,13 @@ export function SinceHero() {
           fold on a laptop and separates it from the line it completes.
         */}
         <div aria-hidden="true" className="mt-6 w-full max-w-3xl sm:mt-8">
-          <WordmarkShader className="w-full" />
+          {/*
+            The wordmark flat, in Geekdom Red — the outline mask filled with
+            one approved color. It was `WordmarkShader`, the largest instance
+            of the gradient-on-a-mark exception the guide bans; the page's
+            celebration is the photo wall below, not an effect on the logo.
+          */}
+          <div className="geekdom-mask aspect-[375/142] w-full bg-geekdom-red" />
         </div>
 
         {/*

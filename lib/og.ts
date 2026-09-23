@@ -1,4 +1,3 @@
-import { priceLabel } from "@/lib/membership";
 import {
   FOUNDED_YEAR,
   LOCATION,
@@ -10,56 +9,34 @@ import {
 /**
  * The share cards, one per page.
  *
- * These are RENDERED TO PNG AHEAD OF TIME, not generated per request — run
- * `npm run og` and the files land in each route's folder as
- * `opengraph-image.png`, which is a Next file convention resolved per segment.
- * The reasoning for that is in scripts/og.mjs; the short version is that the
- * visual is a live WebGL shader, and no server-side image generator can run
- * one.
+ * RENDERED TO PNG AHEAD OF TIME — run `npm run og` and the files land in each
+ * route's folder as `opengraph-image.png`, a Next file convention resolved
+ * per segment. See scripts/og.mjs and components/site/og-card.tsx.
  *
  * Copy lives here rather than in the card component so the whole set can be
  * read at once. A share card is the only piece of this site a person sees
- * before they have decided whether to click, so the seven headlines below want
- * to be compared side by side, not hunted for across seven files.
+ * before they have decided whether to click, so the headlines below want to
+ * be compared side by side, not hunted for across a dozen files.
  *
- * EVERY CARD IS TWO LINES, and the second carries the accent. Satori isn't
- * involved so this is real CSS, but the constraint stays: the break is chosen
- * rather than measured, and a third line collides with the crown.
+ * EVERY CARD IS TWO LINES, and the second carries the Clay accent. Keep each
+ * line under roughly 24 characters: at 76px that is about the width of the
+ * card's measure, and a third line pushes the footer off the canvas. It is a
+ * proxy for width, not width itself — render the set and look at it.
  *
- * THE ACCENT IS CLAY, NOT GOLD. This file said gold in three places and the
- * cards have not rendered gold since the 2026 palette landed — there is no
- * gold in the brand at all now. The comments were describing a colour the
- * renderer had already stopped using.
- *
- * KEEP EACH LINE UNDER ROUGHLY 21 CHARACTERS. At 76px the type reaches the
- * crown's left edge at about that point and the last letter of the line
- * disappears into the pigment. Two of these cards were drafted at 22 and 23 and
- * both collided, so the number is measured rather than guessed — but it is a
- * proxy for width, not width itself, and a line of capitals or wide letterforms
- * will run out sooner. Render the set and look at it: `npm run og`.
+ * LINES COME FROM THE PAGE'S OWN COPY — its h1, its eyebrow, its source-copy
+ * headline — not written for the card. Geekdom's feedback is that the site
+ * should read in their words, and a card is the site's most-distributed text.
  */
 export interface OgCard {
-  /** Mono kicker. Bone on the graphite ground — Clay fails at this size. */
+  /** Mono kicker. Concrete on Bone — Clay fails at this size. */
   eyebrow: string;
   /** Exactly two lines. The second renders in Clay. */
   lines: readonly [string, string];
-  /**
-   * Where in the shader's timeline this card's pigment is frozen.
-   *
-   * The field is two drifting drops, so the moment you sample it decides the
-   * shape inside the crown. Fixing a different second per card gives each page
-   * its own pigment while every one of them is demonstrably the same system —
-   * and fixing it AT ALL is what stops `npm run og` producing a fresh binary
-   * diff for seven PNGs every time it runs.
-   */
-  seed: number;
   /** Path under app/, where the Next file convention picks it up. */
   out: string;
   /** Becomes the `.alt.txt` sidecar, which Next emits as og:image:alt. */
   alt: string;
 }
-
-const price = priceLabel();
 
 /*
   "Find your thinking partner." -> ["Find your", "thinking partner."]
@@ -98,24 +75,23 @@ export const OG_CARDS: Record<string, OgCard> = {
       leave the old words sitting on the card.
     */
     lines: PROMISE_LINES,
-    seed: 3.4,
     out: "app/opengraph-image.png",
     alt: `Geekdom — ${PROMISE} ${POSITIONING}`,
   },
 
   /*
-    The price IS the card, the same call the page makes. A membership card that
-    leads with anything else invites the click that ends in "so what does it
-    cost" — and the figure is the single most-asked question in the FAQ sheet.
+    NO PRICE ON THE CARD. It read "One membership. $100/month." — the largest
+    price anywhere Geekdom's name travels, since this is what unfurls in every
+    chat a /club link is pasted into. Geekdom asked that nothing feel salesy
+    or pushy, and the page itself now keeps the figure in its membership
+    card. Both lines are /club's source copy: the eyebrow's "Members only"
+    and the Membership headline.
   */
   club: {
     eyebrow: "The Club",
-    lines: ["One membership.", price ? `${price}.` : "No desks. No offices."],
-    seed: 11.8,
+    lines: ["Members only.", "Application-based."],
     out: "app/(site)/club/opengraph-image.png",
-    alt: price
-      ? `The Geekdom Club — one membership, ${price}.`
-      : "The Geekdom Club — one membership, no desks, no offices.",
+    alt: "The Geekdom Club — members only, application-based.",
   },
 
   /*
@@ -137,12 +113,9 @@ export const OG_CARDS: Record<string, OgCard> = {
   studio: {
     eyebrow: "Studio · The venture layer",
     lines: ["We go all in with", "a few founders a year."],
-    seed: 7.2,
     out: "app/(site)/studio/opengraph-image.png",
     alt: "Geekdom Studio — the venture layer. $20–30K SAFE checks and hands-on work for four to six San Antonio founders a year. Invitation only.",
   },
-
-
 
   faq: {
     eyebrow: "Questions",
@@ -163,8 +136,7 @@ export const OG_CARDS: Record<string, OgCard> = {
       to directly — and what is here now includes the Studio and downtown
       parking, which no member asked for in that sheet.
     */
-    lines: ["How the club and", "the Studio work."],
-    seed: 42.5,
+    lines: ["How the Club and", "the Studio work."],
     out: "app/(site)/faq/opengraph-image.png",
     // Was "what happens to desks and offices". See the note on the page's own
     // description — the desk belongs to the letter, not to the FAQ.
@@ -178,10 +150,51 @@ export const OG_CARDS: Record<string, OgCard> = {
       the same sentence ending two different ways, shown side by side in every
       unfurl and search result. Neither was wrong; having both was.
     */
-    lines: ["Tell us what you're", "building."],
-    seed: 50.1,
+    lines: ["Tell us what you\u2019re", "building."],
     out: "app/(site)/apply/opengraph-image.png",
     alt: "Apply to the Club at Geekdom — one membership, by application, on the third floor in San Antonio.",
+  },
+
+  /*
+    /events SHIPPED A CARD NOBODY COULD REGENERATE — the PNG was in the
+    folder but had no entry here, so `npm run og` never touched it and it
+    stayed a shader card. The h1 is "What's on."; the second line is the
+    page's own description ("most of them open to non-members").
+  */
+  events: {
+    eyebrow: "The calendar",
+    lines: ["What’s on.", "Most of it is open."],
+    out: "app/(site)/events/opengraph-image.png",
+    alt: "Geekdom events — meetups, build sessions, office hours and pitch nights on the third floor, most of them open to non-members.",
+  },
+
+  /*
+    /about, /contact and /media had no card and unfurled the homepage's. Each
+    now carries its own page's words.
+  */
+  about: {
+    eyebrow: `About · Since ${FOUNDED_YEAR}`,
+    // The origin line, as the homepage and /about both tell it.
+    lines: ["Geekdom started", "with an email."],
+    out: "app/(site)/about/opengraph-image.png",
+    alt: `About Geekdom — started with an email in ${FOUNDED_YEAR}; today a members' club and a venture layer in downtown San Antonio.`,
+  },
+
+  contact: {
+    eyebrow: "Contact",
+    // The h1, then the address — the second thing anyone reaching out needs.
+    lines: ["Get in touch.", `${LOCATION.street}.`],
+    out: "app/(site)/contact/opengraph-image.png",
+    alt: `Contact Geekdom — ${LOCATION.full}.`,
+  },
+
+  media: {
+    eyebrow: "Media",
+    // The h1, cut to fit two lines: "For journalists, writers, and
+    // researchers covering San Antonio's startup community."
+    lines: ["For journalists", "and researchers."],
+    out: "app/(site)/media/opengraph-image.png",
+    alt: "Geekdom media — boilerplate, facts and press contacts for journalists, writers and researchers covering San Antonio's startup community.",
   },
 
   /*
@@ -205,7 +218,6 @@ export const OG_CARDS: Record<string, OgCard> = {
   "since-2011": {
     eyebrow: `Since ${FOUNDED_YEAR} · ${LOCATION.city}`,
     lines: ["The people who", "showed up."],
-    seed: 58.6,
     out: "app/(site)/since-2011/opengraph-image.png",
     alt: `${SITE_NAME} — the photo wall. The people, the pitches, the late nights, and the community that showed up. Since ${FOUNDED_YEAR}.`,
   },

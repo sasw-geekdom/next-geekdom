@@ -488,9 +488,9 @@ export default function FaqPage() {
         costs nobody anything there.
 
         IT COMES OFF PAGES THAT HOLD YOU. This is seventeen questions and the
-        second-longest scroll on the site, and the shader is a
-        requestAnimationFrame loop — it never settles, so it sits moving in
-        peripheral vision for the whole read.
+        second-longest scroll on the site. (The rail's shader, which moved in
+        peripheral vision for the whole read, is gone; the rail is a flat mark
+        now, and this page still reads better at full width.)
 
         (This first said "the rail is for short task pages" and named /apply
         among them. /apply is fourteen fields and promises five minutes —

@@ -36,7 +36,9 @@ export const metadata: Metadata = pageMetadata({
   ownCard: true,
   title: "Studio",
   path: "/studio",
-  description: `Geekdom's venture layer. ${STUDIO.checkRange} ${STUDIO.checkTerms} checks from the ${STUDIO.fund} and ${STUDIO.engagement} of hands-on work with our Entrepreneur in Residence, for ${STUDIO.foundersPerYear} San Antonio founders a year. Not an accelerator. No cohorts. No open application.`,
+  // Under 160 characters — it ran to 244, and Google cut it before the
+  // disqualifier, which is the half that saves a founder a wasted click.
+  description: `Geekdom's venture layer: ${STUDIO.checkRange} ${STUDIO.checkTerms} checks and hands-on work for ${STUDIO.foundersPerYear} San Antonio founders a year. Not an accelerator. No open application.`,
 });
 
 /**

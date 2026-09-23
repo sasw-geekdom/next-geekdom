@@ -2,22 +2,22 @@
 /**
  * Renders the share cards to PNG.  `npm run og`
  *
- * WHY A SCRIPT AND NOT next/og. The visual on every card is the pigment crown —
- * a live WebGL shader masked to the brand mark. Satori, which is what
- * `next/og` runs, has no canvas and no GL context; it lays out flexbox and
- * draws text and SVG, and that is all. It cannot produce this picture at any
- * price. The only renderer that can is a browser, so a browser is what makes
- * them, once, ahead of time.
+ * WHY A SCRIPT AND NOT next/og. The cards are rendered by the app itself, on
+ * a dev-only route, so they are set in Rubik through next/font with the real
+ * color tokens — Satori, which `next/og` runs, can reach neither without a
+ * second copy of the type and the palette. (The original reason was the WebGL
+ * pigment crown, which Satori cannot draw at all; the cards no longer carry
+ * it, but a browser remains the renderer that needs no duplicated design
+ * system.)
  *
  * The output goes to `opengraph-image.png` inside each route's own folder,
  * which is a Next file convention: it is picked up per segment and emits
  * og:image, twitter:image and the dimensions with no metadata code at all.
  * Paths and copy both live in lib/og.ts.
  *
- * DETERMINISTIC. Each card names the second of the shader's clock it freezes
- * at (`seed`), so re-running this writes byte-identical files rather than seven
- * binary diffs against art nobody touched. Re-run it when the card copy in
- * lib/og.ts changes, when the price changes, or when the crown does.
+ * DETERMINISTIC: nothing on a card animates or varies, so re-running this
+ * writes byte-identical files for cards nobody touched. Re-run it when the
+ * card copy in lib/og.ts or the card design changes.
  *
  * 1200×630 at 1x, not 2x. This is the size every scraper expects, feeds render
  * it at half that or less, and a 2400-wide supersample of a soft gradient costs
@@ -125,18 +125,13 @@ async function main() {
         with no bezel to trim — which is why there is no element-clipping step
         here.
 
-        `--virtual-time-budget` is what waits for the shader: the card draws its
-        single frame in an effect after hydration, and the flag lets the browser
-        run the clock forward and only then photograph.
+        `--virtual-time-budget` lets the page finish loading its fonts before
+        the photograph, so the type is Rubik rather than a fallback.
       */
       const res = spawnSync(
         chrome,
         [
           "--headless",
-          // WebGL, in software. Headless has no GPU, and recent Chrome refuses
-          // the SwiftShader fallback unless asked — without this every card
-          // renders with a hole where the crown goes.
-          "--enable-unsafe-swiftshader",
           "--hide-scrollbars",
           "--force-device-scale-factor=1",
           `--window-size=${size.width},${size.height}`,
@@ -159,28 +154,17 @@ async function main() {
       writeFileSync(out.replace(/\.png$/, ".alt.txt"), card.alt);
 
       /*
-        A CROWNLESS CARD IS A SUCCESSFUL RUN THAT PRODUCED THE WRONG PICTURE,
-        which is the only failure mode this script has that does not throw.
-
-        The crown is a WebGL canvas. If the screenshot lands before it has
-        painted, Chrome hands back a perfectly valid PNG of the type on a flat
-        graphite ground — no error, no warning, a green tick, and a share card
-        with the artwork missing. It happened once during a real run here: the
-        apply card came out at 39 KB against its usual 80.
-
-        THE SIZE IS THE TELL. The pigment is most of the file; without it a
-        card is roughly half its normal weight. 55 KB sits clear of both — well
-        under every good card (73–81 KB) and well over a flat one — so it
-        catches the empty canvas without tripping on ordinary variation between
-        seeds. Re-running fixes it; the point is to find out before a commit
-        does.
+        A BLANK CARD IS A SUCCESSFUL RUN THAT PRODUCED THE WRONG PICTURE — a
+        screenshot taken before the page rendered is a valid PNG of an empty
+        Bone rectangle, with no error. A flat fill compresses to a couple of
+        KB; a real card, with its type, is well past 15.
       */
       const bytes = statSync(out).size;
       const kb = Math.round(bytes / 1024);
-      if (bytes < 55 * 1024) {
+      if (bytes < 15 * 1024) {
         throw new Error(
-          `${slug}: rendered ${kb} KB, which is too small to contain the crown — ` +
-            `the WebGL canvas almost certainly had not painted when the shot was ` +
+          `${slug}: rendered ${kb} KB, which is too small to contain the card — ` +
+            `the page almost certainly had not rendered when the shot was ` +
             `taken. Re-run \`npm run og\`.`,
         );
       }

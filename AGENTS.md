@@ -227,11 +227,27 @@ same page runs as "15 years of Geekdom".
   historical by nature rather than a variant of the current mark. Don't use it
   anywhere else. It ships flattened to Bone because an `<img>` can't take
   `currentColor`, and it's an `<img>` because the footer renders on every route.
-- **⚠️ The wordmark shader is the largest instance of the pending brand
-  exception.** The hero masks the flow into the PRIMARY wordmark — every color
-  in it is approved, the gradient is not. It goes into the same sign-off as the
-  crown and the g-mark. `WordmarkShader` exists for this one placement; the
-  rail on `CrownPage` can't even accept it (see `RailShape`).
+- **The hero wordmark is flat Geekdom Red** — `.geekdom-mask` filled with the
+  token. It was a WebGL shader flowing color through the mark, which the guide
+  bans; see the marks rule under Design system.
+
+## Share cards and metadata
+
+- **Cards are Bone, type-led, and carry no shader.** `npm run og` photographs
+  `/og-preview/[slug]` ([og-card.tsx](components/site/og-card.tsx)) into each
+  route's `opengraph-image.png`. The primary wordmark in Geekdom Red is the
+  only mark on them — no crown as decoration, flat or WebGL: the guide bans
+  marks in gradients or effects and bans the crown as a decorative element,
+  and the cards were the shader crown's most distributed placement.
+- **Every card is in `OG_CARDS`** ([lib/og.ts](lib/og.ts)), and its two lines
+  come from that page's own copy. A PNG with no entry there is an orphan that
+  `npm run og` never regenerates — /events was one.
+- **A page with its own card passes `ownCard: true`** to `pageMetadata()`;
+  without it the page gets the root card, with alt text and dimensions.
+- **Descriptions stay under 160 characters.** Google cuts at about 155, and
+  three pages were losing their last clause — /studio its disqualifier.
+- **No price in any description or card.** It lives on /club's membership
+  card only.
 
 ## Scroll motion
 
@@ -465,12 +481,14 @@ are the entry points. Geist Pixel is still not loaded, for the same reason.
 The logo is unaffected by any of this — its letterforms are outlined paths in
 the SVG. Columns of figures get `tabular-nums`.
 
-**The marks may appear only in Geekdom Red, Graphite or Bone, and the guide
-bans gradients on them.** `CrownShader` still runs a flow through the crown and
-the g-mark; the gold is gone and all three values are now approved colors, but
-it remains a gradient and therefore a **known, deliberate exception pending
-sign-off** — see the note in [crown-shader.tsx](components/site/crown-shader.tsx).
-Don't extend it to new placements before that lands.
+**The marks may appear only in Geekdom Red, Graphite or Bone, flat.** The guide
+bans gradients and effects on them, and the WebGL shader that flowed color
+through the crown, the G-mark and the wordmark is gone from the site —
+`CrownShader`, `InkField` and `ShaderCanvas` were deleted, not parked. Draw a
+mark with its mask class (`.crown-mask`, `.g-mark-mask`, `.geekdom-mask` in
+globals.css) and a single token background; that also keeps the second red
+(#AA2D29) in the supplied SVGs off the page. Don't reintroduce a shader, a
+gradient, or a crown used as decoration.
 
 **LaunchSA is a separate brand.** Geekdom operates it for the City of San
 Antonio. Never put its mark in a Geekdom lockup or logo wall — it was in the

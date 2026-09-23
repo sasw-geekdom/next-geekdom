@@ -18,6 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = pageMetadata({
+  ownCard: true,
   title: "Media",
   path: "/media",
   description:

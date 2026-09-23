@@ -1,4 +1,3 @@
-import { InkField } from "@/components/site/ink-field";
 import { Logo } from "@/components/site/logo";
 import { OG_CARDS, OG_SIZE } from "@/lib/og";
 import { SITE_NAME, TAGLINE } from "@/lib/site";
@@ -6,33 +5,26 @@ import { SITE_NAME, TAGLINE } from "@/lib/site";
 /**
  * A share card, at exactly 1200×630, built from the real design system.
  *
- * This is a REAL PAGE that gets photographed, not an image generator. Both of
- * the server-side options render the wrong picture:
+ * This is a REAL PAGE that gets photographed (see scripts/og.mjs), so the
+ * type is Rubik through next/font and the colors are the tokens — nothing is
+ * redrawn by an image generator that can't reach either.
  *
- *   Satori (`next/og`, what this replaced) has no canvas and no GL, so it
- *   cannot draw the pigment crown at all — its version of the card was a flat
- *   white logo on ink. It also can't reach next/font, so the type was whatever
- *   system grotesk the renderer had, on a site whose whole type argument is
- *   that it is set in the brand's own face.
+ * BONE, TYPE-LED, AND THE WORDMARK IS THE ONLY MARK. The cards used to run on
+ * Graphite with the WebGL pigment crown bled off the right edge. That crown
+ * broke the 2026 guide twice over — "Marks appear only in Geekdom Red,
+ * Graphite, or Bone. Never in other colors, gradients, or effects" and
+ * "Don't use the crown as a bullet, divider, or decorative icon" — and the
+ * cards were its most widely distributed placement. So it is not replaced
+ * with a flat crown in the same slot, which would still be the mark used as
+ * decoration: the card is a headline on Bone, signed with the primary
+ * wordmark in Geekdom Red, whole and with its clear space.
  *
- *   A hand-built HTML file in scripts/ could run the shader, but only by
- *   duplicating the GLSL, the mask, the color tokens and the type scale — four
- *   copies to keep in step with a design system built specifically to stop that
- *   happening.
- *
- * Rendering inside the app costs one dev-only route and duplicates nothing: the
- * crown below is the same InkField the homepage hero runs, masked by the same
- * crown-mask.svg, over the same Graphite, IN RUBIK — this route sits under the
- * root layout, so it inherits `--font-rubik` with no work. What ships is what
- * the browser saw.
- *
- * (Two lines above used to say Geist and one said `--ink`. Both predate the
- * 2026 palette and the Rubik switch; the cards have rendered Rubik on Graphite
- * since, so the comments were describing a card that no longer existed.)
+ * CLAY CARRIES THE SECOND LINE, which is legal here and nowhere small: Clay
+ * on Bone is 3.5:1, clear of the 3:1 bar for large text, and this is 76px.
+ * The eyebrow is Concrete, as it is on every light ground on the site.
  *
  * FIXED PIXELS THROUGHOUT, and no responsive variants. The canvas is 1200×630
- * on every machine that will ever see it; a `sm:` here would be a breakpoint
- * that can never fire.
+ * on every machine that will ever see it.
  */
 export function OgCard({ slug }: { slug: string }) {
   const card = OG_CARDS[slug];
@@ -40,7 +32,7 @@ export function OgCard({ slug }: { slug: string }) {
 
   return (
     <div
-      className="relative flex flex-col justify-between overflow-hidden bg-graphite"
+      className="relative flex flex-col justify-between overflow-hidden bg-bone"
       style={{
         width: OG_SIZE.width,
         height: OG_SIZE.height,
@@ -48,43 +40,17 @@ export function OgCard({ slug }: { slug: string }) {
       }}
     >
       {/*
-        The crown, bled off the right edge.
-
-        Cropped rather than contained, on purpose. A share card is a 1200-wide
-        image that a feed renders at maybe 500 — a mark sitting politely inside
-        its own margin disappears at that size, while one running off the edge
-        still reads as a shape. The hero does the same thing with the same mark.
-
-        The box carries the mask's own 55:41 aspect, because the mask is
-        `contain`: a mismatched box letterboxes the crown inside it and the
-        pigment stops filling the shape.
-
-        It also has to CLEAR THE FOOTER RULE at y≈490. A taller crown crosses
-        the hairline, and since both are positioned in the same stacking
-        context the rule simply vanishes into the pigment for the right half of
-        its length — which reads as a rendering fault rather than as overlap.
+        The primary lockup in its own colors. 64px tall — a feed shows the card at
+        roughly 500px wide, where 54px left the name about 20px tall — is past the
+        guide's 80px-wide digital minimum, and the 72px padding gives it more
+        than the "height of the lowercase g" clear space on every side.
       */}
-      <div
-        className="pointer-events-none absolute"
-        style={{ width: 502, height: 374, right: -80, top: 96 }}
-      >
-        <InkField
-          maskClassName="crown-mask"
-          className="h-full w-full"
-          frozenTime={card.seed}
-        />
-      </div>
+      <Logo className="h-16 w-auto self-start" />
 
-      {/*
-        Mono, not Geekdom Red — this is a graphite ground, where the red
-        measures 3.3:1 and turns to mud at thumbnail size. `tone="mono"` takes
-        currentColor, so the bone below drives it.
-      */}
-      <Logo tone="mono" className="relative h-[54px] w-auto self-start text-bone" />
-
-      <div className="relative">
+      <div>
+        <div className="h-0.75 w-14 bg-clay" />
         <p
-          className="font-mono uppercase text-bone"
+          className="mt-7 font-mono uppercase text-concrete"
           style={{ fontSize: 22, letterSpacing: "0.18em" }}
         >
           {card.eyebrow}
@@ -96,7 +62,7 @@ export function OgCard({ slug }: { slug: string }) {
           on — as size grows, both tighten.
         */}
         <p
-          className="mt-6 font-medium text-bone"
+          className="mt-6 font-medium text-graphite"
           style={{ fontSize: 76, lineHeight: 1.04, letterSpacing: "-0.02em" }}
         >
           {card.lines[0]}
@@ -110,14 +76,14 @@ export function OgCard({ slug }: { slug: string }) {
       </div>
 
       <div
-        className="relative flex items-end justify-between border-t border-bone/15"
+        className="flex items-end justify-between border-t border-graphite/15"
         style={{ paddingTop: 26 }}
       >
-        <span className="text-bone/65" style={{ fontSize: 25 }}>
+        <span className="text-concrete" style={{ fontSize: 25 }}>
           {TAGLINE}
         </span>
         <span
-          className="font-mono uppercase text-bone/45"
+          className="font-mono uppercase text-concrete"
           style={{ fontSize: 20, letterSpacing: "0.14em" }}
         >
           {SITE_NAME}.com

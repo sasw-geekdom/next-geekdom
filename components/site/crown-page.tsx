@@ -1,5 +1,4 @@
 import { Eyebrow, HEADING } from "@/components/site/section";
-import { CrownShader, type MarkShape } from "@/components/site/crown-shader";
 
 /*
   How each mark fills the rail. The two are sized on different axes because
@@ -21,7 +20,18 @@ import { CrownShader, type MarkShape } from "@/components/site/crown-shader";
  * three screens tall. Excluding it makes that a compile error at the call site
  * instead of a layout someone has to notice.
  */
-type RailShape = Exclude<MarkShape, "wordmark">;
+type RailShape = "crown" | "g-mark";
+
+/*
+  The mark, flat: the outline mask filled with solid Geekdom Red. The same
+  technique the footer uses for its Bone crown — one approved color, which
+  also keeps the second red (#AA2D29) in the supplied SVGs off the page.
+  Aspect is each source viewBox, so `contain` never letterboxes it.
+*/
+const RAIL_MARK: Record<RailShape, string> = {
+  crown: "crown-mask aspect-[55/41]",
+  "g-mark": "g-mark-mask aspect-[39.81/127.18]",
+};
 
 const RAIL_SIZE: Record<RailShape, string> = {
   crown: "w-full max-w-[min(34rem,calc(100svh-10rem))]",
@@ -73,9 +83,8 @@ export function CrownPage({
   navOffset?: string;
   crownOnMobile?: boolean;
   /**
-   * Which mark holds the rail. The g-mark leads — it is the fuller lockup,
-   * and its height gives the flow somewhere to travel; the crown alone is wide
-   * and shallow, so the same shader reads as a flat wash inside it.
+   * Which mark holds the rail. The g-mark leads — it is the fuller lockup;
+   * the crown alone is the tertiary mark.
    */
   shape?: RailShape;
   fitViewport?: boolean;
@@ -115,7 +124,16 @@ export function CrownPage({
             : "hidden",
         )}
       >
-        <CrownShader shape={shape} className={RAIL_SIZE[shape]} />
+        {/*
+          FLAT, NOT THE SHADER. This rail ran `CrownShader`, a WebGL flow
+          through the mark — a gradient on a mark, which the 2026 guide bans
+          ("Never in other colors, gradients, or effects"). It was carried as
+          an exception pending sign-off; it is gone from the site now.
+        */}
+        <div
+          aria-hidden="true"
+          className={cn("bg-geekdom-red", RAIL_MARK[shape], RAIL_SIZE[shape])}
+        />
       </div>
 
       {/* Right — the page itself */}

@@ -186,45 +186,31 @@ p {
 }
 
 /*
-  Clips a <ShaderCanvas> to the crown.
+  THE MARKS AS MASKS. Each class clips an element to one mark's outline, and
+  the element's own background supplies the color — so a mark always renders
+  in a single approved token (`bg-geekdom-red`, `bg-bone`, `bg-graphite`),
+  never in the second red (#AA2D29) the supplied SVGs carry as shading.
 
-  The canvas itself is a plain rectangle of flowing color; this is what makes
-  it read as the mark. Same technique as the SASTW bolt in the sibling repo.
+  These existed for a WebGL shader that flowed color through the marks. The
+  guide bans marks in gradients or effects, and the shader is gone; the masks
+  stayed because they are the cleanest way to draw a flat mark in a token.
 
-  `contain` rather than `cover`: the crown has to fit its box whole. With cover
-  it would fill the box and crop its own points off on any aspect that isn't
-  the artwork's.
-
-  Points at a FLATTENED copy of the crown — `crown-mask.svg`, plain fill
-  attributes, no <style> block. A mask only consumes the alpha channel, so
-  color is irrelevant, but class-based fills inside a mask reference are a
-  dependency with nothing to gain.
+  `contain`, so the mark fits its box whole; give the box the source viewBox's
+  aspect. Each points at a FLATTENED copy of the artwork — plain fills, no
+  <style> block — because a mask consumes alpha only.
 */
 .crown-mask {
   -webkit-mask: url("/brand/crown-mask.svg") center / contain no-repeat;
   mask: url("/brand/crown-mask.svg") center / contain no-repeat;
 }
 
-/*
-  The full wordmark, same technique — for the `/since-2011` hero, where the
-  lockup is the whole picture rather than a mark in a corner.
-
-  375x142, so `aspect-[375/142]` at the call site; `contain` letterboxes
-  anything else. Points at `geekdom-mask.svg`, a flattened copy of
-  `geekdom_logo_full.svg` with its <style> block resolved to plain fills — the
-  same reason the other two masks exist. The source carries .st0 (#AA2D29) and
-  .st1 (#CA3625), the two rusts of the wordmark; a mask reads alpha only, so
-  both flatten to solid black and the shader supplies every color that ends up
-  on screen.
-*/
+/* The full wordmark — the /since-2011 hero. 375x142. */
 .geekdom-mask {
   -webkit-mask: url("/brand/geekdom-mask.svg") center / contain no-repeat;
   mask: url("/brand/geekdom-mask.svg") center / contain no-repeat;
 }
 
-/* The crown-over-g lockup, same technique. Its own flattened mask file for the
-   same reason: a mask consumes alpha only, so color and <style> blocks are
-   dead weight inside one. */
+/* The crown-over-g lockup — the CrownPage rail. 39.81x127.18. */
 .g-mark-mask {
   -webkit-mask: url("/brand/g-mark-mask.svg") center / contain no-repeat;
   mask: url("/brand/g-mark-mask.svg") center / contain no-repeat;

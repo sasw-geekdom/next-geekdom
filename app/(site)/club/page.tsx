@@ -35,15 +35,13 @@ import {
 } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
-// Built from priceLabel() so the search snippet can't drift from Stripe — see
-// the note in app/layout.tsx.
+// No price in the search snippet — see SITE_DESCRIPTION in lib/seo.ts.
 export const metadata: Metadata = pageMetadata({
   ownCard: true,
   title: "The Club",
   path: "/club",
-  description: `Geekdom's members' club for serious founders and builders in San Antonio${
-    priceLabel() ? `, ${priceLabel()}` : ""
-  }. The third floor, the programming, and a room full of people who'll break the problem down with you. Not coworking. Not an accelerator.`,
+  description:
+    "Geekdom's members' club for founders and builders in San Antonio: the third floor, the programming, and the people in it. Not coworking. Not an accelerator.",
 });
 
 /**

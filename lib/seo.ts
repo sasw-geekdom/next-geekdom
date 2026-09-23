@@ -1,12 +1,20 @@
 import type { Metadata } from "next";
-import { priceLabel } from "@/lib/membership";
 import { POSITIONING, SITE_NAME, SITE_URL } from "@/lib/site";
+import { OG_CARDS } from "@/lib/og";
 
 /**
  * The default share card, `app/opengraph-image.png`, at the URL Next serves it
  * from. Resolved against `metadataBase`, so it comes out absolute.
  */
-const ROOT_CARD = "/opengraph-image.png";
+const ROOT_CARD = {
+  url: "/opengraph-image.png",
+  width: 1200,
+  height: 630,
+  // Declaring the image by path drops the file convention's `.alt.txt`
+  // sidecar, so every page on the root card was shipping no og:image:alt.
+  // Kept in step with OG_CARDS.home.alt.
+  alt: OG_CARDS.home.alt,
+};
 
 /**
  * One page's metadata, with the parts that DON'T inherit correctly.
@@ -111,29 +119,17 @@ export function pageMetadata({
 }
 
 /**
- * The homepage description, and the site-wide default.
+ * The homepage description, and the site-wide default for pages that set none.
+ * One constant, so the layout and the homepage cannot say different things.
  *
- * Built from `priceLabel()` rather than typed as a literal. The price appears
- * in the search snippet, and a hardcoded "$100 a month" here would quietly go
- * stale the day someone changes MEMBERSHIP_PRICE_CENTS — leaving Google
- * advertising a figure the checkout doesn't charge.
+ * It carries the positioning line and both engines, because a snippet is the
+ * whole of what most people ever read about Geekdom.
  *
- * Lives here rather than in the root layout because the homepage needs it too:
- * the layout supplies the `description` meta tag for pages that set none, and
- * the homepage supplies its own openGraph description through pageMetadata().
- * One constant, so the two cannot say different things about the same page.
+ * NO PRICE. It carried "at $100/month", which put the figure in every Google
+ * result and link preview for the whole site. Geekdom asked that nothing feel
+ * salesy; the price lives on /club's membership card.
+ *
+ * UNDER 160 CHARACTERS. It ran to 207, and Google cuts a snippet at about 155
+ * — mid-word, at the part naming the venture fund.
  */
-/**
- * The search snippet and the default share description.
- *
- * It led with "A space for problem solvers" — using the one word the 2026
- * brand guide is running from, and describing a single product on a site that
- * now has two. A snippet is the whole of what most people ever read about
- * Geekdom, so it carries the positioning line and both engines.
- */
-export const SITE_DESCRIPTION = (() => {
-  const price = priceLabel();
-  return `${POSITIONING} A members' club on the third floor${
-    price ? ` at ${price}` : ""
-  }, a venture fund backing a few founders a year, and the work that convenes San Antonio's startup community. Since 2011.`;
-})();
+export const SITE_DESCRIPTION = `${POSITIONING} A members’ club and a venture fund on the third floor of the Rand, downtown. Since 2011.`;

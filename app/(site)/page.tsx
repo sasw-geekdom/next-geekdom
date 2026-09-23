@@ -18,8 +18,6 @@ import { Photo } from "@/components/site/photo";
 import { TypeHero } from "@/components/site/type-hero";
 import { PortfolioWall } from "@/components/site/portfolio-wall";
 import { OfferWipe } from "@/components/site/offer-wipe";
-// GMarkShader: the hero held it until the photograph took that edge. Kept as
-// an import-less note rather than an unused import — see the hero below.
 import { MemberVoices } from "@/components/site/member-voices";
 import { PHOTOS } from "@/lib/photos";
 import { pageMetadata, SITE_DESCRIPTION } from "@/lib/seo";
@@ -468,10 +466,6 @@ export default function HomePage() {
           that has to survive every rewrite is that the thinking partner is a
           person, in a room, on the third floor — and this is the only frame
           that is literally that sentence.
-
-          TO PUT THE MARK BACK: drop `media` and pass
-          `aside={<GMarkShader className="h-[min(32rem,56svh)] w-auto" />}`,
-          then return the Editorial below to `text-graphite/90`.
         */
         media={{ photo: PHOTOS.conversation }}
         tail={

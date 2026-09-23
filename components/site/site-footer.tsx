@@ -33,19 +33,15 @@ export function SiteFooter() {
             THE STATIC CROWN, NOT THE SHADER — Geekdom's call, and it settles
             part of a question this repo had open.
 
-            `CrownShader` ran a WebGL flow through the mark. Every colour in it
-            was approved but the gradient was not, and AGENTS.md carried it as
-            "a known, deliberate exception pending sign-off". Taking it out of
-            the footer removes it from every page on the site; the remaining
-            instances are the CrownPage rail and the /since-2011 wordmark, so
-            the sign-off is now about two placements rather than all of them.
+            `CrownShader` ran a WebGL flow through the mark — a gradient on a
+            mark, which the 2026 guide bans. It came out of the footer first
+            and has since been removed from the site entirely.
 
             THE MASK, NOT `crown.svg`. The asset ships two-tone — #CA3625 and
             #AA2D29 — and the second is not one of the five brand colours, so
             dropping it straight onto graphite would put an off-palette red in
-            the footer of every page. `.crown-mask` in globals.css already
-            exists for the shader, consumes only the alpha, and lets the fill
-            be a real token: Bone, which the guide permits for the marks and
+            the footer of every page. `.crown-mask` in globals.css consumes
+            only the alpha and lets the fill be a real token: Bone, which the guide permits for the marks and
             which is what everything else in this footer is.
 
             Aspect is the source viewBox, 55 x 41.
@@ -111,8 +107,8 @@ export function SiteFooter() {
             instance, 16px tall, in the quietest line on the page, and
             historical rather than current by its whole nature. It is not an
             alteration of the current mark, so the guide's "never recolor,
-            rotate or stretch" rules aren't what's in play; but anyone doing
-            the shader sign-off should know this is here too.
+            rotate or stretch" rules aren't what's in play; but it is a second
+            wordmark, and anyone auditing the marks should know it is here.
 
             An <img> rather than an inline SVG: the footer renders on every
             route, and 5.7KB of paths in every document to color one mark that

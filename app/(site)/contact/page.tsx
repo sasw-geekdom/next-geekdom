@@ -15,6 +15,7 @@ import { CONTACT_BLOCKS, LOCATION } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = pageMetadata({
+  ownCard: true,
   title: "Contact",
   path: "/contact",
   description:

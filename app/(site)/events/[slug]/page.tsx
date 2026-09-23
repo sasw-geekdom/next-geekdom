@@ -41,7 +41,12 @@ export async function generateMetadata({
 
   // First paragraph only, trimmed. Descriptions run long and a meta description
   // past ~160 characters is truncated by search engines mid-word anyway.
-  const summary = event.description?.split("\n").find(Boolean)?.slice(0, 200);
+  // Cut at a word boundary under 157 so it ends on "…" rather than mid-word.
+  const first = event.description?.split("\n").find(Boolean)?.trim();
+  const summary =
+    first && first.length > 157
+      ? `${first.slice(0, 157).replace(/\s+\S*$/, "")}…`
+      : first;
 
   const url = `${SITE_URL}/events/${slug}`;
 
