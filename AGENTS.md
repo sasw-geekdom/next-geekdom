@@ -161,21 +161,21 @@ team asked for — everything else lives in the footer.
   nobody has built. Move them when it exists; `/club` keeps the photography.
 - **`/club` does not lead with the price.** The order is the source copy's —
   the rhythm, the clubhouse, who's in the room, who it's for, then Membership,
-  where `priceLabel()` is the section headline. Don't move the figure back into
+  where the price sits in the membership card — not the headline, which is
+  just "Application-based." Geekdom asked that nothing feel salesy, and at
+  headline size the figure was the largest price on the site. Don't move the figure back into
   the hero: leading with the fee makes it a pricing page, and a pricing page
   asks "is it worth $100?" before the reader has anything to weigh it against.
 
   **The page tells a story and the order is the story**: the problem, the room,
-  the rhythm, the clubhouse, who is in it, the bar, the price, WHERE IT LEADS,
-  how to start. The hero opens on `CLUB` in [lib/site.ts](lib/site.ts) — the
+  the rhythm, the clubhouse, who is in it, the bar, the price, how to start. The hero opens on `CLUB` in [lib/site.ts](lib/site.ts) — the
   same three beats the homepage's Club section reads, so the two cannot drift.
 
-- **`/club` names the Studio, and has to.** It went a long time without
-  mentioning it once — no word, no link — on the page most likely to be
-  somebody's entry point from search. The homepage gives the Club and the
-  Studio a section each; without that, from this side, the club is the whole company.
-  The section must never imply membership buys a check: it doesn't, and there
-  is nothing to apply to.
+- **`/club` does not route anyone to the Studio.** It used to end on "The
+  other engine" — "One is the on-ramp. The other is where it leads." — and
+  that is the pathway Geekdom said never to imply, so it went. The Studio is
+  in the nav and beside the Club on the homepage. Likewise `/studio` carries
+  no "Apply to the Club" control.
 - **`BENEFITS` renders ONCE on `/club`**, under "What's included", with titles
   and descriptions. It used to render twice — titles in a hero side panel,
   detail lower down — and this file said so; the side panel went when the hero
@@ -416,6 +416,13 @@ the constant:
   absence caused thirteen hand-rolled `<a className="inline-flex h-13 ...">` to
   accumulate**, several already missing the focus ring or the size's own
   `text-*`. If a button shape is missing, add a variant — don't hand-roll it.
+
+**Buttons are for Apply; everything else is an arrow link.** Geekdom asked
+for "Explore Studio" and "Explore the Club" as "just a link with an arrow",
+and the pattern now holds on every public page: secondary actions (Maps, the
+calendar, Contact, billing) are `LINK_ARROW` / `LINK_ARROW_ON_INK` with
+`ArrowRight` (in-app) or `ArrowUpRight` (external). A new outline or ghost
+button on a public page is the thing to question.
 
 **Buttons have square corners — no rounding, 90 degrees.** That is Geekdom's
 own feedback, and `buttonClass` sets `rounded-none` at the base. Don't pass a

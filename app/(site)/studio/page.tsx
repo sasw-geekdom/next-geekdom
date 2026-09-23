@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { pageMetadata } from "@/lib/seo";
-import { ButtonLink, ButtonAnchor } from "@/components/ui/button";
+import Link from "next/link";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 import {
   Eyebrow,
   Lede,
@@ -10,10 +11,12 @@ import {
   SectionTitle,
   Subhead,
   MONO,
+  ARROW,
+  LINK_ARROW,
 } from "@/components/site/section";
 import { Editorial, PullQuote } from "@/components/site/editorial";
 import { MemberVoices } from "@/components/site/member-voices";
-import { TypeHero } from "@/components/site/type-hero";
+import { SpreadHero } from "@/components/site/spread-hero";
 import { PortfolioWall } from "@/components/site/portfolio-wall";
 import { VideoCard } from "@/components/site/video-card";
 import { StudioFilmJsonLd } from "@/components/site/structured-data";
@@ -63,102 +66,65 @@ export default function StudioPage() {
   return (
     <>
       {/*
-        THE BLEED, ON THE THIRD HERO THAT NEEDS IT.
+        THE SAME SPREAD AS /club: headline and the source copy's Fraunces
+        tagline on Bone, the photograph full-bleed beneath, no gradient.
+        Geekdom rejected the dark ramp-over-photograph hero on /club as "too
+        basic, not editorial enough", and this page ran the identical
+        treatment. The three opening paragraphs that sat over the photograph
+        move to the section below it, verbatim.
 
-        The homepage and /club both open on a photograph under the ramp, and
-        this page opened on type over Bone. Reading them in sequence, the
-        Studio looked like a subsection of the site rather than the other half
-        of the institution — the visual promotion the nav already gave it was
-        missing from the page itself.
-
-        OPENLANE AT THEIR WHITEBOARD, and it is the whole argument in one
-        frame: two founders of a backed company working a problem out on a
-        wall. What the Studio sells is six to twelve months of that, so a
-        photograph of the act beats a photograph of the building — and the
-        "same floor" rule is scoped to Club imagery for exactly this reason
-        (see the note in lib/photos.ts).
-
-        MEASURED against the three candidates in the real ramp, at 1440×760
-        with the box inset to 38%: this frame holds Bone at 15.3:1 median and
-        6.0:1 at the single worst pixel across the copy column, AA for body
-        with margin. `brianWhiteboard` measured comparably but does not
-        survive the crop — the fold is 1.87 and that frame is 1.50 with both
-        heads near the top edge, so cover takes the tops of their heads off.
-        Centred, not left-anchored: at `object-left` the man on the right is
-        cut in half by the frame edge.
-
-        1600px against the ~2380 device px a full-bleed fold wants at 2x. The
-        same knowing trade /club's hero already takes, and the ramp is what
-        makes it survivable — 96% of the left half is scrim, so there is very
-        little detail left to go soft.
-
-        IT LEAVES THE STUDIO-COMPANIES SECTION, where it was the one
-        photograph. Running it in both places is the duplication this site has
-        been caught on repeatedly; the logo wall is the right content for
-        "who we're in with" anyway, since four companies and one photograph
-        means three of them go unpictured.
+        `openlaneTeam` — a backed company's founders at their own whiteboard,
+        now black and white under the brand grade (a founder spotlight).
       */}
-      <TypeHero
-        size="compact"
+      <SpreadHero
         eyebrow="Studio"
-        media={{ photo: PHOTOS.openlaneTeam, fadeTo: "48%" }}
         title="Where we go all in with the founders we believe in."
+        photo={PHOTOS.openlaneTeam}
+        objectPosition="object-[50%_30%]"
       >
         {/*
-          The guide's editorial face, on the one line here that is a claim
-          rather than a term. The source copy marks it "Fraunces italic"
-          explicitly — it is the Studio's whole argument in six words, and it
-          earns the register the rest of this page can't have.
+          The source copy marks this line "Fraunces italic" explicitly — it
+          is the Studio's whole argument in six words.
         */}
-        <Editorial className="text-2xl leading-[1.45] text-bone">
+        <Editorial className="text-2xl leading-[1.45] text-graphite sm:text-3xl">
           More than a check. More than mentorship.
         </Editorial>
+      </SpreadHero>
 
-        {/*
-          THE SOURCE DOC'S THREE OPENING PARAGRAPHS, VERBATIM.
+      {/*
+        THE SOURCE DOC'S THREE OPENING PARAGRAPHS, VERBATIM, with the first as
+        a lede — the same typographic transition out of the photograph that
+        /club uses. Figures interpolate from `STUDIO`; the sentences are the
+        doc's.
 
-          Geekdom's feedback is that the site should carry the exact copy from
-          `Geekdom Website — Source Copy v1`, and this section had drifted from
-          it in three ways, all introduced here rather than inherited:
-
-            1. Paragraph 1 lost its second sentence — "The focus is on
-               go-to-market, product, and getting founders connected to the
-               local customers, operators, and investors who make growth
-               possible" — trimmed for measure when this hero took the bleed.
-               It is the only line on the page that says what the six to
-               twelve months are actually spent ON.
-            2. Paragraph 2 lost the Club sentence, which moved to the bottom
-               of the page. The doc keeps it here, where the disqualifier is.
-            3. Paragraph 3 did not exist. It is what tells a reader who is not
-               getting invited that there is still a way in.
-
-          The figures still interpolate from `STUDIO` rather than being typed,
-          so a number cannot drift from the fund; the SENTENCES around them are
-          the doc's. Where the doc says "our Community Fund" and the Capital
-          section says "The Geekdom Community Fund", both are reproduced as
-          written — that variation is the doc's, not an inconsistency to fix.
-        */}
-        <p className="mt-8 text-lg leading-relaxed text-bone/80">
-          The Studio backs a small number of local founders each year with a{" "}
-          {STUDIO.checkRange} {STUDIO.checkTerms} check from our Community Fund
-          and {STUDIO.engagement} of intensive, hands-on work with our{" "}
-          {STUDIO.eir.role}, {STUDIO.eir.name}. The focus is on go-to-market,
-          product, and getting founders connected to the local customers,
-          operators, and investors who make growth possible.
-        </p>
-
-        <p className="mt-5 text-lg leading-relaxed text-bone">
-          There&rsquo;s no open application and no cohorts. Founders are
-          scouted and invited. Club membership isn&rsquo;t a prerequisite, but
-          most Studio relationships start there.
-        </p>
-
-        <p className="mt-5 text-lg leading-relaxed text-bone/80">
-          Beyond the portfolio, the Studio also runs open programming
-          throughout the year — Office Hours, Startup Bootcamp, and select
-          workshops — for the broader community.
-        </p>
-      </TypeHero>
+        ⚠️ PENDING GEEKDOM: "Club membership isn't a prerequisite, but most
+        Studio relationships start there." is their own source copy, and it
+        reads as the Club-to-Studio pathway they have since said never to
+        imply. Left as written until they rule on it.
+      */}
+      <Section tone="bone">
+        <h2 className="sr-only">Opening</h2>
+        <div className="max-w-3xl">
+          <p className="text-2xl leading-snug text-graphite sm:text-[1.75rem]">
+            The Studio backs a small number of local founders each year with a{" "}
+            {STUDIO.checkRange} {STUDIO.checkTerms} check from our Community
+            Fund and {STUDIO.engagement} of intensive, hands-on work with our{" "}
+            {STUDIO.eir.role}, {STUDIO.eir.name}. The focus is on
+            go-to-market, product, and getting founders connected to the local
+            customers, operators, and investors who make growth possible.
+          </p>
+          <p className="mt-8 max-w-2xl text-lg leading-relaxed text-muted-foreground">
+            There&rsquo;s no open application and no cohorts. Founders are
+            scouted and invited. Club membership isn&rsquo;t a prerequisite,
+            but most Studio relationships start there.
+          </p>
+          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground">
+            Beyond the portfolio, the Studio also runs open programming
+            throughout the year — Office Hours, Startup Bootcamp, and select
+            workshops — for the broader community.
+          </p>
+        </div>
+      </Section>
 
       {/*
         THE TERMS BAND CAME OUT, and it was mine rather than the doc's.
@@ -478,26 +444,15 @@ export default function StudioPage() {
             </Lede>
           </div>
 
-          <figure>
-            <Photo
-              photo={PHOTOS.workshopWednesday}
-              aspect="aspect-video"
-              sizes="(min-width: 1024px) 490px, 100vw"
-            />
-            {/*
-              NAMED, because the guide's rule is "Real people, named" and
-              because naming him is what ties this to the film further down —
-              the person running the open session is the founder of a company
-              the Studio backed. That is the pipeline argument in two frames,
-              and it only works if both say who he is.
-            */}
-            <figcaption
-              className={cn("mt-3", MONO.label, "text-muted-foreground")}
-            >
-              Workshop Wednesday — {STUDIO_FILM.founder} of{" "}
-              {STUDIO_FILM.company} on marketing strategy
-            </figcaption>
-          </figure>
+          {/*
+            NO CAPTION — Geekdom has asked for photographs without them. The
+            alt text still names who is speaking, for anyone who needs it.
+          */}
+          <Photo
+            photo={PHOTOS.workshopWednesday}
+            aspect="aspect-video"
+            sizes="(min-width: 1024px) 490px, 100vw"
+          />
         </div>
       </Section>
 
@@ -575,7 +530,7 @@ export default function StudioPage() {
                   href={partner.href}
                   target="_blank"
                   rel="noreferrer noopener"
-                  className="-mx-3 block rounded-lg px-3 py-6 transition-colors group-hover:bg-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay"
+                  className="-mx-3 block px-3 py-6 transition-colors group-hover:bg-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay"
                 >
                   {mark}
                 </a>
@@ -630,26 +585,25 @@ export default function StudioPage() {
             founders and companies to be invited in. The best Studio
             investments start as relationships.
           </p>
-          {/*
-            THE CAVEAT BELONGS BESIDE THE BUTTON, not in the hero.
-
-            It was in the hero's disqualifier paragraph, which the bleed
-            trimmed for measure. Losing it here is worse than losing it there:
-            the button under this paragraph says "Apply to the Club", and
-            without the caveat a founder reads that as the route in — i.e.
-            that $100 a month buys a shot at a check. It doesn't, and /club
-            carries the same rule in the other direction.
-          */}
           <p className="mt-4 leading-relaxed text-muted-foreground">
             Club membership isn&rsquo;t a prerequisite, but most Studio
             relationships start there.
           </p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <ButtonLink href="/apply">Apply to the Club</ButtonLink>
-            <ButtonAnchor external href={LUMA_CALENDAR_URL} variant="outline">
-              See upcoming events
-            </ButtonAnchor>
-          </div>
+          {/*
+            NO "APPLY TO THE CLUB" HERE. A red Apply-to-the-Club button under
+            "If you're a founder" on the Studio page is the Club-to-Studio
+            pathway in one control, and Geekdom has said never to imply one.
+            What's left is a link, not a button — buttons are for Apply.
+          */}
+          <a
+            href={LUMA_CALENDAR_URL}
+            target="_blank"
+            rel="noreferrer noopener"
+            className={cn("mt-8 inline-flex", LINK_ARROW)}
+          >
+            See upcoming events
+            <ArrowUpRight aria-hidden="true" className={ARROW.external} />
+          </a>
           <p className="mt-6 text-muted-foreground">
             Or introduce yourself — send your deck to{" "}
             <a href={`mailto:${STUDIO.email}`} className={LINK}>
@@ -670,7 +624,7 @@ export default function StudioPage() {
           this to drift out of alignment again — nothing else is being aligned
           to.
         */}
-        <div className="mt-12 rounded-xl border border-border bg-bone-light p-8 sm:p-10">
+        <div className="mt-12 border border-border bg-bone-light p-8 sm:p-10">
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-12">
             <div>
               <Subhead>If you&rsquo;re a corporate partner</Subhead>
@@ -685,9 +639,10 @@ export default function StudioPage() {
               "Contact us → /contact" is the doc's link for this block. It had
               been a mailto because /contact did not exist; it does now.
             */}
-            <ButtonLink href="/contact" variant="outline" className="shrink-0">
+            <Link href="/contact" className={cn("shrink-0", LINK_ARROW)}>
               Contact us
-            </ButtonLink>
+              <ArrowRight className={ARROW.internal} strokeWidth={2} />
+            </Link>
           </div>
         </div>
       </Section>

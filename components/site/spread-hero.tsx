@@ -4,8 +4,10 @@ import type { Photo as PhotoData } from "@/lib/photos";
 import { cn } from "@/lib/utils";
 
 /**
- * /club's hero, as a SPREAD: the headline at display size on Bone, then the
- * photograph full-bleed beneath it, running past the fold. No gradient.
+ * The hero for /club and /studio, as a SPREAD: the headline at display size
+ * on Bone, then the photograph full-bleed beneath it, running past the fold.
+ * No gradient. `children` (a tagline) sits under the headline, above the
+ * photograph; body copy belongs in the section after, not here.
  *
  * Geekdom on the TypeHero version this replaced: "I don't like this gradient
  * treatment and the short header. It feels too basic. Not editorial enough.
@@ -32,14 +34,16 @@ import { cn } from "@/lib/utils";
  * Nothing overlaps the photograph and nothing fades it: the section after
  * it (/club's Opening) makes the transition in type — see the note there.
  */
-export function ClubHero({
+export function SpreadHero({
   eyebrow,
   title,
+  children,
   photo,
   objectPosition,
 }: {
   eyebrow: React.ReactNode;
   title: React.ReactNode;
+  children?: React.ReactNode;
   photo: PhotoData;
   /** Tailwind `object-[x_y]` class — which part of the frame survives. */
   objectPosition?: string;
@@ -56,6 +60,7 @@ export function ClubHero({
         >
           {title}
         </h1>
+        {children && <div className="mt-6 max-w-3xl">{children}</div>}
       </Container>
       <div className="relative h-[min(66.667vw,88svh)] bg-graphite">
         <Image

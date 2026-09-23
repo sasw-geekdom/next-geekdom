@@ -115,12 +115,13 @@ export function VideoCard({
     <div className={className}>
       {playing && (
         /*
-          46rem, not the full measure. A 16:9 player across 1088px is 612px
-          tall and turns a supporting link into the tallest thing in the
-          section; at 736px it is 414px, which sits under the logo wall
-          without outranking it. Square corners, like `Photo`.
+          THE FULL CONTENT WIDTH, at Geekdom's request — the player matches
+          the portfolio grid above it edge to edge (1088px at most, so 612px
+          tall). It was capped at 46rem so it wouldn't outrank the logo wall;
+          once someone has pressed play, the film is the point. Square
+          corners, like `Photo`.
         */
-        <div className="relative mb-8 aspect-video overflow-hidden bg-graphite lg:max-w-[46rem]">
+        <div className="relative mb-8 aspect-video overflow-hidden bg-graphite">
           <iframe
             src={`https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`}
             title={title}

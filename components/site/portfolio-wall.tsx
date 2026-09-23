@@ -47,6 +47,20 @@ import { cn } from "@/lib/utils";
  * mask reads alpha and throws color away, which fixes the white-logo problem
  * and the sponsor-wall mismatch at once. See `logo` in lib/site.ts.
  */
+/**
+ * Column steps that fill the last row whenever the count allows it: the
+ * widest divisor that still leaves a wordmark room. An odd count with no
+ * divisor of 3 cannot fill a row of two; it gets one column on a phone.
+ * Literal class strings, so Tailwind can see each one.
+ */
+function columnsFor(n: number): string {
+  if (n % 6 === 0) return "grid-cols-2 sm:grid-cols-3 xl:grid-cols-6";
+  if (n % 4 === 0) return "grid-cols-2 lg:grid-cols-4";
+  if (n % 3 === 0) return "grid-cols-1 sm:grid-cols-3";
+  if (n % 2 === 0) return "grid-cols-2";
+  return "grid-cols-1 sm:grid-cols-2";
+}
+
 export function PortfolioWall({
   /** Only the companies the Studio has backed. */
   studioOnly = false,
@@ -65,12 +79,14 @@ export function PortfolioWall({
         right and bottom, so each line is exactly one border wide and a cell's
         hover fill can't be clipped by a neighbor.
 
-        2 / 3 / 6 COLUMNS because every count this renders divides by all
-        three — 18 on the homepage, 6 on /studio — so no layout ends on a
-        half-empty row with an open right edge.
+        COLUMNS FROM THE COUNT, so no layout ends on a half-empty row with an
+        open right edge. This hardcoded 2 / 3 / 6 on the assumption that
+        /studio showed six companies; it shows four, which left two empty
+        columns and a missing border at xl. `columnsFor` picks the steps.
       */
       className={cn(
-        "grid grid-cols-2 border-l border-t border-border sm:grid-cols-3 xl:grid-cols-6",
+        "grid border-l border-t border-border",
+        columnsFor(companies.length),
         className,
       )}
     >

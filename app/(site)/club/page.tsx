@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
 import { MembershipJsonLd } from "@/components/site/structured-data";
-import { Check, Minus, Plus } from "lucide-react";
+import { ArrowUpRight, Check, Minus, Plus } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import {
   Eyebrow,
@@ -10,11 +10,12 @@ import {
   Subhead,
   HEADING,
   MONO,
+  ARROW,
+  LINK_ARROW,
 } from "@/components/site/section";
 import { Editorial } from "@/components/site/editorial";
 import { Photo } from "@/components/site/photo";
-import { ButtonAnchor } from "@/components/ui/button";
-import { ClubHero } from "@/components/site/club-hero";
+import { SpreadHero } from "@/components/site/spread-hero";
 import { PHOTOS } from "@/lib/photos";
 import {
   BENEFITS,
@@ -29,13 +30,9 @@ import {
 } from "@/lib/membership";
 import {
   CLUB,
-  STUDIO,
   LOCATION,
-  CLUB_OPENS,
-  OPEN_COFFEE,
   LUMA_CALENDAR_URL,
 } from "@/lib/site";
-import { formatLongDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 // Built from priceLabel() so the search snippet can't drift from Stripe — see
@@ -105,7 +102,7 @@ export default function ClubPage() {
         THE HERO IS A SPREAD: the source copy's eyebrow and headline at display
         size on Bone, the photograph full-bleed beneath, no gradient. Geekdom
         found the gradient band before it "too basic, not editorial enough";
-        ClubHero records what was tried and why this won.
+        SpreadHero records what was tried and why this won.
 
         NO PRICE HERE, deliberately. Leading with the fee makes the page a
         pricing page — "is it worth $100?" before the reader has anything to
@@ -117,7 +114,7 @@ export default function ClubPage() {
         different set of faces from the homepage hero. Anchored at 35% down so
         the crop keeps the back row's heads and the speaker's hands.
       */}
-      <ClubHero
+      <SpreadHero
         eyebrow="The Club · Members only"
         photo={PHOTOS.makeAPoint}
         objectPosition="object-[60%_35%]"
@@ -298,119 +295,13 @@ export default function ClubPage() {
           belief that no good idea gets built alone.
         </p>
 
-      <div className="mt-14 grid gap-6 sm:grid-cols-3">
-        {/*
-          `pysaTalk` took this tile when `makeAPoint` went to the hero, and
-          it is the right shape for the slot rather than a stand-in: the two
-          frames beside it are both ROOMS, and a third room at 341px makes
-          the row one texture. This is people at close range — two speakers,
-          an audience in the foreground — which is what "all breeds" is
-          actually claiming.
-        */}
-        <Photo
-          photo={PHOTOS.pysaTalk}
-          aspect="aspect-[3/2]"
-          sizes="(min-width: 640px) 341px, 100vw"
-        />
-        {/*
-          `fullHouse` took this slot when `speaking` went to the homepage's
-          Club section, where it had to carry a 584px frame on its own. It
-          is the better trade in both directions: this is a three-up of small
-          tiles under "Builders of all breeds", and a packed room reads as a
-          crowd here without needing any single face to be legible.
-        */}
-        {/*
-          `fullHouse` LEFT THIS TILE BECAUSE OF WHO IS IN IT. The man
-          applauding centre-right is the man on the right of the homepage
-          hero, and at 341px he is legible rather than incidental — so the
-          same face was appearing on the two biggest pages on the site for no
-          reason anyone chose.
-
-          He is now in exactly one frame across the whole site: the homepage
-          hero, where he is meant to be.
-
-          `pysaTables` replaces him on merit as well as by elimination. It is
-          the only EVENING photograph in the library, and the two tiles
-          beside it are both daylight — in a row of three it is the one that
-          does not blend into its neighbours.
-        */}
-        {/*
-          `fireside` REPLACED `pysaTables` BECAUSE OF A SHARED FACE. Both pysa
-          frames come from the same evening meetup, so they share a room and
-          they share people — the person with long dreadlocks is in the
-          foreground of both, and they sat in adjacent tiles.
-
-          Two frames from one event will always do this. The risk was noted
-          about the morehumanthanhuman archive and then not applied here, which
-          is why this row needed a third EVENT rather than a third photograph.
-
-          It also suits the section better than a packed room does: two
-          speakers laughing with members watching from close by is what a
-          give-first culture looks like.
-        */}
-        <Photo
-          photo={PHOTOS.fireside}
-          aspect="aspect-[3/2]"
-          sizes="(min-width: 640px) 341px, 100vw"
-        />
-        {/*
-          `welcomeHero`, and the reason this slot has now changed twice is
-          worth writing down: it keeps colliding with the homepage.
-
-          It held `theRoom` while the homepage's Club section did, then
-          `conversation` — which was free at the time and is now the
-          homepage's full-bleed HERO. That made the collision worse than the
-          one the swap was meant to fix: a reader clicking "Explore the Club"
-          met the same two men, at 341px, one screen after meeting them at
-          full width.
-
-          `welcomeHero` had never been placed anywhere. Two members greeting
-          each other with a room applauding around them is the most literal
-          "builders of all breeds" frame in the library, and nothing else
-          competes for it.
-
-          THE BLACK-AND-WHITE QUOTA STILL NEEDS ANSWERING. The 2026 guide
-          asks for roughly 30% of the photography in black and white,
-          "reserved for editorial gravity". `conversation` was carrying that
-          here; it now carries it on the homepage hero instead, which is a
-          more prominent home for it but leaves this page without one. Worth
-          a look when the /club photography gets its own pass.
-
-          It is also the library's only BLACK AND WHITE frame, and it had
-          never been placed. The 2026 guide asks for roughly 30% of the
-          photography in black and white, "reserved for editorial gravity —
-          member spotlights, ceremonial moments"; two people in close
-          conversation, under a heading about who is in the room, is the
-          closest thing on this site to a member spotlight.
-        */}
-        {/*
-          `speaking` REPLACED `theCrowd`, AND IT WAS A FACE AGAIN. The man in
-          the black coat addressing the room in `theCrowd` is the same man
-          presenting in `pysaTalk`, which is tile one. Different events, same
-          person, same row — the second time this row has shipped a repeat.
-
-          THE LIBRARY IS THE REASON, and it is worth writing down. A handful of
-          people recur across most of these frames: the man with the long dark
-          hair is in `theCrowd` and `pysaTalk`; the grey-haired man with the
-          tattooed forearm is in `conversation`, `welcomeHero`, `fullHouse` AND
-          `programming`. That is why every unused frame was unusable here — all
-          four carry one of the two. A three-up of people needs three EVENTS,
-          and there are barely three to draw on.
-
-          `speaking` is the third event, and it fixes something else the row
-          had: tiles one and two are both men presenting. This is a woman
-          leading a room, which is the only frame in the library that shows it.
-
-          `theCrowd` went to the homepage's Club section in exchange — warmer
-          there than what it replaced, and no one in it appears anywhere else
-          on that page.
-        */}
-        <Photo
-          photo={PHOTOS.speaking}
-          aspect="aspect-[3/2]"
-          sizes="(min-width: 640px) 341px, 100vw"
-        />
-      </div>
+      {/*
+        NO PHOTO ROW HERE. A three-up of event photographs sat between the
+        intro and the fit lists; it went when Geekdom asked for a site that
+        doesn't feel photo-heavy. /club now carries three photographs: the
+        hero, the rhythm's full-width frame (which the source copy asks for),
+        and the clubhouse.
+      */}
 
         <div className="mt-14 grid gap-12 lg:grid-cols-2 lg:gap-16">
           <div>
@@ -495,12 +386,6 @@ export default function ClubPage() {
               game — in the historic {LOCATION.building} downtown, where San
               Antonio builders have been gathering for over a decade.
             </p>
-            <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
-              Every Tuesday, {OPEN_COFFEE.name} meets at {OPEN_COFFEE.where}{" "}
-              from 8 to 9:30. Public, free, no agenda — just founders and
-              builders finding each other over coffee. You don&rsquo;t have to
-              be a member to come.
-            </p>
 
             {/*
               The address as an <address>, not a paragraph — it is the one
@@ -517,122 +402,60 @@ export default function ClubPage() {
               Elevator to the {LOCATION.floor.toLowerCase()}.
             </address>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <ButtonAnchor
-                external
+            {/* Links, not buttons — Geekdom keeps buttons for Apply. */}
+            <div className="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:gap-8">
+              <a
                 href={`https://maps.google.com/?q=${encodeURIComponent(
                   `Geekdom, ${LOCATION.postal}`,
                 )}`}
-                variant="outline"
+                target="_blank"
+                rel="noreferrer noopener"
+                className={LINK_ARROW}
               >
                 Open in Maps
-              </ButtonAnchor>
-              <ButtonAnchor external href={LUMA_CALENDAR_URL} variant="ghost">
+                <ArrowUpRight aria-hidden="true" className={ARROW.external} />
+              </a>
+              <a
+                href={LUMA_CALENDAR_URL}
+                target="_blank"
+                rel="noreferrer noopener"
+                className={LINK_ARROW}
+              >
                 Browse the calendar
-              </ButtonAnchor>
+                <ArrowUpRight aria-hidden="true" className={ARROW.external} />
+              </a>
             </div>
           </div>
 
-          <div>
-            <Photo
-              photo={PHOTOS.theFloor}
-              aspect="aspect-[4/3]"
-              sizes="(min-width: 1024px) 544px, 100vw"
-            />
-          <ul className="mt-4 grid grid-cols-2 gap-4">
-            {[
-              // Captions name WHERE YOU ARE, not what you get. See the note above.
-              { photo: PHOTOS.theCafe, caption: "The cafe" },
-              { photo: PHOTOS.dropIn, caption: "By the windows" },
-            ].map((frame) => (
-              <li key={frame.caption}>
-                <Photo
-                  photo={frame.photo}
-                  aspect="aspect-[4/5]"
-                  sizes="(min-width: 1024px) 256px, 50vw"
-                />
-                {/*
-                  Editorial captions, which the brand guide asks for by name in
-                  its website section and which the site had nowhere.
-                */}
-                <p className={cn("mt-3", MONO.label, "text-muted-foreground")}>
-                  {frame.caption}
-                </p>
-              </li>
-            ))}
-          </ul>
-          </div>
+          {/*
+            ONE FRAME, NO CAPTION. This column held the floor as a lead plus
+            two captioned portrait tiles; Geekdom asked for fewer photographs
+            and no captions. `theCafe` rather than `theFloor`, because
+            `theFloor` is the same moment as the rhythm section's
+            `theFloorWide` a screen above — the two would have been two of the
+            page's three photographs.
+          */}
+          <Photo
+            photo={PHOTOS.theCafe}
+            aspect="aspect-[4/3]"
+            sizes="(min-width: 1024px) 544px, 100vw"
+          />
         </div>
 
-        {/*
-          THE GRID SHOWS THE ROOM, WHICH IS THE SECTION'S ONE JOB.
-
-          It used to run four tiles captioned "The cafe", "Drop in and work",
-          "Fireside chats" and "Programming, most weeks" — and two of those are
-          not the room at all. Their own alt text gives them away: `fireside`
-          is "two speakers laughing during a fireside chat" and `programming`
-          is "a talk in progress". Photographs of EVENTS, in the one section
-          that exists to answer WHERE.
-
-          The captions had a second problem. Four of them were an arbitrary
-          subset of the ten-item `BENEFITS` list the page states properly a
-          screen later — "The cafe" appears in both, verbatim — written in a
-          different vocabulary and arriving first. That is why the row read as
-          randomly chosen: as a selection from a list nobody had seen yet, it
-          was.
-
-          TWO FRAMES, NOT THREE, AND THE FLOOR ONLY HAS THREE PLACES. The
-          third tile was `theFloorWide` — which is the same view as this
-          section's own lead photograph. Both alt texts open "The third floor
-          from the back"; they are two frames of one moment, a panel recording
-          shot from almost the same spot, and they sat a few hundred pixels
-          apart.
-
-          Nothing replaces it, because there is nothing left to show. The
-          photographed areas of this floor are the open tables, the cafe and
-          the window banquettes — and the open tables IS the lead photograph.
-          The archive was searched for a fourth: every candidate was either the
-          cafe again, a close-up of faces, or carried one of the two people who
-          recur across this whole library.
-
-          So the section shows three places, one of them large: the floor as
-          the lead, then the cafe and the windows. The captions are wayfinding
-          rather than an offer, and they describe only what is visible.
-
-          PORTRAIT TILES, 4:5, which is not the aspect any other grid on the
-          site uses. Landscape frames in a row read as a filmstrip of moments;
-          upright ones read as places you could walk to.
-
-          THEY LIVE INSIDE THE RIGHT COLUMN, AND THE WIDTH IS WHY. 4:5 was
-          picked for a FOUR-up across the full container — 254px wide, 318
-          tall, thumbnails you scan. Cutting the row to two and leaving it
-          full-width made each one 532 x 665px: two portraits towering over the
-          4:3 lead photograph above them, which is a section that looks broken
-          and reads as though the bottom two images have no job.
-
-          In the right column they are 248 x 310 — within a few pixels of what
-          the aspect was chosen for. It also groups the photography into one
-          column, so the section reads as copy on the left and the place on the
-          right, rather than a block and then two orphans.
-        */}
       </Section>
 
       {/* ── Membership ───────────────────────────────────────────────── */}
       {/*
-        WHERE THE PRICE LIVES NOW — eighth of nine sections, which is where
-        Geekdom's own source copy puts it, and where it stops being an opening
-        bid and starts being an answer.
+        THE PRICE IS IN THE CARD, NOT THE HEADLINE. The source copy's headline
+        here is "$100 per month. Application-based.", and for a while the
+        number ran at SectionTitle size — the largest rendering of the price
+        on the site. Geekdom has since asked that nothing on the site feel
+        salesy or pushy, so the headline keeps only "Application-based." and
+        the figure sits at the top of the card, one quiet line above "Billed
+        monthly", where it answers a question the reader is already asking.
 
-        The number is the HEADLINE here rather than a figure in a card, and
-        that is deliberate: by this point the reader has been through the
-        room, the rhythm, the clubhouse and who it's for, so "$100/month.
-        Application-based." reads as the resolution of a question they are
-        already holding. The same sentence at the top of the page reads as a
-        price tag.
-
-        Built from `priceLabel()` and never typed — a literal here would drift
-        from Stripe silently, and this is now the largest rendering of the
-        price on the site.
+        Built from `priceSentence()` and never typed — a literal would drift
+        from Stripe silently.
       */}
       {/*
         BONE, NOT BONE-LIGHT. Moving "The bar is generosity" above the
@@ -643,50 +466,33 @@ export default function ClubPage() {
       */}
       <Section tone="bone">
         <Eyebrow>Membership</Eyebrow>
-        {/*
-          "$100 per month. Application-based." — the doc's headline, and the
-          preposition matters. This read "$100/month.", which is a rate card;
-          `priceSentence()` spells it out and still derives the figure from
-          `MEMBERSHIP_PRICE_CENTS`, so it cannot drift from Stripe.
-
-          THE LEDE UNDER IT IS GONE. "One membership. No tiers to compare, no
-          desk to rent, no contract to negotiate." was written here. The doc
-          gives this section an eyebrow, a headline, the includes list, and
-          one closing line — which now sits after the list, where the doc puts
-          it.
-        */}
-        <SectionTitle>
-          {priceSentence() ? (
-            <>
-              <span className="tabular-nums">{priceSentence()}</span>.{" "}
-              <span className="text-clay">Application-based.</span>
-            </>
-          ) : (
-            <>
-              One membership.{" "}
-              <span className="text-clay">Application-based.</span>
-            </>
-          )}
-        </SectionTitle>
+        <SectionTitle>Application-based.</SectionTitle>
 
         <div className="mt-16 grid gap-12 lg:grid-cols-[1fr_360px] lg:gap-16">
           {/* What you get */}
           <div>
             <Subhead>What&rsquo;s included</Subhead>
-            <ul className="mt-8 flex flex-col gap-7">
+            {/*
+              TITLES ONLY. Each benefit carried a sentence or two of
+              description — about 360 words for the section — and Geekdom's
+              note on the portfolio applies here too: too text-heavy, remove
+              the descriptions. They stay in `BENEFITS` (/llms.txt still reads
+              them); this list just doesn't render them.
+            */}
+            <ul className="mt-8 grid border-b border-border sm:grid-cols-2 sm:gap-x-10">
               {BENEFITS.map((benefit) => (
-                <li key={benefit.title} className="flex gap-4">
+                <li
+                  key={benefit.title}
+                  className="flex items-center gap-3 border-t border-border py-4"
+                >
                   <Check
-                    className="mt-1 h-5 w-5 shrink-0 text-clay"
+                    className="h-4 w-4 shrink-0 text-clay"
                     strokeWidth={2}
                     aria-hidden="true"
                   />
-                  <div>
-                    <h3 className={cn(HEADING.item, "text-graphite")}>{benefit.title}</h3>
-                    <p className="mt-1 leading-relaxed text-muted-foreground">
-                      {benefit.description}
-                    </p>
-                  </div>
+                  <span className="text-lg leading-snug text-graphite">
+                    {benefit.title}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -739,25 +545,25 @@ export default function ClubPage() {
 
           {/* Price / apply card */}
           <aside className="lg:sticky lg:top-24 lg:self-start">
-            <div className="rounded-xl border border-border bg-bone p-7 shadow-sm">
-              {/*
-                NO PRICE IN THE CARD. It used to repeat the figure at
-                FIGURE.md, which made sense when the hero carried the number
-                and this was the second mention; now the section headline two
-                inches away IS the price, and setting it twice in one viewport
-                reads as a page that is nervous about it.
-
-                What the card does instead is hold the CTA while the reader
-                scrolls the nine-item list beside it — which is the whole
-                reason it is sticky.
-              */}
+            <div className="border border-border bg-bone p-7">
               <p className={cn(MONO.eyebrow, "text-concrete")}>Geekdom Club</p>
 
               {price ? (
-                <p className="mt-4 leading-relaxed text-muted-foreground">
-                  Billed monthly. Nothing is charged until you&rsquo;re
-                  accepted, and you can cancel any time.
-                </p>
+                <>
+                  <p
+                    className={cn(
+                      "mt-4 tabular-nums",
+                      HEADING.subhead,
+                      "text-graphite",
+                    )}
+                  >
+                    {priceSentence()}
+                  </p>
+                  <p className="mt-3 leading-relaxed text-muted-foreground">
+                    Billed monthly. Nothing is charged until you&rsquo;re
+                    accepted, and you can cancel any time.
+                  </p>
+                </>
               ) : (
                 <>
                   <p className={cn("mt-4", HEADING.item, "text-graphite")}>
@@ -795,109 +601,26 @@ export default function ClubPage() {
         never said how long you'd wait or when the thing you're paying for
         actually starts.
       */}
-            {/* ── The other engine ─────────────────────────────────────────── */}
       {/*
-        /club NEVER MENTIONED THE STUDIO. Not the word, not a venture layer,
-        not a fund, and no link — zero occurrences in the page body, on the
-        page most likely to be somebody's entry point from search.
-
-        That breaks the site's central claim from the Club's side. The homepage
-        states it plainly — "Geekdom runs a members' club and a venture fund" —
-        and builds a whole section on the pipeline between them, because
-        without it the two engines read as a landlord with a side fund. Every
-        other page already carries its half: /studio points at the Club by
-        name, the FAQ answers for both. This page behaved as though the club
-        were the whole company.
-
-        WHAT IT MUST NOT SAY is that membership buys a check. The homepage
-        lede is explicit that it does not and that there is nothing to apply
-        to, and this reuses that wording rather than softening it — an
-        application fee that reads as buying a lottery ticket is the one way
-        this section could do damage.
+        "THE OTHER ENGINE" IS GONE. It ran "One is the on-ramp. The other is
+        where it leads." — the Club-to-Studio pathway Geekdom said never to
+        imply. The Studio is in the nav and beside the Club on the homepage;
+        this page doesn't need to route anyone to it.
       */}
+
       {/*
-        GRAPHITE, FOR TWO REASONS. It landed on bone-light directly after the
-        Membership section, which is also bone-light — six points of luminance
-        between them, which reads as one long section rather than two.
-
-        And graphite is how the HOMEPAGE treats this same argument: its
-        pipeline section is the one dark band on the page. Matching it means
-        the reader who met the idea there meets it in the same clothes here.
+        "WHAT HAPPENS NEXT — Three steps, no negotiation." IS GONE, at
+        Geekdom's request. "No negotiation" read pushy, and its three steps
+        repeated the membership card (a person reads it, two weeks, nothing
+        charged until accepted). The Club's opening date it carried is on
+        /faq.
       */}
-      <Section tone="graphite">
-        <Eyebrow onInk>The other engine</Eyebrow>
-        <SectionTitle className="text-bone">
-          One is the on-ramp. The other is where it leads.
-        </SectionTitle>
-        <p className="mt-6 max-w-2xl text-lg leading-relaxed text-bone/70">
-          Geekdom runs a members&rsquo; club and a venture fund. Most Studio
-          relationships start in the Club — not because membership buys you a
-          check, it doesn&rsquo;t and there&rsquo;s nothing to apply to, but
-          because the work is easier to see up close.
-        </p>
-        <p className="mt-5 max-w-2xl text-lg leading-relaxed text-bone/70">
-          The Studio backs {STUDIO.foundersPerYear} founders a year with{" "}
-          {STUDIO.checkRange} {STUDIO.checkTerms} checks from the {STUDIO.fund}{" "}
-          and {STUDIO.engagement} of hands-on work with {STUDIO.eir.name}, our{" "}
-          {STUDIO.eir.role}. Founders are scouted and invited.
-        </p>
-        <div className="mt-8">
-          <ButtonLink href="/studio" size="lg" variant="on-ink-outline">
-            Explore Studio
-          </ButtonLink>
-        </div>
-      </Section>
 
-      {/* ── What happens next ────────────────────────────────────────── */}
-      <Section tone="bone">
-        <Eyebrow>What happens next</Eyebrow>
-        <SectionTitle>Three steps, no negotiation.</SectionTitle>
-        <ol className="mt-12 grid gap-10 sm:grid-cols-3">
-          {[
-            {
-              n: "01",
-              title: "Apply",
-              body: "A short form — a handful of questions, about ten minutes.",
-            },
-            {
-              n: "02",
-              title: "Hear back",
-              body: "A person on the Geekdom team reads it. You'll have an answer within two weeks.",
-            },
-            {
-              n: "03",
-              title: "Start",
-              body: `The club membership operates fully from ${formatLongDate(
-                CLUB_OPENS,
-              )}. Nothing is charged until you're accepted.`,
-            },
-          ].map((step) => (
-            <li key={step.n}>
-              <p className="font-mono text-xs tracking-[0.18em] text-concrete">
-                {step.n}
-              </p>
-              <h3 className={cn("mt-2", HEADING.subhead, "text-graphite")}>{step.title}</h3>
-              <p className="mt-3 leading-relaxed text-muted-foreground">
-                {step.body}
-              </p>
-            </li>
-          ))}
-        </ol>
-      </Section>
-
-      <Section tone="graphite">
-        <Eyebrow onInk>Already a member</Eyebrow>
-        <SectionTitle className="text-bone">
-          Manage your membership.
-        </SectionTitle>
-        <p className="mt-6 max-w-2xl text-lg leading-relaxed text-bone/70">
-          Update your card, download invoices, or cancel — no sign-in to
-          remember. We&rsquo;ll email you a secure link.
-        </p>
-        <ButtonLink href="/account" size="lg" variant="on-ink" className="mt-8">
-          Go to billing
-        </ButtonLink>
-      </Section>
+      {/*
+        "ALREADY A MEMBER — Manage your membership." IS OFF until billing is
+        live. It linked to /account; that route still exists, it just isn't
+        promoted here. Put the section back when members can actually use it.
+      */}
     </>
   );
 }

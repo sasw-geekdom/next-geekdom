@@ -139,7 +139,7 @@ function FeaturedRow({ event }: { event: FeaturedEvent }) {
         href={event.href}
         target="_blank"
         rel="noreferrer noopener"
-        className="-mx-3 block rounded-lg px-3 py-5 transition-colors hover:bg-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay"
+        className="-mx-3 block px-3 py-5 transition-colors hover:bg-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay"
       >
         <p className={cn(MONO.label, "text-muted-foreground")}>
           {formatDateTime(event.start)}
