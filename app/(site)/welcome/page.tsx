@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
-import { ButtonLink, ButtonAnchor } from "@/components/ui/button";
-import { Container, Eyebrow, PageTitle } from "@/components/site/section";
+import { ArrowUpRight } from "lucide-react";
+import {
+  ARROW,
+  Container,
+  Eyebrow,
+  LINK_ARROW,
+  PageTitle,
+} from "@/components/site/section";
 import { LOCATION, LUMA_CALENDAR_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -39,17 +45,17 @@ export default function WelcomePage() {
         </p>
 
         <div className="mt-10 flex flex-col gap-3 sm:flex-row">
-          <ButtonLink href="/events" size="lg">
-            See what&rsquo;s on
-          </ButtonLink>
-          <ButtonAnchor
-            external
+          {/* /events is gone; the calendar is Luma. A link, not a button —
+              buttons on this site are for Apply. */}
+          <a
             href={LUMA_CALENDAR_URL}
-            variant="outline"
-            size="lg"
+            target="_blank"
+            rel="noreferrer noopener"
+            className={LINK_ARROW}
           >
-            Subscribe on Luma
-          </ButtonAnchor>
+            See what&rsquo;s on
+            <ArrowUpRight aria-hidden="true" className={ARROW.external} />
+          </a>
         </div>
 
         <p className="mt-10 text-sm text-muted-foreground">

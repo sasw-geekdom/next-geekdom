@@ -152,8 +152,6 @@ export default function MediaPage() {
         <h2 className="sr-only">Logos and brand assets</h2>
         <Lede>
           Please follow our logo usage guidelines when using any Geekdom marks.
-          The marks may appear in Geekdom Red, Graphite, or Bone, and should
-          never be recolored, rotated, stretched, or placed in a gradient.
         </Lede>
         <ul className="mt-10 max-w-2xl">
           {[

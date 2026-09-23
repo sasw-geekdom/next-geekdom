@@ -72,14 +72,29 @@ const nextConfig: NextConfig = {
       { source: "/venture", destination: "/studio", permanent: true },
       { source: "/community-fund", destination: "/studio", permanent: true },
 
-      // Programs and events now run through the club calendar.
-      { source: "/programs", destination: "/events", permanent: true },
-      { source: "/programs/:slug*", destination: "/events", permanent: true },
-      { source: "/incubator", destination: "/events", permanent: true },
+      // /events and /faq CAME OUT at Geekdom's request — neither is in
+      // `Source Copy v1`'s sitemap. The calendar lives on Luma (the homepage's
+      // "This month in the Club" links there); the FAQ's membership answers
+      // live on /club.
+      //
+      // Luma is TEMPORARY (307), not permanent: it's another company's URL
+      // and could change, and a 308 is cached by browsers forever. Kept in
+      // step with LUMA_CALENDAR_URL in lib/site.ts by hand — this file
+      // doesn't import app code.
+      { source: "/events", destination: "https://luma.com/geekdom", permanent: false },
+      { source: "/events/:slug*", destination: "https://luma.com/geekdom", permanent: false },
+      { source: "/faq", destination: "/club", permanent: true },
 
-      // The announcement itself is the "about us" of this moment.
-      { source: "/about-us", destination: "/whats-changing", permanent: true },
-      { source: "/press", destination: "/whats-changing", permanent: true },
+      // Programs pointed at /events; straight to the calendar now, rather
+      // than a two-hop chain through a redirect.
+      { source: "/programs", destination: "https://luma.com/geekdom", permanent: false },
+      { source: "/programs/:slug*", destination: "https://luma.com/geekdom", permanent: false },
+      { source: "/incubator", destination: "https://luma.com/geekdom", permanent: false },
+
+      // These pointed at /whats-changing, which itself 308s to /club — a
+      // chain to the wrong place. The pages they were guessing at exist now.
+      { source: "/about-us", destination: "/about", permanent: true },
+      { source: "/press", destination: "/media", permanent: true },
 
       // NOT redirected, on purpose: the old blog archive and its ~dozens of
       // posts. None has a counterpart here, and pointing them all at the

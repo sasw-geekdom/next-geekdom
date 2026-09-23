@@ -354,24 +354,52 @@ export const PROGRAMS_OPERATED = [
 /** Press inbox, from /media's spec. */
 export const PRESS_EMAIL = "press@geekdom.com";
 
-export const CONTACT_BLOCKS = [
+/**
+ * /contact's four blocks, in `Source Copy v1`'s order — Membership,
+ * Partnerships and Studio, Press, General. Press points at /media rather than
+ * an inbox, as the doc writes it.
+ *
+ * /about renders the ones marked `onAbout`: the doc's "three-line contact list
+ * for membership, partnerships, and press", from the same constant so the two
+ * pages cannot disagree about an address.
+ */
+export interface ContactBlock {
+  heading: string;
+  body: string;
+  email?: string;
+  alsoEmail?: string;
+  /** An internal page instead of an inbox. */
+  page?: { href: string; label: string };
+  onAbout: boolean;
+}
+
+export const CONTACT_BLOCKS: readonly ContactBlock[] = [
   {
     heading: "Membership questions",
     body: "For questions about applying, current membership, billing, or the Club:",
     email: "mm@geekdom.com",
+    onAbout: true,
   },
   {
     heading: "Partnerships and Studio",
     body: "For corporate partnership inquiries or Studio-related conversations:",
     email: "lesliechasnoff@geekdom.com",
     alsoEmail: "studio@geekdom.com",
+    onAbout: true,
+  },
+  {
+    heading: "Press",
+    body: "For press and media inquiries, see our",
+    page: { href: "/media", label: "Media page" },
+    onAbout: true,
   },
   {
     heading: "General",
     body: "For anything else:",
     email: "hello@geekdom.com",
+    onAbout: false,
   },
-] as const;
+];
 
 /*
   `LETTER_AUTHOR` IS GONE with the letter. It held Charles Woodin's name, role
@@ -1359,8 +1387,6 @@ export const NAV: NavLink[] = [
   { href: "/studio", label: "Studio" },
 ];
 
-/** The rest of the site, for the footer. Not nav-worthy, not orphaned. */
-export const EXPLORE: NavLink[] = [{ href: "/events", label: "Events" }];
 
 /*
   THE FOOTER'S COLUMNS, AS `Source Copy v1` SPECIFIES THEM.
@@ -1388,12 +1414,6 @@ export const FOOTER_EXPLORE: FooterLink[] = [
   { href: "/about", label: "About" },
   { href: "/media", label: "Media" },
   { href: "/contact", label: "Contact" },
-  /*
-    Not in the doc's Explore column, and kept anyway: /events is a real page
-    carrying the week, and the doc has no column that houses it. Flagged for
-    Leslie rather than orphaned.
-  */
-  { href: "/events", label: "Events" },
 ];
 
 export const FOOTER_PROGRAMS: FooterLink[] = [
@@ -1401,12 +1421,6 @@ export const FOOTER_PROGRAMS: FooterLink[] = [
   { href: "/studio", label: "Studio" },
   { href: "/field-notes", label: "Field Notes", pending: true },
   { href: "/apply", label: "Apply" },
-  /*
-    Also not in the doc, also kept: the FAQ answers the questions Apply
-    provokes, and deleting the only route to it because a column spec does not
-    list it would lose a real page.
-  */
-  { href: "/faq", label: "FAQ" },
 ];
 
 /** Drops anything with no page behind it. */

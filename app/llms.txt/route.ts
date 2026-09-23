@@ -96,8 +96,7 @@ Goal: ${GOAL}
 - [Home](${url("/")}): What ${SITE_NAME} is, who is in the room, and what fifteen years produced.
 - [The Club](${url("/club")}): The members' club — what it costs, what it includes, who it is and isn't for, and the third-floor clubhouse itself.
 - [Studio](${url("/studio")}): The venture layer. Invitation-only; there is no application.
-- [Events](${url("/events")}): The public calendar. Some events are members-only; many are open to anyone.
-- [FAQ](${url("/faq")}): The practical answers — what club membership costs and includes, how to apply, how the Studio works, and where to park downtown.
+- [Events](${LUMA_CALENDAR_URL}): The public calendar, on Luma. Some events are members-only; many are open to anyone.
 - [Apply](${url("/apply")}): The membership application.
 
 ## Membership

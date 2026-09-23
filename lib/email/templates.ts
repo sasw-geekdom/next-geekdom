@@ -7,7 +7,7 @@
  * render a preview in the browser.
  */
 
-import { SITE_URL, CONTACT_EMAIL, LOCATION } from "@/lib/site";
+import { SITE_URL, CONTACT_EMAIL, LOCATION, LUMA_CALENDAR_URL } from "@/lib/site";
 import { firstName } from "@/lib/format";
 
 // Geekdom brand, hardcoded — email can't read CSS custom properties.
@@ -227,7 +227,7 @@ export function decisionEmail(vars: DecisionVars): {
     html: shell(
       heading(vars.waitlisted ? "You're on the list." : "Not this round.") +
         paragraphs(body.join("\n\n")) +
-        button(`${SITE_URL}/events`, "See what's coming up"),
+        button(LUMA_CALENDAR_URL, "See what's coming up"),
     ),
   };
 }
@@ -248,7 +248,7 @@ export function welcomeEmail(vars: { name: string }): {
             "The calendar is where the club actually happens. Start there.",
           ].join("\n\n"),
         ) +
-        button(`${SITE_URL}/events`, "See what's on") +
+        button(LUMA_CALENDAR_URL, "See what's on") +
         note(
           `Manage your membership or update your card any time at <a href="${SITE_URL}/account" style="color:${RUST};">${SITE_URL.replace(/^https?:\/\//, "")}/account</a>.`,
         ),

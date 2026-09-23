@@ -1,6 +1,5 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site";
-import { eventSlug, safeUpcomingEvents } from "@/lib/luma";
 
 /**
  * Public pages only. /admin, /account and /welcome are deliberately absent —
@@ -19,7 +18,7 @@ import { eventSlug, safeUpcomingEvents } from "@/lib/luma";
  */
 export const revalidate = 300;
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
 
   const routes: {
@@ -31,8 +30,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: "/club", priority: 0.9, changeFrequency: "weekly" },
     { path: "/studio", priority: 0.9, changeFrequency: "weekly" },
     { path: "/apply", priority: 0.9, changeFrequency: "monthly" },
-    { path: "/events", priority: 0.8, changeFrequency: "daily" },
-    { path: "/faq", priority: 0.6, changeFrequency: "monthly" },
     { path: "/about", priority: 0.7, changeFrequency: "monthly" },
     { path: "/contact", priority: 0.6, changeFrequency: "monthly" },
     { path: "/media", priority: 0.5, changeFrequency: "monthly" },
@@ -50,17 +47,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: route.priority,
   }));
 
-  // `safeUpcomingEvents` never throws, so a Luma outage costs the event URLs
-  // rather than the whole sitemap.
-  const events = await safeUpcomingEvents(50);
-
-  return [
-    ...pages,
-    ...events.map((event) => ({
-      url: `${SITE_URL}/events/${eventSlug(event)}`,
-      lastModified: now,
-      changeFrequency: "weekly" as const,
-      priority: 0.6,
-    })),
-  ];
+  return pages;
 }

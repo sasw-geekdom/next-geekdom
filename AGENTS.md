@@ -32,7 +32,7 @@ benefit list belong on `/club`; don't move them back.
 
 **The convening section ("What we are", rendering `ECOSYSTEM`) is off the
 homepage at Geekdom's request.** Don't put it back unasked. `ECOSYSTEM` still
-feeds the footer's "Beyond the club" column and `/events`, so the `role`
+feeds the footer's "Beyond the club" column, so the `role`
 rule above still applies.
 
 **"Why there's an application" is off the homepage too**, and Geekdom was
@@ -150,15 +150,22 @@ team asked for — everything else lives in the footer.
   not rounded, the same rule `MILESTONES` carries.
 - **`/the-floor` is gone**, 308ing to `/club`. Half of it duplicated this site
   — it rendered `BENEFITS` a third time under "What's in the room", and its
-  rhythm section repeated `/events`. Its photography and its wayfinding moved
-  into the Club's clubhouse section, which is what makes the deletion free:
+  rhythm section repeated the events calendar. Its photography moved into
+  the Club's clubhouse section and its wayfinding to `/contact`, which is what
+  makes the deletion free:
   the page was expendable, the content was not. **Don't rebuild it.** A
   standalone page about the floor is a coworking-era argument — "look at our
   space" is how a coworking company sells — and the 2026 position is that the
   desk was never the point.
-- **The address, the Maps link and the elevator line are on `/club` as a
-  stopgap.** They belong on `/contact`, which the source copy specifies and
-  nobody has built. Move them when it exists; `/club` keeps the photography.
+- **The address, the Maps link and the elevator line live on `/contact`.**
+  They sat on `/club` as a stopgap and moved when `/contact` was built; the
+  membership card keeps a one-line address. Don't put wayfinding back on
+  `/club`.
+- **`/events` and `/faq` are gone, at Geekdom's request** — neither is in
+  `Source Copy v1`'s sitemap. `/events` (and every `/events/*`) 307s to the
+  Luma calendar, `/faq` 308s to `/club` ([next.config.ts](next.config.ts)).
+  The calendar is Luma's job; the homepage's "This month in the Club" links
+  there. Don't rebuild either page without a spec from Geekdom.
 - **`/club` does not lead with the price.** The order is the source copy's —
   the rhythm, the clubhouse, who's in the room, who it's for, then Membership,
   where the price sits in the membership card — not the headline, which is
@@ -241,7 +248,7 @@ same page runs as "15 years of Geekdom".
   and the cards were the shader crown's most distributed placement.
 - **Every card is in `OG_CARDS`** ([lib/og.ts](lib/og.ts)), and its two lines
   come from that page's own copy. A PNG with no entry there is an orphan that
-  `npm run og` never regenerates — /events was one.
+  `npm run og` never regenerates.
 - **A page with its own card passes `ownCard: true`** to `pageMetadata()`;
   without it the page gets the root card, with alt text and dimensions.
 - **Descriptions stay under 160 characters.** Google cuts at about 155, and
@@ -509,8 +516,8 @@ caught `honour` but not `honoured`, `apologise` but not `apologises`.
 Two proper nouns are exceptions and must survive the sweep:
 
 - **Weston Centre** — Geekdom's first home. That is the building's real name.
-- **Event Center** — Geekdom spells its own venue the American way; the FAQ
-  said "Centre" and that was the error.
+- **Event Center** — Geekdom spells its own venue the American way; an
+  earlier FAQ said "Centre" and that was the error.
 
 
 Short declaratives. Active verbs. Parallel structure. No jargon, no

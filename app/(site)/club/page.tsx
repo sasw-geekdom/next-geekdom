@@ -366,10 +366,9 @@ export default function ClubPage() {
         parts of the floor: the floor itself as the lead, then the cafe and the
         window banquettes. The copy claims a room; these show it.
 
-        WAYFINDING IS TEMPORARY HERE. The address, the Maps link and the
-        elevator instruction belong on /contact, which the source copy
-        specifies and nobody has built. Until then this is the only place on
-        the site that tells someone how to actually get here.
+        NO WAYFINDING HERE. The address, the Maps link and the elevator line
+        sat on this page as a stopgap until /contact existed; they live there
+        now. The membership card keeps the one-line address.
       */}
       <Section tone="bone-light">
         <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
@@ -385,34 +384,8 @@ export default function ClubPage() {
               Antonio builders have been gathering for over a decade.
             </p>
 
-            {/*
-              The address as an <address>, not a paragraph — it is the one
-              block on this page a browser, a screen reader or a phone should
-              be able to recognize as contact information.
-            */}
-            <address className="mt-8 not-italic leading-relaxed text-muted-foreground">
-              <span className="font-medium text-graphite">
-                {LOCATION.building}
-              </span>
-              <br />
-              {LOCATION.full}
-              <br />
-              Elevator to the {LOCATION.floor.toLowerCase()}.
-            </address>
-
-            {/* Links, not buttons — Geekdom keeps buttons for Apply. */}
-            <div className="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:gap-8">
-              <a
-                href={`https://maps.google.com/?q=${encodeURIComponent(
-                  `Geekdom, ${LOCATION.postal}`,
-                )}`}
-                target="_blank"
-                rel="noreferrer noopener"
-                className={LINK_ARROW}
-              >
-                Open in Maps
-                <ArrowUpRight aria-hidden="true" className={ARROW.external} />
-              </a>
+            {/* A link, not a button — Geekdom keeps buttons for Apply. */}
+            <div className="mt-8">
               <a
                 href={LUMA_CALENDAR_URL}
                 target="_blank"

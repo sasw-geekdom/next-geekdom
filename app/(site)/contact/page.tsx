@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { pageMetadata } from "@/lib/seo";
 import {
+  ARROW,
   Eyebrow,
-  Lede,
-  LINK,
+  LINK_ARROW,
   PageTitle,
   Section,
   Subhead,
   MONO,
 } from "@/components/site/section";
-import { ButtonAnchor } from "@/components/ui/button";
+import { ArrowUpRight } from "lucide-react";
+import { ContactLinks } from "@/components/site/contact-links";
 import { CONTACT_BLOCKS, LOCATION } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
@@ -47,58 +47,34 @@ export default function ContactPage() {
       <Section tone="bone-light">
         <Eyebrow>Contact</Eyebrow>
         <PageTitle className="mt-6">Get in touch.</PageTitle>
-        <Lede>
-          Four ways in, so a question reaches the person who can answer it
-          rather than a shared inbox.
-        </Lede>
+        {/* No lede. The doc's header is the eyebrow and the headline; the
+            line that sat here ("Four ways in…") was written here, not by
+            Geekdom. */}
       </Section>
 
       <Section tone="bone">
         <h2 className="sr-only">Contact blocks</h2>
         <ul className="max-w-3xl">
-          {CONTACT_BLOCKS.map((block) => (
-            <li key={block.heading} className="border-t border-border py-7">
+          {CONTACT_BLOCKS.map((block, i) => (
+            <li
+              key={block.heading}
+              className={cn(
+                "border-t border-border py-7",
+                i === CONTACT_BLOCKS.length - 1 && "border-b",
+              )}
+            >
               <Subhead className="text-xl">{block.heading}</Subhead>
               <p className="mt-3 leading-relaxed text-muted-foreground">
-                {block.body}{" "}
-                <a href={`mailto:${block.email}`} className={LINK}>
-                  {block.email}
-                </a>
-                {"alsoEmail" in block && block.alsoEmail ? (
-                  <>
-                    {" or "}
-                    <a href={`mailto:${block.alsoEmail}`} className={LINK}>
-                      {block.alsoEmail}
-                    </a>
-                  </>
-                ) : null}
-                .
+                {block.body} <ContactLinks block={block} />.
               </p>
             </li>
           ))}
-
-          {/*
-            THE PRESS BLOCK, AS THE DOC WRITES IT — "For press and media
-            inquiries: See our Media page → /media", a pointer rather than an
-            address, so press resources live in one place.
-          */}
-          <li className="border-t border-b border-border py-7">
-            <Subhead className="text-xl">Press</Subhead>
-            <p className="mt-3 leading-relaxed text-muted-foreground">
-              For press and media inquiries, see our{" "}
-              <Link href="/media" className={LINK}>
-                Media page
-              </Link>
-              .
-            </p>
-          </li>
         </ul>
       </Section>
 
       {/*
-        THE ADDRESS, ON THE PAGE IT BELONGS TO. /club carries this today as a
-        stopgap — see the note in AGENTS.md. Moving it is a separate change to
-        that page; this is the destination it moves to.
+        THE ADDRESS LIVES HERE. /club carried it as a stopgap until this page
+        existed; it has moved off /club.
 
         The doc's note asks to "consider embedding a small map or directions
         link". A link, not an embed: a Maps iframe is a third-party frame with
@@ -117,18 +93,24 @@ export default function ContactPage() {
             <br />
             {LOCATION.city}, {LOCATION.state} {LOCATION.zip}
           </p>
+          {/* Moved here from /club, where it sat as a stopgap. */}
+          <p className="mt-2 leading-relaxed text-muted-foreground">
+            Elevator to the {LOCATION.floor.toLowerCase()}.
+          </p>
         </address>
         {/* Same construction /club uses, so both land on the same pin. */}
-        <ButtonAnchor
-          external
+        {/* A link, not a button — buttons on this site are for Apply. */}
+        <a
           href={`https://maps.google.com/?q=${encodeURIComponent(
             `Geekdom, ${LOCATION.postal}`,
           )}`}
-          variant="outline"
-          className="mt-7"
+          target="_blank"
+          rel="noreferrer noopener"
+          className={cn("mt-7 inline-flex", LINK_ARROW)}
         >
           Open in Maps
-        </ButtonAnchor>
+          <ArrowUpRight aria-hidden="true" className={ARROW.external} />
+        </a>
       </Section>
     </>
   );

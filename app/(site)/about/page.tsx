@@ -2,18 +2,15 @@ import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
 import {
   Eyebrow,
-  Lede,
-  LINK,
   PageTitle,
   Section,
   Subhead,
-  MONO,
 } from "@/components/site/section";
 import { Editorial } from "@/components/site/editorial";
 import { Photo } from "@/components/site/photo";
+import { ContactLinks } from "@/components/site/contact-links";
 import { PHOTOS } from "@/lib/photos";
 import { CONTACT_BLOCKS, FOUNDED_YEAR } from "@/lib/site";
-import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = pageMetadata({
   ownCard: true,
@@ -114,16 +111,14 @@ export default function AboutPage() {
           two-subject portrait with the sign above them, and all three are
           load-bearing. The homepage note on this frame has the full reasoning.
         */}
-        <figure className="mt-12">
-          <Photo
-            photo={PHOTOS.grahamNick}
-            aspect="aspect-[16/9]"
-            sizes="(min-width: 1152px) 1088px, 100vw"
-          />
-          <figcaption className={cn("mt-3", MONO.label, "text-muted-foreground")}>
-            Graham Weston and Nick Longo, {FOUNDED_YEAR}
-          </figcaption>
-        </figure>
+        {/* No caption — Geekdom has asked for photographs without them. The
+            alt text still names both men. */}
+        <Photo
+          photo={PHOTOS.grahamNick}
+          aspect="aspect-[16/9]"
+          sizes="(min-width: 1152px) 1088px, 100vw"
+          className="mt-12"
+        />
       </Section>
 
       <Section tone="bone-light">
@@ -154,32 +149,19 @@ export default function AboutPage() {
       {/*
         THE DOC'S CONTACT BLOCK: "Three-line contact list for membership,
         partnerships, and press. Uses same contacts as the Contact page." So it
-        reads the same constant /contact does — two copies of three addresses
-        is one copy that will be wrong.
+        reads the same constant /contact does, filtered to `onAbout`. It
+        showed General instead of Press, under an intro line written here
+        rather than by Geekdom; both are fixed.
       */}
       <Section tone="bone">
         <Eyebrow>Get in touch</Eyebrow>
         <h2 className="sr-only">Contact</h2>
-        <Lede>
-          A question reaches the person who can answer it faster than a shared
-          inbox does.
-        </Lede>
-        <ul className="mt-10 max-w-3xl">
-          {CONTACT_BLOCKS.map((block) => (
+        <ul className="mt-6 max-w-3xl">
+          {CONTACT_BLOCKS.filter((b) => b.onAbout).map((block) => (
             <li key={block.heading} className="border-t border-border py-6">
               <Subhead className="text-xl">{block.heading}</Subhead>
               <p className="mt-2 leading-relaxed text-muted-foreground">
-                <a href={`mailto:${block.email}`} className={LINK}>
-                  {block.email}
-                </a>
-                {"alsoEmail" in block && block.alsoEmail ? (
-                  <>
-                    {" or "}
-                    <a href={`mailto:${block.alsoEmail}`} className={LINK}>
-                      {block.alsoEmail}
-                    </a>
-                  </>
-                ) : null}
+                <ContactLinks block={block} />
               </p>
             </li>
           ))}

@@ -117,31 +117,6 @@ export const OG_CARDS: Record<string, OgCard> = {
     alt: "Geekdom Studio — the venture layer. $20–30K SAFE checks and hands-on work for four to six San Antonio founders a year. Invitation only.",
   },
 
-  faq: {
-    eyebrow: "Questions",
-    /*
-      THE PAGE'S OWN H1, EXPANDED — not repeated, and the reason is size. The
-      h1 is "How it works.", thirteen characters, which on a 1200px card is a
-      few words adrift in a lot of graphite. This says the same thing with
-      enough of it to fill the measure, and names the two engines while it is
-      there.
-
-      Same claim, more specific: that is the bar. The rule the home card set is
-      that a card and a title must not make two DIFFERENT claims, because a
-      search result and an unfurl show them together.
-
-      It read "The ones members actually asked", which was true when this was
-      the transition sheet. The lease, refund and prorated-credit questions
-      have since been retired — every member they were written for was spoken
-      to directly — and what is here now includes the Studio and downtown
-      parking, which no member asked for in that sheet.
-    */
-    lines: ["How the Club and", "the Studio work."],
-    out: "app/(site)/faq/opengraph-image.png",
-    // Was "what happens to desks and offices". See the note on the page's own
-    // description — the desk belongs to the letter, not to the FAQ.
-    alt: "Geekdom FAQ — what club membership costs and includes, how to apply, how the Studio works, and where to park downtown.",
-  },
 
   apply: {
     eyebrow: "Apply to the Club",
@@ -155,18 +130,6 @@ export const OG_CARDS: Record<string, OgCard> = {
     alt: "Apply to the Club at Geekdom — one membership, by application, on the third floor in San Antonio.",
   },
 
-  /*
-    /events SHIPPED A CARD NOBODY COULD REGENERATE — the PNG was in the
-    folder but had no entry here, so `npm run og` never touched it and it
-    stayed a shader card. The h1 is "What's on."; the second line is the
-    page's own description ("most of them open to non-members").
-  */
-  events: {
-    eyebrow: "The calendar",
-    lines: ["What’s on.", "Most of it is open."],
-    out: "app/(site)/events/opengraph-image.png",
-    alt: "Geekdom events — meetups, build sessions, office hours and pitch nights on the third floor, most of them open to non-members.",
-  },
 
   /*
     /about, /contact and /media had no card and unfurled the homepage's. Each
