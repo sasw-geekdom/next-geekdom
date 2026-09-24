@@ -61,7 +61,8 @@ list for cards, because some entries aren't Geekdom-hosted.
   Studio." Don't rebuild it or fold its argument into another section.
   `/club` and `/studio` still carry versions of the claim ("One is the
   on-ramp…", "most Studio relationships start there") and are pending review.
-- **The origin is "Geekdom started with an email"** (Graham Weston, 2011), not
+- **The origin is "Geekdom started with an email"** (Graham Weston, 2009 —
+  Geekdom opened in 2011, which is what "Since 2011" counts from), not
   "the desk was never the point." The second is the members letter's line — it
   is about what Geekdom *stopped* doing, and it belongs on `/whats-changing`,
   addressed to people who had a desk. On the homepage it apologizes for

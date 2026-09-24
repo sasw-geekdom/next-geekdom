@@ -1345,19 +1345,53 @@ export const LUMA_CALENDAR_URL = envOr(
  * Date: the source abbreviates September as "Sept", which no locale format
  * produces, and nothing sorts or filters on it. Keep entries in date order.
  */
-export const THIS_MONTH: { date: string; title: string }[] = [
-  { date: "Sept 23", title: "Open Coffee Club at Creme Coffee & Social" },
-  { date: "Sept 28", title: "San Antonio Startup + Tech Week kicks off" },
+/**
+ * Startup + Tech Week's own site. `www` is its canonical host — the SASW repo
+ * (next-sasw, lib/event.ts) notes that bare `sasw.co` redirects.
+ */
+export const SASW_SITE = "https://www.sasw.co";
+
+/*
+  EVERY ROW LINKS OUT — Geekdom: "link to the sasw.co website here… make
+  every event clickable to their event page on the Startup + Tech Week site."
+  URLs come from the SASW repo and were checked live (200):
+
+    The Model        /schedule/the-model
+    Access Granted   /schedule/access-granted
+    PySanAntonio II  /schedule/pysanantonio — NOT /schedule/pysanantonio-ii,
+                     which 404s. SASW gives a headline activation a `page`
+                     separate from its edition slug so the URL outlives 2026.
+
+  The kickoff and final-day rows aren't single events, so they go to the
+  week's home and its schedule. The Sept 23 Open Coffee Club row came out
+  once it had passed; a non-SASW entry would link to LUMA_CALENDAR_URL.
+*/
+export const THIS_MONTH: { date: string; title: string; href: string }[] = [
+  {
+    date: "Sept 28",
+    title: "San Antonio Startup + Tech Week kicks off",
+    href: SASW_SITE,
+  },
   {
     date: "Sept 28",
     title: "The Model — a half-day summit at the intersection of AI and creative",
+    href: `${SASW_SITE}/schedule/the-model`,
   },
   {
     date: "Sept 30",
     title: "Access Granted — a half-day summit for security and cyber",
+    href: `${SASW_SITE}/schedule/access-granted`,
   },
-  { date: "Oct 2", title: "PySanAntonio II" },
-  { date: "Oct 2", title: "Final day of San Antonio Startup + Tech Week" },
+  {
+    date: "Oct 2",
+    title: "PySanAntonio II",
+    href: `${SASW_SITE}/schedule/pysanantonio`,
+  },
+  {
+    date: "Oct 2",
+    title: "Final day of San Antonio Startup + Tech Week",
+    href: `${SASW_SITE}/schedule`,
+  },
 ];
 
 /**

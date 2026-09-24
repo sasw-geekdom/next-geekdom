@@ -308,30 +308,7 @@ function Frame({
   );
 }
 
-/**
- * "Fifteen" rather than "15", without pinning the number.
- *
- * The source doc spells this count out in prose and a numeral reads wrong
- * mid-sentence, but hardcoding the word makes the line false the year after
- * next. Covers the range Geekdom will plausibly be in during this site's
- * life and falls back to the numeral outside it, which is wrong-looking
- * rather than wrong.
- */
-const YEAR_WORDS: Record<number, string> = {
-  14: "Fourteen",
-  15: "Fifteen",
-  16: "Sixteen",
-  17: "Seventeen",
-  18: "Eighteen",
-  19: "Nineteen",
-  20: "Twenty",
-};
-function spellYears(n: number): string {
-  return YEAR_WORDS[n] ?? String(n);
-}
-
 export default function HomePage() {
-  const years = new Date().getFullYear() - FOUNDED_YEAR;
 
   return (
     <>
@@ -573,7 +550,8 @@ export default function HomePage() {
       {/* ── 8 · This month in the Club ──────────────────────────────── */}
       {/*
         GEEKDOM'S SOURCE COPY, IN ITS LIST LAYOUT: a header, dated one-line
-        entries, one link out to the public calendar. It replaced a Luma card
+        entries — each linking to its page on the Startup + Tech Week site —
+        and one link out to the public calendar. It replaced a Luma card
         grid under "Come see how the room feels" — Luma isn't connected, so in
         production that grid never rendered and the section was a fallback
         sentence. The list lives in `THIS_MONTH` in lib/site.ts, which is
@@ -583,16 +561,37 @@ export default function HomePage() {
         <SectionTitle>This month in the Club</SectionTitle>
         <ul className="mt-10 border-b border-border">
           {THIS_MONTH.map((item) => (
-            <li
-              key={`${item.date}-${item.title}`}
-              className="grid gap-1 border-t border-border py-5 sm:grid-cols-[8rem_1fr] sm:gap-6"
-            >
-              <span className={cn(MONO.label, "pt-1 text-muted-foreground")}>
-                {item.date}
-              </span>
-              <span className="text-lg leading-snug text-graphite">
-                {item.title}
-              </span>
+            <li key={`${item.date}-${item.title}`} className="border-t border-border">
+              {/*
+                THE WHOLE ROW IS THE LINK, and it stays a list row: the title
+                takes the site's link treatment on hover (Clay underline) and
+                the external arrow nudges — nothing heavier, because Geekdom
+                asked for this section as a plain list. New tab: every row
+                leaves the site.
+              */}
+              <a
+                href={item.href}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="group grid grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-1 py-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-offset-2 focus-visible:ring-offset-bone sm:grid-cols-[8rem_1fr_auto] sm:gap-x-6"
+              >
+                <span
+                  className={cn(
+                    MONO.label,
+                    "col-span-2 pt-1 text-muted-foreground sm:col-span-1",
+                  )}
+                >
+                  {item.date}
+                </span>
+                <span className="text-lg leading-snug text-graphite decoration-clay decoration-2 underline-offset-4 group-hover:underline">
+                  {item.title}
+                </span>
+                <ArrowUpRight
+                  aria-hidden="true"
+                  className={cn(ARROW.external, "self-center text-muted-foreground")}
+                />
+                <span className="sr-only"> (opens in a new tab)</span>
+              </a>
             </li>
           ))}
         </ul>
@@ -642,27 +641,19 @@ export default function HomePage() {
             <Eyebrow>Since {FOUNDED_YEAR}</Eyebrow>
             <SectionTitle>Geekdom started with an email.</SectionTitle>
             {/*
-              THE DOC'S BODY, WITH THE COUNT STILL COMPUTED.
+              GEEKDOM'S WORDING, VERBATIM. `Source Copy v1` opened "Fifteen
+              years ago," — computed from FOUNDED_YEAR so it wouldn't go
+              stale — and Geekdom's own correction made it a fixed date: "In
+              2009, Graham Weston received an email…". The email came in 2009;
+              Geekdom opened in 2011, which is what the eyebrow counts from.
 
-              `Source Copy v1` writes "Fifteen years ago, Graham Weston
-              received an email from a founder that said San Antonio was
-              missing a startup and tech community. Geekdom was born as the
-              answer. Today, it powers the next generation of venture
-              companies in San Antonio and the builders behind them."
-
-              That is the whole body — Geekdom asked for the source copy and
-              nothing added after it ("weird extra stuff and AI edits"), so
-              don't append a second paragraph. The one thing not taken literally is
-              "Fifteen": hardcoding it makes the sentence wrong on 1 January,
-              so it spells the number computed from `FOUNDED_YEAR`. Same
-              reasoning /since-2011 uses for its heading — the doc is the
-              source of truth for the words, not for a figure that changes
-              while nobody is looking.
+              That is the whole body — Geekdom asked for their copy and nothing
+              added after it ("weird extra stuff and AI edits"), so don't
+              append a second paragraph.
             */}
             <Lede>
-              {spellYears(years)} years ago, Graham Weston received an email
-              from a founder that said San Antonio was missing a startup and
-              tech community. Geekdom was born as the answer. Today, it powers
+              In 2009, Graham Weston received an email from a founder that said
+              San Antonio was missing a startup and tech community. Geekdom was born as the answer. Today, it powers
               the next generation of venture companies in San Antonio and the
               builders behind them.
             </Lede>
@@ -731,7 +722,9 @@ export default function HomePage() {
             Building something<span className="text-clay">?</span>
           </SectionTitle>
           <Lede className="mt-6 text-bone/70">
-            Membership is by application. We respond within two weeks.
+            {/* Geekdom's wording, verbatim. */}
+            Membership is by application. It&rsquo;s how we get to know you.
+            Our team reads every one and follows up personally.
           </Lede>
           <div className="mt-10 flex flex-col gap-3 sm:flex-row">
             <ButtonLink href="/apply" size="lg" variant="on-ink">
