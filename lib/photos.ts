@@ -185,9 +185,9 @@ export const PHOTOS = {
       counter, a drink and a pizza box between them, the kitchen and the tiled
       wall through the doorway behind.
 
-      IT MATCHES WHAT THE CAFE IS SOLD AS. `BENEFITS` calls it "for your coffee
-      chats — the conversation that turns into a co-founder, a customer". A
-      photograph of the counter is the furniture; this is the conversation.
+      IT MATCHES WHAT THE CAFE IS FOR — coffee chats, the conversation that
+      turns into a co-founder or a customer. A photograph of the counter is
+      the furniture; this is the conversation.
 
       Natively 1.69, not the 1.50 most of the archive is, so a 4:5 tile crop
       leaves 1033px against the tile's ~1064 at 2x. Three percent under, and

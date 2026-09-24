@@ -72,84 +72,28 @@ export function priceSentence(): string | null {
 
 export interface Benefit {
   title: string;
-  description: string;
 }
 
 /**
- * What the membership actually gets you.
+ * What the membership includes — Geekdom's list, in Geekdom's order.
  *
- * Every item comes from the letter's list of what the third floor becomes —
- * don't invent a benefit Geekdom hasn't promised. Order is deliberate: the
- * people first, the programming second, the logistics last, because that's the
- * argument the letter makes.
- *
- * Written as concrete deliverables in second person, not abstractions. "A cafe
- * for your coffee chats" is a thing you can picture using on a Tuesday;
- * "curated networking opportunities" is not. If an edit makes one of these
- * sound like a brochure, it's gone the wrong way.
+ * TITLES ONLY. This used to carry a sentence of description per item, written
+ * from the members letter; Geekdom asked for the list without descriptions
+ * ("too text heavy") and then replaced the items outright with the ten below.
+ * Don't reorder or add to them — the order is theirs.
  */
 export const BENEFITS: Benefit[] = [
-  {
-    title: "The room",
-    description:
-      "The third floor and everyone on it. Founders, engineers, and creators; the operators and investors who've done it before; the corporate and civic leaders who want a hand in what this city becomes.",
-  },
-  {
-    title: "Office hours",
-    description:
-      "Bring the thing that's blocking you to someone who's already hit that wall. Mentors on the calendar, for the specific problem — not a general chat.",
-  },
-  {
-    title: "Build sessions",
-    description:
-      "Heads down, together, with the goal of shipping something before you leave. Meetups, fireside chats, and pitch nights fill the rest of the week.",
-  },
-  {
-    title: "Retreats",
-    description:
-      "Time away from the room with the people you'd want in it. Small, focused, built around what your company needs next.",
-  },
-  {
-    title: "24/7 access",
-    description:
-      "The third floor, whenever you need it. Sit down and work when you need to focus — no assigned seat, no contract, nothing with your name taped to it.",
-  },
-  {
-    title: "The cafe",
-    description:
-      "For your coffee chats. The conversation that turns into a co-founder, a customer, or a check usually starts over one.",
-  },
-  {
-    title: "Rooms and desks to reserve",
-    description:
-      "Meeting rooms with a door for the deep dives and the offsite your team keeps postponing, call rooms for the conversation you'd rather not have at the table, and workstations with monitors. Complimentary hours are included.",
-  },
-  {
-    title: "Guests",
-    description:
-      "Bring someone. Guests are complimentary for as long as you're there with them.",
-  },
-  {
-    title: "Member Slack and directory",
-    description:
-      "The room keeps working when you're not in it. Find who you need, ask the question between visits, and turn up already knowing who to look for.",
-  },
-  {
-    title: "First on the list",
-    description:
-      "Member-first and member-only access to the special events — the ones that fill before they're announced.",
-  },
+  { title: "24/7 workspace" },
+  { title: "Event and meeting space" },
+  { title: "Phone booths and call rooms" },
+  { title: "Member Slack and directory" },
+  { title: "The cafe" },
+  { title: "Guests" },
+  { title: "Socials" },
+  { title: "Meetups" },
+  { title: "Build sessions" },
+  { title: "Exclusive events" },
 ];
-
-/**
- * Real, and priced separately. Named on the page rather than left to be
- * discovered at the garage — a membership page that quietly omits a cost people
- * will meet on day one buys a small conversion win and spends it on the first
- * awkward conversation.
- */
-export const EXTRAS = [
-  "Parking passes and validations, at additional cost",
-] as const;
 
 /** What the membership is explicitly not — the letter is blunt about this. */
 export const NOT_INCLUDED = [
@@ -171,14 +115,12 @@ export const GENEROSITY_BAR =
   "The bar isn’t impressiveness. It’s generosity.";
 
 /**
- * Who the Club is for, and — the half that was missing — who it isn't.
+ * Who the Club is for — /club's "A good fit" list, the source copy's wording.
  *
- * SAYING NO PLAINLY IS THE POINT. The site had a soft version of this buried
- * in the FAQ; the source copy puts it on the Club page in two columns, which
- * is the honest shape. Someone who wants a desk should find that out here, in
- * ten seconds, rather than after a ten-minute application and a two-week wait.
- * "Not the right fit RIGHT NOW" is the exact wording, and the "right now"
- * carries weight — it is a statement about timing, not about the person.
+ * Its partner, "Not the right fit right now" (coworking-seekers and small
+ * business owners, plus a referral line), came off at Geekdom's request. The
+ * disqualifier still reaches readers: /club's opening says "It's not
+ * coworking. It's not an accelerator."
  */
 export const GOOD_FIT = [
   "Aspiring and current founders",
@@ -188,15 +130,6 @@ export const GOOD_FIT = [
   "Innovators looking to up their game with other ambitious and interesting people",
   "Corporate and civic leaders who want a hand in San Antonio’s innovation economy",
 ] as const;
-
-export const NOT_FIT = [
-  "People primarily looking for a traditional coworking space",
-  "Small business owners looking for general support",
-] as const;
-
-/** What we do instead of just declining. Said out loud, because it's true. */
-export const NOT_FIT_CLOSING =
-  "If the Club isn’t the right fit, we’ll point you toward free community events and refer you to spaces or resources that fit better.";
 
 /**
  * Who this is for. The letter names these groups directly; the apply form

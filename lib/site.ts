@@ -140,7 +140,11 @@ export const CLUB = {
     "Where San Antonio\u2019s founders and builders find their room.",
   /** Opening › Body, paragraphs 1–3. */
   opening: [
-    "Geekdom\u2019s Club is a members-only community for the people building San Antonio\u2019s next generation of companies and technologies. Ritual activities like build sessions, tech talks, fireside chats, and socials create new connections. Member-only channels keep the community connected beyond the room.",
+    // The lede is the first sentence alone. Geekdom: "break this paragraph
+    // up and move 'Ritual activities…' into the body below" — the words are
+    // unchanged, only where they sit.
+    "Geekdom\u2019s Club is a members-only community for the people building San Antonio\u2019s next generation of companies and technologies.",
+    "Ritual activities like build sessions, tech talks, fireside chats, and socials create new connections. Member-only channels keep the community connected beyond the room.",
     "Our downtown San Antonio clubhouse offers space to drop-in for focused work, meetings, coffee chats, and events in the historic Rand Building on Houston Street.",
     "It\u2019s not coworking. It\u2019s not an accelerator. It\u2019s a community powered by its mix of people, activities, and a clubhouse on the third floor of the Rand.",
   ],

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
 import { MembershipJsonLd } from "@/components/site/structured-data";
-import { ArrowUpRight, Check, Minus, Plus } from "lucide-react";
+import { ArrowUpRight, Check } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import {
   Eyebrow,
@@ -19,14 +19,10 @@ import { SpreadHero } from "@/components/site/spread-hero";
 import { PHOTOS } from "@/lib/photos";
 import {
   BENEFITS,
-  NOT_INCLUDED,
   priceLabel,
   priceSentence,
-  EXTRAS,
   GENEROSITY_BAR,
   GOOD_FIT,
-  NOT_FIT,
-  NOT_FIT_CLOSING,
 } from "@/lib/membership";
 import {
   CLUB,
@@ -203,22 +199,23 @@ export default function ClubPage() {
           wants that treatment back — but it was written here rather than by
           them, which is the thing the feedback is about.
 
-          The second paragraph names a real recurring event with a real time,
-          so it is transcribed rather than paraphrased: Creme Coffee and
-          Social, Tuesdays 8 to 9:30.
+          The Open Coffee Club paragraph ("Every Tuesday… Creme Coffee and
+          Social, 8 to 9:30") came out at Geekdom's request; the section is
+          now the rhythm and the online layer.
         */}
         <Eyebrow>The rhythm</Eyebrow>
         <h2 className="sr-only">A month in the Club</h2>
-        <div className="max-w-2xl">
+        {/*
+          mt-6 — the gap every eyebrow-then-body pair on the site uses (24px,
+          measured on /about, /media and /studio). This one had none: the
+          h2 between them is screen-reader-only, so the eyebrow sat directly
+          on the first line. Geekdom: "Eyebrow seems tight next to the body".
+        */}
+        <div className="mt-6 max-w-2xl">
           <p className="text-lg leading-relaxed text-muted-foreground">
             The Club runs on a monthly rhythm of programming — socials,
             meetups, office hours, build sessions — plus special events open to
             members first.
-          </p>
-          <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
-            Every Tuesday, Open Coffee Club meets at Creme Coffee and Social
-            from 8 to 9:30. Public, free, no agenda. Just founders and builders
-            finding each other over coffee.
           </p>
           <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
             Beyond the space, we&rsquo;re building the online layer too: a
@@ -301,47 +298,27 @@ export default function ClubPage() {
         and the clubhouse.
       */}
 
-        <div className="mt-14 grid gap-12 lg:grid-cols-2 lg:gap-16">
-          <div>
-            <h3 className={cn(MONO.label, "text-muted-foreground")}>
-              A good fit
-            </h3>
-            <ul className="mt-5">
-              {GOOD_FIT.map((item) => (
-                <li
-                  key={item}
-                  className="border-t border-border py-4 text-lg leading-snug text-graphite"
-                >
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h3 className={cn(MONO.label, "text-muted-foreground")}>
-              Not the right fit right now
-            </h3>
-            {/*
-              "RIGHT NOW" IS LOAD-BEARING and is the source copy's own wording.
-              It makes this a statement about timing rather than about the
-              person — a small business owner today may be a founder in two
-              years, and the door should still read as open to them.
-            */}
-            <ul className="mt-5">
-              {NOT_FIT.map((item) => (
-                <li
-                  key={item}
-                  className="border-t border-border py-4 text-lg leading-snug text-muted-foreground"
-                >
-                  {item}
-                </li>
-              ))}
-            </ul>
-            <p className="mt-8 leading-relaxed text-muted-foreground">
-              {NOT_FIT_CLOSING}
-            </p>
-          </div>
+        {/*
+          ONE LIST NOW, ACROSS TWO COLUMNS. This sat beside "Not the right
+          fit right now" (two exclusions and a referral line), which Geekdom
+          asked to remove. Left alone, "A good fit" filled half the width with
+          nothing beside it, so its six items run in two columns instead —
+          the same hairline-row pattern as "What's included" below.
+        */}
+        <div className="mt-14">
+          <h3 className={cn(MONO.label, "text-muted-foreground")}>
+            A good fit
+          </h3>
+          <ul className="mt-5 grid border-b border-border sm:grid-cols-2 sm:gap-x-10">
+            {GOOD_FIT.map((item) => (
+              <li
+                key={item}
+                className="border-t border-border py-4 text-lg leading-snug text-graphite"
+              >
+                {item}
+              </li>
+            ))}
+          </ul>
         </div>
       </Section>
 
@@ -444,11 +421,8 @@ export default function ClubPage() {
           <div>
             <Subhead>What&rsquo;s included</Subhead>
             {/*
-              TITLES ONLY. Each benefit carried a sentence or two of
-              description — about 360 words for the section — and Geekdom's
-              note on the portfolio applies here too: too text-heavy, remove
-              the descriptions. They stay in `BENEFITS` (/llms.txt still reads
-              them); this list just doesn't render them.
+              GEEKDOM'S TEN, IN THEIR ORDER, titles only — see `BENEFITS` in
+              lib/membership.ts. Two columns of hairline rows.
             */}
             <ul className="mt-8 grid border-b border-border sm:grid-cols-2 sm:gap-x-10">
               {BENEFITS.map((benefit) => (
@@ -468,50 +442,13 @@ export default function ClubPage() {
               ))}
             </ul>
 
-<Subhead className="mt-14">What it isn&rsquo;t</Subhead>
-            <ul className="mt-6 flex flex-col gap-3">
-              {NOT_INCLUDED.map((item) => (
-                <li
-                  key={item}
-                  className="flex items-center gap-3 text-muted-foreground"
-                >
-                  <Minus
-                    className="h-4 w-4 shrink-0"
-                    strokeWidth={2}
-                    aria-hidden="true"
-                  />
-                  {item}
-                </li>
-              ))}
-            </ul>
-
-            {/* Priced separately, and said out loud. */}
-            <ul className="mt-4 flex flex-col gap-3">
-              {EXTRAS.map((item) => (
-                <li
-                  key={item}
-                  className="flex items-center gap-3 text-muted-foreground"
-                >
-                  <Plus
-                    className="h-4 w-4 shrink-0"
-                    strokeWidth={2}
-                    aria-hidden="true"
-                  />
-                  {item}
-                </li>
-              ))}
-            </ul>
-
             {/*
-              The doc's closing line for this section, in its place — after
-              the includes list, not before it. It used to be folded into a
-              lede above the list alongside three sentences that were written
-              here rather than by Geekdom.
+              THE LIST ENDS THE COLUMN. "What it isn't" (no desks, offices or
+              contracts; parking extra) and the closing line ("The
+              application takes about ten minutes…") came off at Geekdom's
+              request — the card beside this carries the application details.
+              The exclusions still stand in /terms.
             */}
-            <p className="mt-10 text-lg leading-relaxed text-muted-foreground">
-              The application takes about ten minutes. We respond within two
-              weeks.
-            </p>
           </div>
 
           {/* Price / apply card */}

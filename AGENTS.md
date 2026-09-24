@@ -184,11 +184,11 @@ team asked for — everything else lives in the footer.
   that is the pathway Geekdom said never to imply, so it went. The Studio is
   in the nav and beside the Club on the homepage. Likewise `/studio` carries
   no "Apply to the Club" control.
-- **`BENEFITS` renders ONCE on `/club`**, under "What's included", with titles
-  and descriptions. It used to render twice — titles in a hero side panel,
-  detail lower down — and this file said so; the side panel went when the hero
-  was rebuilt to open on the claim rather than the feature list. A second
-  render is now the thing to question, not the third.
+- **`BENEFITS` is Geekdom's ten, in their order, titles only**, and renders
+  once on `/club` under "What's included". Geekdom replaced the letter-derived
+  list outright and dropped the descriptions ("too text heavy"). Don't
+  reorder, add to, or re-describe it. "A good fit" beside it stands alone —
+  "Not the right fit right now" came off at their request.
 - **Startup Bootcamp and the Community Fund are LIVE**, under the Studio. An
   earlier version of `lib/site.ts` and `/llms.txt` said all four of the
   one-pager's programs were legacy. Only the Incubator and the
