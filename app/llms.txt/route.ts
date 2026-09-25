@@ -77,8 +77,10 @@ Beyond those, ${SITE_NAME} convenes the wider startup community. It OPERATES
 LaunchSA, ${LOCATION.city}'s open-access entrepreneurship hub, in partnership
 with the City of ${LOCATION.city} — a SEPARATE program with its own brand and
 its own audience, open to any entrepreneur, and NOT a benefit of ${SITE_NAME}
-membership. It RUNS San Antonio Startup + Tech Week. It is backed by the
-Accelerate South Texas fund, and it sits on the regional team for MIT REAP.
+membership. It RUNS San Antonio Startup + Tech Week. It HELPED CREATE
+Accelerate South Texas, a fund at the San Antonio Area Foundation that
+supports the organizations serving entrepreneurs across the region, and it
+sits on the regional team for MIT REAP.
 
 ${SITE_NAME} opened in 2011 and spent fifteen years as ${LOCATION.city}'s startup
 coworking space. It is not that any more — as of ${formatLongDate(CLUB_OPENS)}

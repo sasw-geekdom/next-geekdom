@@ -307,9 +307,10 @@ export const CONTACT_EMAIL = "members@geekdom.com";
  * of question. Same reasoning `TEAM_CONTACTS` carries: "email us" on a page
  * about billing sends the anxious question to a shared inbox and adds a hop.
  *
- * ⚠️ TWO OF THESE ADDRESSES ARE NEW TO THIS REPO — `mm@geekdom.com` and
- * `hello@geekdom.com` appear in the doc and nowhere in the codebase before
- * now, and `press@geekdom.com` comes from the Media page's spec. Worth
+ * ⚠️ SOME OF THESE ADDRESSES ARE NEW TO THIS REPO — `club@geekdom.com`
+ * (Geekdom's swap for the doc's `mm@`) and `hello@geekdom.com` appear nowhere
+ * in the codebase before now, and `press@geekdom.com` comes from the Media
+ * page's spec. Worth
  * confirming all three are real mailboxes before launch; a contact page that
  * routes to an address nobody reads is worse than one that does not exist.
  * `CONTACT_EMAIL` (members@) is the one already in use for membership.
@@ -381,13 +382,17 @@ export const CONTACT_BLOCKS: readonly ContactBlock[] = [
   {
     heading: "Membership questions",
     body: "For questions about applying, current membership, billing, or the Club:",
-    email: "mm@geekdom.com",
+    // Geekdom: "Let's swap this for club@geekdom.com" (was mm@, from the
+    // source copy).
+    email: "club@geekdom.com",
     onAbout: true,
   },
   {
     heading: "Partnerships and Studio",
     body: "For corporate partnership inquiries or Studio-related conversations:",
-    email: "lesliechasnoff@geekdom.com",
+    // Geekdom: "swap out the leslie email with partner@geekdom.com" — a
+    // role inbox rather than a person's.
+    email: "partner@geekdom.com",
     alsoEmail: "studio@geekdom.com",
     onAbout: true,
   },
@@ -1286,7 +1291,10 @@ export const ECOSYSTEM: readonly EcosystemEntry[] = [
   {
     name: "Accelerate South Texas",
     href: "https://saafdn.org/accelerate-south-texas/",
-    role: "A fund Geekdom is backed by",
+    // Geekdom's own words on /about: "We helped create Accelerate South
+    // Texas, a fund at the San Antonio Area Foundation." This read "a fund
+    // Geekdom is backed by", which undersold it.
+    role: "A San Antonio Area Foundation fund Geekdom helped create",
     description:
       "A component fund of the San Antonio Area Foundation that funds the organizations supporting entrepreneurs across South Texas — startup, nonprofit and small business creation, and the job growth that follows.",
   },

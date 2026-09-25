@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
 import {
   Eyebrow,
+  HEADING,
   PageTitle,
   Section,
   Subhead,
@@ -11,6 +12,7 @@ import { Photo } from "@/components/site/photo";
 import { ContactLinks } from "@/components/site/contact-links";
 import { PHOTOS } from "@/lib/photos";
 import { CONTACT_BLOCKS, FOUNDED_YEAR } from "@/lib/site";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = pageMetadata({
   ownCard: true,
@@ -63,6 +65,8 @@ const YEAR_WORDS: Record<number, string> = {
   20: "Twenty",
 };
 
+const BODY = "text-lg leading-relaxed text-muted-foreground";
+
 export default function AboutPage() {
   const years = new Date().getFullYear() - FOUNDED_YEAR;
   const spelled = YEAR_WORDS[years] ?? String(years);
@@ -85,19 +89,45 @@ export default function AboutPage() {
       <Section tone="bone">
         <Eyebrow>Founding</Eyebrow>
         <h2 className="sr-only">Founding</h2>
+        {/*
+          GEEKDOM'S FOUNDING STORY, VERBATIM, in two parts under their own
+          subheads. It replaced the source copy's two paragraphs ("Fifteen
+          years ago, Graham Weston received an email…"). Company names are as
+          Geekdom wrote them — "Parlevel", where PORTFOLIO lists "ParLevel
+          Systems".
+        */}
         <div className="mt-6 max-w-2xl">
-          <p className="text-lg leading-relaxed text-muted-foreground">
-            {spelled} years ago, Graham Weston received an email from a founder
-            that said San Antonio was missing a startup and tech community.
-            Geekdom was born as the answer. Today, it powers the next
-            generation of venture companies in San Antonio and the builders
-            behind them.
+          <h3 className={cn(HEADING.subhead, "text-graphite")}>The email</h3>
+          <p className={cn("mt-4", BODY)}>
+            Around 2010, a founder whose company Rackspace had just acquired
+            sent Graham Weston a now-infamous email explaining why he
+            wasn&rsquo;t moving to San Antonio. The city, he wrote, had no
+            startups and no developers to speak of.
           </p>
-          <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
-            From the start, the point wasn&rsquo;t the space. It was the people
-            the space brought together — the founders who found their
-            co-founders, the engineers who joined the companies that would
-            later go on to raise, hire, and stay rooted here.
+          <p className={cn("mt-5", BODY)}>
+            That email set Graham on the path that led to Geekdom.
+          </p>
+
+          <h3 className={cn("mt-12", HEADING.subhead, "text-graphite")}>
+            The place where startups are born
+          </h3>
+          <p className={cn("mt-4", BODY)}>
+            Graham brought in Nick Longo to help build what came next.
+            Together they visited New York, Philadelphia, and San Francisco to
+            see how the strongest startup communities actually worked. In
+            2011, they opened Geekdom downtown with a single promise: be the
+            place where startups are born.
+          </p>
+          <p className={cn("mt-5", BODY)}>
+            Soon after, Geekdom hosted Techstars Cloud, which brought founders
+            from around the world to San Antonio.
+          </p>
+          <p className={cn("mt-5", BODY)}>
+            From the beginning, the point wasn&rsquo;t the space. It was the
+            people the space brought together. Founders met their co-founders
+            here. Developers joined companies that went on to raise, hire, and
+            build in San Antonio — Parlevel, Promoter.io, FloatMe, PorchPass,
+            and more.
           </p>
         </div>
 
@@ -105,7 +135,8 @@ export default function AboutPage() {
           The doc's note: "Full-width placeholder photograph after this
           section. Graham + Nick photo or another from early Geekdom days at
           Weston Centre." `grahamNick` is that photograph — 2011, both men
-          under the original wall sign.
+          under the original wall sign, which reads "The Place Where Startups
+          Are Born." — so it lands directly under the part that quotes it.
 
           16:9 rather than a taller crop, and uncropped: it is a symmetrical
           two-subject portrait with the sign above them, and all three are
@@ -124,24 +155,55 @@ export default function AboutPage() {
       <Section tone="bone-light">
         <Eyebrow>Where we are now</Eyebrow>
         <h2 className="sr-only">Where we are now</h2>
+        {/*
+          GEEKDOM'S COPY, VERBATIM, replacing the source copy's three
+          paragraphs. The mission line is the lede, as on /club and /studio;
+          the closing line keeps Graphite, the weight the old closing line
+          had. "Fifteen" is computed from FOUNDED_YEAR, so it reads "Sixteen"
+          next year rather than going stale.
+
+          The relationships here are Geekdom's own words and they settle two
+          of ECOSYSTEM's verbs: they OPERATE LaunchSA with the City, and they
+          HELPED CREATE Accelerate South Texas (lib/site.ts had "a fund
+          Geekdom is backed by"). LaunchSA stays a separate program, named —
+          nothing here offers its resources to Club members.
+        */}
         <div className="mt-6 max-w-2xl">
-          <p className="text-lg leading-relaxed text-muted-foreground">
-            {spelled} years in, Geekdom is a members&rsquo; club for the people
-            building San Antonio&rsquo;s next generation of scalable companies
-            — founders, builders, and the operators, investors, and partners
-            who invest in their success.
+          <p className="text-2xl leading-snug text-graphite sm:text-[1.75rem]">
+            Geekdom is on a mission to build San Antonio one startup at a time.
           </p>
-          <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
-            Alongside the Club, we operate the Studio, our venture layer that
-            backs the founders we go all in with. Together with the Community
-            Fund, Startup + Tech Week, Accelerate South Texas, and our work
-            operating LaunchSA in partnership with the City of San Antonio,
-            we&rsquo;re one part of a broader startup community — and we work
-            to make sure the whole thing reinforces itself.
+          <p className={cn("mt-8", BODY)}>
+            {spelled} years in, we&rsquo;ve gone from providing a place to work
+            to deliberately building a place where companies get built.
           </p>
-          <p className="mt-5 text-lg leading-relaxed text-graphite">
-            We put founders at the center of everything we do. Give them what
-            they need. And build San Antonio, one startup at a time.
+          <p className={cn("mt-5", BODY)}>
+            Today, Geekdom has two parts. The Club is the community for the
+            people building San Antonio&rsquo;s future — founders, engineers,
+            creators, operators, and the corporate and civic leaders who want a
+            hand in what the city becomes. The Studio is where we go all in
+            with a small number of founders each year, investing through our
+            Community Fund and working alongside them for the next six to
+            twelve months.
+          </p>
+          <p className={cn("mt-5", BODY)}>
+            Around the Club and Studio, we run a few things that make the whole
+            ecosystem stronger. We operate LaunchSA with the City of San
+            Antonio, the open front door for anyone starting something. We
+            helped create Accelerate South Texas, a fund at the San Antonio
+            Area Foundation that supports the organizations serving
+            entrepreneurs across the region. And we run San Antonio Startup +
+            Tech Week every fall to give our community a bigger stage.
+          </p>
+          <p className={cn("mt-5", BODY)}>
+            Founders rarely succeed alone. So we bring entrepreneurs,
+            investors, universities, corporations, and local government
+            together to clear the path for startups in San Antonio. We&rsquo;re
+            one part of a broader startup community, and we work to make every
+            part of it stronger.
+          </p>
+          <p className="mt-8 text-lg leading-relaxed text-graphite">
+            The email named what San Antonio was missing. We made it our
+            mission.
           </p>
         </div>
       </Section>

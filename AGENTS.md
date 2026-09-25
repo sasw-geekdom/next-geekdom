@@ -16,12 +16,15 @@ class or copy change doesn't need one.
 
 **Geekdom is a convening institution, not a membership product.** It runs the
 Club and the Studio — the two things you can join — and it also operates
-LaunchSA for the City of San Antonio, produces San Antonio Startup + Tech Week,
-is backed by the Accelerate South Texas fund, and sits on the regional team for
-MIT REAP. That work lives in `ECOSYSTEM` in [lib/site.ts](lib/site.ts), and the
-`role` field on each entry is required: **never flatten these to "partner"** —
-operating something for the City and being invited into MIT's cohort are
-different claims, and two of the four verbs still need confirming from Geekdom.
+LaunchSA for the City of San Antonio, runs San Antonio Startup + Tech Week,
+helped create the Accelerate South Texas fund, and sits on the regional team
+for MIT REAP. That work lives in `ECOSYSTEM` in [lib/site.ts](lib/site.ts), and
+the `role` field on each entry is required: **never flatten these to
+"partner"** — operating something for the City and being invited into MIT's
+cohort are different claims. Geekdom's /about copy confirmed three of the four
+verbs in their own words (operate LaunchSA, run Startup Week, helped create
+Accelerate South Texas — the last corrected from "backed by"); MIT REAP's
+"sits on the regional team" is still ours.
 
 **The homepage answers "what is Geekdom in 2026", not "what replaced
 coworking."** Its old spine argued one point — that one membership is worth

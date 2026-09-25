@@ -62,9 +62,12 @@ export default function MediaPage() {
           For journalists, writers, and researchers covering San
           Antonio&rsquo;s startup community.
         </PageTitle>
+        {/* Geekdom's wording, verbatim ("tell the story of", was "write
+            about"). */}
         <Lede>
-          Everything you need to write about Geekdom, our members, and the
-          founders building San Antonio&rsquo;s next generation of companies.
+          Everything you need to tell the story of Geekdom, our members, and
+          the founders building San Antonio&rsquo;s next generation of
+          companies.
         </Lede>
       </Section>
 
