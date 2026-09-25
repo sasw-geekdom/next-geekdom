@@ -94,7 +94,8 @@ export default function AboutPage() {
           subheads. It replaced the source copy's two paragraphs ("Fifteen
           years ago, Graham Weston received an email…"). Company names are as
           Geekdom wrote them — "Parlevel", where PORTFOLIO lists "ParLevel
-          Systems".
+          Systems". "In 2009" was "Around 2010" in their draft; they changed
+          it to match the homepage's origin section.
         */}
         {/*
           THE ARCHIVE, SPRINKLED — Geekdom sent older photographs "to sprinkle
@@ -107,7 +108,7 @@ export default function AboutPage() {
           <div>
             <h3 className={cn(HEADING.subhead, "text-graphite")}>The email</h3>
             <p className={cn("mt-4", BODY)}>
-              Around 2010, a founder whose company Rackspace had just acquired
+              In 2009, a founder whose company Rackspace had just acquired
               sent Graham Weston a now-infamous email explaining why he
               wasn&rsquo;t moving to San Antonio. The city, he wrote, had no
               startups and no developers to speak of.
