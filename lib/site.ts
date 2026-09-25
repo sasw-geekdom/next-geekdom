@@ -1335,15 +1335,6 @@ export const BEYOND_THE_CLUB: NavLink[] = ECOSYSTEM.map((e) => ({
   label: e.name,
 }));
 
-/**
- * The utility row under the footer proper. Small, quiet, and the one part of
- * the site that exists because it has to rather than because it argues
- * anything.
- */
-export const LEGAL: NavLink[] = [
-  { href: "/privacy", label: "Privacy" },
-  { href: "/terms", label: "Terms" },
-];
 
 /** Public calendar the events page links out to when Luma isn't configured. */
 /**
@@ -1494,3 +1485,19 @@ export function live(links: FooterLink[]): NavLink[] {
     .filter((l) => !l.pending)
     .map(({ href, label }) => ({ href, label }));
 }
+
+/**
+ * The utility row under the footer proper. Small, quiet, and the one part of
+ * the site that exists because it has to rather than because it argues
+ * anything.
+ *
+ * HIDDEN FOR NOW, at Geekdom's request ("Let's hide the Terms & Privacy for
+ * now"). `pending: true` keeps them out of the footer through `live()`, the
+ * same switch Field Notes uses; the pages themselves are still live at
+ * /privacy and /terms and still in the sitemap. Drop the flags to bring the
+ * links back. Declared after `FooterLink` so it can use the flag.
+ */
+export const LEGAL: FooterLink[] = [
+  { href: "/privacy", label: "Privacy", pending: true },
+  { href: "/terms", label: "Terms", pending: true },
+];

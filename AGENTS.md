@@ -203,6 +203,11 @@ team asked for — everything else lives in the footer.
 footer's copyright line. Ported from the sibling `next-sasw` repo, where the
 same page runs as "15 years of Geekdom".
 
+**The door is unlinked for now, at Geekdom's request** — the classic mark
+still sits in the footer, but as a plain image, until the photo wall has
+photographs (see below for what that takes). Re-wrap it in a `<Link>` to
+reopen; the route itself is untouched.
+
 - **Deliberately out of the sitemap and out of the nav.** An easter egg that
   ranks in search has stopped being one. It is still indexable and has a
   canonical, so a link someone shares works.

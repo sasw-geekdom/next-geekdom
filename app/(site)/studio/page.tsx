@@ -199,26 +199,13 @@ export default function StudioPage() {
             </p>
 
             {/*
-              ⚠️ THE PLACEHOLDER PULL QUOTE IS BACK, AND IT IS STILL A
-              PLACEHOLDER.
-
-              I deleted it, on the reasoning that `data/mock/voices.ts` had
-              already settled that a fabricated sentence under a real person's
-              name should not ship. `Source Copy v1` carries it — "Pull quote
-              is a placeholder. Get a real one from Brian before launch." —
-              and Geekdom's instruction is that the site follows the doc, so
-              deleting it was a decision that was not mine to make.
-
-              THE FLAG IS THE POINT. The doc says replace it before launch, so
-              the job is to get a real one from Brian, not to quietly remove
-              the slot and let the page look finished. If it must not ship as
-              his words, that is a conversation with Leslie rather than a
-              silent edit — see the note in data/mock/voices.ts for the case
-              against it.
+              BRIAN'S QUOTE, VERBATIM — the real one, sent by Geekdom. The
+              source copy carried a placeholder here ("Get a real one from
+              Brian before launch"); this replaces it.
             */}
             <PullQuote className="mt-8 lg:text-xl">
-              Early stage startups need two things: customers and capital. I
-              personally love to go after both.
+              Early-stage startups need one thing: money. They get it from
+              customers, investors, and partners. We help them land all three.
             </PullQuote>
           </div>
 

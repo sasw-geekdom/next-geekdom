@@ -162,23 +162,22 @@ export function SiteFooter() {
               route. The file is flattened to Bone because an <img> cannot
               take `currentColor`, so the hover runs on opacity.
             */}
-            <Link
-              href="/since-2011"
-              aria-label={`${new Date().getFullYear() - FOUNDED_YEAR} years of Geekdom`}
-              className="group inline-flex items-center rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-offset-2 focus-visible:ring-offset-graphite"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/brand/geekdom-classic.svg"
-                alt="Geekdom"
-                width={59}
-                height={16}
-                className="h-4 w-auto opacity-55 transition-opacity group-hover:opacity-100"
-              />
-            </Link>
+            {/*
+              THE DOOR IS SHUT FOR NOW, at Geekdom's request: the mark stays,
+              the link doesn't, until the photo wall has photographs in it.
+              /since-2011 still exists; wrap this back in a <Link> to reopen.
+            */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/brand/geekdom-classic.svg"
+              alt="Geekdom"
+              width={59}
+              height={16}
+              className="h-4 w-auto opacity-55"
+            />
           </p>
           <nav className="flex flex-wrap items-center gap-x-6 gap-y-2">
-            {LEGAL.map((l) => (
+            {live(LEGAL).map((l) => (
               <Link
                 key={l.href}
                 href={l.href}
