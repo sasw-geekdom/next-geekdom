@@ -87,7 +87,7 @@ export function pageMetadata({
     in a feed, next to a stranger's photo.
 
     The homepage's own title already opens with the name, so both would run it
-    twice: "Geekdom — Find your thinking partner. · Geekdom". Marking it
+    twice: "Geekdom — Building San Antonio · Geekdom". Marking it
     absolute opts out of the template, and the share title skips the suffix for
     the same reason.
   */

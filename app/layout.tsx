@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Rubik, IBM_Plex_Mono } from "next/font/google";
-import { SITE_URL, SITE_NAME, PROMISE } from "@/lib/site";
+import { SITE_URL, SITE_NAME, TITLE_LINE } from "@/lib/site";
 import { IS_PREVIEW } from "@/lib/preview";
 import { PreviewBadge } from "@/components/site/preview-badge";
 import { SiteJsonLd } from "@/components/site/structured-data";
@@ -89,7 +89,7 @@ const plexMono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `${SITE_NAME} — ${PROMISE}`,
+    default: `${SITE_NAME} — ${TITLE_LINE}`,
     template: `%s · ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,

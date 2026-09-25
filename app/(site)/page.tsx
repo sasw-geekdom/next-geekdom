@@ -27,7 +27,7 @@ import {
   LOCATION,
   POSITIONING,
   POSITIONING_ACCENT,
-  PROMISE,
+  TITLE_LINE,
   SITE_NAME,
   STUDIO,
   TAGLINE_LINE,
@@ -36,7 +36,7 @@ import {
 } from "@/lib/site";
 
 export const metadata: Metadata = pageMetadata({
-  title: `${SITE_NAME} — ${PROMISE}`,
+  title: `${SITE_NAME} — ${TITLE_LINE}`,
   path: "",
   description: SITE_DESCRIPTION,
 });

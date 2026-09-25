@@ -405,6 +405,33 @@ p {
   into a clean instant swap instead of a flicker.
 */
 /*
+  THE TYPEFORM POPUP (/apply's "Start application"). Typeform draws its
+  overlay frame with rounded corners; this is our page, and Geekdom's rule is
+  "No rounded corners… 90 degrees." Everything INSIDE the frame is styled in
+  Geekdom's Typeform account. `!important` because Typeform's popup.css loads
+  after ours.
+*/
+.tf-v1-popup .tf-v1-iframe-wrapper,
+.tf-v1-popup iframe {
+  border-radius: 0 !important;
+}
+
+/*
+  A WINDOW, NOT A TAKEOVER, on anything bigger than a phone. Near-full-screen
+  (Typeform's size 100) felt like leaving the site on a MacBook Air and was a
+  vast white field on a large monitor. Capped at 880x680 — the form's natural
+  reading size — and shrunk to keep a 40px margin on a short or narrow window.
+  Below 481px Typeform's own popup.css makes it edge to edge, which is right
+  on a phone, so this stops there.
+*/
+@media (min-width: 481px) {
+  .tf-v1-popup .tf-v1-iframe-wrapper {
+    width: min(880px, calc(100vw - 80px)) !important;
+    height: min(680px, calc(100svh - 80px)) !important;
+  }
+}
+
+/*
   THE SOFT SCROLL-IN. An element rises 24px and fades in as it enters the
   viewport, driven by its own scroll position rather than a timer — so it
   moves exactly as fast as the reader scrolls and never replays.

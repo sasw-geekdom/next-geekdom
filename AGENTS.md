@@ -248,13 +248,34 @@ same page runs as "15 years of Geekdom".
   Geekdom.", the Fraunces line "Membership is by application. We respond
   within two weeks.", and one paragraph ("about ten minutes"). No price and no
   explanation of why there's an application — Geekdom asked for neither.
-- **The form is custom, and the doc asks for Typeform + Airtable.** It stays
-  custom pending Geekdom's call, because it feeds the whole membership
-  pipeline: admin review → acceptance email → Stripe checkout → the webhook
-  that creates the member. A Typeform embed sits outside all of that.
-- **`formerMember` ("I was a Geekdom coworking member.") is load-bearing** —
-  it reaches the admin detail view, the CSV export and the team email. Don't
-  drop the checkbox without replacing that signal.
+- **The form is Geekdom's Typeform, opened as a popup from our own button**
+  ([typeform-popup-button.tsx](components/forms/typeform-popup-button.tsx),
+  `TYPEFORM_FORM_ID` in [lib/site.ts](lib/site.ts)). /apply shows only the
+  source-copy header and a Geekdom Red "Start application"; the Typeform
+  opens in a centered 880x680 window (edge to edge on phones) when clicked —
+  near-full-screen was tried and read as leaving the site. An inline embed was tried first and
+  put Typeform's own styling in the middle of a Bone page. Load-bearing:
+  - It is a real `<a href>` to the form, so it works before (or without) the
+    script; once Typeform is ready the click opens the popup instead.
+  - `data-tf-popup` + `tf.load()` from `<Script onReady>` — the declarative
+    path loads popup.css, and `onReady` re-runs on client-side navigation.
+  - Callbacks are global names (`geekdomApplySubmitted` / `...Closed`);
+    submit + close sends the visitor to /apply/thanks.
+  - `TYPEFORM_FORM_ID` is the FORM id (`xzboPb6K`), read from the live
+    embed Geekdom sent (`01M3AFG25RTFW121XX356HREK9`), which resolves to it.
+  - The overlay's corners are squared in globals.css. Everything inside the
+    frame (colors, Inter, copy, its rounded button) is Geekdom's Typeform.
+- **The custom `<ApplyForm />` is unrendered, not deleted.** It fed the whole
+  membership pipeline — `/api/apply` → the admin review queue → acceptance
+  email → Stripe checkout → the webhook that creates the member. Typeform
+  submissions go to Typeform/Airtable instead, so none of that runs from
+  /apply now. Reconnecting it (a Typeform webhook into `/api/apply`, or the
+  admin creating applications) is the integration step, deferred with the
+  others until the design is agreed.
+- **`formerMember` ("I was a Geekdom coworking member.") was load-bearing** in
+  the custom form — it reaches the admin detail view, the CSV export and the
+  team email. If Typeform is ever wired into the pipeline, map an equivalent
+  question onto it.
 
 ## Share cards and metadata
 

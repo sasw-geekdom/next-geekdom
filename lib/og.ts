@@ -2,7 +2,7 @@ import {
   FOUNDED_YEAR,
   LOCATION,
   POSITIONING,
-  PROMISE,
+  TITLE_LINE,
   SITE_NAME,
 } from "@/lib/site";
 
@@ -39,13 +39,13 @@ export interface OgCard {
 }
 
 /*
-  "Find your thinking partner." -> ["Find your", "thinking partner."]
-  Two words, then the rest. Both halves land under the 21-character ceiling.
+  The homepage card's two lines are the page title's line, split: "Building /
+  San Antonio." The card and the <title> show together in every unfurl and
+  search result, so they must say the same thing — both read TITLE_LINE.
 */
-const PROMISE_WORDS = PROMISE.split(" ");
-const PROMISE_LINES: readonly [string, string] = [
-  PROMISE_WORDS.slice(0, 2).join(" "),
-  PROMISE_WORDS.slice(2).join(" "),
+const TITLE_LINES: readonly [string, string] = [
+  TITLE_LINE.split(" ")[0],
+  `${TITLE_LINE.split(" ").slice(1).join(" ")}.`,
 ];
 
 export const OG_CARDS: Record<string, OgCard> = {
@@ -55,28 +55,17 @@ export const OG_CARDS: Record<string, OgCard> = {
     an invoice link into a chat still unfurls something.
   */
   home: {
-    eyebrow: `${LOCATION.city} · Since 2011`,
+    // Not "San Antonio · Since 2011" — the headline already says San Antonio.
+    eyebrow: `Since ${FOUNDED_YEAR}`,
     /*
       THE CARD AND THE <title> HAVE TO AGREE, because a search result and a
-      Slack unfurl show them together.
-
-      This card read "Make people your unfair advantage." — HOOK, which was
-      the h1 for the life of the old site and is now the line that CLOSES the
-      homepage. The rebuild moved it there deliberately: as an opening claim it
-      competed with the positioning line. The card kept making the demoted
-      argument, directly above a title making the other one.
-
-      POSITIONING is the h1 and would be the obvious fix, but it is 52
-      characters against the ~21-per-line limit above and there is no honest
-      two-line break in it. PROMISE is what the title already uses, it splits
-      cleanly, and it is the forward-facing claim.
-
-      SPLIT FROM THE CONSTANT rather than retyped, so a reworded PROMISE cannot
-      leave the old words sitting on the card.
+      Slack unfurl show them together. Both read TITLE_LINE — "Building San
+      Antonio", Geekdom's replacement for "Find your thinking partner." —
+      so rewording it moves the title and the card together.
     */
-    lines: PROMISE_LINES,
+    lines: TITLE_LINES,
     out: "app/opengraph-image.png",
-    alt: `Geekdom — ${PROMISE} ${POSITIONING}`,
+    alt: `Geekdom — ${TITLE_LINE}. ${POSITIONING}`,
   },
 
   /*

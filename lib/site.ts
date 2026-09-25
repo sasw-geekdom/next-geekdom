@@ -164,11 +164,19 @@ export const CLUB = {
 export const HOOK = "Make people your unfair advantage.";
 
 /**
+ * THE TITLE LINE — "Geekdom — Building San Antonio" in a browser tab, a search
+ * result and the homepage's share card. Geekdom asked for it in place of
+ * "Find your thinking partner." ("Geekdom - building San Antonio. Or
+ * something like that."). It is the head of `TAGLINE`, "Building San Antonio,
+ * one startup at a time.", so the title and the tagline say one thing.
+ */
+export const TITLE_LINE = "Building San Antonio";
+
+/**
  * The promise — what you actually do about the hook.
  *
- * Carries the page <title> and search snippets rather than the hero, because
- * it's the plainer, more searchable of the two. HOOK is for the eye, PROMISE is
- * for the query.
+ * It carried the page <title> until Geekdom asked for "Building San Antonio"
+ * there instead (see TITLE_LINE); it no longer reaches any title or card.
  */
 export const PROMISE = "Find your thinking partner.";
 
@@ -1338,6 +1346,17 @@ export const LEGAL: NavLink[] = [
 ];
 
 /** Public calendar the events page links out to when Luma isn't configured. */
+/**
+ * Geekdom's application form on Typeform (`Source Copy v1`: "Embed Typeform
+ * that feeds into current Airtable").
+ *
+ * THIS IS THE FORM ID, not the ID Geekdom sent. Their snippet was a "live
+ * embed" (`data-tf-live="01M3AFG25RTFW121XX356HREK9"`), which resolves to this
+ * form at load — read from the live embed's iframe URL
+ * (form.typeform.com/to/xzboPb6K). The popup needs the form ID itself.
+ */
+export const TYPEFORM_FORM_ID = "xzboPb6K";
+
 export const LUMA_CALENDAR_URL = envOr(
   process.env.NEXT_PUBLIC_LUMA_CALENDAR_URL,
   "https://luma.com/geekdom",

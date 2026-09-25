@@ -6,7 +6,8 @@ import {
   Section,
 } from "@/components/site/section";
 import { cn } from "@/lib/utils";
-import { ApplyForm } from "@/components/forms/apply-form";
+import { TypeformPopupButton } from "@/components/forms/typeform-popup-button";
+import { TYPEFORM_FORM_ID } from "@/lib/site";
 import { Editorial } from "@/components/site/editorial";
 
 export const metadata: Metadata = pageMetadata({
@@ -50,13 +51,13 @@ export default function ApplyPage() {
       </header>
 
       {/*
-        Narrower than the prose measure on /faq and the letter. Those are read
-        left to right at 672px; a column of inputs is scanned down its left
-        edge, and a wide field is a long way to travel back for the next one.
+        GEEKDOM'S TYPEFORM, as `Source Copy v1` specified — opened as a
+        full-screen popup from our own button rather than embedded inline, so
+        the page stays in the brand until the visitor starts. See
+        TypeformPopupButton. The custom <ApplyForm /> is still in the repo,
+        unrendered — see the /apply notes in AGENTS.md before deleting it.
       */}
-      <div className="max-w-xl">
-        <ApplyForm />
-      </div>
+      <TypeformPopupButton formId={TYPEFORM_FORM_ID} />
     </Section>
   );
 }
