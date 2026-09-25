@@ -550,6 +550,15 @@ globals.css) and a single token background; that also keeps the second red
 (#AA2D29) in the supplied SVGs off the page. Don't reintroduce a shader, a
 gradient, or a crown used as decoration.
 
+**The press brand kit is generated, not hand-made.** `npm run brand:kit`
+([scripts/brand-kit.mjs](scripts/brand-kit.mjs)) writes the wordmark, G mark
+and crown in Red, Graphite and Bone (SVG + PNG) and a ZIP to
+`public/brand/kit/`, from the flattened `*-mask.svg` outlines — /media shows
+and serves those files. The two-tone originals Geekdom supplied (Red plus a
+#AA2D29 shade) are not in the kit: the guide allows the marks "only in
+Geekdom Red, Graphite, or Bone". If Geekdom sends official single-color
+files, they replace these. Don't edit the kit by hand; re-run the script.
+
 **LaunchSA is a separate brand.** Geekdom operates it for the City of San
 Antonio. Never put its mark in a Geekdom lockup or logo wall — it was in the
 partner marquee and was removed. Refer to it by name, as a separate program:

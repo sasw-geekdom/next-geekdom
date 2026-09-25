@@ -11,7 +11,8 @@
     "start": "next start",
     "lint": "eslint",
     "og": "node scripts/og.mjs",
-    "photos:grade": "node scripts/grade-photos.mjs"
+    "photos:grade": "node scripts/grade-photos.mjs",
+    "brand:kit": "node scripts/brand-kit.mjs"
   },
   "dependencies": {
     "@vercel/blob": "^2.8.0",
