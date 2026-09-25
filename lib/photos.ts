@@ -7,6 +7,8 @@ import byTheWindows from "@/public/photos/by-the-windows.jpg";
 import speaking from "@/public/photos/speaking.jpg";
 import theRoom from "@/public/photos/the-room.jpg";
 import theCafe from "@/public/photos/the-cafe.jpg";
+import clubRoom from "@/public/photos/club-room.jpg";
+import clubWindows from "@/public/photos/club-windows.jpg";
 import dropIn from "@/public/photos/drop-in.jpg";
 import makeAPoint from "@/public/photos/make-a-point.jpg";
 import pitch from "@/public/photos/pitch.jpg";
@@ -79,6 +81,29 @@ export interface Photo {
 }
 
 export const PHOTOS = {
+  /*
+    THE 2024 CLUB SHOOT — Geekdom's own photographs (Sony A7 IV, June and
+    March 2024), sent for /club. Camera originals are 4608–7008px; they are
+    stored downscaled to 3600px on the long edge (a downscale, never an
+    upscale), which is 2-3x anything else here and enough for a full-bleed
+    hero on a large retina display. Graded like the rest of the library.
+
+    Picked from nine against the guide: club1 and club4 carry a lit Apple
+    logo and club8/9 a designer-bag monogram ("no visible logos of unrelated
+    companies"); club6/7 are portrait crops of club5, and both slots on /club
+    are landscape.
+  */
+  /** club2 — the whole third floor mid-session. /club hero. */
+  clubRoom: {
+    src: clubRoom,
+    alt: "The third floor mid-session: a full room at long wooden tables and orange and yellow chairs, a speaker at the front, windows along the far wall.",
+  },
+  /** club5 — two members by the windows, the skyline behind. /club clubhouse. */
+  clubWindows: {
+    src: clubWindows,
+    alt: "Two members talking over coffee by the third-floor windows, with downtown San Antonio's towers behind them.",
+  },
+
   /**
    * The frame the homepage opens on — not in the hero, which is type only, but
    * in the full-width band directly beneath it.
@@ -440,7 +465,9 @@ export const PHOTOS = {
    */
   brianWhiteboard: {
     src: brianWhiteboard,
-    alt: "Two men working at a whiteboard covered in a hand-drawn product wireframe, one sketching with a marker while the other points at the screen layout.",
+    // Named: the guide asks for "Real people, named", and this now carries
+    // /studio's EIR section beside his name.
+    alt: "Brian Sierakowski at a whiteboard with a founder, sketching a product wireframe while the founder points at the screen layout.",
   },
 
   /** A talk in progress — the programming frame in /club's clubhouse grid. */

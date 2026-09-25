@@ -103,15 +103,17 @@ export default function ClubPage() {
         weigh — so the figure lives in the Membership section, eighth of nine,
         where the source copy puts it.
 
-        `makeAPoint`: someone mid-sentence with people listening at close
-        range, which is the claim rather than an illustration of it, and a
-        different set of faces from the homepage hero. Anchored at 35% down so
-        the crop keeps the back row's heads and the speaker's hands.
+        `clubRoom`, from Geekdom's 2024 Club shoot at their request: the whole
+        third floor mid-session — the headline's "room", literally. It
+        replaced `makeAPoint`, which was 1600px (soft at full bleed on a large
+        display) and carried a Red Bull can and an Apple logo on the table.
+        This original is 3600px. Anchored a little below center so the crop
+        keeps the tables and the people rather than the ceiling ducts.
       */}
       <SpreadHero
         eyebrow="The Club · Members only"
-        photo={PHOTOS.makeAPoint}
-        objectPosition="object-[60%_35%]"
+        photo={PHOTOS.clubRoom}
+        objectPosition="object-[50%_55%]"
         title={
           <>
             Where {"San\u00A0Antonio\u2019s"} founders and builders find their
@@ -376,15 +378,14 @@ export default function ClubPage() {
           </div>
 
           {/*
-            ONE FRAME, NO CAPTION. This column held the floor as a lead plus
-            two captioned portrait tiles; Geekdom asked for fewer photographs
-            and no captions. `theCafe` rather than `theFloor`, because
-            `theFloor` is the same moment as the rhythm section's
-            `theFloorWide` a screen above — the two would have been two of the
-            page's three photographs.
+            ONE FRAME, NO CAPTION. `clubWindows`, from Geekdom's 2024 Club
+            shoot at their request: two members over coffee by the windows,
+            the skyline behind — the place and the people in it, which is
+            what "The third floor is where the Club lives" claims. It
+            replaced `theCafe`.
           */}
           <Photo
-            photo={PHOTOS.theCafe}
+            photo={PHOTOS.clubWindows}
             aspect="aspect-[4/3]"
             sizes="(min-width: 1024px) 544px, 100vw"
           />

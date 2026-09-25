@@ -181,7 +181,7 @@ export default function StudioPage() {
           THE CAP STAYS. A face widened to fill a column becomes a poster; at
           ~300px it reads as someone you could recognise in the room.
         */}
-        <div className="grid gap-12 lg:grid-cols-[19rem_minmax(0,34rem)] lg:gap-16">
+        <div className="grid gap-12 lg:grid-cols-[28rem_minmax(0,34rem)] lg:gap-16">
           <div>
             <Eyebrow>Leading the Studio</Eyebrow>
             <SectionTitle>{STUDIO.eir.name}</SectionTitle>
@@ -234,11 +234,19 @@ export default function StudioPage() {
             ORDERED sequence, so the rail still takes the 19rem track.
           */}
           <div className="lg:order-first">
+            {/*
+              BRIAN AT WORK, NOT A HEADSHOT — Geekdom's call. `brianWhiteboard`
+              shows what the Studio sells (his hands-on time with a founder);
+              the studio portrait it replaced showed who he is. Landscape 3:2,
+              so the rail widened from 19rem to 28rem: at 448px the camera
+              original (1200px) still covers 2x, which is the most this frame
+              can carry sharply — see AGENTS.md on this photograph.
+            */}
             <Photo
-              photo={PHOTOS.brianPortrait}
-              aspect="aspect-[4/5]"
-              sizes="(min-width: 1024px) 304px, 60vw"
-              className="max-w-[19rem]"
+              photo={PHOTOS.brianWhiteboard}
+              aspect="aspect-[3/2]"
+              sizes="(min-width: 1024px) 448px, 90vw"
+              className="max-w-[28rem]"
             />
             {/*
               THE DOC'S ROLE LINE, IN FULL. I had cut ", Geekdom Studio" on
