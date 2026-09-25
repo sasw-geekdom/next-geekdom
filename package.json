@@ -15,6 +15,7 @@
     "brand:kit": "node scripts/brand-kit.mjs"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "@vercel/blob": "^2.8.0",
     "botid": "^1.5.11",
     "clsx": "^2.1.1",

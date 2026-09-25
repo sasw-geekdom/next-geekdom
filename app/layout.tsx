@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { Rubik, IBM_Plex_Mono } from "next/font/google";
 import { SITE_URL, SITE_NAME, TITLE_LINE } from "@/lib/site";
 import { IS_PREVIEW } from "@/lib/preview";
@@ -141,6 +142,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {children}
         <SiteJsonLd />
         <PreviewBadge />
+        <Analytics />
       </body>
     </html>
   );
