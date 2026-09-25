@@ -96,39 +96,68 @@ export default function AboutPage() {
           Geekdom wrote them — "Parlevel", where PORTFOLIO lists "ParLevel
           Systems".
         */}
-        <div className="mt-6 max-w-2xl">
-          <h3 className={cn(HEADING.subhead, "text-graphite")}>The email</h3>
-          <p className={cn("mt-4", BODY)}>
-            Around 2010, a founder whose company Rackspace had just acquired
-            sent Graham Weston a now-infamous email explaining why he
-            wasn&rsquo;t moving to San Antonio. The city, he wrote, had no
-            startups and no developers to speak of.
-          </p>
-          <p className={cn("mt-5", BODY)}>
-            That email set Graham on the path that led to Geekdom.
-          </p>
+        {/*
+          THE ARCHIVE, SPRINKLED — Geekdom sent older photographs "to sprinkle
+          throughout this top section or two". One beside each part of the
+          story rather than a grid (they have pushed back on photo-heavy rows),
+          in black and white like the 2011 portrait below: this section is the
+          past. On a phone each photo follows its text.
+        */}
+        <div className="mt-6 grid items-start gap-x-16 gap-y-10 lg:grid-cols-[minmax(0,42rem)_minmax(0,1fr)]">
+          <div>
+            <h3 className={cn(HEADING.subhead, "text-graphite")}>The email</h3>
+            <p className={cn("mt-4", BODY)}>
+              Around 2010, a founder whose company Rackspace had just acquired
+              sent Graham Weston a now-infamous email explaining why he
+              wasn&rsquo;t moving to San Antonio. The city, he wrote, had no
+              startups and no developers to speak of.
+            </p>
+            <p className={cn("mt-5", BODY)}>
+              That email set Graham on the path that led to Geekdom.
+            </p>
 
-          <h3 className={cn("mt-12", HEADING.subhead, "text-graphite")}>
-            The place where startups are born
-          </h3>
-          <p className={cn("mt-4", BODY)}>
-            Graham brought in Nick Longo to help build what came next.
-            Together they visited New York, Philadelphia, and San Francisco to
-            see how the strongest startup communities actually worked. In
-            2011, they opened Geekdom downtown with a single promise: be the
-            place where startups are born.
-          </p>
-          <p className={cn("mt-5", BODY)}>
-            Soon after, Geekdom hosted Techstars Cloud, which brought founders
-            from around the world to San Antonio.
-          </p>
-          <p className={cn("mt-5", BODY)}>
-            From the beginning, the point wasn&rsquo;t the space. It was the
-            people the space brought together. Founders met their co-founders
-            here. Developers joined companies that went on to raise, hire, and
-            build in San Antonio — Parlevel, Promoter.io, FloatMe, PorchPass,
-            and more.
-          </p>
+          </div>
+          <Photo
+            photo={PHOTOS.about2013}
+            aspect="aspect-[3/2]"
+            sizes="(min-width: 1024px) 360px, 100vw"
+            className="w-full max-w-[24rem] lg:mt-12"
+          />
+
+          <div className="lg:mt-6">
+            <h3 className={cn(HEADING.subhead, "text-graphite")}>
+              The place where startups are born
+            </h3>
+            <p className={cn("mt-4", BODY)}>
+              Graham brought in Nick Longo to help build what came next.
+              Together they visited New York, Philadelphia, and San Francisco to
+              see how the strongest startup communities actually worked. In
+              2011, they opened Geekdom downtown with a single promise: be the
+              place where startups are born.
+            </p>
+            <p className={cn("mt-5", BODY)}>
+              Soon after, Geekdom hosted Techstars Cloud, which brought founders
+              from around the world to San Antonio.
+            </p>
+            <p className={cn("mt-5", BODY)}>
+              From the beginning, the point wasn&rsquo;t the space. It was the
+              people the space brought together. Founders met their co-founders
+              here. Developers joined companies that went on to raise, hire, and
+              build in San Antonio — Parlevel, Promoter.io, FloatMe, PorchPass,
+              and more.
+            </p>
+          </div>
+          {/*
+            PORTRAIT, centered on the speaker: the full frame has an Apple
+            laptop at its right edge, and this crop leaves it out.
+          */}
+          <Photo
+            photo={PHOTOS.about2014}
+            aspect="aspect-[4/5]"
+            sizes="(min-width: 1024px) 360px, 100vw"
+            className="w-full max-w-[24rem] lg:mt-6"
+            imageClassName="object-[55%_50%]"
+          />
         </div>
 
         {/*
@@ -168,43 +197,63 @@ export default function AboutPage() {
           Geekdom is backed by"). LaunchSA stays a separate program, named —
           nothing here offers its resources to Club members.
         */}
-        <div className="mt-6 max-w-2xl">
-          <p className="text-2xl leading-snug text-graphite sm:text-[1.75rem]">
-            Geekdom is on a mission to build San Antonio one startup at a time.
-          </p>
-          <p className={cn("mt-8", BODY)}>
-            {spelled} years in, we&rsquo;ve gone from providing a place to work
-            to deliberately building a place where companies get built.
-          </p>
-          <p className={cn("mt-5", BODY)}>
-            Today, Geekdom has two parts. The Club is the community for the
-            people building San Antonio&rsquo;s future — founders, engineers,
-            creators, operators, and the corporate and civic leaders who want a
-            hand in what the city becomes. The Studio is where we go all in
-            with a small number of founders each year, investing through our
-            Community Fund and working alongside them for the next six to
-            twelve months.
-          </p>
-          <p className={cn("mt-5", BODY)}>
-            Around the Club and Studio, we run a few things that make the whole
-            ecosystem stronger. We operate LaunchSA with the City of San
-            Antonio, the open front door for anyone starting something. We
-            helped create Accelerate South Texas, a fund at the San Antonio
-            Area Foundation that supports the organizations serving
-            entrepreneurs across the region. And we run San Antonio Startup +
-            Tech Week every fall to give our community a bigger stage.
-          </p>
-          <p className={cn("mt-5", BODY)}>
-            Founders rarely succeed alone. So we bring entrepreneurs,
-            investors, universities, corporations, and local government
-            together to clear the path for startups in San Antonio. We&rsquo;re
-            one part of a broader startup community, and we work to make every
-            part of it stronger.
-          </p>
-          <p className="mt-8 text-lg leading-relaxed text-graphite">
-            The email named what San Antonio was missing. We made it our
-            mission.
-          </p>
+        {/*
+          Today's frames, in COLOR — the Founding section above is the past in
+          black and white. Beside the text on desktop, after it on a phone.
+        */}
+        <div className="mt-6 grid items-start gap-x-16 gap-y-10 lg:grid-cols-[minmax(0,42rem)_minmax(0,1fr)]">
+          <div>
+            <p className="text-2xl leading-snug text-graphite sm:text-[1.75rem]">
+              Geekdom is on a mission to build San Antonio one startup at a time.
+            </p>
+            <p className={cn("mt-8", BODY)}>
+              {spelled} years in, we&rsquo;ve gone from providing a place to work
+              to deliberately building a place where companies get built.
+            </p>
+            <p className={cn("mt-5", BODY)}>
+              Today, Geekdom has two parts. The Club is the community for the
+              people building San Antonio&rsquo;s future — founders, engineers,
+              creators, operators, and the corporate and civic leaders who want a
+              hand in what the city becomes. The Studio is where we go all in
+              with a small number of founders each year, investing through our
+              Community Fund and working alongside them for the next six to
+              twelve months.
+            </p>
+            <p className={cn("mt-5", BODY)}>
+              Around the Club and Studio, we run a few things that make the whole
+              ecosystem stronger. We operate LaunchSA with the City of San
+              Antonio, the open front door for anyone starting something. We
+              helped create Accelerate South Texas, a fund at the San Antonio
+              Area Foundation that supports the organizations serving
+              entrepreneurs across the region. And we run San Antonio Startup +
+              Tech Week every fall to give our community a bigger stage.
+            </p>
+            <p className={cn("mt-5", BODY)}>
+              Founders rarely succeed alone. So we bring entrepreneurs,
+              investors, universities, corporations, and local government
+              together to clear the path for startups in San Antonio. We&rsquo;re
+              one part of a broader startup community, and we work to make every
+              part of it stronger.
+            </p>
+            <p className="mt-8 text-lg leading-relaxed text-graphite">
+              The email named what San Antonio was missing. We made it our
+              mission.
+            </p>
+          </div>
+          <div className="flex flex-col gap-6 lg:mt-24">
+            <Photo
+              photo={PHOTOS.about2021}
+              aspect="aspect-[3/2]"
+              sizes="(min-width: 1024px) 360px, 100vw"
+              className="w-full max-w-[24rem]"
+            />
+            <Photo
+              photo={PHOTOS.aboutChair}
+              aspect="aspect-[3/2]"
+              sizes="(min-width: 1024px) 360px, 100vw"
+              className="w-full max-w-[24rem]"
+            />
+          </div>
         </div>
       </Section>
 

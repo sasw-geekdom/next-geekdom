@@ -44,7 +44,7 @@ const GRAPHITE = [0x1b, 0x1b, 0x1b];
 
 /**
  * Editorial gravity, per the guide: spotlights, ceremonial moments, profiles.
- * 7 of 25 at the time of writing — 28% against the guide's ~30%.
+ * 9 of 31 at the time of writing — 29% against the guide's ~30%.
  */
 const BLACK_AND_WHITE = new Set([
   "conversation.jpg", // homepage hero; already B&W at source
@@ -54,6 +54,10 @@ const BLACK_AND_WHITE = new Set([
   "openlane-team.jpg", // founder spotlight, /studio hero
   "fireside.jpg", // a fireside chat
   "the-crowd.jpg", // the whole room at once
+  // /about's archive: Geekdom's history in black and white, beside the 2011
+  // photograph; the page's present-day frames stay in color.
+  "about-2013-whiteboard.jpg",
+  "about-2014-stage.jpg",
 ]);
 
 /** The guide's "-10 to -15", applied to every color frame. */

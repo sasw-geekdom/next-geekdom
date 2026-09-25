@@ -9,6 +9,10 @@ import theRoom from "@/public/photos/the-room.jpg";
 import theCafe from "@/public/photos/the-cafe.jpg";
 import clubRoom from "@/public/photos/club-room.jpg";
 import clubWindows from "@/public/photos/club-windows.jpg";
+import about2013 from "@/public/photos/about-2013-whiteboard.jpg";
+import about2014 from "@/public/photos/about-2014-stage.jpg";
+import about2021 from "@/public/photos/about-2021-work.jpg";
+import aboutChair from "@/public/photos/about-spinner-chair.jpg";
 import dropIn from "@/public/photos/drop-in.jpg";
 import makeAPoint from "@/public/photos/make-a-point.jpg";
 import pitch from "@/public/photos/pitch.jpg";
@@ -93,6 +97,44 @@ export const PHOTOS = {
     companies"); club6/7 are portrait crops of club5, and both slots on /club
     are landscape.
   */
+  /*
+    /ABOUT'S ARCHIVE — older photographs Geekdom sent "to sprinkle throughout
+    this top section or two." Dates from the camera metadata where it exists.
+    The two early frames are black and white (with the 2011 portrait, the
+    page's history); the later two stay in color.
+
+    Left out of the six: about1 is the Graham + Nick scene again, but a
+    Google-processed export with no camera data — not the original this
+    library is waiting for (see grahamNick). about3 has a lit Apple logo at
+    the center of the frame that no crop removes.
+
+    ⚠️ UNNAMED. The guide asks for "Real people, named"; these alts describe
+    the moment because we don't have the names. Ask Geekdom.
+  */
+  /** about4, 2013 (Canon 5D Mk III). 1000px — small slots only. */
+  about2013: {
+    src: about2013,
+    alt: "A founder writing on a sticky note at a whiteboard during Geekdom's early days, 2013.",
+  },
+  /**
+   * about2, 2014 (Sony a6000). Crop it PORTRAIT and centered on the speaker:
+   * an Apple laptop sits at the right edge of the full frame.
+   */
+  about2014: {
+    src: about2014,
+    alt: "A speaker presenting in front of the Geekdom sign, 2014.",
+  },
+  /** about5, 2021 (Canon 5D Mk IV). */
+  about2021: {
+    src: about2021,
+    alt: "Two members working at laptops on the Geekdom floor, one smiling at his screen, 2021.",
+  },
+  /** about6. 1280px — small slots only. */
+  aboutChair: {
+    src: aboutChair,
+    alt: "A member working on a laptop while reclining in a red spinner chair on the Geekdom floor.",
+  },
+
   /** club2 — the whole third floor mid-session. /club hero. */
   clubRoom: {
     src: clubRoom,
