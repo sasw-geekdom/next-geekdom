@@ -38,9 +38,8 @@ declare global {
  *     to `window[name]`. On submit we note it; Typeform shows its ending
  *     screen and auto-closes; on close, a submitted visitor goes to
  *     /apply/thanks. Closing WITHOUT submitting just returns them to /apply.
- *   · SIZE IS SET IN globals.css, not here: a centered 880x680 window (smaller
- *     on a short screen) on desktop, edge to edge on a phone. Full screen
- *     was tried and felt like leaving the site.
+ *   · SIZE IS SET IN globals.css, not here: full page on every screen, at
+ *     Geekdom's request (a centered window was tried first).
  */
 export function TypeformPopupButton({
   formId,

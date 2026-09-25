@@ -252,8 +252,9 @@ same page runs as "15 years of Geekdom".
   ([typeform-popup-button.tsx](components/forms/typeform-popup-button.tsx),
   `TYPEFORM_FORM_ID` in [lib/site.ts](lib/site.ts)). /apply shows only the
   source-copy header and a Geekdom Red "Start application"; the Typeform
-  opens in a centered 880x680 window (edge to edge on phones) when clicked —
-  near-full-screen was tried and read as leaving the site. An inline embed was tried first and
+  opens FULL PAGE when clicked, on every screen — Geekdom's request, and how
+  they configured their live embed. (A centered 880x680 window was tried
+  first.) The × is moved inside the frame in Graphite — see globals.css. An inline embed was tried first and
   put Typeform's own styling in the middle of a Bone page. Load-bearing:
   - It is a real `<a href>` to the form, so it works before (or without) the
     script; once Typeform is ready the click opens the popup instead.

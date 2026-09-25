@@ -417,18 +417,30 @@ p {
 }
 
 /*
-  A WINDOW, NOT A TAKEOVER, on anything bigger than a phone. Near-full-screen
-  (Typeform's size 100) felt like leaving the site on a MacBook Air and was a
-  vast white field on a large monitor. Capped at 880x680 — the form's natural
-  reading size — and shrunk to keep a 40px margin on a short or narrow window.
-  Below 481px Typeform's own popup.css makes it edge to edge, which is right
-  on a phone, so this stops there.
+  FULL PAGE, AT GEEKDOM'S REQUEST: "when the application starts they want
+  the Typeform full page." Their live embed is now configured the same way
+  in Typeform. So on every screen the popup fills the viewport, edge to edge
+  — it was a centered 880x680 window for a while, which read as less of a
+  takeover on a laptop; the client asked for the takeover.
+
+  THE CLOSE BUTTON MOVES INSIDE. Typeform parks its × 34px ABOVE the frame
+  in white, which works with a margin of dimmed page around the window and
+  vanishes (off-screen, white on white) once the frame is the whole page.
+  Inside the top-right corner in Graphite, the placement Typeform itself
+  uses on phones.
 */
-@media (min-width: 481px) {
-  .tf-v1-popup .tf-v1-iframe-wrapper {
-    width: min(880px, calc(100vw - 80px)) !important;
-    height: min(680px, calc(100svh - 80px)) !important;
-  }
+.tf-v1-popup .tf-v1-iframe-wrapper {
+  width: 100vw !important;
+  height: 100svh !important;
+}
+/* `:root` for specificity: Typeform's popup.css sets the × to white with
+   !important at desktop widths and loads after this file, so an equal
+   selector loses the tie. */
+:root .tf-v1-popup .tf-v1-close {
+  top: 14px !important;
+  right: 16px !important;
+  z-index: 1;
+  color: var(--graphite) !important;
 }
 
 /*
