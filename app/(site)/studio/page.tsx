@@ -94,10 +94,12 @@ export default function StudioPage() {
       </SpreadHero>
 
       {/*
-        THE SOURCE DOC'S THREE OPENING PARAGRAPHS, VERBATIM, with the first as
-        a lede — the same typographic transition out of the photograph that
-        /club uses. Figures interpolate from `STUDIO`; the sentences are the
-        doc's.
+        THE OPENING: a lede, then two body paragraphs — the same typographic
+        transition out of the photograph that /club uses. The lede is
+        Geekdom's rewrite ("Geekdom Studio is where we back…"), replacing the
+        source copy's figure-heavy first paragraph; the check size, the
+        engagement length and Brian's name are carried by the Capital and EIR
+        sections below.
 
         ⚠️ PENDING GEEKDOM: "Club membership isn't a prerequisite, but most
         Studio relationships start there." is their own source copy, and it
@@ -107,15 +109,18 @@ export default function StudioPage() {
       <Section tone="bone">
         <h2 className="sr-only">Opening</h2>
         <div className="max-w-3xl">
+          {/* Geekdom's wording, verbatim. */}
           <p className="text-2xl leading-snug text-graphite sm:text-[1.75rem]">
-            The Studio backs a small number of local founders each year with a{" "}
-            {STUDIO.checkRange} {STUDIO.checkTerms} check from our Community
-            Fund and {STUDIO.engagement} of intensive, hands-on work with our{" "}
-            {STUDIO.eir.role}, {STUDIO.eir.name}. The focus is on
-            go-to-market, product, and getting founders connected to the local
-            customers, operators, and investors who make growth possible.
+            Geekdom Studio is where we back a small number of San Antonio
+            founders each year with capital, hands-on operator support, and
+            access to the people who make the work go faster.
           </p>
+          {/* Geekdom's addition, verbatim. */}
           <p className="mt-8 max-w-2xl text-lg leading-relaxed text-muted-foreground">
+            The focus is on go-to-market, product, and getting founders
+            connected to customers, operators, and investors.
+          </p>
+          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground">
             There&rsquo;s no open application and no cohorts. Founders are
             scouted and invited. Club membership isn&rsquo;t a prerequisite,
             but most Studio relationships start there.
@@ -315,38 +320,30 @@ export default function StudioPage() {
         <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
           <div>
             <Eyebrow onInk>Capital</Eyebrow>
+            {/* Geekdom's wording, verbatim. */}
             <SectionTitle className="text-bone">
-              The check is small on purpose.
+              The check is just the starting point.
             </SectionTitle>
           </div>
           <div className="flex flex-col gap-6">
+            {/* Geekdom's wording, verbatim. */}
             <p className="text-lg leading-relaxed text-bone/70">
               The {STUDIO.fund} is how we make our initial investment in each
-              Studio company. Checks are {STUDIO.checkRange} on{" "}
-              {STUDIO.checkTerms} terms.
+              Studio company.
             </p>
             <p className="text-lg leading-relaxed text-bone/70">
-              It signals real commitment without stretching the founder or the
-              fund. The value is in what comes with it: {STUDIO.eir.name}
-              &rsquo;s time, the network, and the local corporate, operator, and
-              investor relationships that make the next round possible.
+              The local corporate, operator, and investor relationships make
+              the next round or contract possible. Our goal is to get you to
+              capital and customers faster than you can on your own.
             </p>
           </div>
         </div>
 
         {/*
-          THE "WHAT COMES WITH IT" LIST CAME OUT. It itemized the paragraph
-          above into five rows — go-to-market, product, local customers,
-          operators, investors — which is a reshaping of the doc's sentence
-          rather than the doc's copy. `Source Copy v1` writes it as prose:
-          "The value is in what comes with it: Brian's time, the network, and
-          the local corporate, operator, and investor relationships that make
-          the next round possible." That sentence is above, verbatim.
-
-          The same five things now sit where the doc puts them — in the
-          opening paragraph's "The focus is on go-to-market, product, and
-          getting founders connected to the local customers, operators, and
-          investors who make growth possible."
+          CAPITAL IS GEEKDOM'S COPY: "The check is just the starting point."
+          and the two paragraphs beside it. An itemized "what comes with it"
+          list sat here once and came out; the focus areas now live in the
+          opening ("The focus is on go-to-market, product…").
         */}
       </Section>
 
@@ -438,11 +435,13 @@ export default function StudioPage() {
               {STUDIO.openPrograms.at(-1)?.toLowerCase()}. These are open to
               the broader community, not just Studio companies.
             </Lede>
+            {/* The last two sentences ("The application tells us who you
+                are…" / "Studio invitations get made from there.") came off at
+                Geekdom's request. */}
             <Lede className="mt-5">
               If you&rsquo;re building something and wondering whether the
               Studio might be a fit, come to a public event and apply to the
-              Club. The application tells us who you are and what you&rsquo;re
-              working on. Studio invitations get made from there.
+              Club.
             </Lede>
           </div>
 
