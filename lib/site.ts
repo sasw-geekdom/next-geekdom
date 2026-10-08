@@ -1380,6 +1380,11 @@ export const SASW_SITE = "https://www.sasw.co";
   replaced had all passed. Weekly, Tuesdays at 8am at Crème Coffee & Social.
   Drop a row once its date passes; when the key is in, this list becomes
   the merge target described above.
+
+  Two community groups' meetups at Geekdom ride along, linked to Meetup —
+  hosted on the floor, not by Geekdom, so they will never come through Luma.
+  Same-day rows run in start order (Open Coffee 8am, AWS 6pm). ACM's page
+  still read "Needs a location" when added; Geekdom is the venue per 434.
 */
 export const THIS_MONTH: { date: string; title: string; href: string }[] = [
   {
@@ -1398,9 +1403,19 @@ export const THIS_MONTH: { date: string; title: string; href: string }[] = [
     href: "https://luma.com/qjn1cgti",
   },
   {
+    date: "Oct 27",
+    title: "Trick, Treat, & Deploy: AWS Card Clash, with the San Antonio AWS User Group",
+    href: "https://www.meetup.com/san-antonio-aws-users-group/events/316892225/",
+  },
+  {
     date: "Nov 3",
     title: "SATX Open Coffee Club at Crème Coffee & Social",
     href: "https://luma.com/maq0aopv",
+  },
+  {
+    date: "Nov 11",
+    title: "Confidential Computing Leveraging Bootable Containers, with ACM San Antonio",
+    href: "https://www.meetup.com/acm-sa/events/312889987/",
   },
 ];
 

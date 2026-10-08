@@ -107,6 +107,20 @@ export function PortfolioWall({
   Cells without a link get none of it — a hover that inverts and then does
   nothing on click reads as broken.
 */
+/*
+  THE MARK FLIPS; ONLY THE GROUND FADES. Both used to fade over the same
+  200ms — the ground Bone to Graphite, the mark Graphite to Bone — so halfway
+  through they were the same grey and the logo vanished. Moving from one cell
+  to the next put the cell you left and the cell you entered through that
+  point in the same frame: measured, logo contrast fell from ~55 to ~5 in
+  both at once, which is the flicker Geekdom saw.
+
+  So the type and the mark change color in one step at the midpoint of a
+  LINEAR ground fade (delay = half the duration), when the ground is mid-grey
+  and either color reads against it. Contrast never drops below ~100 levels.
+*/
+const FLIP = "transition-colors duration-0 delay-100";
+
 const CELL =
   "flex h-full min-h-32 flex-col items-center justify-center gap-3 border-b border-r border-border px-4 py-7 text-center sm:min-h-36";
 
@@ -117,7 +131,8 @@ function Company({ company }: { company: PortfolioCompany }) {
   const name = (
     <span
       className={cn(
-        "text-lg font-medium leading-snug text-graphite transition-colors duration-200",
+        "text-lg font-medium leading-snug text-graphite",
+        linked && FLIP,
         linked && "group-hover:text-bone group-focus-visible:text-bone",
       )}
     >
@@ -137,7 +152,8 @@ function Company({ company }: { company: PortfolioCompany }) {
     <span
       aria-hidden="true"
       className={cn(
-        "block bg-graphite transition-colors duration-200",
+        "block bg-graphite",
+        linked && FLIP,
         linked && "group-hover:bg-bone group-focus-visible:bg-bone",
         company.logoHeight ?? "h-6 sm:h-7",
         isSymbol ? "aspect-square shrink-0" : "w-full max-w-40",
@@ -189,7 +205,8 @@ function Company({ company }: { company: PortfolioCompany }) {
       <span
         className={cn(
           MONO.label,
-          "text-muted-foreground transition-colors duration-200",
+          "text-muted-foreground",
+          linked && FLIP,
           linked && "group-hover:text-bone/70 group-focus-visible:text-bone/70",
         )}
       >
@@ -216,7 +233,7 @@ function Company({ company }: { company: PortfolioCompany }) {
         rel="noreferrer noopener"
         className={cn(
           CELL,
-          "group w-full transition-colors duration-200 hover:bg-graphite focus-visible:bg-graphite focus-visible:outline-none",
+          "group w-full transition-colors duration-200 ease-linear hover:bg-graphite focus-visible:bg-graphite focus-visible:outline-none",
         )}
       >
         {content}
