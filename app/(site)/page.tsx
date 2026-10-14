@@ -32,8 +32,15 @@ import {
   STUDIO,
   TAGLINE_LINE,
   LUMA_CALENDAR_URL,
-  THIS_MONTH,
+  upcomingThisMonth,
 } from "@/lib/site";
+
+/*
+  HOURLY, for "This month in the Club": past events drop out of the list on
+  the next regeneration after they end (`upcomingThisMonth`). The rest of
+  the page is static either way.
+*/
+export const revalidate = 3600;
 
 export const metadata: Metadata = pageMetadata({
   title: `${SITE_NAME} — ${TITLE_LINE}`,
@@ -309,6 +316,8 @@ function Frame({
 }
 
 export default function HomePage() {
+  const events = upcomingThisMonth();
+
 
   return (
     <>
@@ -559,42 +568,45 @@ export default function HomePage() {
       */}
       <Section tone="bone">
         <SectionTitle>This month in the Club</SectionTitle>
-        <ul className="mt-10 border-b border-border">
-          {THIS_MONTH.map((item) => (
-            <li key={`${item.date}-${item.title}`} className="border-t border-border">
-              {/*
-                THE WHOLE ROW IS THE LINK, and it stays a list row: the title
-                takes the site's link treatment on hover (Clay underline) and
-                the external arrow nudges — nothing heavier, because Geekdom
-                asked for this section as a plain list. New tab: every row
-                leaves the site.
-              */}
-              <a
-                href={item.href}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="group grid grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-1 py-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-offset-2 focus-visible:ring-offset-bone sm:grid-cols-[8rem_1fr_auto] sm:gap-x-6"
-              >
-                <span
-                  className={cn(
-                    MONO.label,
-                    "col-span-2 pt-1 text-muted-foreground sm:col-span-1",
-                  )}
+        {/* Every row past: the list goes and the calendar link carries it. */}
+        {events.length > 0 && (
+          <ul className="mt-10 border-b border-border">
+            {events.map((item) => (
+              <li key={`${item.date}-${item.title}`} className="border-t border-border">
+                {/*
+                  THE WHOLE ROW IS THE LINK, and it stays a list row: the title
+                  takes the site's link treatment on hover (Clay underline) and
+                  the external arrow nudges — nothing heavier, because Geekdom
+                  asked for this section as a plain list. New tab: every row
+                  leaves the site.
+                */}
+                <a
+                  href={item.href}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="group grid grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-1 py-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-offset-2 focus-visible:ring-offset-bone sm:grid-cols-[8rem_1fr_auto] sm:gap-x-6"
                 >
-                  {item.date}
-                </span>
-                <span className="text-lg leading-snug text-graphite decoration-clay decoration-2 underline-offset-4 group-hover:underline">
-                  {item.title}
-                </span>
-                <ArrowUpRight
-                  aria-hidden="true"
-                  className={cn(ARROW.external, "self-center text-muted-foreground")}
-                />
-                <span className="sr-only"> (opens in a new tab)</span>
-              </a>
-            </li>
-          ))}
-        </ul>
+                  <span
+                    className={cn(
+                      MONO.label,
+                      "col-span-2 pt-1 text-muted-foreground sm:col-span-1",
+                    )}
+                  >
+                    {item.date}
+                  </span>
+                  <span className="text-lg leading-snug text-graphite decoration-clay decoration-2 underline-offset-4 group-hover:underline">
+                    {item.title}
+                  </span>
+                  <ArrowUpRight
+                    aria-hidden="true"
+                    className={cn(ARROW.external, "self-center text-muted-foreground")}
+                  />
+                  <span className="sr-only"> (opens in a new tab)</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
         <a
           href={LUMA_CALENDAR_URL}
           target="_blank"

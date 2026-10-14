@@ -1386,38 +1386,56 @@ export const SASW_SITE = "https://www.sasw.co";
   Same-day rows run in start order (Open Coffee 8am, AWS 6pm). ACM's page
   still read "Needs a location" when added; Geekdom is the venue per 434.
 */
-export const THIS_MONTH: { date: string; title: string; href: string }[] = [
-  {
-    date: "Oct 13",
-    title: "SATX Open Coffee Club at Crème Coffee & Social",
-    href: "https://luma.com/m0aubxfk",
-  },
+export const THIS_MONTH: {
+  date: string;
+  title: string;
+  href: string;
+  /** When the event ENDS, with its Central offset — the row drops after it. */
+  endsAt: string;
+}[] = [
   {
     date: "Oct 20",
     title: "SATX Open Coffee Club at Crème Coffee & Social",
     href: "https://luma.com/a0xcm13x",
+    endsAt: "2026-10-20T09:30:00-05:00",
   },
   {
     date: "Oct 27",
     title: "SATX Open Coffee Club at Crème Coffee & Social",
     href: "https://luma.com/qjn1cgti",
+    endsAt: "2026-10-27T09:30:00-05:00",
   },
   {
     date: "Oct 27",
     title: "Trick, Treat, & Deploy: AWS Card Clash, with the San Antonio AWS User Group",
     href: "https://www.meetup.com/san-antonio-aws-users-group/events/316892225/",
+    endsAt: "2026-10-27T21:00:00-05:00",
   },
   {
     date: "Nov 3",
     title: "SATX Open Coffee Club at Crème Coffee & Social",
     href: "https://luma.com/maq0aopv",
+    endsAt: "2026-11-03T09:30:00-06:00",
   },
   {
     date: "Nov 11",
     title: "Confidential Computing Leveraging Bootable Containers, with ACM San Antonio",
     href: "https://www.meetup.com/acm-sa/events/312889987/",
+    endsAt: "2026-11-11T20:00:00-06:00",
   },
 ];
+
+/**
+ * THIS_MONTH WITHOUT WHAT HAS ALREADY HAPPENED. A stopgap until Luma is
+ * connected: rows fall off on their own once `endsAt` passes, so the
+ * homepage never lists last week's meetup because nobody got to the file.
+ * The homepage revalidates hourly for this; a row can outlive its event by
+ * up to an hour. Adding rows is still by hand.
+ */
+export function upcomingThisMonth() {
+  const now = Date.now();
+  return THIS_MONTH.filter((item) => Date.parse(item.endsAt) > now);
+}
 
 /**
  * THE TWO ENGINES, and that is the whole nav.
