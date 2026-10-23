@@ -13,6 +13,8 @@ export const COLLECTIONS = {
   // Site content edited from the admin — see lib/content/.
   events: "events",
   portfolio: "portfolio",
+  // One doc per hashed email: when its last sign-in link went out.
+  authThrottle: "authThrottle",
 } as const;
 
 /** Doc id in `settings` holding admin-edited email copy. */

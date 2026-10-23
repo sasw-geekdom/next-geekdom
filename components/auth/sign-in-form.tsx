@@ -4,7 +4,6 @@ import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   isSignInWithEmailLink,
-  sendSignInLinkToEmail,
   signInWithEmailAndPassword,
   signInWithEmailLink,
   signInWithPopup,
@@ -24,7 +23,10 @@ import { LINK } from "@/components/site/section";
   account (lib/auth/session.ts), never by which button was pressed.
 
   The link round-trip, per Firebase's email-link guide:
-    1. `sendSignInLinkToEmail` with `handleCodeInApp: true`, returning here.
+    1. POST /api/auth/email-link. The SERVER makes the link (Admin SDK) and
+       sends it through Resend in Geekdom's brand — Firebase's own email
+       can't be reworded. The server only sends to staff and current
+       members, and answers the same either way.
     2. The address is remembered in localStorage so the same device can finish
        without asking again. It is never put in the link's URL — that enables
        session injection.
@@ -160,16 +162,19 @@ export function SignInForm() {
     setPending("link");
     const address = email.trim();
     try {
-      const back = new URL("/sign-in", window.location.origin);
-      if (from !== "/portal") back.searchParams.set("from", from);
-      await sendSignInLinkToEmail(getFirebaseAuth(), address, {
-        url: back.toString(),
-        handleCodeInApp: true,
+      const res = await fetch("/api/auth/email-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: address, from }),
       });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "Couldn't send the link. Try again in a minute.");
+      }
       remember(address);
       setSentTo(address);
     } catch (err) {
-      setError(explain(err, "Couldn't send the link. Try again in a minute."));
+      setError(err instanceof Error ? err.message : "Couldn't send the link. Try again in a minute.");
     }
     setPending(null);
   }

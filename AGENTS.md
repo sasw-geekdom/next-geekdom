@@ -339,6 +339,16 @@ member. Members sign in by **email link** (no passwords); staff keep Google
 and email/password. The Google button has no `hd` domain hint any more —
 members use personal Gmail, and the hint hid their accounts.
 
+- **Sign-in links are sent by Geekdom, not Firebase**
+  ([app/api/auth/email-link/route.ts](app/api/auth/email-link/route.ts)):
+  the Admin SDK's `generateSignInWithEmailLink` + Resend + `signInLinkEmail`.
+  Firebase's own email ("sign in to project-geekdom") can't be reworded, so
+  the form never calls `sendSignInLinkToEmail`. The route sends only to
+  staff and current members — creating their Firebase login if needed, so
+  staff need no manual setup once self sign-up is off — answers the same
+  `{ ok: true }` for everyone, and allows one link per address per minute
+  (`authThrottle`). Its continue URL is SITE_URL/sign-in, so that domain
+  must be in Firebase's authorized domains.
 - **`/portal` is the member portal; `/portal/admin` is the admin behind the
   sidebar's labeled "Admin" switch** (a shield, and "← Member portal" inside
   the admin). It was a bare wrench; an unlabeled tool icon reads as the

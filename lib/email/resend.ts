@@ -49,6 +49,8 @@ export async function sendSafely(payload: {
   to: string | string[];
   subject: string;
   html: string;
+  /** Plain-text alternative. Spam filters and some clients read it. */
+  text?: string;
   replyTo?: string;
 }): Promise<boolean> {
   if (!hasEnv(process.env.RESEND_API_KEY)) {
@@ -62,6 +64,7 @@ export async function sendSafely(payload: {
       to: payload.to,
       subject: payload.subject,
       html: payload.html,
+      ...(payload.text ? { text: payload.text } : {}),
       replyTo: payload.replyTo ?? EMAIL_REPLY_TO,
     });
 
