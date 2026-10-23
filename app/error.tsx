@@ -34,8 +34,8 @@ export default function Error({
         <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
           Something on our end failed. Try again — and if it keeps happening,
           let us know at{" "}
-          <a href="mailto:members@geekdom.com" className="font-medium text-graphite underline decoration-clay decoration-2 underline-offset-2 transition-colors hover:decoration-graphite">
-            members@geekdom.com
+          <a href="mailto:club@geekdom.com" className="font-medium text-graphite underline decoration-clay decoration-2 underline-offset-2 transition-colors hover:decoration-graphite">
+            club@geekdom.com
           </a>
           .
         </p>

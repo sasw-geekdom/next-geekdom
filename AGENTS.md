@@ -201,14 +201,14 @@ team asked for — everything else lives in the footer.
 
 ## The easter egg
 
-`/since-2011` is a throwback page hiding behind the **Geekdom** word in the
-footer's copyright line. Ported from the sibling `next-sasw` repo, where the
+`/since-2011` is a throwback page; its door was the classic **Geekdom**
+wordmark in the footer's copyright line (removed for now — see below). Ported from the sibling `next-sasw` repo, where the
 same page runs as "15 years of Geekdom".
 
-**The door is unlinked for now, at Geekdom's request** — the classic mark
-still sits in the footer, but as a plain image, until the photo wall has
-photographs (see below for what that takes). Re-wrap it in a `<Link>` to
-reopen; the route itself is untouched.
+**The door is off the footer for now, at Geekdom's request** — the classic
+wordmark was removed from the copyright line, and it will get a different
+home when the page comes back (once the photo wall has photographs; see
+below). The route and `public/brand/geekdom-classic.svg` are untouched.
 
 - **Deliberately out of the sitemap and out of the nav.** An easter egg that
   ranks in search has stopped being one. It is still indexable and has a

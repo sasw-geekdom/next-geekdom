@@ -92,37 +92,6 @@ export function SiteFooter() {
         */}
         <div className="mt-14 flex flex-col gap-3 border-t border-bone/12 pt-6 text-[0.8125rem] text-bone/50 sm:flex-row sm:items-center sm:justify-between">
           {/*
-            THE EASTER EGG'S DOOR, and it wears the OLD LOGO.
-
-            The copyright line is the one place on the site where the founding
-            year already appears, so the throwback hangs off it rather than
-            taking a nav slot or a footer column — which is what makes it an
-            easter egg rather than a page. The years are computed, so the label
-            is still true in 2031.
-
-            THE CLASSIC MARK IS THE POINT. This is Geekdom's original
-            wordmark — the light humanist face with the spiky crown over the
-            "d" — not the condensed slab lockup in the navbar six inches above
-            it. A door to a fifteen-year retrospective that wears the logo
-            those fifteen years were spent under is the joke landing before the
-            page loads. Ported from the sibling next-sasw repo, which uses the
-            same mark in the same slot.
-
-            IT IS A SECOND WORDMARK ON THE SITE, which is worth being honest
-            about: the 2026 guide has one. It is contained on purpose — one
-            instance, 16px tall, in the quietest line on the page, and
-            historical rather than current by its whole nature. It is not an
-            alteration of the current mark, so the guide's "never recolor,
-            rotate or stretch" rules aren't what's in play; but it is a second
-            wordmark, and anyone auditing the marks should know it is here.
-
-            An <img> rather than an inline SVG: the footer renders on every
-            route, and 5.7KB of paths in every document to color one mark that
-            never changes color is a bad trade. The file is flattened to Bone
-            (#F4F1EB) for that reason — an <img> can't take `currentColor`, so
-            the palette color is baked in and the hover runs on opacity.
-          */}
-          {/*
             THE ADDRESS MOVED HERE, at Geekdom's request. It used to sit in
             the left block under the tagline; the tagline and the membership
             email came out with this change, which left that block holding
@@ -150,31 +119,11 @@ export function SiteFooter() {
               © {FOUNDED_YEAR}–{new Date().getFullYear()}
             </span>
             {/*
-              THE EASTER EGG'S DOOR, and it wears the OLD LOGO.
-
-              The copyright line is the one place the founding year already
-              appears, so the throwback hangs off it rather than taking a nav
-              slot or a footer column — which is what makes it an easter egg
-              rather than a page. The years are computed, so the label is
-              still true in 2031.
-
-              An <img> rather than an inline SVG: the footer renders on every
-              route. The file is flattened to Bone because an <img> cannot
-              take `currentColor`, so the hover runs on opacity.
+              THE EASTER EGG'S DOOR IS OFF THE FOOTER, at Geekdom's request —
+              the classic wordmark used to sit here (unlinked since the photo
+              wall is still empty). It gets a different home when /since-2011
+              comes back; the route and public/brand/geekdom-classic.svg stay.
             */}
-            {/*
-              THE DOOR IS SHUT FOR NOW, at Geekdom's request: the mark stays,
-              the link doesn't, until the photo wall has photographs in it.
-              /since-2011 still exists; wrap this back in a <Link> to reopen.
-            */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/brand/geekdom-classic.svg"
-              alt="Geekdom"
-              width={59}
-              height={16}
-              className="h-4 w-auto opacity-55"
-            />
           </p>
           <nav className="flex flex-wrap items-center gap-x-6 gap-y-2">
             {live(LEGAL).map((l) => (
@@ -189,14 +138,17 @@ export function SiteFooter() {
             {/*
               Not in the doc's utility row, kept deliberately: it is the only
               signposted way into the member portal and the admin behind it,
-              and the doc does not cover signed-in routes at all. One door for
-              members and staff — the account decides where it leads.
+              and the doc does not cover signed-in routes at all. Named for
+              where it goes — "Member portal", the label beside the wordmark
+              in the portal's own top bar. Links to /portal: signed out, the
+              proxy sends you to /sign-in and back; staff find the Admin
+              switch there.
             */}
             <Link
-              href="/sign-in"
+              href="/portal"
               className="transition-colors hover:text-bone/80"
             >
-              Sign in
+              Member portal
             </Link>
           </nav>
         </div>

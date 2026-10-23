@@ -306,7 +306,14 @@ export function transitionPhase(now: Date = new Date()): TransitionPhase {
 /** Years since Geekdom opened — "Fifteen years ago…" in the letter. */
 export const FOUNDED_YEAR = 2011;
 
-export const CONTACT_EMAIL = "members@geekdom.com";
+/**
+ * The Club's one address — membership questions, the error page, the legal
+ * pages, email footers, structured data. It was `members@`; Geekdom moved
+ * membership questions to `club@` (CONTACT_BLOCKS, the portal), and every
+ * place now says the same thing. The Resend reply-to and team-notify env
+ * vars are club@ too.
+ */
+export const CONTACT_EMAIL = "club@geekdom.com";
 
 /**
  * /contact's routing table, from `Source Copy v1`.
@@ -321,7 +328,7 @@ export const CONTACT_EMAIL = "members@geekdom.com";
  * page's spec. Worth
  * confirming all three are real mailboxes before launch; a contact page that
  * routes to an address nobody reads is worse than one that does not exist.
- * `CONTACT_EMAIL` (members@) is the one already in use for membership.
+ * `CONTACT_EMAIL` is club@ as well (it was members@).
  */
 /**
  * THE MEDIA BOILERPLATE, verbatim from `Source Copy v1`.

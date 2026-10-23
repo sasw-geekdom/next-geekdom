@@ -32,7 +32,7 @@ export const EMAIL_REPLY_TO = env(process.env.RESEND_REPLY_TO);
 
 /** Inboxes notified when a membership application lands. */
 export const TEAM_NOTIFY_TO = (
-  envOr(process.env.TEAM_NOTIFY_EMAILS, "members@geekdom.com")
+  envOr(process.env.TEAM_NOTIFY_EMAILS, "club@geekdom.com")
 )
   .split(",")
   .map((s) => s.trim())
