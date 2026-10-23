@@ -42,10 +42,12 @@ rule above still applies.
 explicit: "I definitely don't want to talk about why an application." They
 may want something else in that slot — ask, don't fill it.
 
-**"This month in the Club" is the source copy's list, in `THIS_MONTH`
-([lib/site.ts](lib/site.ts)), maintained by hand monthly.** Luma isn't
-connected. When it is, merge its events into the list instead of swapping the
-list for cards, because some entries aren't Geekdom-hosted.
+**"This month in the Club" is edited in the admin** (`/portal/admin/events`,
+the `events` collection), with `THIS_MONTH` in [lib/site.ts](lib/site.ts) as
+its fallback — see "Member portal and admin" below. Rows leave the site when
+their event ends. Luma isn't connected. When it is, merge its events into the
+list instead of swapping the list for cards, because some entries aren't
+Geekdom-hosted.
 
 - **The Club and the Studio sit side by side as two panels, with no
   photographs** — `Offering` in the homepage. Geekdom found the old
@@ -326,18 +328,169 @@ easing in or the page gliding, wanted both. They are two separate mechanisms:
   INSIDE a section would be positioned against its block, not the viewport —
   portal it out, or give its block `.reveal`-free markup.
 
+## Member portal and admin
+
+**One sign-in, three roles.** `/sign-in` serves members and staff; the
+account decides where it lands. Roles resolve on EVERY request in
+[lib/auth/session.ts](lib/auth/session.ts), never from the cookie: superadmin
+(`SUPER_ADMIN_EMAILS`), staff (`@geekdom.com`), member (an email with a
+`members` doc whose status is active, trialing or past_due). Admin wins over
+member. Members sign in by **email link** (no passwords); staff keep Google
+and email/password. The Google button has no `hd` domain hint any more —
+members use personal Gmail, and the hint hid their accounts.
+
+- **`/portal` is the member portal; `/portal/admin` is the admin behind the
+  sidebar's labeled "Admin" switch** (a shield, and "← Member portal" inside
+  the admin). It was a bare wrench; an unlabeled tool icon reads as the
+  member's own settings. `/admin/*` and `/admin/login` 308 there. The switch
+  renders only for staff, but that is UX: every admin page and action calls
+  `requireAdmin()`, which sends a signed-in member to `/portal`. Tested: a
+  member replaying a staff save action is redirected and nothing is written.
+- **Two layouts in one shell** ([portal-shell.tsx](components/portal/portal-shell.tsx)):
+  the MEMBER portal is a top bar (four pages, full width — the directory
+  needs it) with a bottom tab bar on phones; the ADMIN keeps the sidebar.
+- **The dashboard is a bento** ([app/portal/page.tsx](app/portal/page.tsx)):
+  membership + a compact Graphite Slack CTA; this month's events as the
+  LARGEST tile (it changes most — not Field Notes, which updates rarely)
+  with a right column of a compact Follow Geekdom row (SOCIALS as arrow
+  links) over Field Notes; New in the Club full width (four newest); a slim
+  "Need something?" row. Don't let a small tile stretch to a tall row's
+  height — stack it with another instead. **New in the Club is the people tile and the
+  reason it exists**: everything else is Geekdom broadcasting, and the
+  Club's promise is a person. No Studio tile — that's the Club→Studio
+  pathway Geekdom ruled out.
+- **The profile fits one screen** (next-angels' layout): a Graphite
+  membership card and the directory-profile card on the left, billing with
+  payment history inside it on the right. The ten-field form opens in the
+  slide-out from the card's Edit button — never inline again; that was the
+  scroll. The top bar says "Member portal" beside the wordmark.
+- **Billing is fully in-app — members never see Stripe's hosted portal**
+  (Geekdom decision). "Manage billing" opens the billing slide-out
+  ([billing-drawer.tsx](components/portal/billing-drawer.tsx)): plan, card +
+  Update card, invoices and receipts, cancel at period end / resume, and a
+  past-due banner that pays the open invoice in place. A MOCK until the
+  Stripe keys exist; the real build is Stripe's Payment Element in the
+  drawer (SetupIntent, card data never on our servers), `invoices.list`,
+  `invoices.pay`, `cancel_at_period_end`. No "More billing options" link —
+  no tax IDs or other payment methods needed. No autopay toggle: the
+  subscription always auto-charges. **The mock's card fields are read-only
+  on purpose** — never let a mock accept a real card number. `/account`
+  still emails a Stripe portal link; switch it to "sign in" when this ships.
+- **Every member-portal page starts with `PortalPage`**
+  ([portal-page.tsx](components/portal/portal-page.tsx)): eyebrow, Section-H1,
+  optional sample notice, then Tiles. No full-width rules, no standfirst —
+  the older header sat 12px lower and ruled past the column, so titles
+  jumped between tabs. FAQ & resources is two columns: the FAQ tile (with
+  live resources above it, "coming soon" folded to one line) beside a
+  sticky "At a glance" + "Still have a question?" column.
+- **The directory is master/detail, not a card grid** — next-angels'
+  pattern, because it has to hold 400+ people: an alphabetical list under
+  sticky letter headings (`top-16`, under the 64px top bar) with an A–Z
+  jump bar, a sticky profile pane on desktop, the slide-out on phones.
+  Search covers "Ask me about" so "who knows X?" is answered by typing X.
+- **Sample members get ILLUSTRATED portraits, never photos**
+  (`public/mock/avatars/`, DiceBear Notionists, CC0, generated by a one-off
+  script with `data/mock/directory-more.ts`). Invented names on
+  real-looking faces would be invented people. Real members upload their
+  own photo; frames stay square.
+- **Outside `(site)`** — no public navbar, footer or Lenis. Same brand: Bone,
+  Rubik and Plex Mono, square corners (the admin's old `rounded-*` was swept
+  out), Graphite `ink` for main actions because Geekdom Red is reserved.
+- **Custom dropdowns only, never a native `<select>` or date picker** —
+  Jesse's call. Use [combobox.tsx](components/ui/combobox.tsx) (now with a
+  controlled `value` and a `searchable` override) and
+  [switch.tsx](components/ui/switch.tsx). Event dates are month/day/year and
+  15-minute time comboboxes, in Central time.
+- **Admin editing happens in a right-hand slide-out**
+  ([drawer.tsx](components/ui/drawer.tsx)), next-sasw's pattern rebuilt
+  without `motion`: a native `<dialog>` (top layer, focus containment,
+  Escape) with the slide in CSS (`.drawer` in globals.css). One column of
+  `FieldGroup`s, Save/Cancel pinned in its footer. Not inline forms above the
+  list — Jesse found that "staggered". Mark the first field `data-autofocus`;
+  React's `autoFocus` loses to `showModal()`.
+- **A Geekdom membership is one person**: one `members` record, one
+  Firebase login. Staff add, edit and deactivate members at
+  `/portal/admin/members` ([members-manager.tsx](components/admin/members-manager.tsx),
+  [member-actions.ts](lib/admin/member-actions.ts)) — borrowed from
+  next-angels' CRM: search + status/sign-in/tag filters, a folding
+  slide-out per member, staff-only tags and notes, and each person's login
+  state (no login / never signed in / last signed in) from ONE paged
+  `listUsers`, not a lookup per member.
+  - **Adding a member creates their Firebase login** (no email sent), which
+    is what lets them in once self sign-up is off. Fixing an email MOVES the
+    login rather than making a second one.
+  - **Deactivate = status** — `inactive` (labeled **Paused**: stepping
+    away, expected back) or `canceled` (left). The record stays, access ends
+    on their next request, and they move to a folded **Former members** list
+    (like past events); a search that matches one opens it. Past due stays
+    current — a failed card isn't leaving. A Stripe-billed member's status is
+    Stripe's and isn't editable here.
+  - **One "View" filter** (all current / past due / never signed in / no
+    login) — not separate Status and Sign-in dropdowns, which read as
+    contradicting each other.
+  - **Record ids are auto ids that never change**; email and
+    `stripeCustomerId` are fields, looked up by value. The webhook finds a
+    member by customer-id doc, then the `stripeCustomerId` field, then (at
+    checkout) the email — so a staff-added or imported member who later pays
+    is linked, not duplicated. Only a total miss creates a `cus_`-keyed doc.
+  - Join dates are stored at noon Central (midnight UTC is the day before
+    here).
+- **Geekdom's CSV (~400 members) is a one-time import** — not built yet; it
+  should loop over the same write + `ensureLogin` as "Add a member", with
+  `source: "import"`.
+
+**Site content edited in the admin: `events` and `portfolio`**
+([lib/content/](lib/content/)). The pattern, for anything added next:
+
+- **Read through `unstable_cache` with a tag**, not `"use cache"` — this app
+  doesn't enable `cacheComponents`, and turning it on would forbid the
+  homepage's `revalidate` export. The cached function THROWS on error so a
+  failure isn't cached as the answer.
+- **Fall back to the static data in `lib/site.ts`** when the collection is
+  empty or Firestore is unreachable, so `next build` without credentials
+  still renders the page (tested: `/` stays `○ 1h`). The static lists are
+  the fallback and the seed ("Copy from the current site"), not the source.
+- **Write with `requireAdmin()` → zod → Firestore → `updateTag(tag)` +
+  `revalidatePath` for every page that renders it.** `updateTag`, not
+  `revalidateTag`: it's the Next 16 read-your-own-writes call in a server
+  action; `revalidateTag(tag, "max")` serves the stale page once more.
+- **An event's host is shown on the site** ("Hosted by …" under the title,
+  homepage and dashboard) when it isn't Geekdom — so it stays OUT of the
+  title. Past events sit in a closed `<details>` in the admin. No event
+  search yet: worth adding once the past list runs to dozens.
+- **Dropdowns never move the page they're in.** The Combobox opens upward
+  when there's no room below inside its scroll container, caps its height to
+  the space it gets, and scrolls only its own list — `scrollIntoView` there
+  used to lurch the whole slide-out 200px.
+- **The wall's order is the admin's**: staff drag cells in
+  `/portal/admin/portfolio` (native HTML `draggable`, plus Move
+  earlier/later buttons, since native drag-and-drop has no keyboard path),
+  saved as `order` by `reorderPortfolio`. `PortfolioWall` renders the list
+  as given — don't re-add a sort by `founded` there; it would undo every drag.
+- **`logoHeight` is a closed list** (`LOGO_HEIGHTS`): it's a Tailwind class,
+  and a class that exists only in Firestore has no CSS.
+- **Logos are uploaded to Vercel Blob** ([logo-upload.ts](lib/content/logo-upload.ts)),
+  never picked from a list of other companies' files. The server rejects
+  anything without real transparency (the wall is a CSS mask, so a solid
+  background renders as a block) and SVGs with scripts or external links.
+  Blob, not Firebase Storage, because masks are fetched with CORS and Blob
+  allows it. **Pass `token: process.env.BLOB_READ_WRITE_TOKEN` to every Blob
+  call:** on a `vercel link`ed machine the SDK otherwise picks up an OIDC
+  credential that this store refuses in development.
+
 ## Repo gotchas
 
 - **Middleware is `proxy.ts` now** (Next 16 renamed it). Creating a
-  `middleware.ts` gets you a file that silently never runs. `/admin/*` guarding
-  lives in [proxy.ts](proxy.ts) **and** is re-verified in the admin layout, in
-  every admin route handler, and in every server action — the proxy only checks
-  that a cookie *exists*, never that it's valid. Don't treat it as the gate.
+  `middleware.ts` gets you a file that silently never runs. `/portal/*`
+  guarding lives in [proxy.ts](proxy.ts) **and** is re-verified in the portal
+  and admin layouts, in every page, every admin route handler, and every
+  server action — the proxy only checks that a cookie *exists*, never that
+  it's valid. Don't treat it as the gate.
 
   **And never let it redirect on the cookie's presence alone.** It used to
-  send `/admin/login` to `/admin` whenever a cookie existed; with an expired
+  send the login page inside whenever a cookie existed; with an expired
   or revoked cookie that looped with the layout's redirect forever, and
-  "Staff sign in" looked like a page that wouldn't load. The login page now
+  "Staff sign in" looked like a page that wouldn't load. `/sign-in` now
   verifies the session itself before skipping the form.
 
 - **Every third-party client is constructed lazily, on purpose.** Firebase

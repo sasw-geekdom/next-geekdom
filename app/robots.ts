@@ -18,7 +18,7 @@ export default function robots(): MetadataRoute.Robots {
       // The staff portal, the billing flow, and the post-checkout pages. All of
       // these already carry `robots: noindex` in their own metadata; this stops
       // crawlers spending budget requesting them at all.
-      disallow: ["/admin", "/admin/", "/api/", "/account", "/welcome", "/apply/thanks"],
+      disallow: ["/admin", "/admin/", "/portal", "/portal/", "/sign-in", "/api/", "/account", "/welcome", "/apply/thanks"],
     },
     sitemap: `${SITE_URL}/sitemap.xml`,
   };

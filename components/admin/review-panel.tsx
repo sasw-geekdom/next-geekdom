@@ -74,7 +74,7 @@ export function ReviewPanel({ application }: { application: Application }) {
   const sendsEmail = (s: ApplicationStatus) => s !== "reviewing";
 
   return (
-    <div className="flex flex-col gap-6 rounded-xl border border-border bg-bone-light p-6">
+    <div className="flex flex-col gap-6 border border-border bg-bone-light p-6">
       <div>
         <h2 className="text-sm font-medium text-graphite">Staff notes</h2>
         <Textarea
@@ -168,7 +168,7 @@ export function ReviewPanel({ application }: { application: Application }) {
       {result && (
         <p
           role="status"
-          className="rounded-lg bg-bone-light px-3 py-2 text-sm text-graphite"
+          className=" bg-bone-light px-3 py-2 text-sm text-graphite"
         >
           {result}
         </p>

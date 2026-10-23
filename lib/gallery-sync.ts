@@ -68,6 +68,9 @@ async function buildThumb(
     contentType: "image/webp",
     addRandomSuffix: false,
     allowOverwrite: true,
+    // Explicit, so a `vercel link`ed machine doesn't try OIDC — see
+    // lib/content/logo-upload.ts.
+    token: process.env.BLOB_READ_WRITE_TOKEN,
   });
 
   return {
@@ -112,7 +115,11 @@ export async function syncGalleryThumbnails(): Promise<SyncResult> {
 
   // Prune entries whose original was deleted; best-effort remove their Blob.
   const removedItems = manifest.filter((m) => !liveNames.has(m.name));
-  await Promise.all(removedItems.map((m) => del(m.url).catch(() => {})));
+  await Promise.all(
+    removedItems.map((m) =>
+      del(m.url, { token: process.env.BLOB_READ_WRITE_TOKEN }).catch(() => {}),
+    ),
+  );
 
   // Which originals still need a (re)build? Compare MD5 from Storage metadata.
   const pending: {

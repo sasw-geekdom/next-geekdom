@@ -63,7 +63,10 @@ export async function POST(request: Request) {
 
   try {
     const member = await getMemberByEmail(email);
-    if (!member) return ok;
+    // No member, or one added by staff/import who has never been through
+    // Stripe — either way there's no billing portal to send, and the same
+    // uniform answer goes back.
+    if (!member?.stripeCustomerId) return ok;
 
     const session = await createPortalSession(member.stripeCustomerId);
     const mail = portalLinkEmail({ portalUrl: session.url });

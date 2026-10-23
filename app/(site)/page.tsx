@@ -32,13 +32,15 @@ import {
   STUDIO,
   TAGLINE_LINE,
   LUMA_CALENDAR_URL,
-  upcomingThisMonth,
 } from "@/lib/site";
+import { getUpcomingEvents } from "@/lib/content/events";
+import { getPortfolio } from "@/lib/content/portfolio";
 
 /*
   HOURLY, for "This month in the Club": past events drop out of the list on
-  the next regeneration after they end (`upcomingThisMonth`). The rest of
-  the page is static either way.
+  the next regeneration after they end (`getUpcomingEvents`). Admin saves
+  don't wait for it — they expire the page directly (lib/content/*-actions).
+  The rest of the page is static either way.
 */
 export const revalidate = 3600;
 
@@ -315,8 +317,11 @@ function Frame({
   );
 }
 
-export default function HomePage() {
-  const events = upcomingThisMonth();
+export default async function HomePage() {
+  const [events, companies] = await Promise.all([
+    getUpcomingEvents(),
+    getPortfolio(),
+  ]);
 
 
   return (
@@ -563,8 +568,8 @@ export default function HomePage() {
         and one link out to the public calendar. It replaced a Luma card
         grid under "Come see how the room feels" — Luma isn't connected, so in
         production that grid never rendered and the section was a fallback
-        sentence. The list lives in `THIS_MONTH` in lib/site.ts, which is
-        maintained by hand monthly until there's a CMS or a Luma feed.
+        sentence. The list is edited in the admin (/portal/admin/events, the
+        `events` collection), with THIS_MONTH in lib/site.ts as its fallback.
       */}
       <Section tone="bone">
         <SectionTitle>This month in the Club</SectionTitle>
@@ -572,7 +577,7 @@ export default function HomePage() {
         {events.length > 0 && (
           <ul className="mt-10 border-b border-border">
             {events.map((item) => (
-              <li key={`${item.date}-${item.title}`} className="border-t border-border">
+              <li key={item.id} className="border-t border-border">
                 {/*
                   THE WHOLE ROW IS THE LINK, and it stays a list row: the title
                   takes the site's link treatment on hover (Clay underline) and
@@ -592,10 +597,23 @@ export default function HomePage() {
                       "col-span-2 pt-1 text-muted-foreground sm:col-span-1",
                     )}
                   >
-                    {item.date}
+                    {item.dateLabel}
                   </span>
-                  <span className="text-lg leading-snug text-graphite decoration-clay decoration-2 underline-offset-4 group-hover:underline">
-                    {item.title}
+                  {/*
+                    THE HOST, when it isn't Geekdom — a muted line under the
+                    title. The floor hosts other people's meetups (the AWS
+                    User Group, ACM), and naming them is the honest version
+                    of the row. Not underlined: the title is the link text.
+                  */}
+                  <span className="min-w-0">
+                    <span className="text-lg leading-snug text-graphite decoration-clay decoration-2 underline-offset-4 group-hover:underline">
+                      {item.title}
+                    </span>
+                    {item.host && (
+                      <span className="mt-1 block text-sm text-muted-foreground">
+                        Hosted by {item.host}
+                      </span>
+                    )}
                   </span>
                   <ArrowUpRight
                     aria-hidden="true"
@@ -717,7 +735,7 @@ export default function HomePage() {
       */}
       <Section tone="bone">
         <Eyebrow>Built at {SITE_NAME}</Eyebrow>
-        <PortfolioWall className="mt-8" />
+        <PortfolioWall companies={companies} className="mt-8" />
       </Section>
 
       {/* ── 10 · Close ───────────────────────────────────────────────── */}

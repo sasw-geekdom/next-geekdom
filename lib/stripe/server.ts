@@ -145,9 +145,11 @@ export async function createCheckoutSession(opts: {
 /** Stripe-hosted billing portal — update card, view invoices, cancel. */
 export async function createPortalSession(
   customerId: string,
+  /** Where Stripe's "Return to Geekdom" goes. /account for the emailed link. */
+  returnPath = "/account",
 ): Promise<Stripe.BillingPortal.Session> {
   return getStripe().billingPortal.sessions.create({
     customer: customerId,
-    return_url: `${SITE_URL}/account`,
+    return_url: `${SITE_URL}${returnPath}`,
   });
 }

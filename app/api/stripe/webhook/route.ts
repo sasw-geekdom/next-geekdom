@@ -82,9 +82,36 @@ export async function POST(request: Request) {
   return NextResponse.json({ received: true });
 }
 
-/** Doc id is the Stripe customer id, which makes every write idempotent. */
-function memberRef(customerId: string) {
-  return getAdminDb().collection(COLLECTIONS.members).doc(customerId);
+/*
+  FIND THE MEMBER BEFORE CREATING ONE.
+
+  The webhook used to key every member doc by the Stripe customer id and look
+  nowhere else. Members now also arrive from the admin ("Add a member") and
+  Geekdom's CSV, with auto ids and no Stripe customer yet — so the first time
+  one of them paid, checkout would have made a SECOND record for the same
+  person, with a fresh join date and a second welcome email.
+
+  So, in order: the doc keyed by the customer id (everything the webhook
+  created before this change), then any doc whose `stripeCustomerId` FIELD
+  matches, then — at checkout only — the member with that email, which is how
+  an admin-added member is linked to Stripe the first time they pay. Only
+  when all three miss is a new doc created, keyed by the customer id as
+  before, so redelivered events stay idempotent.
+*/
+async function findMember(customerId: string, email?: string) {
+  const col = getAdminDb().collection(COLLECTIONS.members);
+  const byId = col.doc(customerId);
+  const snap = await byId.get();
+  if (snap.exists) return { ref: byId, existing: snap };
+
+  const byField = await col.where("stripeCustomerId", "==", customerId).limit(1).get();
+  if (!byField.empty) return { ref: byField.docs[0].ref, existing: byField.docs[0] };
+
+  if (email) {
+    const byEmail = await col.where("email", "==", email).limit(1).get();
+    if (!byEmail.empty) return { ref: byEmail.docs[0].ref, existing: byEmail.docs[0] };
+  }
+  return { ref: byId, existing: null };
 }
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
@@ -110,19 +137,24 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     ? await getStripe().subscriptions.retrieve(subscriptionId)
     : null;
 
-  const email =
-    session.customer_details?.email ?? session.customer_email ?? "";
+  const email = (
+    session.customer_details?.email ?? session.customer_email ?? ""
+  )
+    .trim()
+    .toLowerCase();
   const name =
     session.metadata?.name || session.customer_details?.name || email;
   const applicationId = session.metadata?.applicationId || null;
 
-  const ref = memberRef(customerId);
-  const existing = await ref.get();
+  const { ref, existing } = await findMember(customerId, email || undefined);
+  const known = existing?.data() as MemberDoc | undefined;
 
   const record: Partial<MemberDoc> = {
-    name,
-    email: email.trim().toLowerCase(),
-    applicationId,
+    // An existing member keeps the name staff gave them; Stripe's
+    // cardholder name is often a spouse or a company.
+    name: known?.name || name,
+    email,
+    applicationId: known?.applicationId ?? applicationId,
     stripeCustomerId: customerId,
     stripeSubscriptionId: subscription?.id ?? null,
     status: subscription ? toMemberStatus(subscription.status) : "inactive",
@@ -134,14 +166,18 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   };
 
   // joinedAt is set once and never overwritten — a member who cancels and
-  // rejoins should keep their original join date on the roster.
-  if (!existing.exists) record.joinedAt = Timestamp.now();
+  // rejoins, or one added by staff before they first paid, keeps their
+  // original join date on the roster.
+  if (!existing) {
+    record.joinedAt = Timestamp.now();
+    record.source = "stripe";
+  }
 
   await ref.set(record, { merge: true });
 
   // Welcome mail only on the first checkout. Stripe redelivers events, and a
   // member should not get "Welcome to Geekdom" twice.
-  if (!existing.exists && email) {
+  if (!existing && email) {
     const mail = welcomeEmail({ name });
     await sendSafely({ to: email, subject: mail.subject, html: mail.html });
   }
@@ -153,14 +189,13 @@ async function syncSubscription(subscription: Stripe.Subscription) {
       ? subscription.customer
       : subscription.customer.id;
 
-  const ref = memberRef(customerId);
-  const existing = await ref.get();
+  const { ref, existing } = await findMember(customerId);
 
   // No member doc means checkout.session.completed hasn't landed yet — Stripe
   // does not guarantee event ordering. Creating a stub here would produce a
   // roster row with no name or email, so let the checkout handler create it
   // and rely on Stripe's retry to re-deliver this one.
-  if (!existing.exists) {
+  if (!existing) {
     console.warn(
       "[stripe] subscription event before checkout for customer",
       customerId,

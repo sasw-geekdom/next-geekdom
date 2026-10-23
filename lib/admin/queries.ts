@@ -52,13 +52,17 @@ function toMember(id: string, doc: MemberDoc): Member {
     name: doc.name,
     email: doc.email,
     applicationId: doc.applicationId ?? null,
-    stripeCustomerId: doc.stripeCustomerId,
+    stripeCustomerId: doc.stripeCustomerId || null,
     stripeSubscriptionId: doc.stripeSubscriptionId,
     status: doc.status,
     currentPeriodEnd: iso(doc.currentPeriodEnd),
     cancelAtPeriodEnd: doc.cancelAtPeriodEnd,
     joinedAt: iso(doc.joinedAt) ?? new Date(0).toISOString(),
     updatedAt: iso(doc.updatedAt) ?? new Date(0).toISOString(),
+    // Records the webhook wrote before `source` existed came from Stripe.
+    source: doc.source ?? "stripe",
+    tags: doc.tags ?? [],
+    notes: doc.notes ?? "",
   };
 }
 
@@ -103,7 +107,9 @@ export async function listMembers(opts?: {
   const snap = await getAdminDb()
     .collection(COLLECTIONS.members)
     .orderBy("joinedAt", "desc")
-    .limit(opts?.limit ?? 500)
+    // Geekdom's roster is ~400 and growing; the list is searched in the
+    // browser, so it needs all of it.
+    .limit(opts?.limit ?? 2000)
     .get();
 
   return snap.docs.map((d) => toMember(d.id, d.data() as MemberDoc));

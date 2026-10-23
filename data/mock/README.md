@@ -18,3 +18,17 @@ When the admin portal grows a CMS, these arrays are what it replaces.
 
 **The invented names in `voices.ts` must not reach production.** A testimonial
 is a claim about a named person.
+
+## The member portal (`portal.ts`)
+
+| Export | Feeds | Replace with |
+| --- | --- | --- |
+| `MOCK_DIRECTORY` | `/portal/directory`, the dashboard's "New in the Club" | Members who opt in (Phase 3) |
+| `MOCK_FIELD_NOTE` | The dashboard's Field Notes tile | The latest post, once `/field-notes` exists |
+| `MOCK_SLACK` | The dashboard's Slack tile | Geekdom's invite link and channels |
+| `MOCK_FAQ` | `/portal/resources` | Geekdom's answers — every `confirm: true` is a placeholder |
+| `MOCK_RESOURCES` | `/portal/resources` | Real links as each one exists |
+| `MOCK_BILLING`, `MOCK_MY_PROFILE` | `/portal/profile` | Stripe, and the member's own directory profile |
+
+Every page that renders these shows a "Sample content" notice. The invented
+people and companies must not reach production, same as `voices.ts`.

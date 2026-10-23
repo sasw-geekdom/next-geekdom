@@ -10,12 +10,12 @@ import {
   POSITIONING,
   SITE_NAME,
   SITE_URL,
-  PORTFOLIO,
   STUDIO,
   STUDIO_FILM,
   STUDIO_PARTNERS,
   TAGLINE,
 } from "@/lib/site";
+import { getPortfolio } from "@/lib/content/portfolio";
 import { BENEFITS, priceLabel } from "@/lib/membership";
 import { formatLongDate } from "@/lib/format";
 import { IS_PREVIEW } from "@/lib/preview";
@@ -49,7 +49,7 @@ import { IS_PREVIEW } from "@/lib/preview";
  */
 export const revalidate = 3600;
 
-export function GET() {
+export async function GET() {
   // Same reasoning as robots.ts: a review deploy is a public copy of the site,
   // and handing a crawler a tidy machine-readable summary of it is the last
   // thing that copy should do.
@@ -58,6 +58,9 @@ export function GET() {
       headers: { "content-type": "text/plain; charset=utf-8" },
     });
   }
+
+  // What the admin edits (falls back to lib/site.ts's PORTFOLIO).
+  const PORTFOLIO = await getPortfolio();
 
   const price = priceLabel();
   const url = (path: string) => `${SITE_URL}${path}`;

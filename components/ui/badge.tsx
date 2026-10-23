@@ -89,7 +89,9 @@ const MEMBER_LABELS: Record<MemberStatus, string> = {
   trialing: "Trialing",
   past_due: "Past due",
   canceled: "Canceled",
-  inactive: "Inactive",
+  // Shown as "Paused": staff set it for someone stepping away who's expected
+  // back. Stripe's unknown statuses also map here (toMemberStatus).
+  inactive: "Paused",
 };
 
 export function ApplicationBadge({ status }: { status: ApplicationStatus }) {

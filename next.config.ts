@@ -96,6 +96,14 @@ const nextConfig: NextConfig = {
       { source: "/about-us", destination: "/about", permanent: true },
       { source: "/press", destination: "/media", permanent: true },
 
+      // THE ADMIN MOVED BEHIND THE WRENCH, inside the member portal. One
+      // sign-in for members and staff; bookmarks to the old staff URLs land
+      // in the same place. /admin/login first — the catch-all would send it
+      // to /portal/admin/login, which doesn't exist.
+      { source: "/admin/login", destination: "/sign-in", permanent: true },
+      { source: "/admin", destination: "/portal/admin", permanent: true },
+      { source: "/admin/:path*", destination: "/portal/admin/:path*", permanent: true },
+
       // NOT redirected, on purpose: the old blog archive and its ~dozens of
       // posts. None has a counterpart here, and pointing them all at the
       // homepage is what Google reads as a soft 404. A clean 404 is honest.

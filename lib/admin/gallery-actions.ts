@@ -24,7 +24,7 @@ export async function syncGallery(): Promise<GallerySyncResult> {
   await requireAdmin();
   try {
     const result = await syncGalleryThumbnails();
-    revalidatePath("/admin/gallery");
+    revalidatePath("/portal/admin/gallery");
     revalidatePath("/since-2011");
     return { ok: true, result };
   } catch (err) {

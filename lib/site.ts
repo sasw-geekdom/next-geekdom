@@ -1354,88 +1354,82 @@ export const LUMA_CALENDAR_URL = envOr(
 );
 
 /**
- * "THIS MONTH IN THE CLUB" on the homepage — Geekdom's source copy, verbatim.
- *
- * HAND-MAINTAINED, AND MONTHLY. The source copy's note: "This list should be
- * maintained monthly. Ideal state: pulls from Luma via API or other tracking
- * source. Interim: editable CMS field or mixture of both." There is no CMS
- * yet, so this array is the interim field. When Luma is connected, merge its
- * events in rather than replacing this — some entries (Open Coffee Club at
- * Creme) are not Geekdom-hosted and won't be on the calendar.
- *
- * `date` is display text exactly as the source writes it ("Sept 23"), not a
- * Date: the source abbreviates September as "Sept", which no locale format
- * produces, and nothing sorts or filters on it. Keep entries in date order.
- */
-/**
  * Startup + Tech Week's own site. `www` is its canonical host — the SASW repo
  * (next-sasw, lib/event.ts) notes that bare `sasw.co` redirects.
  */
 export const SASW_SITE = "https://www.sasw.co";
 
-/*
-  THE NEXT FOUR OPEN COFFEE CLUBS, from luma.com/geekdom (October 2026) —
-  every upcoming event on the calendar, each linked to its own Luma page.
-  A stopgap until the Luma API key arrives: the Startup + Tech Week rows it
-  replaced had all passed. Weekly, Tuesdays at 8am at Crème Coffee & Social.
-  Drop a row once its date passes; when the key is in, this list becomes
-  the merge target described above.
-
-  Two community groups' meetups at Geekdom ride along, linked to Meetup —
-  hosted on the floor, not by Geekdom, so they will never come through Luma.
-  Same-day rows run in start order (Open Coffee 8am, AWS 6pm). ACM's page
-  still read "Needs a location" when added; Geekdom is the venue per 434.
-*/
-export const THIS_MONTH: {
-  date: string;
+/**
+ * "THIS MONTH IN THE CLUB" on the homepage — Geekdom's source copy.
+ *
+ * The source copy's note: "This list should be maintained monthly. Ideal
+ * state: pulls from Luma via API or other tracking source. Interim: editable
+ * CMS field or mixture of both." The admin is that CMS field now. When Luma is
+ * connected, MERGE its events in rather than replacing the list — some
+ * entries (Open Coffee Club at Crème, the AWS and ACM meetups hosted on the
+ * floor) are not Geekdom's and will never be on its calendar.
+ */
+export interface ThisMonthEvent {
   title: string;
   href: string;
-  /** When the event ENDS, with its Central offset — the row drops after it. */
+  /**
+   * Who hosts it, when it isn't Geekdom — rendered under the title as
+   * "Hosted by …", so keep it OUT of the title.
+   */
+  host?: string;
+  /** Start, with its Central offset. The row's date label comes from this. */
+  startsAt: string;
+  /** End, with its Central offset — the row leaves the homepage after it. */
   endsAt: string;
-}[] = [
+}
+
+/*
+  THE FALLBACK AND THE SEED, NOT THE SOURCE. "This month in the Club" is
+  edited in the admin now (/portal/admin/events, the `events` collection).
+  This list is what the homepage renders when that collection is empty or
+  Firestore can't be reached — a build without credentials, CI — and what
+  "Copy from the current site" writes into it. See lib/content/events.ts.
+
+  The date label is DERIVED from `startsAt` ("Oct 27", and "Sept" for
+  September, the source copy's abbreviation), never typed.
+*/
+export const THIS_MONTH: readonly ThisMonthEvent[] = [
   {
-    date: "Oct 20",
-    title: "SATX Open Coffee Club at Crème Coffee & Social",
+    title: "Open Coffee Club at Crème Coffee & Social",
     href: "https://luma.com/a0xcm13x",
+    host: "SATX Open Coffee Club",
+    startsAt: "2026-10-20T08:00:00-05:00",
     endsAt: "2026-10-20T09:30:00-05:00",
   },
   {
-    date: "Oct 27",
-    title: "SATX Open Coffee Club at Crème Coffee & Social",
+    title: "Open Coffee Club at Crème Coffee & Social",
     href: "https://luma.com/qjn1cgti",
+    host: "SATX Open Coffee Club",
+    startsAt: "2026-10-27T08:00:00-05:00",
     endsAt: "2026-10-27T09:30:00-05:00",
   },
   {
-    date: "Oct 27",
-    title: "Trick, Treat, & Deploy: AWS Card Clash, with the San Antonio AWS User Group",
+    title: "Trick, Treat, & Deploy: AWS Card Clash",
     href: "https://www.meetup.com/san-antonio-aws-users-group/events/316892225/",
+    host: "San Antonio AWS User Group",
+    startsAt: "2026-10-27T18:00:00-05:00",
     endsAt: "2026-10-27T21:00:00-05:00",
   },
   {
-    date: "Nov 3",
-    title: "SATX Open Coffee Club at Crème Coffee & Social",
+    title: "Open Coffee Club at Crème Coffee & Social",
     href: "https://luma.com/maq0aopv",
+    host: "SATX Open Coffee Club",
+    startsAt: "2026-11-03T08:00:00-06:00",
     endsAt: "2026-11-03T09:30:00-06:00",
   },
   {
-    date: "Nov 11",
-    title: "Confidential Computing Leveraging Bootable Containers, with ACM San Antonio",
+    title: "Confidential Computing Leveraging Bootable Containers",
     href: "https://www.meetup.com/acm-sa/events/312889987/",
+    host: "ACM San Antonio",
+    startsAt: "2026-11-11T18:00:00-06:00",
     endsAt: "2026-11-11T20:00:00-06:00",
   },
 ];
-
-/**
- * THIS_MONTH WITHOUT WHAT HAS ALREADY HAPPENED. A stopgap until Luma is
- * connected: rows fall off on their own once `endsAt` passes, so the
- * homepage never lists last week's meetup because nobody got to the file.
- * The homepage revalidates hourly for this; a row can outlive its event by
- * up to an hour. Adding rows is still by hand.
- */
-export function upcomingThisMonth() {
-  const now = Date.now();
-  return THIS_MONTH.filter((item) => Date.parse(item.endsAt) > now);
-}
 
 /**
  * THE TWO ENGINES, and that is the whole nav.

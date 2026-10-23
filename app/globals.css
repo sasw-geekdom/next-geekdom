@@ -545,6 +545,48 @@ p {
   filter: opacity(0.4);
 }
 
+/*
+  THE ADMIN SLIDE-OUT (components/ui/drawer.tsx), in CSS rather than `motion`.
+
+  The panel slides in from the right on next-sasw's curve (0.32, 0.72, 0, 1)
+  over 320ms; the backdrop fades over 200ms. `@starting-style` gives the
+  entrance its "before" state; `overlay` + `display` with `allow-discrete`
+  keep the dialog in the top layer until the exit finishes. Browsers without
+  them open and close it instantly — never half-drawn. The reduced-motion
+  rule below flattens the durations like every other transition.
+*/
+.drawer {
+  translate: 100% 0;
+  transition:
+    translate 320ms cubic-bezier(0.32, 0.72, 0, 1),
+    overlay 320ms allow-discrete,
+    display 320ms allow-discrete;
+}
+.drawer[open] {
+  translate: 0 0;
+}
+@starting-style {
+  .drawer[open] {
+    translate: 100% 0;
+  }
+}
+.drawer::backdrop {
+  background-color: rgb(27 27 27 / 0);
+  transition:
+    background-color 200ms ease-out,
+    overlay 320ms allow-discrete,
+    display 320ms allow-discrete;
+}
+.drawer[open]::backdrop {
+  /* Graphite at 40% — a scrim of the brand's own dark, not black. */
+  background-color: rgb(27 27 27 / 0.4);
+}
+@starting-style {
+  .drawer[open]::backdrop {
+    background-color: rgb(27 27 27 / 0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -63,7 +63,7 @@ export function GalleryManager({
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-4 rounded-lg border border-border bg-bone-light p-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 border border-border bg-bone-light p-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className={cn(FIGURE.md, "text-graphite")}>{count}</p>
           <p className="mt-1 text-sm text-muted-foreground">

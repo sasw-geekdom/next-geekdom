@@ -1,4 +1,4 @@
-import { PORTFOLIO, type PortfolioCompany } from "@/lib/site";
+import type { PortfolioCompany } from "@/lib/site";
 import { MONO } from "@/components/site/section";
 import { cn } from "@/lib/utils";
 
@@ -13,9 +13,12 @@ import { cn } from "@/lib/utils";
  * produced. They make opposite arguments and the second one is stronger, which
  * is why this is a static grid you can read rather than a row that drifts past.
  *
- * `sortBy year` runs oldest first, which is the order that makes the point:
- * 2012 to 2025 is the claim, and a list that opens on four acquisitions and
- * closes on this year's pre-seeds reads as fifteen unbroken years.
+ * THE ORDER IS THE ADMIN'S. Staff drag the cells into order on
+ * /portal/admin/portfolio, and the wall renders the list exactly as it
+ * arrives. The seed (and the static fallback) runs oldest first, which is the
+ * order that makes the point: 2012 to 2025 is the claim, and a list that
+ * opens on four acquisitions and closes on this year's pre-seeds reads as
+ * fifteen unbroken years. Re-sorting here would quietly undo every drag.
  *
  * ── A logo grid, per Geekdom ────────────────────────────────────────────────
  *
@@ -62,14 +65,20 @@ function columnsFor(n: number): string {
 }
 
 export function PortfolioWall({
+  /**
+   * The wall's companies — from `getPortfolio()` (lib/content/portfolio.ts),
+   * which reads what the admin edits and falls back to PORTFOLIO.
+   */
+  companies: all,
   /** Only the companies the Studio has backed. */
   studioOnly = false,
   className,
 }: {
+  companies: readonly PortfolioCompany[];
   studioOnly?: boolean;
   className?: string;
 }) {
-  const companies = studioOnly ? PORTFOLIO.filter((c) => c.studio) : PORTFOLIO;
+  const companies = studioOnly ? all.filter((c) => c.studio) : all;
 
   return (
     <ul
@@ -90,11 +99,9 @@ export function PortfolioWall({
         className,
       )}
     >
-      {[...companies]
-        .sort((a, b) => a.founded - b.founded)
-        .map((company) => (
-          <Company key={company.name} company={company} />
-        ))}
+      {companies.map((company) => (
+        <Company key={company.name} company={company} />
+      ))}
     </ul>
   );
 }

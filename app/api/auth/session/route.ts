@@ -22,11 +22,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid token." }, { status: 401 });
   }
 
-  // Token verified, but the account isn't a Geekdom workspace account or a
-  // listed superadmin.
+  // Token verified, but the account is neither staff nor a current member.
+  // Neutral on purpose: it doesn't say which of the two it checked.
   if (!result) {
     return NextResponse.json(
-      { error: "This account isn't allowed. Use your Geekdom email." },
+      {
+        error:
+          "This account doesn't have access. Use the email your membership is under.",
+      },
       { status: 403 },
     );
   }

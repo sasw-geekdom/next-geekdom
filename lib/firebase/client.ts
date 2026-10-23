@@ -1,6 +1,5 @@
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, type Auth } from "firebase/auth";
-import { envOr } from "@/lib/env";
 
 /**
  * Browser-side Firebase. NEXT_PUBLIC_* values ship to the client by design —
@@ -36,17 +35,15 @@ export function getFirebaseAuth(): Auth {
 }
 
 /**
- * Google provider, hinted to the Geekdom workspace domain.
+ * Google provider, with the account picker always shown.
  *
- * `hd` is a UX hint only — it preselects the right account in the picker and is
- * trivially removable by the person signing in. The real gate is server-side in
- * lib/auth/roles.ts.
+ * NO `hd` DOMAIN HINT. It used to pin the picker to @geekdom.com, which was
+ * right while only staff signed in. Members sign in here too now, mostly with
+ * personal Gmail, and the hint hid their accounts. The gate was never the
+ * hint — it is server-side, in lib/auth/session.ts.
  */
 export function getGoogleProvider(): GoogleAuthProvider {
   const provider = new GoogleAuthProvider();
-  provider.setCustomParameters({
-    hd: envOr(process.env.NEXT_PUBLIC_ALLOWED_WORKSPACE_DOMAIN, "geekdom.com"),
-    prompt: "select_account",
-  });
+  provider.setCustomParameters({ prompt: "select_account" });
   return provider;
 }

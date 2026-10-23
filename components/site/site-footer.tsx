@@ -188,14 +188,15 @@ export function SiteFooter() {
             ))}
             {/*
               Not in the doc's utility row, kept deliberately: it is the only
-              signposted way to the admin sign-in, and the doc does not cover
-              staff routes at all. Flagged rather than dropped.
+              signposted way into the member portal and the admin behind it,
+              and the doc does not cover signed-in routes at all. One door for
+              members and staff — the account decides where it leads.
             */}
             <Link
-              href="/admin"
+              href="/sign-in"
               className="transition-colors hover:text-bone/80"
             >
-              Staff sign in
+              Sign in
             </Link>
           </nav>
         </div>

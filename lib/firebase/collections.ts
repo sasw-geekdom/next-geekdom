@@ -10,6 +10,9 @@ export const COLLECTIONS = {
   members: "members",
   staff: "staff",
   settings: "settings",
+  // Site content edited from the admin — see lib/content/.
+  events: "events",
+  portfolio: "portfolio",
 } as const;
 
 /** Doc id in `settings` holding admin-edited email copy. */
@@ -103,7 +106,13 @@ export interface MemberDoc {
   /** Back-reference to the application they came in through, when there is one. */
   applicationId?: string | null;
 
-  stripeCustomerId: string;
+  /**
+   * Null for a member added by staff or imported from Geekdom's CSV who
+   * hasn't been through Stripe checkout. The doc id is NOT this — members
+   * created by the webhook before this change are keyed by it, everyone else
+   * has an auto id — so always look a member up by the FIELD.
+   */
+  stripeCustomerId: string | null;
   stripeSubscriptionId: string | null;
   status: MemberStatus;
   /** End of the paid-through window, so staff can see who lapses when. */
@@ -113,6 +122,13 @@ export interface MemberDoc {
 
   joinedAt: Timestamp;
   updatedAt: Timestamp;
+
+  /** How the record began: the Stripe webhook, an admin, or the CSV import. */
+  source?: "stripe" | "admin" | "import";
+  /** Staff-only grouping ("founding member", "former coworking"). Never shown to members. */
+  tags?: string[];
+  /** Staff-only notes. Never shown to members. */
+  notes?: string;
 }
 
 // ─── Staff ──────────────────────────────────────────────────────────────────
@@ -121,4 +137,46 @@ export interface StaffDoc {
   email: string;
   role: Role;
   createdAt: Timestamp;
+}
+
+// ─── Site content ───────────────────────────────────────────────────────────
+
+/**
+ * One row of "This month in the Club". The display date ("Oct 27", "Sept 23")
+ * is derived from `startsAt` in Central time, never stored — stored text is
+ * what drifted when THIS_MONTH was typed by hand.
+ */
+export interface EventDoc {
+  title: string;
+  href: string;
+  /** Who hosts it, when it isn't Geekdom. Admin-facing only for now. */
+  host?: string;
+  startsAt: Timestamp;
+  /** The row leaves the homepage once this passes. */
+  endsAt: Timestamp;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+/** One cell of "Built at Geekdom". Mirrors `PortfolioCompany` in lib/site.ts. */
+export interface PortfolioDoc {
+  name: string;
+  href?: string;
+  link?: "site" | "story" | "video";
+  stage: string;
+  founded: number;
+  studio: boolean;
+  description?: string;
+  /** A path under /public/portfolio, rendered as a CSS mask. */
+  logo?: string;
+  logoHeight?: string;
+  logoMark?: "wordmark" | "symbol";
+  /** Off the site without deleting the record. */
+  hidden: boolean;
+  /**
+   * Position on the wall, set by dragging in the admin. Optional so a record
+   * without one sorts by `founded` after the ordered ones rather than failing.
+   */
+  order?: number;
+  updatedAt: Timestamp;
 }

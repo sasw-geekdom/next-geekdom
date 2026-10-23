@@ -109,9 +109,9 @@ export async function decideApplication(
       status === "waitlisted" ? "Waitlisted — notified." : "Declined — notified.";
   }
 
-  revalidatePath("/admin/applications");
-  revalidatePath(`/admin/applications/${id}`);
-  revalidatePath("/admin");
+  revalidatePath("/portal/admin/applications");
+  revalidatePath(`/portal/admin/applications/${id}`);
+  revalidatePath("/portal/admin");
 
   return { ok: true, message };
 }
@@ -128,7 +128,7 @@ export async function saveNotes(
     .doc(id)
     .update({ notes: notes.slice(0, 4000) });
 
-  revalidatePath(`/admin/applications/${id}`);
+  revalidatePath(`/portal/admin/applications/${id}`);
   return { ok: true, message: "Notes saved." };
 }
 
@@ -173,7 +173,7 @@ export async function resendInvite(id: string): Promise<ActionResult> {
     if (!sent) return { ok: false, message: "Email failed to send." };
 
     await ref.update({ invitedAt: Timestamp.now() });
-    revalidatePath(`/admin/applications/${id}`);
+    revalidatePath(`/portal/admin/applications/${id}`);
     return { ok: true, message: "Fresh invitation sent." };
   } catch (error) {
     console.error("[admin] resend failed", error);

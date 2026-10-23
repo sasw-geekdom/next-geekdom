@@ -18,6 +18,7 @@ import { Editorial, PullQuote } from "@/components/site/editorial";
 import { MemberVoices } from "@/components/site/member-voices";
 import { SpreadHero } from "@/components/site/spread-hero";
 import { PortfolioWall } from "@/components/site/portfolio-wall";
+import { getPortfolio } from "@/lib/content/portfolio";
 import { VideoCard } from "@/components/site/video-card";
 import { StudioFilmJsonLd } from "@/components/site/structured-data";
 import { Photo } from "@/components/site/photo";
@@ -64,7 +65,8 @@ export const metadata: Metadata = pageMetadata({
  * wrong assumption a founder arrives with, and the brand guide lists
  * "accelerator" among the things Geekdom explicitly is not.
  */
-export default function StudioPage() {
+export default async function StudioPage() {
+  const companies = await getPortfolio();
   return (
     <>
       {/*
@@ -363,7 +365,7 @@ export default function StudioPage() {
           treat the four the same, which is what the section's own title
           promises.
         */}
-        <PortfolioWall studioOnly className="mt-14" />
+        <PortfolioWall companies={companies} studioOnly className="mt-14" />
 
         {/*
           ONE OF THE FOUR, ON CAMERA — and this is the section's proof rather

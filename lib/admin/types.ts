@@ -40,13 +40,16 @@ export interface Member {
   name: string;
   email: string;
   applicationId: string | null;
-  stripeCustomerId: string;
+  stripeCustomerId: string | null;
   stripeSubscriptionId: string | null;
   status: MemberStatus;
   currentPeriodEnd: string | null;
   cancelAtPeriodEnd: boolean;
   joinedAt: string;
   updatedAt: string;
+  source: "stripe" | "admin" | "import";
+  tags: string[];
+  notes: string;
 }
 
 export interface DashboardStats {
