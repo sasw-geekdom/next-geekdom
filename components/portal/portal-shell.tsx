@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, LogOut, Menu, ShieldCheck, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Menu, ShieldCheck, X } from "lucide-react";
 import { signOut } from "firebase/auth";
 import { getFirebaseAuth } from "@/lib/firebase/client";
 import {
@@ -16,6 +16,7 @@ import {
 } from "@/lib/portal/nav";
 import { isAdmin, type SessionUser } from "@/lib/auth/roles";
 import { Logo } from "@/components/site/logo";
+import { AccountMenu } from "@/components/portal/account-menu";
 import { MONO } from "@/components/site/section";
 import { cn } from "@/lib/utils";
 import { buttonClass } from "@/components/ui/button";
@@ -28,7 +29,7 @@ import { buttonClass } from "@/components/ui/button";
   width. Phones get a bottom tab bar (next-angels' pattern). The ADMIN keeps
   the SIDEBAR: seven sections in groups is a workspace, and a rail suits it.
 
-  Staff see a LABELED SWITCH — "Admin", and "Member portal" to
+  Staff see a LABELED SWITCH — "Admin portal", and "Member portal" to
   come back — that swaps the sidebar to the admin pages. It was a bare wrench
   icon: it read as "settings", which is a member's own thing once members
   have settings, and an icon with no word has to be guessed. A shield says
@@ -84,7 +85,7 @@ export function PortalShell({
   const switchIcon = staff && (
     <Link
       href={switchHref}
-      aria-label={admin ? "Back to the member portal" : "Admin"}
+      aria-label={admin ? "Back to the member portal" : "Admin portal"}
       className={cn(
         "inline-flex h-9 w-9 items-center justify-center border transition-colors",
         switchRing,
@@ -114,7 +115,7 @@ export function PortalShell({
       ) : (
         <>
           <ShieldCheck className="h-4 w-4 shrink-0" strokeWidth={1.7} />
-          <span className="flex-1">Admin</span>
+          <span className="flex-1">Admin portal</span>
           <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" strokeWidth={1.7} />
         </>
       )}
@@ -131,7 +132,7 @@ export function PortalShell({
               NAMED AS THE MEMBER PORTAL, beside the wordmark — the bare
               wordmark read as the public site, so nothing said you were
               signed in. A hairline, then the label in Plex Mono: the admin
-              sidebar says "Admin" under its wordmark the same way.
+              sidebar says "Admin portal" under its wordmark the same way.
             */}
             <Link href="/portal" aria-label="Member portal home" className="flex shrink-0 items-center gap-3">
               <Logo title="" className="h-8 w-auto" />
@@ -172,22 +173,18 @@ export function PortalShell({
                     )}
                   >
                     <ShieldCheck className="h-4 w-4" strokeWidth={1.7} />
-                    Admin
+                    Admin portal
                   </Link>
                 </>
               )}
-              <span className="hidden max-w-48 truncate text-sm text-muted-foreground lg:inline">
-                {user.name ?? user.email}
-              </span>
-              <button
-                type="button"
-                onClick={onSignOut}
-                aria-label="Sign out"
-                title="Sign out"
-                className={cn(buttonClass("ghost", "icon"), "text-muted-foreground hover:text-graphite")}
-              >
-                <LogOut className="h-4 w-4" strokeWidth={1.7} />
-              </button>
+              {/* Name, Profile, Admin portal and Sign out, together. */}
+              <AccountMenu
+                name={user.name}
+                email={user.email}
+                staff={staff}
+                adminHref={ADMIN_ROOT}
+                onSignOut={onSignOut}
+              />
             </div>
           </div>
         </header>
@@ -258,7 +255,7 @@ export function PortalShell({
             <Logo title="" className="h-8 w-auto" />
           </Link>
           <p className={cn(MONO.label, "mt-2 text-muted-foreground")}>
-            {admin ? "Admin" : "Member portal"}
+            {admin ? "Admin portal" : "Member portal"}
           </p>
         </div>
         {switchLabeled && <div className="px-3 pt-3 lg:pb-5 lg:pt-0">{switchLabeled}</div>}
@@ -302,31 +299,20 @@ export function PortalShell({
 
         </nav>
 
-        <div className="mt-6 border-t border-border px-6 py-5 lg:mt-auto">
-          <p className="truncate text-sm font-medium text-graphite">
-            {user.name ?? user.email}
-          </p>
-          <p className="truncate text-xs text-muted-foreground">{user.email}</p>
-          {/* The sidebar only renders in the admin, so this is always staff. */}
-          <p className={cn(MONO.label, "mt-1.5 text-concrete")}>
-            {user.role === "superadmin" ? "Superadmin" : "Staff"}
-          </p>
-          <div className="mt-4 flex items-center gap-5">
-            <Link
-              href="/"
-              className="text-sm text-muted-foreground transition-colors hover:text-graphite"
-            >
-              Public site
-            </Link>
-            <button
-              type="button"
-              onClick={onSignOut}
-              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-graphite"
-            >
-              <LogOut className="h-3.5 w-3.5" strokeWidth={1.7} />
-              Sign out
-            </button>
-          </div>
+        {/*
+          THE SAME ACCOUNT MENU AS THE MEMBER TOP BAR, at the foot of the
+          rail. It was name, email, a "Staff" label and two loose text links —
+          a different pattern for the same job. Opens upward here.
+        */}
+        <div className="mt-6 border-t border-border px-3 py-4 lg:mt-auto">
+          <AccountMenu
+            name={user.name}
+            email={user.email}
+            staff={staff}
+            adminHref={ADMIN_ROOT}
+            onSignOut={onSignOut}
+            placement="up"
+          />
         </div>
       </aside>
 

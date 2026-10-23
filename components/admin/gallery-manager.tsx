@@ -70,7 +70,8 @@ export function GalleryManager({
             thumbnails published to the wall
           </p>
         </div>
-        <Button onClick={onSync} disabled={pending} className="gap-2">
+        {/* Graphite, not the default red: Geekdom Red is reserved for Apply. */}
+        <Button variant="ink" onClick={onSync} disabled={pending} className="gap-2">
           <RefreshCw
             className={pending ? "h-4 w-4 animate-spin" : "h-4 w-4"}
             strokeWidth={2}

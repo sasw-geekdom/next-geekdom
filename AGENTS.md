@@ -356,6 +356,22 @@ members use personal Gmail, and the hint hid their accounts.
   renders only for staff, but that is UX: every admin page and action calls
   `requireAdmin()`, which sends a signed-in member to `/portal`. Tested: a
   member replaying a staff save action is redirected and nothing is written.
+- **The admin follows the portal's rules**: Graphite buttons only (no red
+  "Sync photos" / "Approve"), arrow links for secondary actions, square
+  status badges, dashed notices (no off-palette tints), content capped at
+  max-w-7xl, an eyebrow on every PageHeader (compact 24px title on purpose —
+  it's a workspace), and the same account menu at the foot of the sidebar
+  (opens upward). The Overview leads with members and site content — not
+  application counts, which stay at zero while applications live in
+  Typeform → Airtable — with quick actions that open the right drawer via
+  `?add=1`. /portal/admin/applications explains, to Geekdom's team, the two
+  ways to connect it (Typeform webhook to the site — recommended, keeps
+  Airtable fed too — or reading from Airtable).
+- **The top bar's right side**: "Admin portal" (staff only — it pairs with
+  the "Member portal" label; not "Admin", not "management platform"), then
+  the ACCOUNT MENU ([account-menu.tsx](components/portal/account-menu.tsx)):
+  initials + name opens Profile, Admin portal (staff) and "Sign out" in
+  words. It replaced a bare sign-out icon parked away from the name.
 - **Two layouts in one shell** ([portal-shell.tsx](components/portal/portal-shell.tsx)):
   the MEMBER portal is a top bar (four pages, full width — the directory
   needs it) with a bottom tab bar on phones; the ADMIN keeps the sidebar.

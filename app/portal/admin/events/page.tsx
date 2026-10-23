@@ -1,4 +1,4 @@
-import { ExternalLink, TriangleAlert } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { getUpcomingEvents, isLumaConfigured, eventLocation } from "@/lib/luma";
 import { listEvents } from "@/lib/content/events";
 import { EventManager } from "@/components/admin/event-manager";
@@ -24,7 +24,8 @@ export const metadata = { title: "This month in the Club" };
  *     second editor for those would be a second answer to "which is right".
  *     It appears once LUMA_API_KEY is set.
  */
-export default async function AdminEventsPage() {
+export default async function AdminEventsPage(props: PageProps<"/portal/admin/events">) {
+  const { add } = await props.searchParams;
   const list = await listEvents();
   // Server time, handed down so "upcoming" is decided once, here.
   const now = new Date().getTime();
@@ -46,6 +47,7 @@ export default async function AdminEventsPage() {
   return (
     <>
       <PageHeader
+        eyebrow="Site content"
         title="This month in the Club"
         description="The homepage's event list. Rows leave the site when their event ends."
         actions={
@@ -62,7 +64,7 @@ export default async function AdminEventsPage() {
       />
 
       <AdminSection>
-        <EventManager events={list} now={now} />
+        <EventManager events={list} now={now} startAdding={add === "1"} />
       </AdminSection>
 
       <AdminSection>
@@ -136,18 +138,15 @@ export default async function AdminEventsPage() {
   );
 }
 
+/*
+  The dashed notice the member portal uses for anything provisional — it was
+  a Clay tint with a brown (#7A5405) warning icon, neither in the palette.
+*/
 function Notice({ title, body }: { title: string; body: string }) {
   return (
-    <div className="flex gap-3 border border-clay/40 bg-clay/10 p-5">
-      <TriangleAlert
-        className="mt-0.5 h-5 w-5 shrink-0 text-[#7a5405]"
-        strokeWidth={1.8}
-        aria-hidden="true"
-      />
-      <div>
-        <p className="font-medium text-graphite">{title}</p>
-        <p className="mt-1 text-sm leading-relaxed text-graphite/75">{body}</p>
-      </div>
+    <div className="border border-dashed border-border px-5 py-4">
+      <p className="font-medium text-graphite">{title}</p>
+      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{body}</p>
     </div>
   );
 }

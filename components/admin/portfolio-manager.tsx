@@ -114,16 +114,23 @@ function fromRow(c: AdminCompanyRow): Draft {
   };
 }
 
-export function PortfolioManager({ companies }: { companies: AdminCompanyRow[] }) {
+export function PortfolioManager({
+  companies,
+  startAdding = false,
+}: {
+  companies: AdminCompanyRow[];
+  /** Open "Add a company" straight away — the Overview's quick action (?add=1). */
+  startAdding?: boolean;
+}) {
   const router = useRouter();
   const [pending, startTransition] = React.useTransition();
-  const [draft, setDraft] = React.useState<Draft | null>(null);
+  const [draft, setDraft] = React.useState<Draft | null>(() => (startAdding ? blank() : null));
   /*
     `drawerOpen` is separate from `draft` so the form stays rendered while the
     panel slides OUT — clearing the draft on close would blank the panel
     mid-animation.
   */
-  const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [drawerOpen, setDrawerOpen] = React.useState(startAdding);
   const close = React.useCallback(() => setDrawerOpen(false), []);
 
   const [errors, setErrors] = React.useState<Record<string, string>>({});

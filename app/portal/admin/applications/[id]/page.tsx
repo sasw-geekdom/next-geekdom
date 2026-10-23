@@ -25,6 +25,7 @@ export default async function ApplicationDetailPage(
   return (
     <>
       <PageHeader
+        eyebrow="Members · Applications"
         title={application.name}
         description={application.company || application.email}
         actions={<ApplicationBadge status={application.status} />}

@@ -7,6 +7,7 @@ import { PageHeader, AdminSection } from "@/components/admin/page-header";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { buttonClass } from "@/components/ui/button";
+import { ApplicationsSourceNote } from "@/components/admin/applications-source-note";
 
 export const metadata = { title: "Applications" };
 
@@ -28,6 +29,7 @@ export default async function ApplicationsPage(
   return (
     <>
       <PageHeader
+        eyebrow="Members"
         title="Applications"
         description={`${applications.length} ${status ? status : "total"}`}
         actions={
@@ -42,6 +44,13 @@ export default async function ApplicationsPage(
       />
 
       <AdminSection>
+        {/* Until applications arrive here, say why — and what connecting it means. */}
+        {applications.length === 0 && !status && (
+          <div className="mb-8">
+            <ApplicationsSourceNote />
+          </div>
+        )}
+
         {/* Status filter */}
         <nav aria-label="Filter by status" className="flex flex-wrap gap-2">
           <FilterChip href="/portal/admin/applications" active={!status}>

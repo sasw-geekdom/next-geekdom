@@ -102,16 +102,19 @@ function fromEvent(e: AdminEvent): Draft {
 export function EventManager({
   events,
   now,
+  startAdding = false,
 }: {
+  /** Open "Add an event" straight away — the Overview's quick action (?add=1). */
+  startAdding?: boolean;
   events: AdminEvent[];
   /** Server time, so "upcoming" doesn't shift between server and client. */
   now: number;
 }) {
   const router = useRouter();
   const [pending, startTransition] = React.useTransition();
-  const [draft, setDraft] = React.useState<Draft | null>(null);
+  const [draft, setDraft] = React.useState<Draft | null>(() => (startAdding ? blank() : null));
   // Separate from `draft` so the form stays rendered while the panel slides out.
-  const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [drawerOpen, setDrawerOpen] = React.useState(startAdding);
   const close = React.useCallback(() => setDrawerOpen(false), []);
   const [errors, setErrors] = React.useState<Record<string, string>>({});
   const [notice, setNotice] = React.useState<{ tone: "ok" | "error"; text: string } | null>(

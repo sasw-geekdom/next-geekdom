@@ -108,7 +108,7 @@ export function ReviewPanel({ application }: { application: Application }) {
             return (
               <div key={d.status}>
                 <Button
-                  variant={d.status === "approved" ? "primary" : "outline"}
+                  variant={d.status === "approved" ? "ink" : "outline"}
                   size="sm"
                   disabled={pending !== null || isCurrent}
                   onClick={() =>

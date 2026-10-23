@@ -9,17 +9,19 @@ export const metadata = { title: "Built at Geekdom" };
  * subset on /studio), edited here. The `portfolio` collection; the static
  * PORTFOLIO in lib/site.ts renders until it has anything in it.
  */
-export default async function AdminPortfolioPage() {
+export default async function AdminPortfolioPage(props: PageProps<"/portal/admin/portfolio">) {
+  const { add } = await props.searchParams;
   const companies = await listPortfolio();
 
   return (
     <>
       <PageHeader
+        eyebrow="Site content"
         title="Built at Geekdom"
         description="The companies on the homepage wall. Studio-backed ones also appear on /studio."
       />
       <AdminSection>
-        <PortfolioManager companies={companies} />
+        <PortfolioManager companies={companies} startAdding={add === "1"} />
       </AdminSection>
     </>
   );

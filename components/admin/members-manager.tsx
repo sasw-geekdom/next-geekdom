@@ -142,7 +142,14 @@ function fromRow(m: MemberRow): Draft {
   };
 }
 
-export function MembersManager({ members }: { members: MemberRow[] }) {
+export function MembersManager({
+  members,
+  startAdding = false,
+}: {
+  members: MemberRow[];
+  /** Open "Add a member" straight away — the Overview's quick action (?add=1). */
+  startAdding?: boolean;
+}) {
   const router = useRouter();
   const [pending, startTransition] = React.useTransition();
   const [query, setQuery] = React.useState("");
@@ -150,8 +157,8 @@ export function MembersManager({ members }: { members: MemberRow[] }) {
   const [tag, setTag] = React.useState("all");
   const [formerOpen, setFormerOpen] = React.useState(false);
 
-  const [draft, setDraft] = React.useState<Draft | null>(null);
-  const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [draft, setDraft] = React.useState<Draft | null>(() => (startAdding ? blank() : null));
+  const [drawerOpen, setDrawerOpen] = React.useState(startAdding);
   const close = React.useCallback(() => setDrawerOpen(false), []);
   const [errors, setErrors] = React.useState<Record<string, string>>({});
   const [notice, setNotice] = React.useState<{ tone: "ok" | "error"; text: string } | null>(null);

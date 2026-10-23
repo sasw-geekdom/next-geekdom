@@ -1,8 +1,9 @@
 import { PageHeader, AdminSection } from "@/components/admin/page-header";
 import { GalleryManager } from "@/components/admin/gallery-manager";
 import { getGalleryManifest } from "@/lib/gallery";
-import { buttonClass } from "@/components/ui/button";
-import { ExternalLink } from "lucide-react";
+import { ARROW, LINK_ARROW } from "@/components/site/section";
+import { cn } from "@/lib/utils";
+import { ArrowUpRight } from "lucide-react";
 import { FOUNDED_YEAR } from "@/lib/site";
 
 export const metadata = { title: "Photo wall" };
@@ -29,8 +30,9 @@ export default async function AdminGalleryPage() {
   return (
     <>
       <PageHeader
+        eyebrow="Site content"
         title="Photo wall"
-        description={`The ${years}-years archive behind /since-2011 — the throwback page hiding in the site footer.`}
+        description={`The ${years}-years archive behind /since-2011. The page is live but not linked from the site for now — its footer door is parked until the wall has photographs.`}
       />
 
       <AdminSection>
@@ -39,14 +41,16 @@ export default async function AdminGalleryPage() {
           thumbs={manifest.map(({ name, url }) => ({ name, url }))}
         />
 
+        {/* An arrow link, not an outlined button — buttons are for actions. */}
         <a
           href="/since-2011"
           target="_blank"
           rel="noreferrer noopener"
-          className={buttonClass("outline", "sm", "mt-6 gap-2")}
+          className={cn("mt-6", LINK_ARROW)}
         >
           View the wall
-          <ExternalLink className="h-4 w-4" strokeWidth={2} />
+          <ArrowUpRight aria-hidden="true" className={ARROW.external} />
+          <span className="sr-only"> (opens in a new tab)</span>
         </a>
       </AdminSection>
     </>
