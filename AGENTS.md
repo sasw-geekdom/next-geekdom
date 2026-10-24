@@ -352,9 +352,12 @@ members use personal Gmail, and the hint hid their accounts.
   Firebase's own email ("sign in to project-geekdom") can't be reworded, so
   the form never calls `sendSignInLinkToEmail`. The route sends only to
   staff and current members — creating their Firebase login if needed, so
-  staff need no manual setup once self sign-up is off — answers the same
-  `{ ok: true }` for everyone, and allows one link per address per minute
-  (`authThrottle`). Its continue URL is SITE_URL/sign-in, so that domain
+  staff need no manual setup once self sign-up is off — and tells anyone
+  else "We don't have a current membership under that email" instead of
+  "Check your inbox" (Jesse's call: a non-member shouldn't be shown a step
+  toward a door that isn't there). That makes the form a membership check,
+  so lookups are capped at 10 per IP per 15 minutes. Former members (paused,
+  canceled) are told their membership isn't active, with club@ to restart it. One link per address per minute (`authThrottle`). Its continue URL is SITE_URL/sign-in, so that domain
   must be in Firebase's authorized domains.
 - **`/portal` is the member portal; `/portal/admin` is the admin behind the
   sidebar's labeled "Admin" switch** (a shield, and "← Member portal" inside

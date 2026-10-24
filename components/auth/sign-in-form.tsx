@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   isSignInWithEmailLink,
@@ -13,6 +14,7 @@ import { getFirebaseAuth, getGoogleProvider } from "@/lib/firebase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/field";
 import { LINK, MONO } from "@/components/site/section";
+import { CONTACT_EMAIL } from "@/lib/site";
 
 /*
   ONE DOOR FOR MEMBERS AND STAFF.
@@ -87,6 +89,10 @@ export function SignInForm() {
   const [showPassword, setShowPassword] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [sentTo, setSentTo] = React.useState<string | null>(null);
+  /** The address we found no membership under — shown instead of "Check your inbox". */
+  const [notFound, setNotFound] = React.useState<string | null>(null);
+  /** Found, but paused or canceled — a different message from a stranger's. */
+  const [inactive, setInactive] = React.useState(false);
   const [pending, setPending] = React.useState<Pending>(null);
   /** Opened a sign-in link on a device that didn't request it. */
   const [confirmEmail, setConfirmEmail] = React.useState(false);
@@ -159,6 +165,7 @@ export function SignInForm() {
     if (confirmEmail) return void finishLink(email.trim());
 
     setError(null);
+    setNotFound(null);
     setPending("link");
     const address = email.trim();
     try {
@@ -167,12 +174,17 @@ export function SignInForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: address, from }),
       });
+      const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
         throw new Error(body.error ?? "Couldn't send the link. Try again in a minute.");
       }
-      remember(address);
-      setSentTo(address);
+      if (body.reason === "no-membership" || body.reason === "inactive") {
+        setNotFound(address);
+        setInactive(body.reason === "inactive");
+      } else {
+        remember(address);
+        setSentTo(address);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't send the link. Try again in a minute.");
     }
@@ -262,7 +274,10 @@ export function SignInForm() {
           placeholder="Email"
           autoComplete="email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            setNotFound(null);
+          }}
           required
         />
         {showPassword && (
@@ -298,6 +313,48 @@ export function SignInForm() {
         <p role="alert" className="text-sm text-geekdom-red">
           {error}
         </p>
+      )}
+
+      {/*
+        NO MEMBERSHIP UNDER THAT EMAIL — said plainly, before anything that
+        looks like progress. Not Geekdom Red: nothing is wrong with what they
+        typed, it just isn't on the list. A Clay rule marks it; the words
+        stay Graphite (Clay can't carry small text). Most people who land
+        here are members who typed a second address, so that comes first.
+      */}
+      {notFound && inactive && (
+        <div role="alert" className="flex flex-col gap-2 border-l-2 border-clay pl-4 text-sm leading-relaxed">
+          <p className="text-graphite">
+            The membership under <span className="font-medium">{notFound}</span>{" "}
+            isn&rsquo;t active right now.
+          </p>
+          <p className="text-muted-foreground">
+            To pick it back up, write to{" "}
+            <a href={`mailto:${CONTACT_EMAIL}`} className={LINK}>
+              {CONTACT_EMAIL}
+            </a>
+            .
+          </p>
+        </div>
+      )}
+      {notFound && !inactive && (
+        <div role="alert" className="flex flex-col gap-2 border-l-2 border-clay pl-4 text-sm leading-relaxed">
+          <p className="text-graphite">
+            We don&rsquo;t have a current membership under{" "}
+            <span className="font-medium">{notFound}</span>.
+          </p>
+          <p className="text-muted-foreground">
+            Try the email you applied with. If it should work, write to{" "}
+            <a href={`mailto:${CONTACT_EMAIL}`} className={LINK}>
+              {CONTACT_EMAIL}
+            </a>
+            . Not a member yet?{" "}
+            <Link href="/apply" className={LINK}>
+              Apply to Geekdom
+            </Link>
+            .
+          </p>
+        </div>
       )}
 
       {/*
