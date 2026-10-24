@@ -19,7 +19,12 @@ export function proxy(request: NextRequest) {
 
   if (!request.cookies.has(SESSION_COOKIE)) {
     const url = new URL("/sign-in", request.url);
-    url.searchParams.set("from", pathname);
+    // `from` only when it says something: /portal is where sign-in lands
+    // anyway, so the footer's "Member portal" link gets a clean /sign-in.
+    // A deeper link (a bookmarked admin page) keeps it, so you land there.
+    if (pathname !== "/portal" && pathname !== "/portal/") {
+      url.searchParams.set("from", pathname + request.nextUrl.search);
+    }
     return NextResponse.redirect(url);
   }
 
