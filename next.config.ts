@@ -104,12 +104,120 @@ const nextConfig: NextConfig = {
       { source: "/admin", destination: "/portal/admin", permanent: true },
       { source: "/admin/:path*", destination: "/portal/admin/:path*", permanent: true },
 
-      // NOT redirected, on purpose: the old blog archive and its ~dozens of
-      // posts. None has a counterpart here, and pointing them all at the
-      // homepage is what Google reads as a soft 404. A clean 404 is honest.
+      ...LEGACY_REDIRECTS,
     ];
   },
 };
+
+
+/*
+  FIFTEEN YEARS OF GEEKDOM.COM URLS, MAPPED. Built from the Internet
+  Archive's index of geekdom.com (web.archive.org CDX, Oct 2026: ~13,900
+  captured URLs, ~3,900 distinct paths on www/apex), grouped by what each
+  old URL WAS, and sent to its real counterpart today.
+
+  THE RULE: redirect when there's a page that answers the same question;
+  otherwise let it 404. Pointing everything at the homepage is what Google
+  calls a soft 404 — it ranks nothing and sends people somewhere that
+  doesn't answer them. So:
+
+    · membership, desks, tours, space, perks  → /club
+    · programs, incubator, pre-accelerator,
+      community fund, bootcamp, mentors       → /studio
+    · team, mission, history, impact reports  → /about
+    · events, calendars, venues, series       → Luma (temporary — another
+                                                 company's URL)
+    · press, media, photos, video             → /media
+    · contact, location, parking              → /contact
+    · old WordPress sitemaps                  → /sitemap.xml
+    · Startup Week pages                      → sasw.co (temporary)
+    · /blog, /news listings                   → / (TEMPORARY, until Field
+                                                 Notes exists)
+
+  NOT redirected, on purpose: individual blog posts and press items with no
+  topic counterpart (spotlights, interviews, how-tos), tag/category/author/
+  date archives, and WordPress internals (/wp-admin, /wp-login.php,
+  /xmlrpc.php, /wp-json, /wp-content, /feed). Those 404 — honest, and the
+  signal that makes Google drop them. When Field Notes launches, the posts
+  worth keeping get moved there and these rules grow.
+
+  Posts whose slug names a program or the space DO redirect, by keyword
+  (incubator, accelerator, community-fund, coworking, membership…), with
+  single-segment patterns that can't touch any current route.
+
+  Patterns are path-to-regexp. This matcher is case-insensitive (see the
+  caution in redirects() above): no rule's source may equal its destination
+  ignoring case.
+*/
+const LUMA = "https://luma.com/geekdom";
+const SASW = "https://www.sasw.co";
+
+const club = ["/membership-access", "/membership-access/:path*", "/membership-access-display/:path*", "/member-benefits/:path*", "/member-benefits-display/:path*", "/memberships", "/membership-perks", "/membership-form", "/membership-cancellation", "/community-membership", "/virtual-membership", "/individual", "/military", "/small-business-and-community-members", "/signup", "/signup/:path*", "/sign-up-now-promotion", "/join-us", "/desk-application", "/desk-office-application", "/office-form", "/new-member-info", "/conference-room-policy", "/our-space", "/tours", "/tour-registration", "/tourregistration", "/video-tour", "/why-geekdom-v2", "/about-san-antonio-coworking", "/benefits_of_co-working", "/gift-voucher", "/san-antonio/faq", "/san-antonio/join", "/san-antonio/signup", "/san-antonio/signup-desk", "/san-antonio/tour", "/san-antonio/welcome", "/san-antonio/insurance", "/sanantonio/tour", "/event-centre", "/eventcentre", "/event-spaces-at-geekdom"];
+const studio = ["/our-programs", "/our-programs/:path*", "/our-programs-v2", "/program-phase/:path*", "/our-community-fund", "/community-fund-application", "/community-fund-aug", "/community-fund-faqs", "/community-fund-form", "/community-fund-finalists-announcement", "/funding", "/pre-accelerator", "/pre-accelerator-application", "/pre-accelerator-mentor-signup", "/pre-accelerator-sponsorship-form", "/our-pre-accelerator", "/mentor-program", "/mentors", "/mentor-week", "/startup", "/the-startup-journey", "/studentsstartups", "/workshops", "/success-stories-list", "/success-stories-list/:path*", "/portfolio", "/geekdomx", "/3ds", "/san-antonio/programs", "/san-antonio/mentors"];
+const about = ["/about/:path+", "/about-us-v2", "/team", "/team/:path*", "/team-members", "/team-members/:path*", "/team-categories/:path*", "/people", "/mission", "/our-mission", "/our-impact", "/impact-report", "/geekdom-10-year-impact-report", "/our-partners", "/partners", "/san-antonio-coworking-mission", "/san-francisco", "/san-francisco/:path*", "/geeksville", "/geeksville/:path*", "/geeksgiveback", "/geeksgiveback/:path*", "/greeningthegeeks", "/greeningthegeeks/:path*", "/garden", "/opportunities", "/opportunities/:path*", "/services", "/services/:path*", "/the-geeks-have-inherited-the-weston-centre", "/san-antonio/mission", "/san-antonio/people"];
+const media = ["/media-release-:slug", "/gallery", "/photos", "/video", "/geekdom-zoom-backgrounds", "/november-press-conference"];
+const contact = ["/contact/:path+", "/contact-us", "/contact-us/:path*", "/location", "/parking-form", "/parking-transportation", "/san-antonio/contact"];
+const home = ["/index.php", "/index.html", "/home", "/homepage-v2", "/san-antonio", "/sanantonio", "/blog-v2"];
+const luma = ["/event", "/event/:path*", "/events-calendar", "/geekdom-events", "/event-submission", "/event-signin", "/events-community-add", "/stec_event/:path*", "/stec_calendar/:path*", "/series/:path*", "/venue/:path*", "/organizer/:path*", "/san-antonio/events"];
+const sasw = ["/sastartupweek2018", "/san-antonio-startup-week-gears-up-for-third-annual-event"];
+const sitemaps = ["/sitemap.html", "/sitemap-misc.html", "/sitemap-pt-:slug.html", "/sitemap_index.xml", "/post-sitemap.xml", "/page-sitemap.xml"];
+
+/** Blog-post slugs that name a program or the space — single segment only. */
+const STUDIO_TOPICS = "incubator|pre-accelerator|accelerator|community-fund|bootcamp|mentorship|entrepreneur-in-residence";
+const CLUB_TOPICS = "coworking|membership|event-space|reopening";
+/** …or Geekdom's own history. Techstars Cloud ran out of Geekdom from 2013. */
+const ABOUT_TOPICS = "techstars|rackspace|graham-weston|weston-centre|impact-report|anniversary";
+
+const LEGACY_REDIRECTS = [
+  ...club.map((source) => ({ source, destination: "/club", permanent: true })),
+  ...studio.map((source) => ({ source, destination: "/studio", permanent: true })),
+  ...about.map((source) => ({ source, destination: "/about", permanent: true })),
+  ...media.map((source) => ({ source, destination: "/media", permanent: true })),
+  ...contact.map((source) => ({ source, destination: "/contact", permanent: true })),
+  ...home.map((source) => ({ source, destination: "/", permanent: true })),
+  ...sitemaps.map((source) => ({ source, destination: "/sitemap.xml", permanent: true })),
+  ...luma.map((source) => ({ source, destination: LUMA, permanent: false })),
+  ...sasw.map((source) => ({ source, destination: SASW, permanent: false })),
+  { source: "/my-account", destination: "/portal", permanent: true },
+  { source: "/account-request", destination: "/portal", permanent: true },
+  { source: "/privacy-policy", destination: "/privacy", permanent: true },
+  { source: "/privacy/:path+", destination: "/privacy", permanent: true },
+  { source: "/terms-conditions", destination: "/terms", permanent: true },
+  { source: "/terms/:path+", destination: "/terms", permanent: true },
+  // Listings with no counterpart YET — temporary, so Field Notes can take them.
+  { source: "/blog", destination: "/", permanent: false },
+  { source: "/blogs", destination: "/", permanent: false },
+  { source: "/news", destination: "/", permanent: false },
+  // Posts named for a program or the space.
+  { source: `/:slug([^/]*(?:${STUDIO_TOPICS})[^/]*)`, destination: "/studio", permanent: true },
+  { source: `/:slug([^/]*(?:${CLUB_TOPICS})[^/]*)`, destination: "/club", permanent: true },
+  { source: `/:slug([^/]*(?:${ABOUT_TOPICS})[^/]*)`, destination: "/about", permanent: true },
+
+  /*
+    OLD SUBDOMAINS — members., jobs., coworking., forum., events., store. and
+    friends. These only fire once each host is ADDED TO THIS VERCEL PROJECT
+    (and its DNS points here); until then they're inert. Every path on the
+    host goes to its counterpart on www.geekdom.com.
+  */
+  ...[
+    ["members.geekdom.com", "https://www.geekdom.com/portal"],
+    ["member.geekdom.com", "https://www.geekdom.com/portal"],
+    ["network.geekdom.com", "https://www.geekdom.com/portal"],
+    ["forum.geekdom.com", "https://www.geekdom.com/portal"],
+    ["forums.geekdom.com", "https://www.geekdom.com/portal"],
+    ["coworking.geekdom.com", "https://www.geekdom.com/club"],
+    ["events.geekdom.com", LUMA],
+    ["jobs.geekdom.com", "https://www.geekdom.com/"],
+    ["store.geekdom.com", "https://www.geekdom.com/"],
+    ["civtechsa.geekdom.com", "https://www.geekdom.com/about"],
+    ["staging.geekdom.com", "https://www.geekdom.com/"],
+  ].map(([host, destination]) => ({
+    source: "/:path*",
+    has: [{ type: "host" as const, value: host }],
+    destination,
+    permanent: false,
+  })),
+];
 
 // withBotId injects the client-side challenge script and the proxy rewrites
 // BotID needs. Without this wrapper, `checkBotId()` has nothing to verify

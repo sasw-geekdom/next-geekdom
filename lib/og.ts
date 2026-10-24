@@ -137,6 +137,18 @@ export const OG_CARDS: Record<string, OgCard> = {
     alt: `Contact Geekdom — ${LOCATION.full}.`,
   },
 
+  /*
+    THE MEMBER PORTAL'S DOOR. /sign-in is noindex, but it's the link in every
+    sign-in email and the one members paste to each other ("sign in here"),
+    so it unfurls as the portal rather than the homepage.
+  */
+  portal: {
+    eyebrow: "Member portal",
+    lines: ["Sign in to", "the member portal."],
+    out: "app/sign-in/opengraph-image.png",
+    alt: "Geekdom member portal — sign in with the email your membership is under.",
+  },
+
   media: {
     eyebrow: "Media",
     // The h1, cut to fit two lines: "For journalists, writers, and

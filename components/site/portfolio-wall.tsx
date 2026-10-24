@@ -128,8 +128,31 @@ export function PortfolioWall({
 */
 const FLIP = "transition-colors duration-0 delay-100";
 
+/*
+  CONTENT PINNED TO THE TOP, NOT CENTERED. "2016 · Bootstrapped" is wider
+  than a cell at six columns and wraps; centered, that lifted Big Sun's and
+  Checkups' marks ~8px above the rest of their row. From a fixed top offset
+  every mark and every caption's first line sit on the same line across the
+  row, and a second line only runs downward. The offset is what centering
+  gave a one-line cell.
+*/
 const CELL =
-  "flex h-full min-h-32 flex-col items-center justify-center gap-3 border-b border-r border-border px-4 py-7 text-center sm:min-h-36";
+  "flex h-full min-h-32 flex-col items-center justify-start gap-3 border-b border-r border-border px-4 pb-6 pt-8 text-center sm:min-h-36 sm:pt-9";
+
+/*
+  THE YEAR FIRST, THEN THE STAGE WORD. The caption was "{stage} · {founded}",
+  and for an acquired company the stage carries its own year — so the cell
+  read "Acquired 2022 · 2012": two bare years, the later one first, on a wall
+  ordered as a timeline. It also wrapped to two lines, so the acquired row
+  stood taller than the rest. Now every cell reads "2012 · Acquired",
+  "2020 · Seed": one line, and the year always means the same thing.
+
+  The stage is stored as written ("Acquired 2022") and /llms.txt still prints
+  it whole; only the wall drops the trailing year.
+*/
+function caption(company: PortfolioCompany) {
+  return `${company.founded} · ${company.stage.replace(/\s+\d{4}$/, "")}`;
+}
 
 function Company({ company }: { company: PortfolioCompany }) {
   const isSymbol = company.logoMark === "symbol";
@@ -217,7 +240,7 @@ function Company({ company }: { company: PortfolioCompany }) {
           linked && "group-hover:text-bone/70 group-focus-visible:text-bone/70",
         )}
       >
-        {company.stage} · {company.founded}
+        {caption(company)}
       </span>
     </>
   );

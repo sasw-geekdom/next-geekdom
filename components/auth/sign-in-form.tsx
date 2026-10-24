@@ -12,7 +12,7 @@ import {
 import { getFirebaseAuth, getGoogleProvider } from "@/lib/firebase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/field";
-import { LINK } from "@/components/site/section";
+import { LINK, MONO } from "@/components/site/section";
 
 /*
   ONE DOOR FOR MEMBERS AND STAFF.
@@ -37,7 +37,7 @@ import { LINK } from "@/components/site/section";
   that merely fetches the link can't spend it.
 
   NO GEEKDOM RED. It is reserved for the logo and Apply; the main action here
-  is Graphite (`ink`).
+  is Graphite (`ink`). Errors are the one exception the brand allows.
 */
 
 const EMAIL_KEY = "geekdom.emailForSignIn";
@@ -294,44 +294,43 @@ export function SignInForm() {
         </Button>
       </form>
 
-      {!confirmEmail && (
-        <>
-          <div className="flex items-center gap-3">
-            <span className="h-px flex-1 bg-border" />
-            <span className="font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground">
-              or
-            </span>
-            <span className="h-px flex-1 bg-border" />
-          </div>
+      {error && (
+        <p role="alert" className="text-sm text-geekdom-red">
+          {error}
+        </p>
+      )}
 
+      {/*
+        GEEKDOM STAFF, set apart. Members have one path — the email link,
+        which also creates their account on first use. Google is offered to
+        staff only: a member who chose it before they had an account got
+        "doesn't have access", which read as a rejection. Labeled, so
+        members don't wonder whether it's meant for them.
+      */}
+      {!confirmEmail && (
+        <div className="flex flex-col gap-3 border-t border-border pt-6">
+          <p className={`${MONO.label} text-muted-foreground`}>Geekdom staff</p>
           <Button
             type="button"
             variant="outline"
-            size="lg"
             onClick={onGoogle}
             disabled={busy}
             className="w-full"
           >
             {pending === "google" ? "Connecting…" : "Continue with Google"}
           </Button>
-
+          <p className="text-xs text-muted-foreground">Use your geekdom.com Google account.</p>
           <button
             type="button"
             onClick={() => {
               setShowPassword((v) => !v);
               setError(null);
             }}
-            className={`self-start text-sm ${LINK}`}
+            className={`mt-1 self-start text-sm ${LINK}`}
           >
             {showPassword ? "Use a sign-in link instead" : "Sign in with a password"}
           </button>
-        </>
-      )}
-
-      {error && (
-        <p role="alert" className="text-sm text-geekdom-red">
-          {error}
-        </p>
+        </div>
       )}
     </div>
   );

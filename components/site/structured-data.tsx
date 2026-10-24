@@ -60,7 +60,9 @@ export function SiteJsonLd() {
       description: SITE_DESCRIPTION,
       email: CONTACT_EMAIL,
       foundingDate: String(FOUNDED_YEAR),
-      logo: `${SITE_URL}/brand/geekdom_logo_full.svg`,
+      // A raster, not the SVG: Google's logo guidelines take PNG/JPG/WebP and
+      // skip SVG. The press kit's flat red wordmark (npm run brand:kit).
+      logo: `${SITE_URL}/brand/kit/geekdom-wordmark-red.png`,
       address: {
         "@type": "PostalAddress",
         streetAddress: LOCATION.street,

@@ -339,6 +339,13 @@ member. Members sign in by **email link** (no passwords); staff keep Google
 and email/password. The Google button has no `hd` domain hint any more —
 members use personal Gmail, and the hint hid their accounts.
 
+- **/sign-in looks like the portal, not the public site**: the portal's
+  top bar (wordmark · "Member portal", "← Back to geekdom.com" top right) and
+  one square tile — no CrownPage, no giant red crown (decoration the guide
+  bans), no Clay flourish. Members get ONE path, the email link; Google and
+  password sit below a rule in a labeled "Geekdom staff" section, because a
+  member choosing Google before their account exists got "doesn't have
+  access", which read as a rejection.
 - **Sign-in links are sent by Geekdom, not Firebase**
   ([app/api/auth/email-link/route.ts](app/api/auth/email-link/route.ts)):
   the Admin SDK's `generateSignInWithEmailLink` + Resend + `signInLinkEmail`.
@@ -593,6 +600,25 @@ members use personal Gmail, and the hint hid their accounts.
   [lib/botid.ts](lib/botid.ts), which fails **open** on an infrastructure error
   and still rejects a positively identified bot; the reasoning is written out
   there.
+
+- **Fifteen years of old URLs are mapped in `LEGACY_REDIRECTS`**
+  ([next.config.ts](next.config.ts)), built from the Internet Archive's index
+  of geekdom.com: of ~3,900 archived paths, ~3,250 now land on a real
+  counterpart and ~600 404 on purpose. The rule: redirect only to a page that
+  answers the same question — everything-to-the-homepage is a soft 404.
+  Individual blog posts, tag/author/date archives and WordPress internals
+  404 until Field Notes exists. Three traps: redirects run BEFORE `public/`
+  is served, so a source must never cover a folder there (`/portfolio/:path*`
+  once sent every homepage logo to /studio — check `ls public`); a
+  `/x/:path*` source also matches `/x` itself, so a live page's legacy
+  children use `:path+` or loop; and
+  the old subdomains (members., jobs., coworking., forum., events.…) have
+  `has: host` rules that do nothing until each host is added to the Vercel
+  project with DNS pointed here.
+
+- **robots names the crawlers on purpose.** A bot obeys its own group and
+  ignores `*`, so every agent sits in ONE group with the same disallows —
+  never give one a group of its own without copying them.
 
 - **npm, not pnpm.** There's a `package-lock.json` (the sibling `next-sasw` repo
   is pnpm — don't copy its commands over).

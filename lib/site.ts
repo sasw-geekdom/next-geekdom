@@ -886,14 +886,20 @@ export interface PortfolioCompany {
    * the wordmark itself. A logo on a solid plate masks to a solid rectangle.
    */
   logo?: string;
-  /** Tailwind height for the mark, e.g. "h-6 sm:h-7". Ignored for wordmarks. */
+  /**
+   * Tailwind height for the mark, from LOGO_HEIGHTS. SET BY MEASUREMENT, not
+   * by eye: the wordmarks are sized so the geometric mean of their visible
+   * ink box (√(width × height), padding excluded) lands near 55px at the
+   * 6-column width, give or take one step. Wide marks hit the cell's width
+   * before their height, so a bigger class does nothing for them.
+   */
   logoHeight?: string;
   /**
    * `symbol` means the asset is a MARK WITHOUT THE NAME IN IT, so the wall
    * sets the name beside it rather than leaving a shape on its own.
    *
-   * Most of these companies ship a lockup — the tick sits above "CHECKUPS",
-   * the paw sits inside "treatwalk" — and those read fine alone. A few ship
+   * Most of these companies ship a lockup — the paw sits inside
+   * "treatwalk" — and those read fine alone. A few ship
    * only the mark: RentBamboo's bamboo stripe, Allosense's circled A. On
    * their own sites neither appears without the name next to it, because
    * neither is recognizable enough to carry a row by itself.
@@ -933,7 +939,7 @@ export const PORTFOLIO: readonly PortfolioCompany[] = [
       them.
     */
     logo: "/portfolio/promoter-io.png",
-    logoHeight: "h-8",
+    logoHeight: "h-9",
     href: "https://youtu.be/6e8ih7FNLEU",
     link: "video",
     description:
@@ -984,8 +990,15 @@ export const PORTFOLIO: readonly PortfolioCompany[] = [
   },
   {
     name: "Checkups",
+    /*
+      THE CHECK ALONE, with the name set beside it. Their lockup stacks the
+      check over a tiny "CHECKUPS", square, so the wall's 40px slot held it
+      at a third of its neighbors' size and the word was unreadable. Cropped
+      from that lockup (the word sat in rows 170–193, clear of the check).
+    */
     logo: "/portfolio/checkups.webp",
-    logoHeight: "h-9",
+    logoHeight: "h-6",
+    logoMark: "symbol",
     href: "https://checkups.us/",
     /*
       The only one of the eighteen whose site ships no meta description at all,
@@ -1012,7 +1025,7 @@ export const PORTFOLIO: readonly PortfolioCompany[] = [
     name: "PorchPass",
     href: "https://www.porchpass.com/",
     logo: "/portfolio/porchpass.svg",
-    logoHeight: "h-7",
+    logoHeight: "h-8",
     description:
       "Buys the land and the house for cash so a build can start up to 60 days sooner.",
     link: "site",
@@ -1035,7 +1048,7 @@ export const PORTFOLIO: readonly PortfolioCompany[] = [
     name: "Betty’s Co.",
     href: "https://bettysco.com/",
     logo: "/portfolio/bettys-co.svg",
-    logoHeight: "h-8",
+    logoHeight: "h-9",
     description: "Gynecology, mental health and wellness care for young women.",
     link: "site",
     stage: "Pre-seed",
@@ -1097,8 +1110,9 @@ export const PORTFOLIO: readonly PortfolioCompany[] = [
   },
   {
     name: "KeepTabz",
+    // viewBox trimmed to the drawing: it shipped with 43% empty height.
     logo: "/portfolio/keeptabz.svg",
-    logoHeight: "h-7",
+    logoHeight: "h-6",
     href: "https://www.keeptabz.ai/",
     description:
       "Competitive intelligence — a competitor's news, pricing, campaigns and reviews in one place.",
@@ -1118,6 +1132,11 @@ export const PORTFOLIO: readonly PortfolioCompany[] = [
       The alpha here comes from the JPEG's own luminance: gold goes opaque, the
       white lattice lines go transparent, so the lattice reads as holes rather
       than ink. Regenerate it the same way if the source ever changes.
+
+      THEN MADE SOLID. That luminance alpha topped out at 86% (facets sat at
+      176–192 of 255), so the mask painted it as a grey haze beside solid
+      neighbors. Alpha is now remapped 96→0, 172→255, linear between: facets
+      fully opaque, lattice fully clear, edges still antialiased.
     */
     logo: "/portfolio/magentrust.png",
     logoHeight: "h-6",
@@ -1131,7 +1150,7 @@ export const PORTFOLIO: readonly PortfolioCompany[] = [
   {
     name: "Treatwalk",
     logo: "/portfolio/treatwalk.png",
-    logoHeight: "h-9",
+    logoHeight: "h-7",
     href: "https://www.treatwalk.com/",
     description:
       "A mobile app for walking, running and hiking with your dog, with training and progress tracking.",

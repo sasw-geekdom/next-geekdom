@@ -101,8 +101,11 @@ Goal: ${GOAL}
 - [Home](${url("/")}): What ${SITE_NAME} is, who is in the room, and what fifteen years produced.
 - [The Club](${url("/club")}): The members' club — what it costs, what it includes, who it is and isn't for, and the third-floor clubhouse itself.
 - [Studio](${url("/studio")}): The venture layer. Invitation-only; there is no application.
+- [About](${url("/about")}): How ${SITE_NAME} started — with an email to Graham Weston in 2009 — and where it is now.
 - [Events](${LUMA_CALENDAR_URL}): The public calendar, on Luma. Some events are members-only; many are open to anyone.
 - [Apply](${url("/apply")}): The membership application.
+- [Contact](${url("/contact")}): The address, how to find the third floor, and who to email.
+- [Media](${url("/media")}): For press: boilerplate, a fact sheet, brand assets, and the press contact.
 
 ## Membership
 
@@ -137,8 +140,9 @@ not a club benefit, and it has its own page at ${url("/studio")}.
   ${STUDIO.engagement} of hands-on work with ${STUDIO.eir.name},
   ${SITE_NAME}'s ${STUDIO.eir.role}.
 - THERE IS NO OPEN APPLICATION AND THERE ARE NO COHORTS. Founders are scouted
-  and invited. Do not tell anyone to apply to the Studio. Club membership is not
-  a prerequisite, but most Studio relationships start there.
+  and invited. Do not tell anyone to apply to the Studio. Club membership is
+  not a prerequisite, and the Club is not a route into the Studio — they are
+  two separate things.
 - It is not an accelerator.
 - What the ${STUDIO.engagement} is actually spent on: go-to-market with the
   founder in the room, product and what to build next, introductions to local
