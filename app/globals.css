@@ -555,6 +555,36 @@ p {
   them open and close it instantly — never half-drawn. The reduced-motion
   rule below flattens the durations like every other transition.
 */
+/*
+  The /since-2011 photo viewer (memory-lane.tsx): a native <dialog>, faded
+  in and out. Same technique as .drawer below — @starting-style for the
+  entrance, allow-discrete so the exit plays before it leaves the top layer;
+  a browser without them just opens and closes it instantly.
+*/
+.lightbox {
+  opacity: 0;
+  transition:
+    opacity 200ms ease-out,
+    overlay 200ms allow-discrete,
+    display 200ms allow-discrete;
+}
+.lightbox[open] {
+  opacity: 1;
+}
+@starting-style {
+  .lightbox[open] {
+    opacity: 0;
+  }
+}
+.lightbox::backdrop {
+  background-color: rgb(27 27 27);
+}
+@media (prefers-reduced-motion: reduce) {
+  .lightbox {
+    transition: none;
+  }
+}
+
 .drawer {
   translate: 100% 0;
   transition:

@@ -1,10 +1,17 @@
-import { Container, Eyebrow, HEADING, MONO } from "@/components/site/section";
+import { Container, Eyebrow, HEADING } from "@/components/site/section";
 import { Editorial } from "@/components/site/editorial";
 import { FOUNDED_YEAR, SITE_NAME } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 /**
- * The hero for /since-2011 — the wordmark, lit from inside.
+ * The hero for /since-2011 — "15 years of" and the wordmark.
+ *
+ * SHORT ON PURPOSE. It held 82% of the first screen with the wordmark at
+ * 768px — the largest block of Geekdom Red on the site — and the first
+ * photograph started at 1.13 screens, so the page about the photos opened
+ * on none. Now it sizes to its content — one mono line (the eyebrow carries
+ * "Since 2011 · San Antonio"; there were two), the wordmark capped at 448px —
+ * and the wall starts inside the first screen down to a 1280×720 laptop.
  *
  * PORTED FROM THE SIBLING next-sasw REPO, where it is the easter egg hiding
  * behind "15 years of Geekdom" in the footer. Two things changed on the way
@@ -31,8 +38,10 @@ export function SinceHero() {
 
   return (
     <section className="relative overflow-hidden bg-bone">
-      <Container className="flex min-h-[82svh] flex-col items-center justify-center py-24 text-center">
-        <Eyebrow>The throwback</Eyebrow>
+      <Container className="flex flex-col items-center justify-center pb-10 pt-12 text-center sm:pt-14">
+        <Eyebrow>
+          Since {FOUNDED_YEAR} · San Antonio
+        </Eyebrow>
 
         {/*
           The real heading is screen-reader-only and the visible type is
@@ -46,7 +55,7 @@ export function SinceHero() {
 
         <p
           aria-hidden="true"
-          className={cn("mt-6", HEADING.display, "text-graphite")}
+          className={cn("mt-5", HEADING.display, "text-graphite")}
         >
           {years} years of
         </p>
@@ -55,11 +64,13 @@ export function SinceHero() {
           THE STAR. `aspect-[375/142]` is the lockup's own ratio — the mask is
           `contain`, so any other box letterboxes the mark inside it.
 
-          max-w-3xl rather than full width: at the container's 1152px the
+          max-w-md rather than full width: at the container's 1152px the
           wordmark is 1152 wide and 436 tall, which puts its baseline below the
-          fold on a laptop and separates it from the line it completes.
+          fold on a laptop and separates it from the line it completes. (It
+          was max-w-3xl, then max-w-xl; both kept the photographs off the
+          first screen of a 720px-tall laptop.)
         */}
-        <div aria-hidden="true" className="mt-6 w-full max-w-3xl sm:mt-8">
+        <div aria-hidden="true" className="mt-5 w-full max-w-md sm:mt-6">
           {/*
             The wordmark flat, in Geekdom Red — the outline mask filled with
             one approved color. It was `WordmarkShader`, the largest instance
@@ -74,14 +85,11 @@ export function SinceHero() {
           ceremonial line", and a fifteen-year retrospective is the most
           ceremonial thing on the site.
         */}
-        <Editorial className="mx-auto mt-12 max-w-xl text-pretty text-xl leading-[1.5] text-graphite/80">
+        <Editorial className="mx-auto mt-7 max-w-xl text-pretty text-xl leading-[1.5] text-graphite/80">
           The people, the pitches, the late nights, and the community that
           showed up. Scroll back through it.
         </Editorial>
 
-        <p className={cn("mt-10", MONO.label, "text-muted-foreground")}>
-          Since {FOUNDED_YEAR} · San Antonio
-        </p>
       </Container>
     </section>
   );

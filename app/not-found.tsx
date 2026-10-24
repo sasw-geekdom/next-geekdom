@@ -1,7 +1,10 @@
-import { ButtonLink } from "@/components/ui/button";
-import { CrownPage } from "@/components/site/crown-page";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+import { ARROW, Eyebrow, HEADING, LINK_ARROW, Section } from "@/components/site/section";
+import { Editorial } from "@/components/site/editorial";
 import { SiteNavbar } from "@/components/site/site-navbar";
 import { SiteFooter } from "@/components/site/site-footer";
+import { cn } from "@/lib/utils";
 
 /**
  * Root not-found — every unmatched URL in the app.
@@ -13,51 +16,73 @@ import { SiteFooter } from "@/components/site/site-footer";
  * inside app/(site)/layout.tsx, so the navbar and footer are pulled in by hand.
  * Moving this file to inherit them would silently stop it catching 404s at all.
  *
- * It carries the full chrome because a 404 is the page where a visitor most
- * needs a way out, and on its own it offered two links. next.config.ts
- * deliberately lets the old blog and press URLs 404 rather than soft-404 them
- * at the homepage — so the people landing here arrive from stale links to the
- * coworking-era site, and the nav is the whole point for them.
+ * WHO LANDS HERE: people following links to the coworking-era site. About
+ * 600 of its old URLs 404 on purpose (LEGACY_REDIRECTS in next.config.ts),
+ * so the nav is the whole point for them — and so is the archive.
  *
- * LEFT/RIGHT rather than stacked. Side by side, the crown and the copy stop
- * competing for the same vertical budget: stacked, the two together needed the
- * entire viewport on a MacBook Air and left nothing over. In two columns each
- * one only has to fit the height it's given.
+ * IN THE BRAND, like /apply: eyebrow, Section-H1 with its Clay accent, one
+ * paragraph. It was a CrownPage — a giant red crown in a side rail (the guide
+ * bans the crown as decoration, and it was the largest block of Geekdom Red
+ * on the site), a red "Back home" button (Red is for Apply), and an outline
+ * "Explore the Club" button. Secondary actions are arrow links everywhere
+ * else, and a 404 has no primary one.
  */
 export default function NotFound() {
   return (
     <>
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-60 focus:rounded-lg focus:bg-graphite focus:px-4 focus:py-2 focus:text-bone"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-60 focus:bg-graphite focus:px-4 focus:py-2 focus:text-bone"
       >
         Skip to content
       </a>
       <SiteNavbar />
 
       <main id="main">
-        <CrownPage
-          fitViewport
-          crownOnMobile
-          eyebrow="404"
-          title={
-            <>
+        <Section tone="bone" className="sm:py-32">
+          <header className="max-w-3xl">
+            <Eyebrow>404</Eyebrow>
+            <h1 className={cn("mt-4", HEADING.heading, "text-graphite")}>
               That page <span className="text-clay">moved out.</span>
-            </>
-          }
-          subtitle="A lot of the old site went away when coworking did. The club is what's here now — start from the top, or use the menu above."
-        >
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <ButtonLink href="/" size="lg">
-              Back home
-            </ButtonLink>
-            {/* Was "What changed" → /whats-changing, removed with that page.
-                The Club is the thing a lost visitor is most likely after. */}
-            <ButtonLink href="/club" size="lg" variant="outline">
-              Explore the Club
-            </ButtonLink>
+            </h1>
+            <p className="mt-6 max-w-lg text-lg leading-relaxed text-muted-foreground">
+              A lot of the old site went away with coworking. What&rsquo;s here
+              now is the Club and the Studio.
+            </p>
+          </header>
+
+          <ul className="mt-8 flex flex-wrap gap-x-8 gap-y-3">
+            {[
+              { href: "/", label: "Home" },
+              { href: "/club", label: "The Club" },
+              { href: "/studio", label: "Studio" },
+            ].map((l) => (
+              <li key={l.href}>
+                <Link href={l.href} className={LINK_ARROW}>
+                  {l.label}
+                  <ArrowRight aria-hidden="true" className={ARROW.internal} />
+                </Link>
+              </li>
+            ))}
+          </ul>
+
+          {/*
+            THE ARCHIVE, FOR THE PEOPLE MOST LIKELY TO WANT IT. They came
+            looking for the old Geekdom; /since-2011 is the old Geekdom, in
+            photographs. Two short declaratives, parallel — the page they
+            wanted is gone, the thing it was about is kept — and the page's
+            one editorial moment, so it's in Fraunces, past a hairline.
+          */}
+          <div className="mt-16 max-w-3xl border-t border-border pt-10">
+            <Editorial className="text-2xl leading-[1.4] text-graphite">
+              You found an old link. We kept the photos.
+            </Editorial>
+            <Link href="/since-2011" className={cn("mt-4", LINK_ARROW)}>
+              Geekdom since 2011
+              <ArrowRight aria-hidden="true" className={ARROW.internal} />
+            </Link>
           </div>
-        </CrownPage>
+        </Section>
       </main>
 
       <SiteFooter />

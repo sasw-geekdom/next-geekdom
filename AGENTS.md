@@ -101,6 +101,16 @@ it per photograph toward one shared target:
 - Before it existed the library's saturation ranged 7x and its warmth from
   cool to very warm; after, the color frames' saturation spread fell from
   0.08 to 0.03 and warmth from 16 to 5 (standard deviation).
+- **The grade is one function, [lib/photo-grade.mjs](lib/photo-grade.mjs)**,
+  shared by the script and the `/since-2011` wall's sync
+  ([gallery-sync.ts](lib/gallery-sync.ts)), which grades each archive photo
+  at 900px as it builds the thumbnail. The wall has its own
+  `BLACK_AND_WHITE` (77 of 256, 30%; keep it there as photos are added) and a `GRADE_KEY` — bump it when the grade
+  changes and the next sync rebuilds every thumbnail under a new URL. On the
+  archive's 32 color frames the spread halved (saturation sd 0.13 → 0.08,
+  warmth 28 → 15) — looser than the library, because the caps stop short on
+  the four purple-lit frames. Moving the grade into the module re-graded the
+  library byte-identical.
 
 **Photos have square corners — no rounding, 90 degrees, Geekdom's request.**
 `Photo` carries none, and neither does any other image frame (video poster,
@@ -201,14 +211,35 @@ team asked for — everything else lives in the footer.
 
 ## The easter egg
 
-`/since-2011` is a throwback page; its door was the classic **Geekdom**
-wordmark in the footer's copyright line (removed for now — see below). Ported from the sibling `next-sasw` repo, where the
+`/since-2011` is a throwback page; its door is the classic **Geekdom**
+wordmark in the footer's copyright line. Ported from the sibling `next-sasw` repo, where the
 same page runs as "15 years of Geekdom".
 
-**The door is off the footer for now, at Geekdom's request** — the classic
-wordmark was removed from the copyright line, and it will get a different
-home when the page comes back (once the photo wall has photographs; see
-below). The route and `public/brand/geekdom-classic.svg` are untouched.
+**Three ways in, and only three.** The footer's classic wordmark (the egg
+itself; it was off while the wall was empty, at Geekdom's request); a
+"Since 2011" photo strip on the member dashboard, because the people in the
+photographs are largely the Club (hidden until the wall has photos); and
+one line on the 404 page — "You found an old link. We kept the photos." —
+because the ~600 coworking-era URLs that 404 on purpose bring exactly the
+people who came looking for the old Geekdom. None of them is in the nav. The 404 itself is /apply's shape —
+eyebrow, Section-H1, arrow links, the archive line in Fraunces past a
+hairline — not a CrownPage: no crown rail, no red button.
+
+**/since-2011 opens on photographs and closes on a request for more.** The
+hero sizes to its content (wordmark ≤448px, one mono line) so the wall
+starts inside the first screen down to 1280×720; the wall's heading is
+sr-only for the same reason. Every frame opens the viewer — a native
+`<dialog>` in Graphite (`.lightbox`), ←/→, Escape, focus back on the frame,
+`data-lenis-prevent` — showing the sync's 1800px `large` copy, graded once at
+that size with the thumbnail cut from it. The close is "Were you there?"
+→ a mailto to club@ for photos, with Apply as an arrow link: the people
+reading this page are mostly alumni, and the archive's early years are thin.
+
+**Blob keys are the MD5 in hex** ([gallery-sync.ts](lib/gallery-sync.ts)).
+Storage's `md5Hash` is base64, and used raw as a path it put a "/" in one
+key in five and made `since-2011//…` for one photo, which Blob refused —
+that photo never reached the wall. next-sasw's copy of this code has the
+same bug.
 
 - **Deliberately out of the sitemap and out of the nav.** An easter egg that
   ranks in search has stopped being one. It is still indexable and has a
@@ -217,7 +248,11 @@ below). The route and `public/brand/geekdom-classic.svg` are untouched.
   `FOUNDED_YEAR`, and the path is `/since-2011` rather than `/15-years` —
   which is true for exactly one year.
 - **The photo wall reads a Firestore manifest, not Storage.** Originals go in
-  the `since-2011/` Storage folder; the admin's **Photo wall** screen resizes
+  the `since-2011/` Storage folder (its first 46 were copied from next-sasw's
+  `15-years/`, the same wall's source there; 210 more are Wayback Machine
+  recoveries of geekdom.com's old uploads, named `YYYY-NNN-…` by upload
+  year, and Geekdom's `og-geekdom` set — all perceptually deduplicated
+  against the wall and the library first); the admin's **Photo wall** screen resizes
   them to WebP and publishes to Vercel Blob
   ([lib/gallery-sync.ts](lib/gallery-sync.ts)). A run is capped at 40 photos so
   a first batch can't blow the request timeout — the UI says to run it again.

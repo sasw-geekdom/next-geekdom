@@ -119,11 +119,35 @@ export function SiteFooter() {
               © {FOUNDED_YEAR}–{new Date().getFullYear()}
             </span>
             {/*
-              THE EASTER EGG'S DOOR IS OFF THE FOOTER, at Geekdom's request —
-              the classic wordmark used to sit here (unlinked since the photo
-              wall is still empty). It gets a different home when /since-2011
-              comes back; the route and public/brand/geekdom-classic.svg stay.
+              THE EASTER EGG'S DOOR, and it wears the OLD LOGO. Back now the
+              wall has its photographs (it was off at Geekdom's request while
+              /since-2011 sat empty).
+
+              The copyright line is the one place the founding year already
+              appears, so the throwback hangs off it rather than taking a nav
+              slot or a footer column — which is what makes it an easter egg
+              rather than a page. The years are computed, so the label is
+              still true in 2031.
+
+              An <img> rather than an inline SVG: the footer renders on every
+              route. The file is flattened to Bone because an <img> cannot
+              take `currentColor`, so the hover runs on opacity. Square focus
+              ring, like everything else.
             */}
+            <Link
+              href="/since-2011"
+              aria-label={`${new Date().getFullYear() - FOUNDED_YEAR} years of Geekdom`}
+              className="group inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-offset-2 focus-visible:ring-offset-graphite"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/brand/geekdom-classic.svg"
+                alt=""
+                width={59}
+                height={16}
+                className="h-4 w-auto opacity-55 transition-opacity group-hover:opacity-100"
+              />
+            </Link>
           </p>
           <nav className="flex flex-wrap items-center gap-x-6 gap-y-2">
             {live(LEGAL).map((l) => (

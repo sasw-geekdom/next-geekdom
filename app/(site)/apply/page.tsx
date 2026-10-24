@@ -21,8 +21,9 @@ export const metadata: Metadata = pageMetadata({
 export default function ApplyPage() {
   return (
     /*
-      NO MARK BESIDE THE FORM. The 404, /account and the staff sign-in carry
-      a mark in a side rail; this page doesn't, because a fourteen-field form
+      NO MARK BESIDE THE FORM. /account carries a mark in a side rail (the
+      404 and the sign-in did too, and were rebuilt without it); this page
+      doesn't, because a fourteen-field form
       keeps somebody here for ten minutes and wants the whole width and
       nothing else in view.
     */

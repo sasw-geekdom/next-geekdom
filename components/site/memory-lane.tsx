@@ -2,10 +2,12 @@
 
 import Image from "next/image";
 import { motion, useScroll, useTransform } from "motion/react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useReducedMotion } from "@/lib/use-reduced-motion";
 import * as React from "react";
 import type { GalleryImage } from "@/lib/gallery";
-import { Container, Eyebrow, SectionTitle } from "@/components/site/section";
+import { Container, MONO } from "@/components/site/section";
+import { cn } from "@/lib/utils";
 
 /**
  * The photo wall on /since-2011 — parallax and a reveal, per photo.
@@ -44,7 +46,17 @@ const SIZES = "(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw";
 // Prioritize the first screenful so the top paints immediately.
 const PRIORITY_COUNT = 8;
 
-function Photo({ img, priority }: { img: GalleryImage; priority: boolean }) {
+function Photo({
+  img,
+  priority,
+  label,
+  onOpen,
+}: {
+  img: GalleryImage;
+  priority: boolean;
+  label: string;
+  onOpen: () => void;
+}) {
   const ref = React.useRef<HTMLDivElement>(null);
   const reduce = useReducedMotion();
   const { scrollYProgress } = useScroll({
@@ -76,30 +88,180 @@ function Photo({ img, priority }: { img: GalleryImage; priority: boolean }) {
           machine-written alt strings would be noise for a screen reader; the
           section heading says what the wall is.
         */}
-        <Image
-          src={img.url}
-          alt=""
-          width={img.width}
-          height={img.height}
-          sizes={SIZES}
-          placeholder={img.blurDataURL ? "blur" : "empty"}
-          blurDataURL={img.blurDataURL || undefined}
-          priority={priority}
-          className="h-auto w-full"
-        />
+        {/* Every frame opens the viewer — a wall you can't look into was the
+            page's biggest gap for the people who are in these photos. */}
+        <button
+          type="button"
+          onClick={onOpen}
+          aria-label={label}
+          className="block w-full cursor-zoom-in focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-clay"
+        >
+          <Image
+            src={img.url}
+            alt=""
+            width={img.width}
+            height={img.height}
+            sizes={SIZES}
+            placeholder={img.blurDataURL ? "blur" : "empty"}
+            blurDataURL={img.blurDataURL || undefined}
+            priority={priority}
+            className="h-auto w-full transition-opacity hover:opacity-90"
+          />
+        </button>
       </motion.figure>
     </motion.div>
   );
 }
 
+/*
+  THE PHOTO VIEWER — one photograph at a time, as large as the screen allows.
+
+  A native <dialog>, the same reasoning as the admin's drawer: showModal()
+  gives the top layer, focus containment, Escape, and focus back on the
+  frame you opened when it closes — none of it hand-rolled. Graphite, edge
+  to edge, because a photo reads best on the dark ground and the brand has
+  one. ← / → (and the on-screen chevrons) walk the wall in its order; a
+  click anywhere that isn't the photo or a control closes it.
+
+  It shows `large` — the sync's 1800px copy, same grade as the thumbnail —
+  and falls back to the thumbnail for anything synced before that existed.
+  The neighbors are fetched ahead so stepping through doesn't wait.
+
+  `data-lenis-prevent`: the page's scroll glide listens on the window, and
+  without it a wheel over the viewer would scroll the wall behind it.
+*/
+function Viewer({
+  images,
+  index,
+  onIndex,
+  onClose,
+}: {
+  images: GalleryImage[];
+  index: number | null;
+  onIndex: (i: number) => void;
+  onClose: () => void;
+}) {
+  const ref = React.useRef<HTMLDialogElement>(null);
+  const open = index !== null;
+  const n = images.length;
+
+  React.useEffect(() => {
+    const dialog = ref.current;
+    if (!dialog) return;
+    if (open && !dialog.open) dialog.showModal();
+    if (!open && dialog.open) dialog.close();
+  }, [open]);
+
+  // Warm the cache for the photos either side.
+  React.useEffect(() => {
+    if (index === null) return;
+    for (const d of [1, -1]) {
+      const img = images[(index + d + n) % n];
+      new window.Image().src = img.large?.url ?? img.url;
+    }
+  }, [index, images, n]);
+
+  const step = (d: number) => index !== null && onIndex((index + d + n) % n);
+  // Swipe on touch screens: a mostly-horizontal drag of 50px or more.
+  const touch = React.useRef<{ x: number; y: number } | null>(null);
+  const img = index !== null ? images[index] : null;
+  const src = img?.large ?? img;
+
+  const control =
+    "flex h-12 w-12 items-center justify-center text-bone/80 transition-colors hover:bg-bone/10 hover:text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay";
+
+  return (
+    <dialog
+      ref={ref}
+      data-lenis-prevent
+      aria-label="Photo viewer"
+      onClose={onClose}
+      onKeyDown={(e) => {
+        if (e.key === "ArrowRight") step(1);
+        if (e.key === "ArrowLeft") step(-1);
+      }}
+      onClick={(e) => {
+        // Only the empty ground closes it, not the photo or a control.
+        if (e.target === e.currentTarget || (e.target as HTMLElement).dataset.ground) onClose();
+      }}
+      className="lightbox m-0 h-svh max-h-none w-screen max-w-none bg-graphite p-0 text-bone"
+    >
+      {img && src && (
+        <div data-ground="1" className="relative flex h-full flex-col">
+          <div className="flex items-center justify-between px-3 py-2 sm:px-5">
+            <p className={cn(MONO.label, "pl-2 text-bone/70")} aria-live="polite">
+              {index! + 1} / {n}
+            </p>
+            <button type="button" onClick={onClose} aria-label="Close" className={control}>
+              <X aria-hidden="true" className="h-5 w-5" strokeWidth={1.6} />
+            </button>
+          </div>
+
+          <div
+            data-ground="1"
+            onTouchStart={(e) => (touch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY })}
+            onTouchEnd={(e) => {
+              const t = touch.current;
+              touch.current = null;
+              if (!t) return;
+              const dx = e.changedTouches[0].clientX - t.x;
+              const dy = e.changedTouches[0].clientY - t.y;
+              if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) step(dx < 0 ? 1 : -1);
+            }}
+            className="relative flex min-h-0 flex-1 items-center justify-center px-3 sm:px-20 sm:pb-6"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element -- already a sized WebP on Blob */}
+            <img
+              key={src.url}
+              src={src.url}
+              width={src.width}
+              height={src.height}
+              alt={`Photo ${index! + 1} of ${n} from Geekdom's archive`}
+              style={{ backgroundImage: `url(${img.blurDataURL})`, backgroundSize: "cover" }}
+              className="max-h-full w-auto max-w-full object-contain"
+            />
+          </div>
+
+          {/*
+            Beside the photo from sm up; on a phone, in a row under it, where
+            a thumb reaches and they don't sit on the picture's edges.
+          */}
+          <div data-ground="1" className="flex justify-center gap-6 py-3 sm:contents">
+            <button
+              type="button"
+              onClick={() => step(-1)}
+              aria-label="Previous photo"
+              className={cn(control, "sm:absolute sm:left-4 sm:top-1/2 sm:-translate-y-1/2")}
+            >
+              <ChevronLeft aria-hidden="true" className="h-6 w-6" strokeWidth={1.6} />
+            </button>
+            <button
+              type="button"
+              onClick={() => step(1)}
+              aria-label="Next photo"
+              className={cn(control, "sm:absolute sm:right-4 sm:top-1/2 sm:-translate-y-1/2")}
+            >
+              <ChevronRight aria-hidden="true" className="h-6 w-6" strokeWidth={1.6} />
+            </button>
+          </div>
+        </div>
+      )}
+    </dialog>
+  );
+}
+
 export function MemoryLane({ images }: { images: GalleryImage[] }) {
+  const [open, setOpen] = React.useState<number | null>(null);
   return (
     <section className="bg-bone pb-28 pt-4">
       <Container>
-        <div className="mb-14">
-          <Eyebrow>Down memory lane</Eyebrow>
-          <SectionTitle>Everyone who showed up.</SectionTitle>
-        </div>
+        {/*
+          The wall's heading is for screen readers only. Visible, it put
+          213px between the hero and the first photograph — the hero's
+          Fraunces line already introduces the wall — and the page opened on
+          no photos at all. It stays a real <h2> so the outline is intact.
+        */}
+        <h2 className="sr-only">Everyone who showed up.</h2>
 
         {/*
           CSS columns, not a grid. The photographs are every aspect ratio a
@@ -110,10 +272,17 @@ export function MemoryLane({ images }: { images: GalleryImage[] }) {
         */}
         <div className="columns-2 gap-4 sm:columns-3 sm:gap-5 lg:columns-4">
           {images.map((img, i) => (
-            <Photo key={img.name} img={img} priority={i < PRIORITY_COUNT} />
+            <Photo
+              key={img.name}
+              img={img}
+              priority={i < PRIORITY_COUNT}
+              label={`Open photo ${i + 1} of ${images.length}`}
+              onOpen={() => setOpen(i)}
+            />
           ))}
         </div>
       </Container>
+      <Viewer images={images} index={open} onIndex={setOpen} onClose={() => setOpen(null)} />
     </section>
   );
 }

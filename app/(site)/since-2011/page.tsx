@@ -3,9 +3,10 @@ import { pageMetadata } from "@/lib/seo";
 import { getGalleryImages } from "@/lib/gallery";
 import { SinceHero } from "@/components/site/since-hero";
 import { MemoryLane } from "@/components/site/memory-lane";
-import { Container, Eyebrow, SectionTitle, Section } from "@/components/site/section";
-import { ButtonLink } from "@/components/ui/button";
-import { FOUNDED_YEAR, SITE_NAME } from "@/lib/site";
+import { ARROW, Container, Eyebrow, LINK_ARROW_ON_INK, SectionTitle, Section } from "@/components/site/section";
+import Link from "next/link";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
+import { CONTACT_EMAIL, FOUNDED_YEAR, LOCATION, SITE_NAME } from "@/lib/site";
 
 const years = new Date().getFullYear() - FOUNDED_YEAR;
 
@@ -80,21 +81,37 @@ export default async function SincePage() {
         </Section>
       )}
 
-      {/* ── Close ────────────────────────────────────────────────────── */}
+      {/* ── Close: ask for the photos ────────────────────────────────── */}
+      {/*
+        THE PEOPLE READING THIS WERE THERE. They arrive from the footer's old
+        wordmark, from the 404 (following a link to the coworking-era site),
+        or from the member dashboard ("You might be in a few"). The close
+        used to sell them a membership under a line borrowed from the members
+        letter. Now it asks for what the page is missing: the archive's
+        dated frames run 2018–2025 and the founding years are thin. A mailto
+        for now — an upload form is the next step if photos start arriving.
+        Apply stays, as an arrow link, not the ask.
+      */}
       <Section tone="graphite">
         <div className="mx-auto max-w-2xl text-center">
-          <SectionTitle className="mx-auto text-bone">
-            The space changes. The people in it don&rsquo;t.
-          </SectionTitle>
+          <SectionTitle className="mx-auto text-bone">Were you there?</SectionTitle>
           <p className="mt-6 text-lg leading-relaxed text-bone/70">
-            {years} years in, and the next one starts the same way the first
-            did — somebody sitting down next to the right person.
+            We&rsquo;re still filling in {years} years — the early ones most of
+            all. If you have photos from the Weston Centre, {LOCATION.building.replace(/^The /, "the ")},
+            or a Startup Week, send them our way.
           </p>
-          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <ButtonLink href="/apply" size="lg" variant="on-ink">
+          <div className="mt-10 flex flex-col items-center justify-center gap-x-10 gap-y-4 sm:flex-row">
+            <a
+              href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(`Photos for Since ${FOUNDED_YEAR}`)}`}
+              className={`text-lg ${LINK_ARROW_ON_INK}`}
+            >
+              Send us yours
+              <ArrowUpRight aria-hidden="true" className={ARROW.external} />
+            </a>
+            <Link href="/apply" className={LINK_ARROW_ON_INK}>
               Apply to {SITE_NAME}
-            </ButtonLink>
-            {/* "Read the letter" came out with /whats-changing. */}
+              <ArrowRight aria-hidden="true" className={ARROW.internal} />
+            </Link>
           </div>
         </div>
       </Section>

@@ -25,12 +25,16 @@ export interface GalleryImage {
   width: number;
   height: number;
   blurDataURL: string;
+  /** The photo viewer's copy: ≤1800px wide, same grade. Absent until re-synced. */
+  large?: { url: string; width: number; height: number };
 }
 
 /** One thumbnail record as stored in the Firestore manifest. */
 export interface GalleryManifestItem extends GalleryImage {
   /** MD5 of the source original — lets a re-sync skip unchanged photos. */
   md5: string;
+  /** Which grade it was built with (GRADE_KEY + B&W) — a change rebuilds it. */
+  grade?: string;
 }
 
 const manifestDoc = () =>
@@ -73,12 +77,13 @@ export async function getGalleryManifest(): Promise<GalleryManifestItem[]> {
 export async function getGalleryImages(): Promise<GalleryImage[]> {
   const items = await getGalleryManifest();
   return items
-    .map(({ name, url, width, height, blurDataURL }) => ({
+    .map(({ name, url, width, height, blurDataURL, large }) => ({
       name,
       url,
       width,
       height,
       blurDataURL,
+      ...(large ? { large } : {}),
     }))
     .sort((a, b) => shuffleKey(a.name) - shuffleKey(b.name));
 }

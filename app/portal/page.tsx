@@ -4,8 +4,9 @@ import { requireMember } from "@/lib/auth/session";
 import { isAdmin } from "@/lib/auth/roles";
 import { getMemberByEmail } from "@/lib/admin/queries";
 import { getUpcomingEvents } from "@/lib/content/events";
+import { getGalleryImages } from "@/lib/gallery";
 import { eventTimeLabel } from "@/lib/content/dates";
-import { LUMA_CALENDAR_URL, SOCIALS } from "@/lib/site";
+import { FOUNDED_YEAR, LUMA_CALENDAR_URL, SOCIALS } from "@/lib/site";
 import { MOCK_DIRECTORY, MOCK_FIELD_NOTE, MOCK_SLACK } from "@/data/mock/portal";
 import { ARROW, HEADING, LINK_ARROW, LINK_ARROW_ON_INK, MONO } from "@/components/site/section";
 import { MemberBadge } from "@/components/ui/badge";
@@ -51,10 +52,12 @@ function longDate(iso: string | null): string {
 */
 export default async function PortalHome() {
   const user = await requireMember();
-  const [member, events] = await Promise.all([
+  const [member, events, wall] = await Promise.all([
     getMemberByEmail(user.email),
     getUpcomingEvents(),
+    getGalleryImages(), // never throws; [] until the wall is synced
   ]);
+  const archive = wall.slice(0, 5);
   const staff = isAdmin(user);
   const first = (member?.name ?? user.name ?? "").split(" ")[0];
   // The four newest SAMPLE members (the hand-written ten), with portraits.
@@ -285,6 +288,54 @@ export default async function PortalHome() {
             ))}
           </ul>
         </Tile>
+
+        {/* ── Since 2011 — the archive, for the people in it ──────────── */}
+        {/*
+          THE MEMBERS' WAY IN to /since-2011 (the public one is the footer's
+          old wordmark). The people in these photographs are, largely, the
+          Club — so the archive is something the portal can hand them that
+          the homepage doesn't. Five frames from the wall, square, in the
+          brand grade; the strip IS the link. No photos synced → no tile.
+        */}
+        {archive.length > 0 && (
+          <Tile
+            label={`Since ${FOUNDED_YEAR}`}
+            className="lg:col-span-3"
+            action={
+              <Link href="/since-2011" className={cn("text-sm", LINK_ARROW)}>
+                See the wall
+                <ArrowRight aria-hidden="true" className={ARROW.internal} />
+              </Link>
+            }
+          >
+            <p className="text-sm leading-relaxed text-graphite">
+              {new Date().getFullYear() - FOUNDED_YEAR} years of Geekdom, in photographs.
+              You might be in a few.
+            </p>
+            <Link
+              href="/since-2011"
+              aria-label="Geekdom since 2011 — the photo wall"
+              className="mt-4 grid grid-cols-3 gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-offset-2 focus-visible:ring-offset-bone-light sm:grid-cols-5"
+            >
+              {archive.map((img, i) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={img.name}
+                  src={img.url}
+                  alt=""
+                  width={img.width}
+                  height={img.height}
+                  loading="lazy"
+                  style={{ backgroundImage: `url(${img.blurDataURL})`, backgroundSize: "cover" }}
+                  className={cn(
+                    "aspect-4/3 w-full border border-border object-cover transition-opacity hover:opacity-85",
+                    i >= 3 && "hidden sm:block",
+                  )}
+                />
+              ))}
+            </Link>
+          </Tile>
+        )}
 
         {/* ── Need something? — a slim row ──────────────────────────── */}
         <section className="flex flex-col gap-3 border border-border bg-bone-light px-6 py-5 sm:flex-row sm:items-center sm:gap-8 sm:px-7 lg:col-span-3">

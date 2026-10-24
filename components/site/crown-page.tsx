@@ -68,8 +68,8 @@ export function CrownPage({
    *
    * Off by default and deliberately so: on the forms and the FAQ a phone-sized
    * decorative canvas competes with the actual task for attention and battery,
-   * and the mark is already in the navbar. The 404 turns it on because there
-   * is no task there to compete with.
+   * and the mark is already in the navbar. The 404 was the one page that
+   * turned it on; it no longer uses CrownPage at all.
    */
   crownOnMobile = false,
   shape = "g-mark",
