@@ -267,7 +267,7 @@ export function TextFrameEditor({
       )}
 
       <div ref={box}>
-        <FrameView frame={frame} className="w-full border border-border">
+        <FrameView frame={frame} draft className="w-full border border-border">
           <EditorContent editor={editor} className="h-full" />
         </FrameView>
       </div>

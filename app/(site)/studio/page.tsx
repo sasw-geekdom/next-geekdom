@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { pageMetadata } from "@/lib/seo";
-import Link from "next/link";
-import { ArrowRight, ArrowUpRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import {
   Eyebrow,
   Lede,
@@ -22,6 +21,8 @@ import { getPortfolio } from "@/lib/content/portfolio";
 import { VideoCard } from "@/components/site/video-card";
 import { StudioFilmJsonLd } from "@/components/site/structured-data";
 import { Photo } from "@/components/site/photo";
+import { TypeformPopupButton } from "@/components/forms/typeform-popup-button";
+import { MOCK_PARTNER_FORM } from "@/data/mock/forms";
 import { PHOTOS } from "@/lib/photos";
 import { MOCK_FOUNDER_VOICES } from "@/data/mock/voices";
 import {
@@ -30,6 +31,7 @@ import {
   STUDIO_PARTNERS,
   STUDIO_FILM,
   LUMA_CALENDAR_URL,
+  STUDIO_PARTNER_TYPEFORM_ID,
 } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
@@ -602,9 +604,21 @@ export default async function StudioPage() {
             See upcoming events
             <ArrowUpRight aria-hidden="true" className={ARROW.external} />
           </a>
+          {/*
+            AN EMAIL, NOT A FORM, on purpose. The Studio has no open
+            application, and a step-by-step Typeform under "If you're a
+            founder" would read as one whatever it was titled. An introduction
+            to a person is how these relationships start. The subject is
+            prefilled so introductions are easy to spot at studio@. (A second
+            line asking for what you're building and MRR was tried and cut —
+            it made the block busy, and the criteria are right above it.)
+          */}
           <p className="mt-6 text-muted-foreground">
             Or introduce yourself — send your deck to{" "}
-            <a href={`mailto:${STUDIO.email}`} className={LINK}>
+            <a
+              href={`mailto:${STUDIO.email}?subject=${encodeURIComponent("Introduction — [your company]")}`}
+              className={LINK}
+            >
               {STUDIO.email}
             </a>
             .
@@ -634,13 +648,13 @@ export default async function StudioPage() {
               </p>
             </div>
             {/*
-              "Contact us → /contact" is the doc's link for this block. It had
-              been a mailto because /contact did not exist; it does now.
+              GEEKDOM'S PARTNER TYPEFORM, opened as a popup the way /apply's
+              is. Until STUDIO_PARTNER_TYPEFORM_ID is set (lib/site.ts) it's
+              the doc's original "Contact us → /contact".
             */}
-            <Link href="/contact" className={cn("shrink-0", LINK_ARROW)}>
-              Contact us
-              <ArrowRight className={ARROW.internal} strokeWidth={2} />
-            </Link>
+            <div className="shrink-0">
+              <TypeformPopupButton formId={STUDIO_PARTNER_TYPEFORM_ID} appearance="link" label="Contact us" mock={MOCK_PARTNER_FORM} />
+            </div>
           </div>
         </div>
       </Section>

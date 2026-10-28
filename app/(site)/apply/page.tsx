@@ -58,7 +58,7 @@ export default function ApplyPage() {
         TypeformPopupButton. The custom <ApplyForm /> is still in the repo,
         unrendered — see the /apply notes in AGENTS.md before deleting it.
       */}
-      <TypeformPopupButton formId={TYPEFORM_FORM_ID} />
+      <TypeformPopupButton formId={TYPEFORM_FORM_ID} thanksHref="/apply/thanks" />
     </Section>
   );
 }

@@ -100,11 +100,27 @@ export function fieldNoteJsonLd(note: PublishedNote): Record<string, unknown> {
     datePublished: note.publishedAt,
     dateModified: note.updatedAt,
     image: [note.ogImage, ...images],
-    author: note.author ? { "@type": "Person", name: note.author } : { "@type": "Organization", name: SITE_NAME },
+    author: authorOf(note),
     publisher: { "@type": "Organization", name: SITE_NAME, logo: `${SITE_URL}/brand/kit/geekdom-wordmark-red.png` },
     isPartOf: { "@type": "Blog", name: "Field Notes", url: `${SITE_URL}/field-notes` },
     ...(body ? { articleBody: body } : {}),
     ...(videos.length ? { video: videos } : {}),
+  };
+}
+
+/** The byline as schema.org — richer when the note closes on an Author frame. */
+function authorOf(note: PublishedNote): Record<string, unknown> {
+  const close = note.frames.find((f) => f.type === "author");
+  const name = (close?.type === "author" && close.name) || note.author;
+  if (!name) return { "@type": "Organization", name: SITE_NAME };
+  if (close?.type !== "author") return { "@type": "Person", name };
+  return {
+    "@type": "Person",
+    name,
+    ...(close.role ? { jobTitle: close.role } : {}),
+    ...(close.company ? { worksFor: { "@type": "Organization", name: close.company } } : {}),
+    ...(close.portrait ? { image: close.portrait.src } : {}),
+    ...(/^https:/.test(close.link) ? { url: close.link } : {}),
   };
 }
 

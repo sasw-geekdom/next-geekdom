@@ -32,3 +32,19 @@ is a claim about a named person.
 
 Every page that renders these shows a "Sample content" notice. The invented
 people and companies must not reach production, same as `voices.ts`.
+
+## Mock Typeforms (`forms.ts`)
+
+| Export | Feeds | Replace with |
+| --- | --- | --- |
+| `MOCK_EVENTS_FORM` | /club "Plan an event", on review builds only | Geekdom's events Typeform — set `EVENTS_TYPEFORM_ID` in lib/site.ts |
+| `MOCK_PARTNER_FORM` | /studio partner "Contact us", on review builds only | Geekdom's partner Typeform — set `STUDIO_PARTNER_TYPEFORM_ID` |
+
+The questions are a proposal for Geekdom to build the real forms from. The
+mock never shows on geekdom.com (`ON_LIVE_DOMAIN`), and sends nothing.
+
+## Sample Field Notes (`field-notes.ts`)
+
+Six invented notes for reviewing /field-notes and the note pages. Review
+builds only (never geekdom.com), noindex, out of the sitemap and llms.txt.
+Delete the array to remove them; real published notes are unaffected.

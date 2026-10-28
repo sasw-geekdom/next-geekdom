@@ -1,5 +1,7 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site";
+import { listPublished } from "@/lib/field-notes/notes";
+import { fieldNoteSitemapEntries } from "@/lib/field-notes/seo";
 
 /**
  * Public pages only. /admin, /account and /welcome are deliberately absent —
@@ -18,7 +20,7 @@ import { SITE_URL } from "@/lib/site";
  */
 export const revalidate = 300;
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
   const routes: {
@@ -33,6 +35,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "/about", priority: 0.7, changeFrequency: "monthly" },
     { path: "/contact", priority: 0.6, changeFrequency: "monthly" },
     { path: "/media", priority: 0.5, changeFrequency: "monthly" },
+    { path: "/field-notes", priority: 0.6, changeFrequency: "weekly" },
     // Listed, but bottom of the pile. They're indexable — a legal page that
     // can't be found is no use to the person looking for it — and nothing on
     // the site should ever rank on them.
@@ -47,5 +50,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: route.priority,
   }));
 
-  return pages;
+  // Every live Field Note, dated by its last publish. listPublished() never
+  // throws — no Firestore at build time means no notes, not a failed build.
+  const notes = fieldNoteSitemapEntries(await listPublished()).map((n) => ({
+    ...n,
+    changeFrequency: "monthly" as const,
+    priority: 0.5,
+  }));
+
+  return [...pages, ...notes];
 }

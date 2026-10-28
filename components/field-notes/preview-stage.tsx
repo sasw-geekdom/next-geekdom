@@ -32,7 +32,12 @@ export function PreviewStage({ frames, title }: { frames: Frame[]; title: string
         </div>
       </div>
       <div className={cn(phone && "mx-auto w-[390px] max-w-full border border-border px-4 py-6")}>
-        {frames.length ? <FrameReader frames={frames} label={title} /> : <p className="text-muted-foreground">No frames yet.</p>}
+        {frames.length ? (
+          // The preview's own bars and title take more height than the note page's.
+          <FrameReader frames={frames} label={title} chrome={phone ? "20rem" : "19rem"} />
+        ) : (
+          <p className="text-muted-foreground">No frames yet.</p>
+        )}
       </div>
     </div>
   );

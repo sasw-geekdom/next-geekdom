@@ -49,6 +49,15 @@ const TITLE_LINES: readonly [string, string] = [
 ];
 
 export const OG_CARDS: Record<string, OgCard> = {
+  /* The index's two lines are its own header. Each NOTE has its own card,
+     generated at publish (lib/field-notes/og-card.tsx), not one of these. */
+  fieldNotes: {
+    eyebrow: "Field Notes",
+    lines: ["Stories from", "the room."],
+    out: "app/(site)/field-notes/opengraph-image.png",
+    alt: "Field Notes from Geekdom — stories from the room.",
+  },
+
   /*
     The root card, so it also covers any page without one of its own —
     /apply/thanks, /welcome, /account. Those are noindex, but a member pasting

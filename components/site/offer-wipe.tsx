@@ -91,9 +91,11 @@ export function OfferWipe({
   }, []);
 
   /*
-    ABOVE the real layer, not behind it — it carries the inverted type, so it
-    has to paint over the original. `pointer-events-none` lets every click
-    fall through to the link's stretched hit area underneath.
+    BEHIND the type: the caller passes `-z-10` (the panel is `isolate`), so the
+    fill is a ground, not a layer over the copy — the type never changes color.
+    (It once sat above, carrying an inverted copy of the type; that version
+    was too loud.) `pointer-events-none` lets every click fall through to the
+    link's stretched hit area.
   */
   return (
     <div

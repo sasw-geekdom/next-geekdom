@@ -14,6 +14,8 @@ import {
   LINK_ARROW,
 } from "@/components/site/section";
 import { Editorial } from "@/components/site/editorial";
+import { TypeformPopupButton } from "@/components/forms/typeform-popup-button";
+import { MOCK_EVENTS_FORM } from "@/data/mock/forms";
 import { Photo } from "@/components/site/photo";
 import { SpreadHero } from "@/components/site/spread-hero";
 import { PHOTOS } from "@/lib/photos";
@@ -26,6 +28,7 @@ import {
 } from "@/lib/membership";
 import {
   CLUB,
+  EVENTS_TYPEFORM_ID,
   LOCATION,
   LUMA_CALENDAR_URL,
 } from "@/lib/site";
@@ -501,6 +504,71 @@ export default function ClubPage() {
               </div>
             </div>
           </aside>
+        </div>
+      </Section>
+
+      {/* ── Host an event ────────────────────────────────────────────── */}
+      {/*
+        FOR COMPANIES, À LA CARTE — the Studio's "How to get involved" idea,
+        aimed at a second audience Geekdom asked to reach: a company that wants
+        Geekdom for a day without joining. An offsite, a planning day, a
+        workshop, an evening with its customers. No membership required, and
+        that's the first thing it says.
+
+        COMPANY EVENTS ONLY, said plainly in one line (Geekdom: "focused on
+        company events and not personal birthday party events") — so the form
+        doesn't fill with requests it will turn down.
+
+        AFTER MEMBERSHIP, NOT INSIDE IT. The page's order is the Club's story
+        and this is a different audience with a different ask; it comes once
+        the membership story is told, the way the corporate partner comes after
+        the founder path on /studio. Bone Light, stepping up from Membership's
+        Bone, so the bands still alternate.
+
+        NO NUMBERS. Capacity, rooms and rates aren't on the site anywhere, so
+        none are invented here; the form is where a company says what it needs.
+        The control is an arrow link, not a button — Red is for Apply — and it
+        opens Geekdom's events Typeform once EVENTS_TYPEFORM_ID is set
+        (lib/site.ts); until then it goes to /contact.
+      */}
+      <Section tone="bone-light">
+        <div className="grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
+          <div>
+            <Eyebrow>Host an event</Eyebrow>
+            <SectionTitle>Bring your team to Geekdom.</SectionTitle>
+            <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
+              You don&rsquo;t need to be a member to host here. Companies book
+              Geekdom à la carte — for a day away from the office, a working
+              session, or an evening with their customers.
+            </p>
+            <ul className="mt-8 border-b border-border">
+              {[
+                "Team offsites",
+                "Planning and strategy days",
+                "Workshops and trainings",
+                "Client and partner events",
+              ].map((kind) => (
+                <li key={kind} className="flex items-center gap-3 border-t border-border py-3.5">
+                  <Check className="h-4 w-4 shrink-0 text-clay" strokeWidth={2} aria-hidden="true" />
+                  <span className="text-lg leading-snug text-graphite">{kind}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-5 text-sm text-muted-foreground">
+              For company and team events — we don&rsquo;t host private parties.
+            </p>
+            <div className="mt-8">
+              <TypeformPopupButton formId={EVENTS_TYPEFORM_ID} appearance="link" label="Plan an event" mock={MOCK_EVENTS_FORM} />
+            </div>
+          </div>
+
+          {/*
+            `windowConversation`: two guests talking by the windows at a
+            Geekdom event — the people, not the room, which is what a company
+            books Geekdom for. Jesse's pick, from the /since-2011 wall. Graded
+            like the rest of the library; square, like every frame.
+          */}
+          <Photo photo={PHOTOS.windowConversation} aspect="aspect-[4/3]" sizes="(min-width: 1024px) 544px, 100vw" />
         </div>
       </Section>
 

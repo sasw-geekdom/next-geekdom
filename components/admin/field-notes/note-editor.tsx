@@ -20,6 +20,7 @@ import {
   Video,
   X,
   LayoutTemplate,
+  UserRound,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Textarea } from "@/components/ui/field";
@@ -78,15 +79,18 @@ function blankFrame(type: FrameType): Frame {
   const id = newId();
   switch (type) {
     case "cover":
-      return { id, type, ground: "bone", title: "", dek: "" };
+      return { id, type, ground: "graphite", title: "", dek: "", layout: "full", series: "", credit: "" };
     case "text":
-      return { id, type, ground: "bone", doc: EMPTY_DOC };
+      // Large by default: the reference carousels' big type, few words.
+      return { id, type, ground: "bone", doc: EMPTY_DOC, size: "large" };
     case "image":
       return { id, type, caption: "", fit: "cover" };
     case "quote":
       return { id, type, ground: "graphite", text: "", attribution: "" };
     case "video":
       return { id, type, caption: "" };
+    case "author":
+      return { id, type, ground: "bone", name: "", role: "", company: "Geekdom", link: "" };
   }
 }
 
@@ -95,8 +99,42 @@ const ADDABLE: { type: FrameType; icon: typeof Type }[] = [
   { type: "image", icon: ImageIcon },
   { type: "quote", icon: Quote },
   { type: "video", icon: Video },
+  { type: "author", icon: UserRound },
   { type: "cover", icon: LayoutTemplate },
 ];
+
+/** A two- or three-way toggle in the admin's square style. */
+function Segmented<T extends string>({
+  value,
+  options,
+  onChange,
+  label,
+}: {
+  value: T;
+  options: { value: T; label: string }[];
+  onChange: (v: T) => void;
+  label: string;
+}) {
+  return (
+    <div role="group" aria-label={label} className="flex">
+      {options.map((o, i) => (
+        <button
+          key={o.value}
+          type="button"
+          aria-pressed={value === o.value}
+          onClick={() => onChange(o.value)}
+          className={cn(
+            "border px-3 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay",
+            i > 0 && "-ml-px",
+            value === o.value ? "relative border-graphite bg-graphite text-bone" : "border-border bg-bone-light text-graphite hover:border-graphite",
+          )}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 function ago(iso: string | null): string {
   if (!iso) return "";
@@ -422,6 +460,7 @@ export function NoteEditor({ note }: { note: AdminNote }) {
                     <FrameView
                       frame={f}
                       still
+                      draft
                       className={cn(
                         "w-full border",
                         i === sel ? "border-graphite outline-2 outline-offset-1 outline-clay" : "border-border",
@@ -461,7 +500,7 @@ export function NoteEditor({ note }: { note: AdminNote }) {
                       onChange={(doc) => updateFrame(sel, { doc } as Partial<Frame>)}
                     />
                   ) : (
-                    <FrameView frame={frame} className="w-full border border-border" />
+                    <FrameView frame={frame} draft className="w-full border border-border" />
                   )}
                   <div className="mt-3 flex flex-wrap items-center gap-1">
                     <Button type="button" variant="ghost" size="icon" onClick={() => moveFrame(sel, sel - 1)} disabled={sel === 0} aria-label="Move frame earlier">
@@ -516,6 +555,17 @@ export function NoteEditor({ note }: { note: AdminNote }) {
                             </Field>
                           </>
                         )}
+                        <Field label="Layout" htmlFor="fn-cover-layout" hint="Full bleed puts the type over the photo, on a Graphite scrim.">
+                          <Segmented
+                            label="Cover layout"
+                            value={frame.layout}
+                            onChange={(layout) => updateFrame(sel, { layout } as Partial<Frame>)}
+                            options={[
+                              { value: "full", label: "Full bleed" },
+                              { value: "split", label: "Photo above" },
+                            ]}
+                          />
+                        </Field>
                         <PhotoField
                           noteId={id}
                           idPrefix={`fn-${frame.id}`}
@@ -523,14 +573,74 @@ export function NoteEditor({ note }: { note: AdminNote }) {
                           value={frame.image}
                           onChange={(image) => updateFrame(sel, { image } as Partial<Frame>)}
                         />
+                        <Field label="Series" htmlFor="fn-cover-series" hint="The kicker above the title, e.g. “Founder stories │ Health tech”.">
+                          <Input
+                            id="fn-cover-series"
+                            value={frame.series}
+                            maxLength={LIMITS.author}
+                            onChange={(e) => updateFrame(sel, { series: e.target.value } as Partial<Frame>)}
+                          />
+                        </Field>
+                        <Field label="Photo credit" htmlFor="fn-cover-credit">
+                          <Input
+                            id="fn-cover-credit"
+                            value={frame.credit}
+                            maxLength={LIMITS.author}
+                            onChange={(e) => updateFrame(sel, { credit: e.target.value } as Partial<Frame>)}
+                            placeholder="Photography by …"
+                          />
+                        </Field>
                       </>
                     )}
 
                     {frame.type === "text" && (
-                      <p className="text-sm leading-relaxed text-muted-foreground">
-                        Type straight into the frame. Styles are the brand&rsquo;s: Body and headings in Rubik, Pull quote and
-                        italics in Fraunces, Caption in Plex Mono.
-                      </p>
+                      <>
+                        <Field label="Text size" htmlFor="fn-text-size" hint="Large fits about 70 words — big type, few words, like a carousel slide.">
+                          <Segmented
+                            label="Text size"
+                            value={frame.size}
+                            onChange={(size) => updateFrame(sel, { size } as Partial<Frame>)}
+                            options={[
+                              { value: "large", label: "Large" },
+                              { value: "regular", label: "Regular" },
+                            ]}
+                          />
+                        </Field>
+                        <p className="text-sm leading-relaxed text-muted-foreground">
+                          Type straight into the frame. Styles are the brand&rsquo;s: Body and headings in Rubik, Pull quote and
+                          italics in Fraunces, Caption in Plex Mono.
+                        </p>
+                      </>
+                    )}
+
+                    {frame.type === "author" && (
+                      <>
+                        <PhotoField
+                          noteId={id}
+                          idPrefix={`fn-${frame.id}-portrait`}
+                          label="Portrait"
+                          value={frame.portrait}
+                          onChange={(portrait) => updateFrame(sel, { portrait } as Partial<Frame>)}
+                        />
+                        <Field label="Name" htmlFor="fn-author-name" required>
+                          <Input id="fn-author-name" value={frame.name} maxLength={LIMITS.author} onChange={(e) => updateFrame(sel, { name: e.target.value } as Partial<Frame>)} />
+                        </Field>
+                        <Field label="Role" htmlFor="fn-author-role">
+                          <Input id="fn-author-role" value={frame.role} maxLength={LIMITS.author} onChange={(e) => updateFrame(sel, { role: e.target.value } as Partial<Frame>)} placeholder="Founder, CEO" />
+                        </Field>
+                        <Field label="Company" htmlFor="fn-author-company">
+                          <Input id="fn-author-company" value={frame.company} maxLength={LIMITS.author} onChange={(e) => updateFrame(sel, { company: e.target.value } as Partial<Frame>)} />
+                        </Field>
+                        <Field label="Link" htmlFor="fn-author-link" hint="Their site, LinkedIn or an email (mailto:…). Optional.">
+                          <Input
+                            id="fn-author-link"
+                            value={frame.link}
+                            inputMode="url"
+                            onChange={(e) => updateFrame(sel, { link: e.target.value } as Partial<Frame>)}
+                            placeholder="https://"
+                          />
+                        </Field>
+                      </>
                     )}
 
                     {frame.type === "image" && (
@@ -645,10 +755,18 @@ export function NoteEditor({ note }: { note: AdminNote }) {
                             Remove video
                           </Button>
                         )}
+                        {/* No YouTube/Vimeo thumbnail on purpose: they're designed
+                            promo graphics, off brand (see components/site/video-card). */}
+                        {!frame.poster && (
+                          <p className="text-sm text-muted-foreground">
+                            Without a poster the frame is a black card until someone presses play. A photo of whoever is
+                            speaking works best.
+                          </p>
+                        )}
                         <PhotoField
                           noteId={id}
                           idPrefix={`fn-${frame.id}-poster`}
-                          label="Poster (optional)"
+                          label="Poster (recommended)"
                           value={frame.poster}
                           onChange={(poster) => updateFrame(sel, { poster } as Partial<Frame>)}
                         />
@@ -812,3 +930,4 @@ export function NoteEditor({ note }: { note: AdminNote }) {
     </div>
   );
 }
+

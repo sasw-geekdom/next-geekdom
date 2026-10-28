@@ -49,6 +49,14 @@ export function SiteNavbar() {
   const pathname = usePathname();
   const [open, setOpen] = React.useState(false);
   const [hidden, setHidden] = React.useState(false);
+  /*
+    A FIELD NOTE KEEPS THE BAR. Its reader pins UNDER the navbar
+    (components/field-notes/frame-reader.tsx, scroll mode), so a bar that
+    slid away left a 64px empty band above the pinned note — and the note
+    page is one long scroll, so it would slide away almost at once. Every
+    other page keeps hide-on-scroll.
+  */
+  const keepBar = /^\/field-notes\/[^/]+/.test(pathname);
 
   /*
     Scroll DIRECTION, for the hide-on-scroll slide.
@@ -132,7 +140,7 @@ export function SiteNavbar() {
           // put while the mobile drawer is up, which otherwise slides the
           // drawer away mid-scroll.
           "has-[:focus-visible]:translate-y-0",
-          hidden && !open && "-translate-y-full",
+          hidden && !open && !keepBar && "-translate-y-full",
         )}
       >
         <Container>

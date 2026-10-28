@@ -32,6 +32,13 @@ function refresh(id?: string) {
   updateTag(FIELD_NOTES_TAG);
   revalidatePath("/portal/admin/field-notes");
   if (id) revalidatePath(`/portal/admin/field-notes/${id}`);
+  // The public side: the index, every note page (a publish can change the
+  // "More Field Notes" shelf on all of them), the sitemap and llms.txt.
+  revalidatePath("/field-notes");
+  revalidatePath("/field-notes/[slug]", "page");
+  revalidatePath("/field-notes/page/[n]", "page");
+  revalidatePath("/sitemap.xml");
+  revalidatePath("/llms.txt");
 }
 
 export async function createNote(): Promise<ActionResult> {
@@ -42,9 +49,12 @@ export async function createNote(): Promise<ActionResult> {
     slug: "",
     dek: "",
     author: user.name ?? "",
+    // A new note opens the way the reference carousels do: a cover, a
+    // content frame, and a close that spotlights who wrote it.
     framesJson: JSON.stringify([
-      { id: "cover", type: "cover", ground: "bone", title: "", dek: "" },
-      { id: "text-1", type: "text", ground: "bone", doc: { type: "doc", content: [{ type: "paragraph" }] } },
+      { id: "cover", type: "cover", ground: "graphite", title: "", dek: "", layout: "full", series: "", credit: "" },
+      { id: "text-1", type: "text", ground: "bone", size: "large", doc: { type: "doc", content: [{ type: "paragraph" }] } },
+      { id: "author", type: "author", ground: "bone", name: user.name ?? "", role: "", company: "Geekdom", link: "" },
     ]),
     seo: { title: "", description: "" },
     status: "draft",
@@ -151,8 +161,29 @@ export async function unpublishNote(id: string): Promise<ActionResult> {
     status: "draft",
     publishedJson: FieldValue.delete(),
     publishedSlug: FieldValue.delete(),
+    // An unpublished note can't stay the hero.
+    featured: FieldValue.delete(),
     updatedAt: FieldValue.serverTimestamp(),
   });
+  refresh(id);
+  return { ok: true, id };
+}
+
+/**
+ * Pin a live note as the /field-notes hero (or unpin it). One batch clears
+ * every other pin, so there's never more than one.
+ */
+export async function setFeatured(id: string, on: boolean): Promise<ActionResult> {
+  await requireAdmin();
+  if (!validId(id)) return { ok: false, error: "Missing note." };
+  const doc = await getNoteDoc(id);
+  if (!doc) return { ok: false, error: "Missing note." };
+  if (on && doc.status !== "published") return { ok: false, error: "Publish the note before featuring it." };
+  const pinned = await col().where("featured", "==", true).get();
+  const batch = getAdminDb().batch();
+  pinned.docs.forEach((d) => d.id !== id && batch.update(d.ref, { featured: FieldValue.delete() }));
+  batch.update(col().doc(id), { featured: on ? true : FieldValue.delete() });
+  await batch.commit();
   refresh(id);
   return { ok: true, id };
 }

@@ -143,14 +143,20 @@ const BLEED = {
  * The padding lives on the inner wrapper, which is the link's positioning
  * context, so the `::after` reaches all four edges.
  *
- * THE HOVER INVERTS THE PANEL. The first version drew a Clay rule across the
- * top and stepped the ground one tone; it read as timid. Now the opposite
- * ground wipes in — Graphite into the Club, Bone into the Studio — from
- * whichever edge the pointer entered by, and back out through the edge it
- * leaves by (`OfferWipe`). The type inverts along the wipe edge, so the two panels trade places in
- * the palette as you move between them. Meanwhile the type on the panel you
- * are NOT on recedes (`offer-pair` in globals.css), so the pair reads as a choice
- * between two things, one at a time.
+ * THE HOVER IS ONE TONE, PUSHED BY THE CURSOR. Three versions:
+ *   1. A Clay rule across the top and the ground stepped one tone — timid.
+ *   2. The opposite ground wiping in (Graphite into the Club, Bone into the
+ *      Studio) carrying an inverted copy of the type — the two panels traded
+ *      places in the palette. Too loud: "still overly distracting" (Jesse).
+ *   3. NOW: the ground's own next step wipes in — Bone → Bone Light, Graphite
+ *      → Graphite Soft — from whichever edge the pointer entered by and out
+ *      through the edge it leaves by (`OfferWipe`), BEHIND the type, which
+ *      never changes color. The CTA's arrow steps 4px toward where it goes,
+ *      and the Club's hairline darkens to Graphite. The motion is what (2)
+ *      had going for it; the contrast is what made it loud.
+ * Still 700ms — Geekdom asked for the wipe slower once (globals.css).
+ * The type on the panel you are NOT on recedes to 60% (`offer-pair` in
+ * globals.css — 40% under version 2), so the pair still reads as a choice.
  *
  * Flat, square, brand colors only: no gradient, no shadow, no lift. Keyboard
  * focus triggers exactly the same state plus a Clay ring. On touch there is
@@ -168,7 +174,7 @@ function Offering({
   cta,
   className,
 }: {
-  /** Graphite at rest, wiping to Bone on hover. */
+  /** Graphite at rest, Graphite Soft on hover (Bone → Bone Light otherwise). */
   ink?: boolean;
   href: string;
   eyebrow: string;
@@ -190,31 +196,15 @@ function Offering({
         className,
       )}
     >
+      {/* Behind the type (`-z-10` inside the panel's `isolate`), so the copy
+          never changes color — only the ground under it moves one step. */}
+      <OfferWipe className={cn("-z-10", ink ? "bg-graphite-soft" : "bg-bone-light")} />
       <OfferCopy tone={ink ? "dark" : "light"} href={href} {...copy} />
-      {/*
-        THE FILL CARRIES ITS OWN COPY OF THE TYPE, in the inverted colors,
-        clipped by the same edge. The first cut flipped the text color on a
-        timer while the ground wiped, so mid-wipe the heading sat dark on the
-        incoming Graphite — for a moment the one word that matters was
-        invisible. With the type inside the clip, it changes color exactly
-        along the wipe line and is never unreadable.
-
-        Laid out identically (same padding, same width, same wraps), so the
-        two layers register. `aria-hidden` and no link: the panel reads and
-        clicks once, through the layer underneath.
-      */}
-      <OfferWipe className={ink ? "bg-bone" : "bg-graphite"}>
-        <OfferCopy tone={ink ? "light" : "dark"} {...copy} />
-      </OfferWipe>
     </article>
   );
 }
 
-/**
- * The type inside an `Offering`, in one of two color sets. With `href` it is
- * the real layer — the link, and the thing a screen reader reads. Without,
- * it is the inverted copy riding inside the fill: the CTA becomes a span.
- */
+/** The type inside an `Offering`, in its panel's color set. */
 function OfferCopy({
   tone,
   href,
@@ -225,7 +215,7 @@ function OfferCopy({
   cta,
 }: {
   tone: "light" | "dark";
-  href?: string;
+  href: string;
   eyebrow: string;
   title: string;
   subhead: string;
@@ -245,42 +235,34 @@ function OfferCopy({
     "mt-auto inline-flex items-center gap-1.5 self-start pt-10 font-medium underline decoration-clay decoration-2 underline-offset-2",
     c.strong,
   );
-  const ctaInner = (
-    <>
-      {cta}
-      <ArrowRight className={ARROW.internal} strokeWidth={2} />
-    </>
-  );
 
   return (
     <div
       className={cn(
         "flex h-full flex-col p-8 sm:p-10 lg:p-12",
-        // Only the real layer recedes when the other panel is hovered.
-        href && "offer-content",
+        "offer-content",
       )}
     >
       <p className={cn(MONO.eyebrow, c.eyebrow)}>{eyebrow}</p>
-      {/* The inverted copy is not a second heading in the outline. */}
-      {href ? (
-        <h2 className={cn("mt-4", HEADING.heading, c.strong)}>{title}</h2>
-      ) : (
-        <p className={cn("mt-4", HEADING.heading, c.strong)}>{title}</p>
-      )}
+      <h2 className={cn("mt-4", HEADING.heading, c.strong)}>{title}</h2>
       <p className={cn("mt-6 max-w-2xl text-xl leading-relaxed", c.strong)}>
         {subhead}
       </p>
       <p className={cn("mt-5 max-w-xl leading-relaxed", c.body)}>{body}</p>
-      {href ? (
-        <Link
-          href={href}
-          className={cn(ctaClass, "after:absolute after:inset-0 focus-visible:outline-none")}
-        >
-          {ctaInner}
-        </Link>
-      ) : (
-        <span className={ctaClass}>{ctaInner}</span>
-      )}
+      <Link
+        href={href}
+        className={cn(ctaClass, "after:absolute after:inset-0 focus-visible:outline-none")}
+      >
+        {cta}
+        {/* The one cue that says "go": a 4px step toward where it leads. */}
+        <ArrowRight
+          className={cn(
+            ARROW.internal,
+            "transition-transform duration-500 group-hover:translate-x-1 group-has-[a:focus-visible]:translate-x-1 motion-reduce:transition-none",
+          )}
+          strokeWidth={2}
+        />
+      </Link>
     </div>
   );
 }

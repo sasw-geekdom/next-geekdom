@@ -538,11 +538,11 @@ p {
 }
 @media (hover: hover) {
   .offer-pair:has(.offer:hover) .offer:not(:hover) .offer-content {
-    filter: opacity(0.4);
+    filter: opacity(0.6);
   }
 }
 .offer-pair:has(.offer :focus-visible) .offer:not(:has(:focus-visible)) .offer-content {
-  filter: opacity(0.4);
+  filter: opacity(0.6);
 }
 
 /*
@@ -662,6 +662,19 @@ p {
   background: var(--bone);
   color: var(--graphite);
 }
+/* The reader's frame width (frame-reader.tsx): from the window's height
+   less `--fn-chrome`, capped by the stage's width — 86% on a phone, where
+   the frame is width-bound and the next one still peeks; 80% above. Set on a
+   CHILD of the @container: container units in an element's own style
+   resolve against its parent. */
+.fn-fw {
+  --fw: min(max(calc((100svh - var(--fn-chrome, 14rem)) * 0.8), 16rem), 86cqw);
+}
+@media (min-width: 640px) {
+  .fn-fw {
+    --fw: min(max(calc((100svh - var(--fn-chrome, 14rem)) * 0.8), 16rem), 80cqw);
+  }
+}
 .fn-frame[data-ground="graphite"] {
   background: var(--graphite);
   color: var(--bone);
@@ -690,6 +703,32 @@ p {
 .fn-rich :where(h2, h3) + :where(p, ul, ol, blockquote) {
   margin-top: 0.5em;
 }
+/* LARGE — the reference carousels' content frames: big type, few words.
+   About 70 words a frame; the editor's overflow warning holds the line. */
+.fn-rich[data-size="large"] {
+  font-size: 6.4cqw;
+  line-height: 1.32;
+  letter-spacing: -0.01em;
+}
+.fn-rich[data-size="large"] h2 {
+  font-size: 9cqw;
+}
+.fn-rich[data-size="large"] h3 {
+  font-size: 7cqw;
+}
+.fn-rich[data-size="large"] blockquote {
+  font-size: 7.4cqw;
+}
+
+/* THE ONE SCROLL EFFECT: the cover photo drifts a little slower than its
+   frame as the note page scrolls off the cover. `--fn-drift` (0→1) is set by
+   the scroll-mode reader; anywhere else it's unset and the photo sits still,
+   uncropped. Scaled just enough that the drift never shows an edge. */
+.fn-drifting .fn-drift {
+  transform: translate3d(calc(var(--fn-drift, 0) * 4%), 0, 0) scale(1.09);
+  will-change: transform;
+}
+
 .fn-rich strong {
   font-weight: 500;
 }

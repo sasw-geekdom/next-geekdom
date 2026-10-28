@@ -34,9 +34,13 @@ export const FRAME_LABELS: Record<FrameType, string> = {
   image: "Photo",
   quote: "Quote",
   video: "Video",
+  author: "Author",
 };
 
 export const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+/** Slugs a note can't take: `/field-notes/page/2` is the index's pagination. */
+export const RESERVED_SLUGS = new Set(["page"]);
+export const slugOk = (s: string) => SLUG_RE.test(s) && !RESERVED_SLUGS.has(s);
 
 export function slugify(s: string): string {
   return s
@@ -188,11 +192,32 @@ const video = z.discriminatedUnion("source", [
 const id = z.string().regex(/^[\w-]{1,40}$/);
 
 export const frameSchema = z.discriminatedUnion("type", [
-  z.object({ id, type: z.literal("cover"), ground, title: str(LIMITS.title), dek: str(LIMITS.dek), image: image.optional() }),
-  z.object({ id, type: z.literal("text"), ground, doc: z.unknown().transform(cleanDoc) }),
+  z.object({
+    id,
+    type: z.literal("cover"),
+    ground,
+    title: str(LIMITS.title),
+    dek: str(LIMITS.dek),
+    image: image.optional(),
+    layout: z.enum(["split", "full"]).catch("split"),
+    series: str(LIMITS.author),
+    credit: str(LIMITS.author),
+  }),
+  z.object({ id, type: z.literal("text"), ground, doc: z.unknown().transform(cleanDoc), size: z.enum(["regular", "large"]).catch("regular") }),
   z.object({ id, type: z.literal("image"), image: image.optional(), caption: str(LIMITS.caption), fit: z.enum(["cover", "contain"]).catch("cover") }),
   z.object({ id, type: z.literal("quote"), ground, text: str(LIMITS.quote), attribution: str(LIMITS.author) }),
   z.object({ id, type: z.literal("video"), video: video.optional(), poster: image.optional(), caption: str(LIMITS.caption) }),
+  z.object({
+    id,
+    type: z.literal("author"),
+    ground,
+    portrait: image.optional(),
+    name: str(LIMITS.author),
+    role: str(LIMITS.author),
+    company: str(LIMITS.author),
+    // A bad link is dropped rather than failing the save.
+    link: z.string().transform((v) => safeHref(v) ?? "").catch(""),
+  }),
 ]);
 
 /**
@@ -206,7 +231,8 @@ export const contentSchema = z.object({
     .string()
     .trim()
     .max(LIMITS.slug)
-    .refine((s) => s === "" || SLUG_RE.test(s), "Use lowercase letters, numbers and dashes."),
+    .refine((s) => s === "" || SLUG_RE.test(s), "Use lowercase letters, numbers and dashes.")
+    .refine((s) => !RESERVED_SLUGS.has(s), "That slug is reserved — pick another."),
   dek: str(LIMITS.dek),
   author: str(LIMITS.author),
   frames: z.array(frameSchema).max(LIMITS.frames, `A Field Note holds up to ${LIMITS.frames} frames.`),
@@ -225,6 +251,7 @@ export const seoDescriptionOf = (c: Pick<NoteContent, "dek" | "seo">) => c.seo.d
 function imagesOf(f: Frame) {
   if (f.type === "cover" || f.type === "image") return f.image ? [f.image] : [];
   if (f.type === "video") return f.poster ? [f.poster] : [];
+  if (f.type === "author") return f.portrait ? [f.portrait] : [];
   return [];
 }
 
@@ -248,12 +275,13 @@ export function checklist(c: NoteContent): CheckItem[] {
     if (f.type === "video") return !f.video;
     if (f.type === "text") return !docText(f.doc);
     if (f.type === "quote") return !f.text;
+    if (f.type === "author") return !f.name.trim();
     return false;
   });
   const noAlt = c.frames.findIndex((f) => imagesOf(f).some((i) => !i.alt.trim()));
   return [
     { key: "title", label: "A title", ok: c.title.trim().length >= 3 },
-    { key: "slug", label: "A URL slug", ok: SLUG_RE.test(c.slug) },
+    { key: "slug", label: "A URL slug", ok: slugOk(c.slug) },
     {
       key: "cover",
       label: "Opens on a cover frame with a title",

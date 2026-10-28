@@ -16,6 +16,7 @@ import aboutChair from "@/public/photos/about-spinner-chair.jpg";
 import dropIn from "@/public/photos/drop-in.jpg";
 import makeAPoint from "@/public/photos/make-a-point.jpg";
 import pitch from "@/public/photos/pitch.jpg";
+import windowConversation from "@/public/photos/window-conversation.jpg";
 import oneOnOne from "@/public/photos/one-on-one.jpg";
 import brianWhiteboard from "@/public/photos/brian-whiteboard.jpg";
 import brianPortrait from "@/public/photos/brian-sierakowski.jpg";
@@ -276,6 +277,18 @@ export const PHOTOS = {
   pitch: {
     src: pitch,
     alt: "A member standing with a laptop, presenting to a seated room.",
+  },
+
+  /**
+   * Two women mid-conversation by the tall windows at a Geekdom event, a
+   * guest on the phone behind them. /club "Host an event" — picked by Jesse
+   * from the /since-2011 wall (`geekdom93.jpg`). The original came from that
+   * wall's Storage folder, resized to 3600px and graded here like the rest
+   * of the library — not the wall's already-graded copy.
+   */
+  windowConversation: {
+    src: windowConversation,
+    alt: "Two women talking and smiling by tall windows at a Geekdom event, a man on the phone behind them.",
   },
 
   /**

@@ -54,11 +54,13 @@ Geekdom-hosted.
   copy-beside-photo sections "too standard and basic" and too photo-heavy, and
   asked for the two offerings next to each other so the split reads at a
   glance. The grounds carry it (Bone with a hairline / Graphite). On hover
-  the opposite ground wipes in from whichever edge the pointer entered and
-  out through the edge it leaves (`OfferWipe`, 700ms), carrying an inverted
-  copy of the type so the text changes color exactly on the wipe line —
-  never time the text separately, that left the heading invisible mid-wipe.
-  The other panel's type recedes. Don't put photographs back in these panels.
+  the panel's NEXT TONE wipes in — Bone → Bone Light, Graphite → Graphite
+  Soft — from whichever edge the pointer entered and out through the edge
+  it leaves (`OfferWipe`, 700ms), BEHIND the type, which never changes
+  color; the CTA arrow steps 4px and the other panel's type recedes to 60%.
+  It replaced a full inversion (the opposite ground plus an inverted copy of
+  the type), which Jesse found "still overly distracting" — don't bring the
+  inversion back. Don't put photographs back in these panels.
 - **Never imply a pathway from the Club to the Studio.** The homepage had a
   "How the two fit together" section arguing exactly that — membership as the
   on-ramp, the Studio as where it leads — and Geekdom removed it: "We don't
@@ -194,6 +196,13 @@ team asked for — everything else lives in the footer.
   the rhythm, the clubhouse, who is in it, the bar, the price, how to start. The hero opens on `CLUB` in [lib/site.ts](lib/site.ts) — the
   same three beats the homepage's Club section reads, so the two cannot drift.
 
+- **`/club` ends on "Host an event" — for COMPANIES, à la carte, no
+  membership needed** (Geekdom's ask): offsites, planning days, workshops,
+  client events, and one plain line that it's company events only, not
+  private parties. It sits AFTER Membership, like /studio's corporate
+  partner after the founder path — a second audience, after the story.
+  No capacities or rates: none are sourced, so the form asks instead.
+
 - **`/club` does not route anyone to the Studio.** It used to end on "The
   other engine" — "One is the on-ramp. The other is where it leads." — and
   that is the pathway Geekdom said never to imply, so it went. The Studio is
@@ -302,8 +311,20 @@ same bug.
     script; once Typeform is ready the click opens the popup instead.
   - `data-tf-popup` + `tf.load()` from `<Script onReady>` — the declarative
     path loads popup.css, and `onReady` re-runs on client-side navigation.
-  - Callbacks are global names (`geekdomApplySubmitted` / `...Closed`);
-    submit + close sends the visitor to /apply/thanks.
+  - Callbacks are global names, one pair per control (from `useId`), so
+    several forms can live on the site; on /apply, submit + close sends the
+    visitor to /apply/thanks (`thanksHref`).
+  - **The same component opens Geekdom's other Typeforms** — /club's "Host
+    an event" and /studio's corporate-partner ask — as an ARROW LINK
+    (`appearance="link"`), because Red is Apply's alone. Their ids are
+    `EVENTS_TYPEFORM_ID` / `STUDIO_PARTNER_TYPEFORM_ID` in lib/site.ts,
+    `null` until Geekdom sends the forms. While null, REVIEW builds
+    (localhost, Vercel previews — `ON_LIVE_DOMAIN` false) open a clickable
+    MOCKUP (components/forms/typeform-mock.tsx) with the questions we propose
+    in data/mock/forms.ts — the spec Geekdom builds the real form from — and
+    geekdom.com gets an arrow link to /contact. The mock sends nothing and
+    must never show on the live domain: a form that looks real and collects
+    nothing is worse than a contact link.
   - `TYPEFORM_FORM_ID` is the FORM id (`xzboPb6K`), read from the live
     embed Geekdom sent (`01M3AFG25RTFW121XX356HREK9`), which resolves to it.
   - The overlay's corners are squared in globals.css. Everything inside the
@@ -556,14 +577,137 @@ members use personal Gmail, and the hint hid their accounts.
   call:** on a `vercel link`ed machine the SDK otherwise picks up an OIDC
   credential that this store refuses in development.
 
-## Field Notes (the blog) — admin built, public page not yet
+## Field Notes (the blog)
 
 **A Field Note is a CAROUSEL OF FRAMES read sideways** — Instagram-style,
-Jesse's reference — not a long article. Up to 20 frames of five kinds:
-cover, text, photo, quote, video. The admin is at `/portal/admin/field-notes`;
-the public `/field-notes` page isn't built (the footer link stays
-`pending`), but its pieces are: `FrameReader`, `getPublishedNote()`,
-`fieldNoteMetadata()` and `fieldNoteJsonLd()` (lib/field-notes/).
+Jesse's reference (Voice of San Antonio's carousels) — not a long article.
+Up to 20 frames of six kinds: cover, text, photo, quote, video, author. A
+new note opens Cover → Text → Author: a cover, a content frame, a close
+that spotlights who wrote it.
+
+- **The sign-off is a LOCKUP, not a logo**: the Geekdom wordmark │ "FIELD
+  NOTES" in Plex Mono, bottom-right of every cover, text, quote and author
+  frame (not photos or videos — it would sit on someone's picture). The
+  guide gives Geekdom one wordmark, so Field Notes gets a lockup of it, the
+  member portal's pattern. If Geekdom commissions a Field Notes mark, it
+  replaces `Lockup` in frame-view.tsx. Red on Bone, Bone on dark.
+- **Covers**: "full" (photo edge to edge, type over a Graphite scrim that
+  darkens from 30% down) or "split" (photo above). Series kicker and photo
+  credit in Plex Mono, title Rubik 500, dek Fraunces italic — not a serif
+  headline: the guide sends headings to Rubik.
+- **Text frames are Large by default** (`data-size`, ~70 words, big type,
+  few words); Regular remains.
+- **The author close** feeds the JSON-LD author (role, company, portrait,
+  link), not just a name.
+- **The one scroll effect**: the cover photo drifts ~4% slower than its frame
+  as the note page scrolls off it (`.fn-drifting .fn-drift`, `--fn-drift`
+  set by the scroll reader). Scroll-tied, never timed; absent in stage mode
+  and reduced motion. Don't add a second. Written at `/portal/admin/field-notes`;
+read at `/field-notes` (a sideways shelf of covers, newest first) and
+`/field-notes/[slug]` (the note in `FrameReader`, "More Field Notes" under it).
+
+- **The index is paged, and the hero appears ONCE.** `/field-notes` is
+  the featured hero plus a grid of 8; `/field-notes/page/N` is a grid
+  of 16 (`FEATURED` / `FIRST_GRID` / `PER_PAGE` in note-grid.tsx), with
+  "← Newer" / "Older →" arrow links and "Page N of M". Pages 2+ head with
+  the share card's hook, "Stories from the room.", the intro line and
+  "Page N of M · date range" — not "Older Field Notes", which said nothing
+  about what's there (Jesse's call). `/page/1` 308s to
+  `/field-notes`; past the end or not a whole number is a 404. Real
+  addresses, not "load more", so a crawler reaches every note. The slug
+  `page` is reserved (`RESERVED_SLUGS` in schemas.ts) — a note there would
+  shadow the pagination. Card dates carry the year once it isn't this one.
+  `SAMPLE_FIELD_NOTES_REPEAT=N` (review builds only) repeats the samples N
+  times so pagination can be seen before there are 10+ real notes.
+- **The hero IS the newest note** (`FeaturedNote`): a spread INSIDE the
+  page width, type left (the lockup as the page's h1 and the story's label,
+  then title, dek, byline, "Read the story →"), cover photo right at 4:3.
+  Not a full-width lockup row ruled off above it — that read as a second
+  navbar — and not a full-bleed photo (too wide for an index; both Jesse's
+  calls). Nothing on the photo, no scrim. Then ONE "More Field Notes" grid
+  of 8 — a row of four with deks sat between them and was cut as a repeat.
+- **The hero is the FEATURED note, else the newest.** Staff pin one live
+  note with "Feature" in the admin list (`setFeatured`, one batch that
+  clears every other pin); the list badges whichever note is in front.
+  `featured` is a doc field, not part of the snapshot — placement isn't
+  content, so it applies without a publish; unpublishing clears it.
+  `indexOrder()` puts it first for both index routes; a real pin beats a
+  sample's (the sample pin is "The same table, fifteen years apart").
+- **The index is a magazine front**: the featured hero, then one card grid
+  (`NoteGrid`). A centered lead with two stories either side
+  (Voice of San Antonio's module) came first and was replaced when Jesse
+  asked for the hero to be the featured post. Thumbnails are the COVER PHOTO,
+  not the cover frame (it sets the title inside, so it would print twice).
+- **Sample notes are review-only** (data/mock/field-notes.ts, six of them, with photos from the library and the /since-2011 wall in public/mock/field-notes/):
+  `listForReaders` / `getNoteForReaders` add them on review builds
+  (`ON_LIVE_DOMAIN` false), noindex and no JSON-LD. No on-page notice —
+  Jesse briefs the reviewers instead, so the layout reads as it will ship. They are never written to Firestore — the live site and every
+  review build share it, so a published sample would go public — and the
+  sitemap, llms.txt and JSON-LD read the real-only `listPublished`. Sample
+  authors get illustrated avatars, never photos.
+- **Deleting a note straight from Firestore leaves it in the public cache**
+  (unstable_cache persists on disk across restarts): delete from the admin,
+  which calls `updateTag`.
+- **In the footer, never the nav** (Jesse's call) — the nav is the two things
+  you can join, plus Apply. The source copy wanted the page hidden "until we
+  populate with several articles"; it's linked at Geekdom's request, so its
+  empty state says what's coming.
+- **The public pages read the published SNAPSHOT only**, cached
+  (`listPublished`, tag `field-notes`), ISR with a 1-hour backstop; every
+  write calls `updateTag` and revalidates /field-notes, every note page, the
+  sitemap and llms.txt. Note pages render on demand — a build never touches
+  Firestore. An old slug 308s to the current one (`previousSlugs`); an
+  unknown one 404s.
+- **SEO per note**: `fieldNoteMetadata` (og:type article, the note's own
+  card, canonical), BlogPosting JSON-LD with a VideoObject per video, a
+  sitemap row and an llms.txt line. The index has a static card in OG_CARDS.
+- **The note page is SCROLL-DRIVEN** (`FrameReader mode="scroll"`): the stage
+  pins under the navbar (sticky; its section is one window tall plus 0.8 of
+  a window per extra frame) and the page's vertical scroll slides the frames
+  sideways — wheel, trackpad, space, the scrollbar, a phone's swipe up; a
+  sideways swipe maps onto it too. The compact header rides inside the pin.
+  It SETTLES on the nearest frame by redirecting Lenis's glide via
+  `targetScroll` 140ms after the last input — waiting for scroll events to
+  stop instead took ~3s, because Lenis fires them through its whole glide.
+  Arrows, ←/→ and the progress segments scroll the page to each frame's
+  exact spot. Reduced motion and one-frame notes get the plain stage; so
+  does the admin preview. Don't put an `overflow: hidden/clip` ancestor
+  above it — that silently breaks `position: sticky`.
+- **A Field Note keeps the navbar** (`keepBar` in site-navbar.tsx): every
+  other page slides the bar away on scroll down, but the reader pins UNDER
+  it, so a hidden bar left a 64px empty band above the note. The side
+  arrows step aside while the page scrolls and return 0.4s after it stops;
+  a keyboard-focused arrow never hides (`focus-visible`).
+- **The reader is a STAGE: one frame at a time** (`FrameReader`), centered,
+  sized from the window's HEIGHT less `--chrome` (MacBook Air ≈ 600×750,
+  2560×1440 ≈ 990×1230), full-bleed, neighbors 96px off with the arrows
+  centered in that gap; off-stage frames are `inert`; ←/→ work page-wide
+  unless typing; a segmented progress bar under it. It replaced
+  two-and-a-bit frames side by side, where no frame was the subject.
+  - **Neighbors dim by ground**: Bone frames to 30% (big type at 45% still
+    read and competed), Graphite and photo frames to 45% (35% went flat).
+  - **Phone**: 86% wide (`.fn-fw` in globals.css) and TOP-aligned in the
+    pin — centered, it left ~115px empty above the title and the frame took
+    46% of the screen. Share rides the back link's row there, so the header
+    is three lines, not four.
+  - **The edges of a note**: "Scroll to read →" ("Swipe up ↑" on a phone)
+    by the count until the first move; an **Up next** card after the last
+    frame — the next note in index order, wrapping — counted as a stop but
+    not as a frame (the progress reads "Up next"); and the pinned title is
+    hidden on the cover from sm up, since the cover prints it.
+  - **Share** (`ShareNote`, in the pinned header): the phone's share sheet
+    or copy-link ("Link copied"), plus a LinkedIn arrow link.
+  - **The author close never shows the editor's placeholders**: "Add a
+    portrait" and "Name" render only with `FrameView`'s `draft` prop (the
+    editor canvas and filmstrip). They leaked to readers until it existed.
+- **The shelf is `SideScroller`** (index, "More Field Notes") — several items
+  on screen, "Next" disabled at the track's END rather than on the last
+  item. Both share `useWheelSideways` (vertical wheel → sideways while the
+  track can move; `data-lenis-prevent`).
+- **Dev-only symptom, not a code bug:** the card route once returned 500
+  "Input buffer contains unsupported image format" (sharp, inside @vercel/og)
+  in a dev server that had run through two `npm install`s; a restart fixed
+  it and it didn't recur. Restart `next dev` before debugging the card.
 
 - **Draft vs live.** Everything edits the DRAFT; publishing copies it into a
   snapshot (`publishedJson`) that is all the public side will read. Editing
@@ -598,6 +742,12 @@ the public `/field-notes` page isn't built (the footer link stays
 - **Video**: YouTube/Vimeo links behind a click-to-load facade (nothing from
   either loads until play — /studio's rule), or uploaded clips, optionally
   silent-looping.
+  **The poster is a photo of whoever is speaking**, uploaded like any photo
+  — never YouTube's or Vimeo's thumbnail (designed promo cards, off brand:
+  see components/site/video-card; a "use the thumbnail" button was built
+  and removed for that reason). The editor labels it "recommended" and says
+  why when it's missing. With a poster the play button sits bottom-left, off
+  the subject — centered, it covered the speaker's face.
 - **Share cards are generated at publish** with `next/og` (lib/field-notes/
   og-card.tsx) and stored on Blob; an uploaded 1200×630 overrides. Satori
   needs STATIC TTFs, so Rubik 400/500 and Plex Mono are committed in

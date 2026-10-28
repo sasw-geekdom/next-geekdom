@@ -52,3 +52,12 @@ const OPTED_IN = process.env.NEXT_PUBLIC_PREVIEW_MODE === "1";
 
 /** Whether to serve sample data and let forms complete without a backend. */
 export const IS_PREVIEW = OPTED_IN && !isLiveDomain(SITE_URL);
+
+/**
+ * Whether this build is serving geekdom.com — DOMAIN ONLY, no flag. For
+ * review-only UI that must never reach the live site but should show on
+ * localhost and every Vercel preview link without anyone remembering to set
+ * NEXT_PUBLIC_PREVIEW_MODE: the mock Typeforms (components/forms/
+ * typeform-mock.tsx) are the case.
+ */
+export const ON_LIVE_DOMAIN = isLiveDomain(SITE_URL);

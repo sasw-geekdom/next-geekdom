@@ -1374,6 +1374,18 @@ export const BEYOND_THE_CLUB: NavLink[] = ECOSYSTEM.map((e) => ({
  */
 export const TYPEFORM_FORM_ID = "xzboPb6K";
 
+/**
+ * Geekdom's other Typeforms, opened the same way as the application
+ * (components/forms/typeform-popup-button.tsx). NULL UNTIL GEEKDOM SENDS
+ * THEM — until then each control is an arrow link to /contact, so the pages
+ * are reviewable and nothing links to a form that doesn't exist. Paste the
+ * FORM id (the part after form.typeform.com/to/), not an embed id.
+ */
+/** "Host an event" on /club — companies booking Geekdom à la carte. */
+export const EVENTS_TYPEFORM_ID: string | null = null;
+/** "If you're a corporate partner" in the Studio's How to get involved. */
+export const STUDIO_PARTNER_TYPEFORM_ID: string | null = null;
+
 export const LUMA_CALENDAR_URL = envOr(
   process.env.NEXT_PUBLIC_LUMA_CALENDAR_URL,
   "https://luma.com/geekdom",
@@ -1516,7 +1528,8 @@ export const FOOTER_EXPLORE: FooterLink[] = [
 export const FOOTER_PROGRAMS: FooterLink[] = [
   { href: "/club", label: "The Club" },
   { href: "/studio", label: "Studio" },
-  { href: "/field-notes", label: "Field Notes", pending: true },
+  // Live, at Geekdom's request — in the footer only, never the nav.
+  { href: "/field-notes", label: "Field Notes" },
   { href: "/apply", label: "Apply" },
 ];
 

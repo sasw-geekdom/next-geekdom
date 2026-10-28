@@ -51,6 +51,13 @@ export interface FieldNoteDoc {
   ogImage?: string;
   /** Slugs this note was live under before — for redirects once it's public. */
   previousSlugs?: string[];
+  /**
+   * The /field-notes hero. At most one note carries it (`setFeatured` clears
+   * the others in the same batch); none means the newest is the hero. Not
+   * part of the snapshot — it's placement, not content, so it takes effect
+   * without a publish.
+   */
+  featured?: boolean;
 }
 
 /** Doc id in `settings` holding admin-edited email copy. */

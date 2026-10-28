@@ -3,6 +3,7 @@
 import * as React from "react";
 import { FRAUNCES_VARIABLE } from "@/components/site/editorial";
 import { RichText } from "@/components/field-notes/rich-text";
+import { isExternal } from "@/lib/field-notes/schemas";
 import { cn } from "@/lib/utils";
 import type { Frame, NoteImage } from "@/lib/field-notes/types";
 
@@ -101,7 +102,15 @@ function VideoFrame({ frame, still }: { frame: Extract<Frame, { type: "video" }>
   const face = (
     <>
       {poster ?? <span className="absolute inset-0 bg-graphite" />}
-      <span className="absolute inset-0 flex flex-col items-center justify-center gap-[4cqw] p-[8cqw] text-center">
+      {/* With a poster the button sits bottom-left, off the picture's subject
+          (centered, it landed on the speaker's face); without one, centered
+          on the plain card. */}
+      <span
+        className={cn(
+          "absolute inset-0 flex flex-col gap-[4cqw] p-[8cqw]",
+          poster ? "items-start justify-end" : "items-center justify-center text-center",
+        )}
+      >
         <PlayMark />
         {!poster && (
           <span className={cn(MONO, "text-[2.8cqw] text-bone/70")}>{v.source === "youtube" ? "YouTube" : "Vimeo"}</span>
@@ -123,15 +132,52 @@ function VideoFrame({ frame, still }: { frame: Extract<Frame, { type: "video" }>
   );
 }
 
+/** "https://www.lorenzo.com/about" → "lorenzo.com". */
+function linkLabel(href: string): string {
+  if (href.startsWith("mailto:")) return href.slice(7);
+  try {
+    return new URL(href, "https://geekdom.com").hostname.replace(/^www\./, "") + (href.startsWith("/") ? href : "");
+  } catch {
+    return href;
+  }
+}
+
+/*
+  THE FIELD NOTES SIGN-OFF — a lockup, not a new logo: the existing Geekdom
+  wordmark, a hairline, and "FIELD NOTES" in Plex Mono, the pattern the
+  member portal's top bar already uses ("geekdom │ MEMBER PORTAL"). The guide
+  gives Geekdom one wordmark, so Field Notes gets a lockup of it rather than
+  a mark of its own. Red on Bone, Bone on Graphite and photos — the only
+  colors the mark may take. Bottom-right of every frame that isn't a photo
+  or a video (it would sit on someone's picture). Decorative: the page says
+  what it is.
+*/
+export function Lockup({ dark }: { dark: boolean }) {
+  return (
+    <div aria-hidden="true" className="pointer-events-none absolute bottom-[6cqw] right-[6cqw] flex items-center gap-[1.8cqw]">
+      <span className={cn("geekdom-mask block aspect-[375/142] h-[4.6cqw]", dark ? "bg-bone" : "bg-geekdom-red")} />
+      <span className={cn("h-[3.2cqw] w-px", dark ? "bg-bone/40" : "bg-graphite/25")} />
+      <span className={cn(MONO, "text-[2cqw]", dark ? "text-bone/80" : "text-muted-foreground")}>Field Notes</span>
+    </div>
+  );
+}
+
 export function FrameView({
   frame,
   still = false,
+  draft = false,
   className,
   children,
 }: {
   frame: Frame;
   /** Non-interactive (filmstrip). */
   still?: boolean;
+  /**
+   * The editor's canvas: show placeholders for what's missing ("Add a
+   * portrait", "Name"). Off everywhere a reader can see — the public page
+   * and the admin preview — where a missing portrait is simply left out.
+   */
+  draft?: boolean;
   className?: string;
   /** Replaces the text frame's body — the editor's in-place Tiptap. */
   children?: React.ReactNode;
@@ -143,34 +189,93 @@ export function FrameView({
   let body: React.ReactNode;
   switch (frame.type) {
     case "cover":
-      body = (
-        <div className="flex h-full flex-col">
-          {frame.image && (
-            <div className="h-[58%] shrink-0">
-              <Photo image={frame.image} />
+      body =
+        frame.layout === "full" ? (
+          /*
+            FULL-BLEED: the photo edge to edge, the type over a Graphite scrim
+            — the reference carousels' cover. `fn-drift` is the one scroll
+            effect: on the note page the photo moves a little slower than its
+            frame as you scroll off the cover (frame-reader.tsx, scroll mode).
+            A scrim on a PHOTO is fine; the guide's no-gradient rule is about
+            the marks. It darkens from 30% down, so a long title and the
+            series kicker above it stay readable on a bright photo (an
+            earlier, lighter scrim left the kicker on a white ceiling).
+          */
+          <div className="relative h-full bg-graphite text-bone">
+            {frame.image && (
+              <div className="absolute inset-0 overflow-hidden">
+                <Photo image={frame.image} className="fn-drift" />
+              </div>
+            )}
+            <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(to_bottom,rgb(27_27_27/0.05),rgb(27_27_27/0.5)_30%,rgb(27_27_27/0.78)_55%,rgb(27_27_27/0.94))]" />
+            <div className="relative flex h-full flex-col justify-end p-[8cqw] pb-[15cqw]">
+              {frame.series && <p className={cn(MONO, "text-[2.6cqw] text-bone/80")}>{frame.series}</p>}
+              <h2
+                className={cn(
+                  "mt-[3cqw] font-medium tracking-[-0.025em]",
+                  "text-[10.5cqw]",
+                  "leading-[1.02]",
+                  !frame.title && "opacity-40",
+                )}
+              >
+                {frame.title || "Your title"}
+              </h2>
+              {frame.dek && (
+                <p className="mt-[3.5cqw] text-[4.8cqw] leading-[1.3] text-bone/90" style={{ fontFamily: "var(--font-fraunces), Georgia, serif", fontStyle: "italic" }}>
+                  {frame.dek}
+                </p>
+              )}
+              {frame.credit && <p className={cn(MONO, "mt-[4cqw] text-[2.2cqw] text-bone/60")}>{frame.credit}</p>}
             </div>
-          )}
-          <div className={cn("flex flex-1 flex-col p-[8cqw]", frame.image ? "justify-start" : "justify-end border-t-[1.4cqw] border-clay")}>
-            <p className={cn(MONO, "text-[2.8cqw]", muted)}>Field Notes</p>
-            {/* Line-height AFTER the size: tailwind-merge drops a `leading-*`
-                that comes before a `text-*` size, as it did here once. */}
-            <h2
+            <Lockup dark />
+          </div>
+        ) : (
+          <div className="relative flex h-full flex-col">
+            {frame.image && (
+              <div className="h-[58%] shrink-0 overflow-hidden">
+                <Photo image={frame.image} className="fn-drift" />
+              </div>
+            )}
+            <div
               className={cn(
-                "mt-[3cqw] font-medium tracking-[-0.025em]",
-                frame.image ? "text-[8.4cqw]" : "text-[11cqw]",
-                "leading-[1.02]",
-                !frame.title && "opacity-40",
+                "flex flex-1 flex-col p-[8cqw] pb-[15cqw]",
+                frame.image ? "justify-start" : "justify-end border-t-[1.4cqw] border-clay",
               )}
             >
-              {frame.title || "Your title"}
-            </h2>
-            {frame.dek && <p className={cn("mt-[3cqw] text-[4.2cqw] leading-[1.4]", muted)}>{frame.dek}</p>}
+              {frame.series && <p className={cn(MONO, "text-[2.6cqw]", muted)}>{frame.series}</p>}
+              {/* Line-height AFTER the size: tailwind-merge drops a `leading-*`
+                  that comes before a `text-*` size, as it did here once. */}
+              <h2
+                className={cn(
+                  "mt-[3cqw] font-medium tracking-[-0.025em]",
+                  frame.image ? "text-[8.4cqw]" : "text-[11cqw]",
+                  "leading-[1.02]",
+                  !frame.title && "opacity-40",
+                )}
+              >
+                {frame.title || "Your title"}
+              </h2>
+              {frame.dek && (
+                <p className={cn("mt-[3cqw] text-[4.2cqw] leading-[1.35]", muted)} style={{ fontFamily: "var(--font-fraunces), Georgia, serif", fontStyle: "italic" }}>
+                  {frame.dek}
+                </p>
+              )}
+              {frame.credit && <p className={cn(MONO, "mt-[3cqw] text-[2.2cqw]", muted)}>{frame.credit}</p>}
+            </div>
+            <Lockup dark={dark} />
           </div>
-        </div>
-      );
+        );
       break;
     case "text":
-      body = <div className="fn-rich h-full p-[8cqw]">{children ?? <RichText doc={frame.doc} />}</div>;
+      body = (
+        <>
+          {/* Bottom padding clears the sign-off, so the overflow check counts it. */}
+          <div data-size={frame.size} className="fn-rich h-full p-[8cqw] pb-[15cqw]">
+            {children ?? <RichText doc={frame.doc} />}
+          </div>
+          <Lockup dark={dark} />
+        </>
+      );
       break;
     case "image":
       body = frame.image ? (
@@ -203,6 +308,7 @@ export function FrameView({
           {frame.attribution && (
             <figcaption className={cn(MONO, "mt-[6cqw] pl-[5.8cqw] text-[2.8cqw]", muted)}>— {frame.attribution}</figcaption>
           )}
+          <Lockup dark={dark} />
         </figure>
       );
       break;
@@ -215,6 +321,45 @@ export function FrameView({
           {frame.caption && (
             <p className={cn(MONO, "shrink-0 px-[6cqw] py-[3.5cqw] text-[2.7cqw] leading-[1.5] text-bone/70")}>{frame.caption}</p>
           )}
+        </div>
+      );
+      break;
+    case "author":
+      /*
+        THE CLOSE: who wrote it — the reference carousels' last slide. A
+        heading, a square portrait (graded, like every photo), name, role and
+        company, and one link.
+      */
+      body = (
+        <div className="relative flex h-full flex-col items-center justify-center p-[8cqw] pb-[15cqw] text-center">
+          <p className="text-[6.4cqw] font-medium leading-none tracking-[-0.02em]">The author</p>
+          {frame.portrait ? (
+            <div className="mt-[6cqw] aspect-square w-[50cqw] overflow-hidden">
+              <Photo image={frame.portrait} />
+            </div>
+          ) : draft ? (
+            <div className={cn("mt-[6cqw] flex aspect-square w-[50cqw] items-center justify-center", dark ? "bg-bone/10" : "bg-graphite/5")}>
+              <span className={cn(MONO, "text-[2.6cqw]", muted)}>Add a portrait</span>
+            </div>
+          ) : null}
+          {(frame.name || draft) && (
+            <p className={cn("mt-[6cqw] text-[5.6cqw] font-medium leading-[1.15]", !frame.name && "opacity-40")}>{frame.name || "Name"}</p>
+          )}
+          {(frame.role || frame.company) && (
+            <p className={cn("mt-[1.5cqw] text-[3.8cqw] leading-[1.35]", muted)}>
+              {[frame.role, frame.company].filter(Boolean).join(", ")}
+            </p>
+          )}
+          {frame.link && (
+            <a
+              href={frame.link}
+              {...(isExternal(frame.link) ? { target: "_blank", rel: "noreferrer noopener" } : {})}
+              className={cn(MONO, "mt-[4cqw] text-[2.6cqw] underline decoration-clay decoration-[0.4cqw] underline-offset-[0.8cqw]")}
+            >
+              {linkLabel(frame.link)}
+            </a>
+          )}
+          <Lockup dark={dark} />
         </div>
       );
       break;

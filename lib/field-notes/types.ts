@@ -49,11 +49,35 @@ export interface RichDoc {
 }
 
 export type Frame =
-  | { id: string; type: "cover"; ground: Ground; title: string; dek: string; image?: NoteImage }
-  | { id: string; type: "text"; ground: Ground; doc: RichDoc }
+  | {
+      id: string;
+      type: "cover";
+      ground: Ground;
+      title: string;
+      dek: string;
+      image?: NoteImage;
+      /** "split": photo on top, type below. "full": photo edge to edge, type over a Graphite scrim. */
+      layout: "split" | "full";
+      /** The column or topic kicker, e.g. "Founder stories │ Health tech". */
+      series: string;
+      /** "Photography by …". */
+      credit: string;
+    }
+  | { id: string; type: "text"; ground: Ground; doc: RichDoc; size: "regular" | "large" }
   | { id: string; type: "image"; image?: NoteImage; caption: string; fit: "cover" | "contain" }
   | { id: string; type: "quote"; ground: Ground; text: string; attribution: string }
-  | { id: string; type: "video"; video?: NoteVideo; poster?: NoteImage; caption: string };
+  | { id: string; type: "video"; video?: NoteVideo; poster?: NoteImage; caption: string }
+  /** The close: who wrote it. Portrait, name, role, company, one link. */
+  | {
+      id: string;
+      type: "author";
+      ground: Ground;
+      portrait?: NoteImage;
+      name: string;
+      role: string;
+      company: string;
+      link: string;
+    };
 
 export type FrameType = Frame["type"];
 
@@ -90,6 +114,8 @@ export interface AdminNote extends NoteContent {
   ogImage: string | null;
   /** The draft differs from what's live. */
   changed: boolean;
+  /** Pinned as the /field-notes hero. */
+  featured: boolean;
 }
 
 /** What the public page will read: the published snapshot only. */
@@ -98,4 +124,8 @@ export interface PublishedNote extends NoteContent {
   publishedAt: string;
   updatedAt: string;
   ogImage: string;
+  /** Slugs it was live under before — old links redirect to the current one. */
+  previousSlugs: string[];
+  /** Pinned as the /field-notes hero (else the newest is). */
+  featured?: boolean;
 }

@@ -16,6 +16,7 @@ import {
   TAGLINE,
 } from "@/lib/site";
 import { getPortfolio } from "@/lib/content/portfolio";
+import { listPublished } from "@/lib/field-notes/notes";
 import { BENEFITS, priceLabel } from "@/lib/membership";
 import { formatLongDate } from "@/lib/format";
 import { IS_PREVIEW } from "@/lib/preview";
@@ -61,6 +62,7 @@ export async function GET() {
 
   // What the admin edits (falls back to lib/site.ts's PORTFOLIO).
   const PORTFOLIO = await getPortfolio();
+  const NOTES = await listPublished();
 
   const price = priceLabel();
   const url = (path: string) => `${SITE_URL}${path}`;
@@ -106,6 +108,7 @@ Goal: ${GOAL}
 - [Apply](${url("/apply")}): The membership application.
 - [Contact](${url("/contact")}): The address, how to find the third floor, and who to email.
 - [Media](${url("/media")}): For press: boilerplate, a fact sheet, brand assets, and the press contact.
+- [Field Notes](${url("/field-notes")}): Geekdom's stories, each one a short carousel of frames.
 
 ## Membership
 
@@ -175,6 +178,16 @@ ${PORTFOLIO.map((c) => {
   const link = c.href ? ` [${label[c.link ?? "site"]}: ${c.href}]` : "";
   return `- ${c.name} — ${c.stage}${c.description ? `. ${c.description}` : ""}${link}`;
 }).join("\n")}
+
+## Field Notes
+
+${
+  NOTES.length
+    ? NOTES.slice(0, 20)
+        .map((n) => `- [${n.title}](${url(`/field-notes/${n.slug}`)}) — ${n.publishedAt.slice(0, 10)}${n.author ? `, ${n.author}` : ""}${n.dek ? `. ${n.dek}` : ""}`)
+        .join("\n")
+    : "None published yet."
+}
 
 ## What ${SITE_NAME} no longer runs
 
