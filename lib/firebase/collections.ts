@@ -13,9 +13,45 @@ export const COLLECTIONS = {
   // Site content edited from the admin — see lib/content/.
   events: "events",
   portfolio: "portfolio",
+  // Field Notes, the blog — see lib/field-notes/.
+  fieldNotes: "fieldNotes",
   // One doc per hashed email: when its last sign-in link went out.
   authThrottle: "authThrottle",
 } as const;
+
+/**
+ * One Field Note. The DRAFT is the top-level content; what's LIVE is a
+ * snapshot taken at publish (`publishedJson`), so editing a live note never
+ * changes the site until "Publish changes".
+ *
+ * FRAMES ARE A JSON STRING, not a Firestore array. Rich text is Tiptap JSON —
+ * arrays of maps of arrays, nested as deep as the lists go — and Firestore
+ * rejects an array directly inside an array and caps nesting at 20 levels.
+ * A string sidesteps both, and the content is validated as a whole anyway
+ * (lib/field-notes/schemas.ts) on the way in.
+ */
+export interface FieldNoteDoc {
+  title: string;
+  slug: string;
+  dek: string;
+  author: string;
+  /** JSON of Frame[] (lib/field-notes/types.ts). */
+  framesJson: string;
+  seo: { title: string; description: string; image?: string };
+  status: "draft" | "published";
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  createdBy: string;
+  /** JSON of the published NoteContent. Absent until first publish. */
+  publishedJson?: string;
+  publishedSlug?: string;
+  publishedAt?: Timestamp;
+  publishedUpdatedAt?: Timestamp;
+  /** The live share card: generated at publish, or the uploaded override. */
+  ogImage?: string;
+  /** Slugs this note was live under before — for redirects once it's public. */
+  previousSlugs?: string[];
+}
 
 /** Doc id in `settings` holding admin-edited email copy. */
 export const EMAIL_SETTINGS_DOC = "emails";

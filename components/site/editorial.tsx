@@ -47,6 +47,14 @@ const fraunces = Fraunces({
 });
 
 /**
+ * The Fraunces CSS variable class, for components that set italic text in
+ * CSS rather than through <Editorial> — Field Notes frames, whose pull
+ * quotes and italics are styled by `.fn-rich` in globals.css. Declaring it
+ * here keeps Fraunces off the root layout (the preload rule above).
+ */
+export const FRAUNCES_VARIABLE = fraunces.variable;
+
+/**
  * One editorial line — a tagline, a ceremonial sentence, the line a page turns
  * on.
  *

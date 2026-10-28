@@ -5,7 +5,10 @@ import { MONO } from "@/components/site/section";
 /** A titled group of fields in an admin drawer — one column, ruled heading. */
 export function FieldGroup({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <fieldset className="flex flex-col gap-5">
+    // `min-w-0`: a <fieldset> defaults to `min-inline-size: min-content`, so
+    // in a narrow grid column it refused to shrink and its fields spilled
+    // under the next column (the Field Notes editor, at laptop widths).
+    <fieldset className="flex min-w-0 flex-col gap-5">
       <legend className={cn(MONO.label, "mb-5 w-full border-b border-border pb-2 text-muted-foreground")}>
         {title}
       </legend>

@@ -85,7 +85,8 @@ export function Field({
   label: string;
   htmlFor: string;
   error?: string;
-  hint?: string;
+  /** Usually text; a node for live counters (Field Notes' SEO fields). */
+  hint?: React.ReactNode;
   required?: boolean;
   children: React.ReactNode;
   className?: string;

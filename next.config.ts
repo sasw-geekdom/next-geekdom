@@ -2,6 +2,17 @@ import type { NextConfig } from "next";
 import { withBotId } from "botid/next/config";
 
 const nextConfig: NextConfig = {
+  /*
+    The Field Notes share card reads static TTFs from assets/fonts/ at runtime
+    (lib/field-notes/og-card.tsx — Satori can't use next/font). A file read
+    by path isn't seen by the tracer, so without this the fonts are missing
+    from the deployed function and every card fails. The card renders in the
+    editor's server actions (publish) and the card-preview route.
+  */
+  outputFileTracingIncludes: {
+    "/portal/admin/field-notes/**": ["./assets/fonts/**/*", "./public/brand/kit/geekdom-wordmark-red.svg"],
+    "/api/admin/field-notes/**": ["./assets/fonts/**/*", "./public/brand/kit/geekdom-wordmark-red.svg"],
+  },
   images: {
     /*
       NEXT 16 NARROWED THIS TO [75] AND IT FAILS SILENTLY.

@@ -7,6 +7,7 @@ import {
   Images,
   Inbox,
   LayoutGrid,
+  NotebookPen,
   Shapes,
   UserRound,
   Users,
@@ -59,7 +60,11 @@ export const ADMIN_NAV: NavGroup[] = [
   {
     label: "Site content",
     items: [
+      // BY HOW OFTEN THEY'RE USED: events expire and need weekly attention,
+      // Field Notes are regular work; the wall and the photo archive are
+      // mostly set once.
       { href: "/portal/admin/events", label: "This month", icon: CalendarDays },
+      { href: "/portal/admin/field-notes", label: "Field Notes", icon: NotebookPen },
       { href: "/portal/admin/portfolio", label: "Built at Geekdom", icon: Shapes },
       { href: "/portal/admin/gallery", label: "Photo wall", icon: Images },
     ],

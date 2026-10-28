@@ -556,6 +556,64 @@ members use personal Gmail, and the hint hid their accounts.
   call:** on a `vercel link`ed machine the SDK otherwise picks up an OIDC
   credential that this store refuses in development.
 
+## Field Notes (the blog) — admin built, public page not yet
+
+**A Field Note is a CAROUSEL OF FRAMES read sideways** — Instagram-style,
+Jesse's reference — not a long article. Up to 20 frames of five kinds:
+cover, text, photo, quote, video. The admin is at `/portal/admin/field-notes`;
+the public `/field-notes` page isn't built (the footer link stays
+`pending`), but its pieces are: `FrameReader`, `getPublishedNote()`,
+`fieldNoteMetadata()` and `fieldNoteJsonLd()` (lib/field-notes/).
+
+- **Draft vs live.** Everything edits the DRAFT; publishing copies it into a
+  snapshot (`publishedJson`) that is all the public side will read. Editing
+  a live note shows "unpublished changes" and changes nothing public until
+  "Publish changes". A changed slug records the old one in `previousSlugs`
+  for future redirects.
+- **Frames are stored as a JSON string**, not a Firestore array — Tiptap's
+  JSON nests arrays in maps in arrays deeper than Firestore allows.
+- **Rich text is an allowlist, rebuilt, never HTML.** `cleanDoc` rebuilds
+  Tiptap JSON from paragraph/heading/blockquote/caption/lists/hard break and
+  bold/italic/link (links: https, mailto, or a site path). The reader renders
+  that JSON with its own components; there is no sanitizer because there is
+  no HTML. Re-parsed on the way OUT too, so a doc edited in the console can't
+  reach a reader unchecked.
+- **Brand styles, not fonts** (Jesse's call): Body / Heading / Subhead in
+  Rubik, Pull quote in Fraunces italic, Caption in Plex Mono. Bold is Rubik
+  500; ITALIC IS FRAUNCES (never italic Rubik); no underline (reads as a
+  link), no colors, no sizes. `.fn-rich` in globals.css styles the editor
+  and the reader alike.
+- **Frame type is in `cqw`** (container units, `.fn-frame`), so a frame is the
+  same composition as a filmstrip thumbnail, in the editor and in the reader
+  — the editor's "runs past the frame" warning is a real overflow.
+- **Uploads go browser → Blob directly** (`@vercel/blob/client` `upload()` +
+  /api/admin/field-notes/upload). A server action can't take the files:
+  Vercel caps function bodies at 4.5MB. The token route is the gate — staff
+  session, path inside one existing note's folder, type and size per kind
+  (photos 25MB, video 200MB MP4/WebM). Everything a note owns lives under
+  `field-notes/{noteId}/`, so deleting a note is one prefix sweep; publish
+  also sweeps files nothing points at (sparing anything under an hour old).
+- **Every photo gets the brand grade** (`gradePhoto` → `gradeRaw`), and the
+  ORIGINAL is kept so the per-photo B&W switch re-grades from source.
+- **Video**: YouTube/Vimeo links behind a click-to-load facade (nothing from
+  either loads until play — /studio's rule), or uploaded clips, optionally
+  silent-looping.
+- **Share cards are generated at publish** with `next/og` (lib/field-notes/
+  og-card.tsx) and stored on Blob; an uploaded 1200×630 overrides. Satori
+  needs STATIC TTFs, so Rubik 400/500 and Plex Mono are committed in
+  `assets/fonts/`, and next.config.ts's `outputFileTracingIncludes` ships
+  them — a path read isn't traced, and without it every card fails in
+  production. The editor previews the exact card from the draft.
+- **Publish checklist** (`checklist()`, shared by the editor and the server):
+  title, slug (unique — checked server-side), a cover first, ≥2 frames, no
+  empty frames, alt text on every photo, a 50–160 character description, an
+  author. Publish is refused until it passes.
+- **The preview is at `/preview/field-notes/[id]`, outside /portal** so it
+  looks like the public page (no admin sidebar) — so it does its own
+  `requireAdmin()`, and `/preview` is disallowed in robots.
+- **`cn()` gotcha, found here:** tailwind-merge drops a `leading-*` that comes
+  BEFORE a `text-*` size. Put line-height after the size.
+
 ## Repo gotchas
 
 - **Middleware is `proxy.ts` now** (Next 16 renamed it). Creating a
@@ -638,6 +696,11 @@ members use personal Gmail, and the hint hid their accounts.
   `process.env.NEXT_PUBLIC_X`; a dynamic `process.env[name]` lookup is invisible
   to that and silently becomes `undefined` in the browser while working on the
   server.
+
+- **Admin API routes check the ROLE, not "signed in".** `getSessionUser()`
+  returns members too since they can sign in; use `requireAdminApi()`. The
+  CSV export used `getSessionUser()` and let any member download the whole
+  roster and every application until it was caught.
 
 - **Every route that calls `isBot()` must be listed in
   [instrumentation-client.ts](instrumentation-client.ts)'s `protect`.**

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { getSessionUser } from "@/lib/auth/session";
+import { requireAdminApi } from "@/lib/auth/session";
 import { listApplications, listMembers } from "@/lib/admin/queries";
 import { csvFilename, toCsv } from "@/lib/admin/csv";
 import {
@@ -16,6 +16,11 @@ import {
  * Without this, the entire member roster and every application would be one
  * unauthenticated GET away.
  *
+ * STAFF ONLY, not "signed in". This checked `getSessionUser()`, which was the
+ * same thing while only staff could sign in — and stopped being the moment
+ * members could: any member could GET the whole roster and every
+ * application as a CSV. `requireAdminApi()` is the role check.
+ *
  * A 401 is returned rather than a redirect — this URL is opened directly by the
  * browser, and bouncing to an HTML login page would download it as a .csv.
  */
@@ -23,7 +28,7 @@ export async function GET(
   request: NextRequest,
   ctx: RouteContext<"/api/admin/export/[entity]">,
 ) {
-  const user = await getSessionUser();
+  const user = await requireAdminApi();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
