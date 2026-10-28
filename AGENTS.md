@@ -632,6 +632,13 @@ members use personal Gmail, and the hint hid their accounts.
   to that and silently becomes `undefined` in the browser while working on the
   server.
 
+- **Every route that calls `isBot()` must be listed in
+  [instrumentation-client.ts](instrumentation-client.ts)'s `protect`.**
+  Unlisted, the browser never sends BotID's signal and production flags
+  every real visitor as a bot. `/api/auth/email-link` shipped unlisted:
+  the form said "Check your inbox" and no sign-in link ever left
+  production. It can't show up locally — there the check fails open.
+
 - **`checkBotId()` throws when it can't reach its backend** — outside the Vercel
   runtime it reports a missing `x-vercel-oidc-token`. Unhandled that's a 500 on
   every submission, real applicant and bot alike. Call `isBot()` from

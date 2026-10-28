@@ -61,8 +61,13 @@ const FAILED = () =>
 const hash = (s: string) => createHash("sha256").update(s).digest("hex").slice(0, 32);
 
 export async function POST(request: Request) {
-  // A bot learns nothing and mails nothing.
-  if (await isBot()) return SENT();
+  // A bot learns nothing and mails nothing — but it's logged, because this
+  // silent "sent" is exactly what hid every link failing in production when
+  // the route was missing from instrumentation-client.ts's `protect` list.
+  if (await isBot()) {
+    console.warn("[auth] email-link: request classified as a bot; nothing sent");
+    return SENT();
+  }
 
   let parsed;
   try {
