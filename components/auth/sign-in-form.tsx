@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   isSignInWithEmailLink,
-  signInWithEmailAndPassword,
   signInWithEmailLink,
   signInWithPopup,
   type UserCredential,
@@ -20,9 +19,13 @@ import { CONTACT_EMAIL } from "@/lib/site";
   ONE DOOR FOR MEMBERS AND STAFF.
 
   Members sign in by EMAIL LINK — no password to forget, and owning the inbox
-  is the proof, which is how /account already worked. Staff keep Google and
-  email/password. Which portal you land in is decided on the server from the
-  account (lib/auth/session.ts), never by which button was pressed.
+  is the proof, which is how /account already worked. Staff use the same link
+  or Google. NO PASSWORDS: the option was the one guessable door on a
+  passwordless sign-in. The server can't refuse password tokens (Firebase
+  labels email-link tokens "password" too — see lib/auth/session.ts), so
+  the guarantee is that no login this app creates has a password, and the
+  server only accepts VERIFIED emails. Which portal you land in is decided
+  on the server from the account, never by which button was pressed.
 
   The link round-trip, per Firebase's email-link guide:
     1. POST /api/auth/email-link. The SERVER makes the link (Admin SDK) and
@@ -62,7 +65,7 @@ function recall(): string | null {
 /** Firebase's error codes, in the words a member needs. */
 function explain(e: unknown, fallback: string): string {
   const code = (e as { code?: string })?.code ?? "";
-  if (code === "auth/admin-restricted-operation" || code === "auth/user-not-found")
+  if (code === "auth/admin-restricted-operation")
     return "That email doesn't have access yet. Use the email your membership is under.";
   if (code === "auth/invalid-action-code" || code === "auth/expired-action-code")
     return "That sign-in link has expired or was already used. Send yourself a new one.";
@@ -75,7 +78,7 @@ function explain(e: unknown, fallback: string): string {
   return e instanceof Error && !code && e.name === "Error" ? e.message : fallback;
 }
 
-type Pending = "link" | "google" | "password" | "finishing" | null;
+type Pending = "link" | "google" | "finishing" | null;
 
 export function SignInForm() {
   const router = useRouter();
@@ -89,8 +92,6 @@ export function SignInForm() {
   const from = /^\/(?!\/)/.test(raw) ? raw : "/portal";
 
   const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("");
-  const [showPassword, setShowPassword] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [sentTo, setSentTo] = React.useState<string | null>(null);
   /** The address we found no membership under — shown instead of "Check your inbox". */
@@ -203,31 +204,19 @@ export function SignInForm() {
     try {
       await establishSession(await signInWithPopup(getFirebaseAuth(), getGoogleProvider()));
     } catch (e) {
-      setError(explain(e, "Sign-in failed."));
-      setPending(null);
-    }
-  }
-
-  async function onPassword(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setPending("password");
-
-    // Two steps, two failure meanings: a bad password is step 1; a server or
-    // config problem is step 2, and calling that "wrong password" sends
-    // people in circles.
-    let cred: UserCredential;
-    try {
-      cred = await signInWithEmailAndPassword(getFirebaseAuth(), email.trim(), password);
-    } catch {
-      setError("Wrong email or password.");
-      setPending(null);
-      return;
-    }
-    try {
-      await establishSession(cred);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Couldn't start your session.");
+      /*
+        NO LOGIN FOR THAT GOOGLE ACCOUNT YET. Self sign-up is off in
+        Firebase, so Google only works for a login that already exists — and
+        a staff member's is created by their first EMAIL LINK. Without this
+        they got the member-worded "Use the email your membership is under",
+        wrong on both counts.
+      */
+      const code = (e as { code?: string })?.code;
+      setError(
+        code === "auth/admin-restricted-operation"
+          ? "There's no login for that Google account yet. Geekdom staff: sign in with the email link above the first time — Google works after that."
+          : explain(e, "Sign-in failed."),
+      );
       setPending(null);
     }
   }
@@ -264,7 +253,7 @@ export function SignInForm() {
 
   return (
     <div className="flex flex-col gap-6">
-      <form onSubmit={showPassword ? onPassword : onSendLink} className="flex flex-col gap-3">
+      <form onSubmit={onSendLink} className="flex flex-col gap-3">
         {confirmEmail && (
           <p className="text-sm leading-relaxed text-muted-foreground">
             You opened this link on a different device. Confirm the email it was
@@ -286,32 +275,12 @@ export function SignInForm() {
           }}
           required
         />
-        {showPassword && (
-          <>
-            <label htmlFor="sign-in-password" className="sr-only">
-              Password
-            </label>
-            <Input
-              id="sign-in-password"
-              type="password"
-              placeholder="Password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </>
-        )}
         <Button type="submit" variant="ink" size="lg" disabled={busy} className="w-full">
-          {showPassword
-            ? pending === "password"
-              ? "Signing in…"
-              : "Sign in"
-            : confirmEmail
-              ? "Finish signing in"
-              : pending === "link"
-                ? "Sending…"
-                : "Email me a sign-in link"}
+          {confirmEmail
+            ? "Finish signing in"
+            : pending === "link"
+              ? "Sending…"
+              : "Email me a sign-in link"}
         </Button>
       </form>
 
@@ -368,7 +337,8 @@ export function SignInForm() {
         which also creates their account on first use. Google is offered to
         staff only: a member who chose it before they had an account got
         "doesn't have access", which read as a rejection. Labeled, so
-        members don't wonder whether it's meant for them.
+        members don't wonder whether it's meant for them. Staff can use the
+        link too, and must the first time (see onGoogle).
       */}
       {!confirmEmail && (
         <div className="flex flex-col gap-3 border-t border-border pt-6">
@@ -382,17 +352,9 @@ export function SignInForm() {
           >
             {pending === "google" ? "Connecting…" : "Continue with Google"}
           </Button>
-          <p className="text-xs text-muted-foreground">Use your geekdom.com Google account.</p>
-          <button
-            type="button"
-            onClick={() => {
-              setShowPassword((v) => !v);
-              setError(null);
-            }}
-            className={`mt-1 self-start text-sm ${LINK}`}
-          >
-            {showPassword ? "Use a sign-in link instead" : "Sign in with a password"}
-          </button>
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            Use your geekdom.com Google account. First time? Use the email link above.
+          </p>
         </div>
       )}
     </div>

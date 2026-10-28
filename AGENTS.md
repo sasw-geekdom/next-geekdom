@@ -370,8 +370,15 @@ account decides where it lands. Roles resolve on EVERY request in
 [lib/auth/session.ts](lib/auth/session.ts), never from the cookie: superadmin
 (`SUPER_ADMIN_EMAILS`), staff (`@geekdom.com`), member (an email with a
 `members` doc whose status is active, trialing or past_due). Admin wins over
-member. Members sign in by **email link** (no passwords); staff keep Google
-and email/password. The Google button has no `hd` domain hint any more —
+member. **Everyone signs in without a password**: members by email link,
+staff by email link or Google (the password option came off the form).
+**Roles are only given to VERIFIED emails** (`trusted()` in session.ts) —
+without that, a password account with an unverified `@geekdom.com` email
+would be staff, held back only by Firebase's self sign-up being off. You
+can't refuse password tokens instead: Firebase labels email-link tokens
+`sign_in_provider: "password"` too, and trying it locked out every member.
+A new staff member's FIRST sign-in must be the email link (it creates their
+login; self sign-up is off, so Google can't) — the Google error says so. The Google button has no `hd` domain hint any more —
 members use personal Gmail, and the hint hid their accounts.
 
 - **/sign-in looks like the portal, not the public site**: the portal's

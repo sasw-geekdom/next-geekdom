@@ -48,6 +48,26 @@ async function resolveRole(email: string | undefined | null): Promise<Role | nul
   return snap.empty ? null : "member";
 }
 
+/*
+  ONLY VERIFIED EMAILS.
+
+  Every role is decided from the token's email — so the email has to be
+  proven. Google and email-link sign-ins always are; a password account
+  isn't, and its email is whatever was typed at sign-up. Firebase's self
+  sign-up is off today, which is the only thing that stops someone making
+  `anything@geekdom.com` with a password and being treated as staff: one
+  console toggle from a hole. This closes it here regardless of that
+  setting. Checked on the session cookie too, not just at sign-in.
+
+  NOT A PASSWORD CHECK, and that was tried: `firebase.sign_in_provider` is
+  "password" for EMAIL-LINK sign-ins as well (both are Firebase's email
+  provider), so refusing it locked out every member. Passwords are off the
+  form instead, and no login this app creates has one.
+*/
+function trusted(decoded: { email_verified?: boolean }) {
+  return decoded.email_verified === true;
+}
+
 /**
  * Exchange a Firebase ID token for a server-verified session cookie.
  * Rejects any account that doesn't resolve to a role.
@@ -57,6 +77,7 @@ export async function createSession(
   idToken: string,
 ): Promise<{ cookie: string; maxAge: number; user: SessionUser } | null> {
   const decoded = await getAdminAuth().verifyIdToken(idToken, true);
+  if (!trusted(decoded)) return null;
   const role = await resolveRole(decoded.email);
   if (!role) return null;
 
@@ -93,6 +114,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
     // checkRevoked = true — a disabled or rotated account loses access on its
     // next request rather than when the 5-day cookie happens to expire.
     const decoded = await getAdminAuth().verifySessionCookie(session, true);
+    if (!trusted(decoded)) return null;
     const role = await resolveRole(decoded.email);
     if (!role) return null;
 
