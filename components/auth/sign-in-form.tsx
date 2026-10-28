@@ -68,7 +68,11 @@ function explain(e: unknown, fallback: string): string {
     return "That sign-in link has expired or was already used. Send yourself a new one.";
   if (code === "auth/invalid-email") return "That doesn't look like an email address.";
   if (code === "auth/popup-closed-by-user") return "Google sign-in was closed before it finished.";
-  return e instanceof Error && !code ? e.message : fallback;
+  // Only our own messages pass through — the session route's ("This account
+  // doesn't have access."), thrown as plain Errors. A browser error (a
+  // DOMException such as IndexedDB's "Database is closing") reached the
+  // screen verbatim once; it gets the fallback and a next step instead.
+  return e instanceof Error && !code && e.name === "Error" ? e.message : fallback;
 }
 
 type Pending = "link" | "google" | "password" | "finishing" | null;
@@ -134,7 +138,9 @@ export function SignInForm() {
         remember(null);
         await establishSession(cred);
       } catch (e) {
-        setError(explain(e, "Couldn't finish signing in."));
+        setError(
+          explain(e, "Couldn't finish signing in. Open the link again, or send yourself a new one."),
+        );
         setPending(null);
       }
     },

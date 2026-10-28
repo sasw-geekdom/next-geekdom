@@ -1,5 +1,12 @@
 import { getApp, getApps, initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, type Auth } from "firebase/auth";
+import {
+  browserPopupRedirectResolver,
+  getAuth,
+  GoogleAuthProvider,
+  inMemoryPersistence,
+  initializeAuth,
+  type Auth,
+} from "firebase/auth";
 
 /**
  * Browser-side Firebase. NEXT_PUBLIC_* values ship to the client by design —
@@ -30,8 +37,38 @@ function firebaseApp() {
       });
 }
 
+/*
+  IN-MEMORY PERSISTENCE — Firebase keeps nothing in the browser.
+
+  By default the SDK saves the signed-in user to IndexedDB, and opening a
+  sign-in link from an email failed on exactly that write: "Database is
+  closing" (Safari and the mail apps' in-app browsers close the database
+  under it, worst with the original sign-in tab still open), and the form
+  showed the raw browser error. Nothing here ever read that saved user — no
+  onAuthStateChanged, no currentUser; the credential is traded at once for
+  the server's session cookie, which is what keeps you signed in. So the
+  browser copy is dropped rather than repaired.
+
+  initializeAuth, not getAuth, because persistence is fixed at creation;
+  it throws if called twice for one app, hence the getAuth fallback.
+  browserPopupRedirectResolver is passed explicitly because initializeAuth,
+  unlike getAuth, doesn't include it — without it "Continue with Google"
+  (signInWithPopup) fails.
+*/
+let auth: Auth | null = null;
+
 export function getFirebaseAuth(): Auth {
-  return getAuth(firebaseApp());
+  if (auth) return auth;
+  const app = firebaseApp();
+  try {
+    auth = initializeAuth(app, {
+      persistence: inMemoryPersistence,
+      popupRedirectResolver: browserPopupRedirectResolver,
+    });
+  } catch {
+    auth = getAuth(app);
+  }
+  return auth;
 }
 
 /**
