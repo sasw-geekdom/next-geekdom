@@ -60,7 +60,7 @@ function Row({ n, hero, onError }: { n: AdminNote; hero?: "featured" | "newest";
         className="group grid min-w-0 flex-1 grid-cols-[3.5rem_1fr] items-center gap-4 py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-offset-2 focus-visible:ring-offset-bone sm:grid-cols-[3.5rem_1fr_auto]"
       >
         <span className="block w-14">
-          {cover ? <FrameView frame={cover} still className="w-full border border-border" /> : <span className="block aspect-[4/5] border border-dashed border-border" />}
+          {cover ? <FrameView frame={cover} still className="w-full border border-border" /> : <span className="block aspect-4/5 border border-dashed border-border" />}
         </span>
         <span className="min-w-0">
           <span className="block truncate text-graphite decoration-clay decoration-2 underline-offset-4 group-hover:underline">

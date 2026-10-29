@@ -99,7 +99,7 @@ export default async function FieldNotePage(props: PageProps<"/field-notes/[slug
               <h1
                 className={cn(
                   HEADING.item,
-                  "min-w-0 flex-1 text-graphite transition-opacity duration-300 sm:truncate sm:group-data-[cover]/reader:opacity-0",
+                  "min-w-0 flex-1 text-graphite transition-opacity duration-300 sm:truncate sm:group-data-cover/reader:opacity-0",
                 )}
               >
                 {note.title}

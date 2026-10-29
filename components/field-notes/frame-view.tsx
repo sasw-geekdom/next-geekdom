@@ -155,7 +155,7 @@ function linkLabel(href: string): string {
 export function Lockup({ dark }: { dark: boolean }) {
   return (
     <div aria-hidden="true" className="pointer-events-none absolute bottom-[6cqw] right-[6cqw] flex items-center gap-[1.8cqw]">
-      <span className={cn("geekdom-mask block aspect-[375/142] h-[4.6cqw]", dark ? "bg-bone" : "bg-geekdom-red")} />
+      <span className={cn("geekdom-mask block aspect-375/142 h-[4.6cqw]", dark ? "bg-bone" : "bg-geekdom-red")} />
       <span className={cn("h-[3.2cqw] w-px", dark ? "bg-bone/40" : "bg-graphite/25")} />
       <span className={cn(MONO, "text-[2cqw]", dark ? "text-bone/80" : "text-muted-foreground")}>Field Notes</span>
     </div>
@@ -212,7 +212,7 @@ export function FrameView({
               {frame.series && <p className={cn(MONO, "text-[2.6cqw] text-bone/80")}>{frame.series}</p>}
               <h2
                 className={cn(
-                  "mt-[3cqw] font-medium tracking-[-0.025em]",
+                  "mt-[3cqw] font-medium tracking-tight",
                   "text-[10.5cqw]",
                   "leading-[1.02]",
                   !frame.title && "opacity-40",
@@ -247,7 +247,7 @@ export function FrameView({
                   that comes before a `text-*` size, as it did here once. */}
               <h2
                 className={cn(
-                  "mt-[3cqw] font-medium tracking-[-0.025em]",
+                  "mt-[3cqw] font-medium tracking-tight",
                   frame.image ? "text-[8.4cqw]" : "text-[11cqw]",
                   "leading-[1.02]",
                   !frame.title && "opacity-40",
@@ -284,7 +284,7 @@ export function FrameView({
             <Photo image={frame.image} fit={frame.fit} />
           </div>
           {frame.caption && (
-            <p className={cn(MONO, "shrink-0 bg-bone px-[6cqw] py-[3.5cqw] text-[2.7cqw] leading-[1.5] text-muted-foreground")}>
+            <p className={cn(MONO, "shrink-0 bg-bone px-[6cqw] py-[3.5cqw] text-[2.7cqw] leading-normal text-muted-foreground")}>
               {frame.caption}
             </p>
           )}
@@ -298,7 +298,7 @@ export function FrameView({
         <figure className="flex h-full flex-col justify-center p-[10cqw]">
           <blockquote
             className={cn(
-              "border-l-[0.8cqw] border-clay pl-[5cqw] text-[7.6cqw] leading-[1.25]",
+              "border-l-[0.8cqw] border-clay pl-[5cqw] text-[7.6cqw] leading-tight",
               !frame.text && "opacity-40",
             )}
             style={{ fontFamily: "var(--font-fraunces), Georgia, serif", fontStyle: "italic" }}
@@ -319,7 +319,7 @@ export function FrameView({
             <VideoFrame frame={frame} still={still} />
           </div>
           {frame.caption && (
-            <p className={cn(MONO, "shrink-0 px-[6cqw] py-[3.5cqw] text-[2.7cqw] leading-[1.5] text-bone/70")}>{frame.caption}</p>
+            <p className={cn(MONO, "shrink-0 px-[6cqw] py-[3.5cqw] text-[2.7cqw] leading-normal text-bone/70")}>{frame.caption}</p>
           )}
         </div>
       );

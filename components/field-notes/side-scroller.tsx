@@ -133,7 +133,7 @@ export function SideScroller({
         }}
         aria-label={`${label} — use the arrow keys to move between ${noun}s`}
         className={cn(
-          "flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain pb-2 [scrollbar-width:thin] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-offset-4 focus-visible:ring-offset-bone sm:gap-5",
+          "flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain pb-2 scrollbar-thin focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-offset-4 focus-visible:ring-offset-bone sm:gap-5",
           !reduce && "scroll-smooth",
         )}
       >

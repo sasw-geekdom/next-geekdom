@@ -333,7 +333,7 @@ function StageReader({ frames, next, label = "Field Note", chrome = "14rem", hea
             ...({ "data-lenis-prevent": "" } as React.HTMLAttributes<HTMLDivElement>),
             onScroll: measure,
             className: cn(
-              "relative flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain [scrollbar-width:none] sm:gap-24 [&::-webkit-scrollbar]:hidden",
+              "relative flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain scrollbar-none sm:gap-24 [&::-webkit-scrollbar]:hidden",
               !reduce && "scroll-smooth",
             ),
             style: { paddingInline: "calc((100cqw - var(--fw)) / 2)" },
