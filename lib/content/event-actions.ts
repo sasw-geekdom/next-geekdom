@@ -10,6 +10,7 @@ import { fieldErrors, stripUndefined } from "@/lib/validation/schemas";
 import { fromCentral } from "@/lib/content/dates";
 import { EVENTS_TAG, seedEvents } from "@/lib/content/events";
 import type { ActionResult } from "@/lib/content/types";
+import { logActivity } from "@/lib/admin/activity";
 
 /*
   WRITES FOR "THIS MONTH IN THE CLUB".
@@ -74,7 +75,7 @@ function refresh() {
 }
 
 export async function saveEvent(input: EventInput): Promise<ActionResult> {
-  await requireAdmin();
+  const user = await requireAdmin();
   const parsed = eventSchema.safeParse(input);
   if (!parsed.success) return { ok: false, fieldErrors: fieldErrors(parsed.error) };
 
@@ -91,15 +92,19 @@ export async function saveEvent(input: EventInput): Promise<ActionResult> {
     ...(id ? {} : { createdAt: FieldValue.serverTimestamp() }),
   });
   await ref.set(record, { merge: true });
+  await logActivity(user, { area: "events", action: id ? "edited" : "added", label: rest.title, href: "/portal/admin/events" });
 
   refresh();
   return { ok: true, id: ref.id };
 }
 
 export async function deleteEvent(id: string): Promise<ActionResult> {
-  await requireAdmin();
+  const user = await requireAdmin();
   if (typeof id !== "string" || !id) return { ok: false, error: "Missing event." };
-  await getAdminDb().collection(COLLECTIONS.events).doc(id).delete();
+  const ref = getAdminDb().collection(COLLECTIONS.events).doc(id);
+  const title = ((await ref.get()).data()?.title as string | undefined) ?? "An event";
+  await ref.delete();
+  await logActivity(user, { area: "events", action: "deleted", label: title, href: "/portal/admin/events" });
   refresh();
   return { ok: true };
 }
@@ -109,7 +114,7 @@ export async function deleteEvent(id: string): Promise<ActionResult> {
  * Refuses once anything is there, so a second press can't duplicate rows.
  */
 export async function seedEventsFromSite(): Promise<ActionResult> {
-  await requireAdmin();
+  const user = await requireAdmin();
   const col = getAdminDb().collection(COLLECTIONS.events);
   if (!(await col.limit(1).get()).empty) {
     return { ok: false, error: "There are events here already, so nothing was copied." };
@@ -124,6 +129,7 @@ export async function seedEventsFromSite(): Promise<ActionResult> {
     });
   }
   await batch.commit();
+  await logActivity(user, { area: "events", action: "copied from the site", label: `${rows.length} events`, href: "/portal/admin/events" });
   refresh();
   return { ok: true, count: rows.length };
 }

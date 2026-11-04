@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth/session";
 import { syncGalleryThumbnails, type SyncResult } from "@/lib/gallery-sync";
+import { logActivity } from "@/lib/admin/activity";
+import { ON_PREVIEW_DATA } from "@/lib/firebase/admin";
 
 export type GallerySyncResult =
   | { ok: true; result: SyncResult }
@@ -21,9 +23,26 @@ export type GallerySyncResult =
  * the admin page with an error boundary.
  */
 export async function syncGallery(): Promise<GallerySyncResult> {
-  await requireAdmin();
+  const user = await requireAdmin();
+  /*
+    NOT ON PREVIEW DATA. The wall's files live in the one Blob store every
+    deployment shares, and a sync deletes the files its manifest no longer
+    needs — a preview syncing under a changed grade would delete the files
+    the LIVE wall still points at.
+  */
+  if (ON_PREVIEW_DATA) {
+    return { ok: false, error: "The photo wall syncs from the live site only — this preview's files are shared with it." };
+  }
   try {
     const result = await syncGalleryThumbnails();
+    if (result.generated || result.removed) {
+      await logActivity(user, {
+        area: "photo-wall",
+        action: "synced",
+        label: `${result.generated} photos built, ${result.removed} removed`,
+        href: "/portal/admin/gallery",
+      });
+    }
     revalidatePath("/portal/admin/gallery");
     revalidatePath("/since-2011");
     return { ok: true, result };

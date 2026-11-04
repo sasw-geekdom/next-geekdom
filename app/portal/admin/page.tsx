@@ -5,6 +5,8 @@ import { loginStates } from "@/lib/admin/member-logins";
 import { listEvents } from "@/lib/content/events";
 import { listPortfolio } from "@/lib/content/portfolio";
 import { listNotes } from "@/lib/field-notes/notes";
+import { listActivity } from "@/lib/admin/activity";
+import { ActivityList } from "@/components/admin/activity-list";
 import { NewNoteButton } from "@/components/admin/field-notes/new-note-button";
 import { eventTimeLabel } from "@/lib/content/dates";
 import { PageHeader, AdminSection } from "@/components/admin/page-header";
@@ -32,6 +34,8 @@ export const metadata = { title: "Overview" };
     ├───────────────────────────────┼────────────────┤
     │ Recently joined               │ Field Notes    │
     ├───────────────────────────────┴────────────────┤
+    │ Recent activity — who changed what             │
+    ├────────────────────────────────────────────────┤
     │ Applications — one slim row                    │
     └────────────────────────────────────────────────┘
 
@@ -43,12 +47,13 @@ export const metadata = { title: "Overview" };
   now, with the same link to how they connect.
 */
 export default async function AdminOverview() {
-  const [members, logins, events, companies, notes] = await Promise.all([
+  const [members, logins, events, companies, notes, activity] = await Promise.all([
     listMembers(),
     loginStates().catch(() => new Map()),
     listEvents().catch(() => []),
     listPortfolio().catch(() => []),
     listNotes().catch(() => []),
+    listActivity(6).catch(() => []),
   ]);
 
   const CURRENT = ["active", "trialing", "past_due"];
@@ -79,7 +84,9 @@ export default async function AdminOverview() {
       <PageHeader eyebrow="Admin portal" title="Overview" description="Your members and the site, at a glance." />
 
       <AdminSection>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Two across even on a phone: stacked, the four counts filled the whole
+            first screen before any content appeared. */}
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           <Stat label="Current members" value={current.length} href="/portal/admin/members" />
           <Stat label="Past due" value={pastDue} href="/portal/admin/members" accent={pastDue > 0} note="Card declined — they keep access" />
           <Stat label="Never signed in" value={neverSignedIn} href="/portal/admin/members" note="Members who haven't used the portal" />
@@ -228,6 +235,20 @@ export default async function AdminOverview() {
             )}
           </Tile>
 
+          {/* Who changed what, most recent first — the full history is a click away. */}
+          <Tile
+            label="Recent activity"
+            className="lg:col-span-3"
+            action={
+              <Link href="/portal/admin/activity" className={cn("text-sm", LINK_ARROW)}>
+                All activity
+                <ArrowRight aria-hidden="true" className={ARROW.internal} />
+              </Link>
+            }
+          >
+            <ActivityList entries={activity} compact />
+          </Tile>
+
           {/* Applications — static explanation, so one row rather than a tile. */}
           <section className="flex flex-col gap-3 border border-border bg-bone-light px-6 py-4 sm:flex-row sm:items-center sm:gap-8 lg:col-span-3">
             <h2 className={cn(MONO.label, "shrink-0 text-muted-foreground")}>Applications</h2>
@@ -268,7 +289,7 @@ function Stat({
   return (
     <Link
       href={href}
-      className="group block border border-border bg-bone-light p-5 transition-colors hover:border-graphite focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-offset-2 focus-visible:ring-offset-bone"
+      className="group block border border-border bg-bone-light p-4 transition-colors sm:p-5 hover:border-graphite focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-offset-2 focus-visible:ring-offset-bone"
     >
       <p className={cn(MONO.label, "text-muted-foreground")}>{label}</p>
       {/* A Clay rule marks a number that needs attention; the figure stays

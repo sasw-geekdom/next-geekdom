@@ -12,7 +12,8 @@
     "lint": "eslint",
     "og": "node scripts/og.mjs",
     "photos:grade": "node scripts/grade-photos.mjs",
-    "brand:kit": "node scripts/brand-kit.mjs"
+    "brand:kit": "node scripts/brand-kit.mjs",
+    "preview:seed": "node --env-file=.env.local scripts/seed-preview-data.mjs"
   },
   "dependencies": {
     "@tiptap/core": "^3.32.0",

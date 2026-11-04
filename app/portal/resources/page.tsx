@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { requireMember } from "@/lib/auth/session";
 import { LOCATION } from "@/lib/site";
-import { MOCK_FAQ, MOCK_RESOURCES } from "@/data/mock/portal";
+import { FAQ_GROUPS, getMemberResources } from "@/lib/content/member-resources";
 import { ARROW, HEADING, LINK_ARROW_ON_INK, MONO } from "@/components/site/section";
 import { PortalPage } from "@/components/portal/portal-page";
 import { Tile } from "@/components/portal/tile";
@@ -31,14 +31,21 @@ export const metadata = { title: "FAQ and resources" };
 */
 export default async function ResourcesPage() {
   await requireMember();
-  const live = MOCK_RESOURCES.filter((r) => r.href && !r.href.startsWith("mailto:"));
-  const soon = MOCK_RESOURCES.filter((r) => !r.href);
+  // Edited by staff at /portal/admin/resources; the shipped text until then.
+  const res = await getMemberResources();
+  const slack = res.slackInviteUrl
+    ? [{ id: "slack", title: "Member Slack", description: "Where members ask, offer and find each other between visits.", href: res.slackInviteUrl }]
+    : [];
+  const live = [...slack, ...res.links.filter((r) => r.href && !r.href.startsWith("mailto:"))];
+  const soon = [...(res.slackInviteUrl ? [] : [{ title: "Member Slack" }]), ...res.links.filter((r) => !r.href)];
+  const faq = FAQ_GROUPS.map((group) => ({ group, items: res.faq.filter((f) => f.group === group) })).filter((g) => g.items.length);
+  const unconfirmed = res.faq.some((f) => f.confirm) || !res.wifiNetwork;
 
   return (
     <PortalPage
       eyebrow="FAQ and resources"
       title="How the Club works."
-      notice="Answers marked “To confirm” are placeholders for Geekdom to write."
+      notice={unconfirmed ? "Answers marked “To confirm” are placeholders for Geekdom to write." : undefined}
     >
       <div className="grid items-start gap-4 lg:grid-cols-3">
         {/* ── Left: resources, then the FAQ ─────────────────────────────── */}
@@ -52,7 +59,7 @@ export default async function ResourcesPage() {
                       <span className="block font-medium text-graphite">{r.title}</span>
                       <span className="block text-sm text-muted-foreground">{r.description}</span>
                     </span>
-                    {r.external ? (
+                    {!r.href.startsWith("/") ? (
                       <ArrowUpRight aria-hidden="true" className={cn(ARROW.external, "shrink-0 text-muted-foreground")} />
                     ) : (
                       <ArrowRight aria-hidden="true" className={cn(ARROW.internal, "shrink-0 text-muted-foreground")} />
@@ -62,11 +69,11 @@ export default async function ResourcesPage() {
                 const cls =
                   "group flex items-center justify-between gap-4 py-3.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-offset-2 focus-visible:ring-offset-bone-light";
                 return (
-                  <li key={r.title} className="border-t border-border first:border-t-0">
-                    {r.href!.startsWith("/") ? (
-                      <Link href={r.href!} className={cls}>{row}</Link>
+                  <li key={r.id} className="border-t border-border first:border-t-0">
+                    {r.href.startsWith("/") ? (
+                      <Link href={r.href} className={cls}>{row}</Link>
                     ) : (
-                      <a href={r.href!} target="_blank" rel="noreferrer noopener" className={cls}>
+                      <a href={r.href} target="_blank" rel="noreferrer noopener" className={cls}>
                         {row}
                         <span className="sr-only"> (opens in a new tab)</span>
                       </a>
@@ -85,12 +92,12 @@ export default async function ResourcesPage() {
 
           <Tile label="Questions members ask">
             <div className="flex flex-col gap-8">
-              {MOCK_FAQ.map((g) => (
+              {faq.map((g) => (
                 <div key={g.group}>
                   <h3 className={cn(MONO.micro, "text-muted-foreground")}>{g.group}</h3>
                   <div className="mt-2 border-b border-border">
                     {g.items.map((item) => (
-                      <details key={item.q} className="group/faq border-t border-border">
+                      <details key={item.id} className="group/faq border-t border-border">
                         <summary className="flex cursor-pointer list-none items-start justify-between gap-4 py-3.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-offset-2 focus-visible:ring-offset-bone-light [&::-webkit-details-marker]:hidden">
                           <span className={cn(HEADING.item, "text-graphite")}>{item.q}</span>
                           <span aria-hidden="true" className="mt-0.5 text-muted-foreground transition-transform duration-200 group-open/faq:rotate-45">
@@ -128,14 +135,27 @@ export default async function ResourcesPage() {
               </div>
               <div>
                 <dt className={cn(MONO.micro, "text-muted-foreground")}>Hours</dt>
-                <dd className="mt-1 text-graphite">Open 24/7 for members</dd>
+                <dd className="mt-1 text-graphite">{res.hours}</dd>
               </div>
               <div>
                 <dt className={cn(MONO.micro, "text-muted-foreground")}>Wi-Fi</dt>
-                <dd className="mt-1 flex items-center gap-2 text-graphite">
-                  Network and password
-                  <span className={cn(MONO.micro, "border border-dashed border-border px-1.5 py-0.5")}>To confirm</span>
-                </dd>
+                {res.wifiNetwork ? (
+                  <dd className="mt-1 leading-relaxed text-graphite">
+                    {res.wifiNetwork}
+                    {res.wifiPassword && (
+                      <>
+                        <br />
+                        <span className="text-muted-foreground">Password</span>{" "}
+                        <span className="select-all font-mono text-[0.8125rem]">{res.wifiPassword}</span>
+                      </>
+                    )}
+                  </dd>
+                ) : (
+                  <dd className="mt-1 flex items-center gap-2 text-graphite">
+                    Network and password
+                    <span className={cn(MONO.micro, "border border-dashed border-border px-1.5 py-0.5")}>To confirm</span>
+                  </dd>
+                )}
               </div>
             </dl>
           </Tile>

@@ -13,6 +13,7 @@ import { createCheckoutSession } from "@/lib/stripe/server";
 import { sendSafely } from "@/lib/email/resend";
 import { decisionEmail, inviteEmail } from "@/lib/email/templates";
 import { priceLabel } from "@/lib/membership";
+import { logActivity } from "@/lib/admin/activity";
 
 export interface ActionResult {
   ok: boolean;
@@ -109,6 +110,8 @@ export async function decideApplication(
       status === "waitlisted" ? "Waitlisted — notified." : "Declined — notified.";
   }
 
+  await logActivity(admin, { area: "applications", action: `marked ${status}`, label: application.name, href: `/portal/admin/applications/${id}` });
+
   revalidatePath("/portal/admin/applications");
   revalidatePath(`/portal/admin/applications/${id}`);
   revalidatePath("/portal/admin");
@@ -140,7 +143,7 @@ export async function saveNotes(
  * second click can trigger.
  */
 export async function resendInvite(id: string): Promise<ActionResult> {
-  await requireAdmin();
+  const user = await requireAdmin();
 
   const ref = getAdminDb().collection(COLLECTIONS.applications).doc(id);
   const snap = await ref.get();
@@ -173,6 +176,7 @@ export async function resendInvite(id: string): Promise<ActionResult> {
     if (!sent) return { ok: false, message: "Email failed to send." };
 
     await ref.update({ invitedAt: Timestamp.now() });
+    await logActivity(user, { area: "applications", action: "resent the invitation to", label: application.name, href: `/portal/admin/applications/${id}` });
     revalidatePath(`/portal/admin/applications/${id}`);
     return { ok: true, message: "Fresh invitation sent." };
   } catch (error) {

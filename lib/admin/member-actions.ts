@@ -10,6 +10,7 @@ import { fieldErrors } from "@/lib/validation/schemas";
 import { fromCentral } from "@/lib/content/dates";
 import { ensureLogin } from "@/lib/admin/member-logins";
 import type { ActionResult } from "@/lib/content/types";
+import { logActivity } from "@/lib/admin/activity";
 
 /*
   "ADD A MEMBER" AND EDITING ONE, from /portal/admin/members.
@@ -62,7 +63,7 @@ function refresh() {
 }
 
 export async function saveMember(input: MemberInput): Promise<ActionResult> {
-  await requireAdmin();
+  const user = await requireAdmin();
   const parsed = memberSchema.safeParse(input);
   if (!parsed.success) return { ok: false, fieldErrors: fieldErrors(parsed.error) };
   const { id, year, month, day, ...data } = parsed.data;
@@ -122,6 +123,14 @@ export async function saveMember(input: MemberInput): Promise<ActionResult> {
   // email is corrected, so the person keeps one account.
   const login = await ensureLogin(data.email, data.name, before?.email);
 
+  const STATUS_WORD: Partial<Record<string, string>> = { inactive: "paused", canceled: "canceled", active: "reactivated" };
+  await logActivity(user, {
+    area: "members",
+    action: !before ? "added" : before.status !== status ? (STATUS_WORD[status] ?? `set to ${status}`) : "edited",
+    label: data.name,
+    href: "/portal/admin/members",
+  });
+
   refresh();
   if (!login.ok) {
     return { ok: false, error: `Saved, but their sign-in couldn't be set up: ${login.error}` };
@@ -131,12 +140,13 @@ export async function saveMember(input: MemberInput): Promise<ActionResult> {
 
 /** "Create login" for a member who has none (e.g. one Stripe created before logins existed). */
 export async function createMemberLogin(id: string): Promise<ActionResult> {
-  await requireAdmin();
+  const user = await requireAdmin();
   if (typeof id !== "string" || !id) return { ok: false, error: "Missing member." };
   const doc = await getAdminDb().collection(COLLECTIONS.members).doc(id).get();
   const m = doc.data() as MemberDoc | undefined;
   if (!m) return { ok: false, error: "That member no longer exists." };
   const login = await ensureLogin(m.email, m.name);
+  if (login.ok) await logActivity(user, { area: "members", action: "set up a sign-in for", label: m.name, href: "/portal/admin/members" });
   refresh();
   return login.ok ? { ok: true } : { ok: false, error: login.error };
 }

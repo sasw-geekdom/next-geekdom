@@ -2,7 +2,7 @@ import "server-only";
 
 import { unstable_cache } from "next/cache";
 import type { Timestamp } from "firebase-admin/firestore";
-import { getAdminDb } from "@/lib/firebase/admin";
+import { dataKey, getAdminDb } from "@/lib/firebase/admin";
 import { COLLECTIONS, type FieldNoteDoc } from "@/lib/firebase/collections";
 import { contentSchema, fingerprint } from "@/lib/field-notes/schemas";
 import type { AdminNote, NoteContent, PublishedNote } from "@/lib/field-notes/types";
@@ -119,7 +119,7 @@ const readPublished = unstable_cache(
       .filter((n): n is PublishedNote => n !== null)
       .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
   },
-  ["field-notes:published"],
+  [dataKey("field-notes:published")],
   { tags: [FIELD_NOTES_TAG] },
 );
 

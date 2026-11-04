@@ -2,7 +2,7 @@ import "server-only";
 
 import { unstable_cache } from "next/cache";
 import { Timestamp } from "firebase-admin/firestore";
-import { getAdminDb } from "@/lib/firebase/admin";
+import { dataKey, getAdminDb } from "@/lib/firebase/admin";
 import { COLLECTIONS, type EventDoc } from "@/lib/firebase/collections";
 import { THIS_MONTH } from "@/lib/site";
 import { eventDateLabel } from "@/lib/content/dates";
@@ -93,7 +93,7 @@ const readUpcoming = unstable_cache(
       .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
     return { seeded: !any.empty, events };
   },
-  ["events:upcoming"],
+  [dataKey("events:upcoming")],
   // An hour, as a floor: the list must also change when an event ENDS,
   // which no admin save announces. The homepage regenerates hourly too.
   { tags: [EVENTS_TAG], revalidate: 3600 },

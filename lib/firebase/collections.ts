@@ -17,7 +17,26 @@ export const COLLECTIONS = {
   fieldNotes: "fieldNotes",
   // One doc per hashed email: when its last sign-in link went out.
   authThrottle: "authThrottle",
+  // Who changed what in the admin — see lib/admin/activity.ts.
+  activity: "activity",
 } as const;
+
+/** Doc id in `settings` holding the member portal's editable basics. */
+export const MEMBER_RESOURCES_DOC = "memberResources";
+
+/** One staff change, appended by every admin write (lib/admin/activity.ts). */
+export interface ActivityDoc {
+  at: Timestamp;
+  /** Who did it, as they were signed in at the time. */
+  actor: { email: string; name: string | null };
+  area: "events" | "field-notes" | "portfolio" | "members" | "applications" | "photo-wall" | "member-resources";
+  /** Past tense, lower case: "published", "added", "deleted"… */
+  action: string;
+  /** What it was done to, in words: the note's title, the member's name. */
+  label: string;
+  /** The admin page to look at it, when there is one. */
+  href?: string;
+}
 
 /**
  * One Field Note. The DRAFT is the top-level content; what's LIVE is a

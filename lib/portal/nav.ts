@@ -55,6 +55,8 @@ export const ADMIN_NAV: NavGroup[] = [
       { href: "/portal/admin", label: "Overview", icon: LayoutGrid },
       { href: "/portal/admin/applications", label: "Applications", icon: Inbox },
       { href: "/portal/admin/members", label: "Members", icon: Users },
+      // What members read on FAQ & resources, and the dashboard's Slack tile.
+      { href: "/portal/admin/resources", label: "Member resources", icon: BookOpen },
     ],
   },
   {

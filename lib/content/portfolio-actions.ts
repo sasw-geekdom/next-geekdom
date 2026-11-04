@@ -10,6 +10,7 @@ import { fieldErrors } from "@/lib/validation/schemas";
 import { companyId, PORTFOLIO_TAG, seedPortfolio } from "@/lib/content/portfolio";
 import { LOGO_FILES, LOGO_HEIGHTS } from "@/lib/content/portfolio-options";
 import type { ActionResult } from "@/lib/content/types";
+import { logActivity } from "@/lib/admin/activity";
 import { isBlobLogoUrl, storeLogo, type LogoUploadResult } from "@/lib/content/logo-upload";
 
 /*
@@ -85,7 +86,7 @@ function refresh() {
 const CLEARABLE = ["href", "link", "description", "logo", "logoHeight", "logoMark"] as const;
 
 export async function saveCompany(input: CompanyInput): Promise<ActionResult> {
-  await requireAdmin();
+  const user = await requireAdmin();
   const parsed = companySchema.safeParse(input);
   if (!parsed.success) return { ok: false, fieldErrors: fieldErrors(parsed.error) };
 
@@ -108,6 +109,7 @@ export async function saveCompany(input: CompanyInput): Promise<ActionResult> {
   for (const k of CLEARABLE) if (data[k] === undefined) record[k] = FieldValue.delete();
 
   await col.doc(docId).set(record, { merge: true });
+  await logActivity(user, { area: "portfolio", action: id ? "edited" : "added", label: data.name, href: "/portal/admin/portfolio" });
   refresh();
   return { ok: true, id: docId };
 }
@@ -123,7 +125,7 @@ const orderSchema = z
  * another tab) are skipped rather than recreated as empty records.
  */
 export async function reorderPortfolio(ids: string[]): Promise<ActionResult> {
-  await requireAdmin();
+  const user = await requireAdmin();
   const parsed = orderSchema.safeParse(ids);
   if (!parsed.success || new Set(parsed.data).size !== parsed.data.length) {
     return { ok: false, error: "That order didn't come through. Refresh and try again." };
@@ -135,6 +137,7 @@ export async function reorderPortfolio(ids: string[]): Promise<ActionResult> {
     if (existing.has(id)) batch.update(col.doc(id), { order: i });
   });
   await batch.commit();
+  await logActivity(user, { area: "portfolio", action: "reordered", label: "The Built at Geekdom wall", href: "/portal/admin/portfolio" });
   refresh();
   return { ok: true };
 }
@@ -154,9 +157,12 @@ export async function uploadLogo(form: FormData): Promise<LogoUploadResult> {
 }
 
 export async function deleteCompany(id: string): Promise<ActionResult> {
-  await requireAdmin();
+  const user = await requireAdmin();
   if (typeof id !== "string" || !id) return { ok: false, error: "Missing company." };
-  await getAdminDb().collection(COLLECTIONS.portfolio).doc(id).delete();
+  const ref = getAdminDb().collection(COLLECTIONS.portfolio).doc(id);
+  const name = ((await ref.get()).data()?.name as string | undefined) ?? "A company";
+  await ref.delete();
+  await logActivity(user, { area: "portfolio", action: "removed", label: name, href: "/portal/admin/portfolio" });
   refresh();
   return { ok: true };
 }
@@ -167,7 +173,7 @@ export async function deleteCompany(id: string): Promise<ActionResult> {
  * overwrite a company with itself.
  */
 export async function seedPortfolioFromSite(): Promise<ActionResult> {
-  await requireAdmin();
+  const user = await requireAdmin();
   const col = getAdminDb().collection(COLLECTIONS.portfolio);
   if (!(await col.limit(1).get()).empty) {
     return { ok: false, error: "There are companies here already, so nothing was copied." };
@@ -178,6 +184,7 @@ export async function seedPortfolioFromSite(): Promise<ActionResult> {
     batch.set(col.doc(id), { ...doc, updatedAt: FieldValue.serverTimestamp() });
   }
   await batch.commit();
+  await logActivity(user, { area: "portfolio", action: "copied from the site", label: `${rows.length} companies`, href: "/portal/admin/portfolio" });
   refresh();
   return { ok: true, count: rows.length };
 }

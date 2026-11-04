@@ -11,6 +11,7 @@ import {
 import { getAuth, type Auth } from "firebase-admin/auth";
 import { getFirestore, type Firestore } from "firebase-admin/firestore";
 import { getStorage, type Storage } from "firebase-admin/storage";
+import { env } from "@/lib/env";
 
 /**
  * Firebase Admin, initialized lazily.
@@ -75,14 +76,26 @@ export function getAdminAuth(): Auth {
 }
 
 /**
- * `geekdomdotcom` uses the console's default database, so this resolves to the
- * no-argument form. FIREBASE_DATABASE_ID exists only for a named database.
+ * WHICH DATABASE. The live site uses the console's default database, so this
+ * is null there. Preview deployments can point FIREBASE_DATABASE_ID at a
+ * separate named database ("preview") so staff testing a branch never edit
+ * the live site's data — see "Preview data" in AGENTS.md.
  */
+export const DATABASE_ID = env(process.env.FIREBASE_DATABASE_ID) ?? null;
+
+/** True when this deployment reads and writes a database other than the live one. */
+export const ON_PREVIEW_DATA = DATABASE_ID !== null;
+
+/**
+ * A cache key for data read from Firestore. Unchanged for the default
+ * database (so the live site's cache is untouched); suffixed for a named
+ * one, so a preview's data can never be served from — or into — the live
+ * site's cached reads.
+ */
+export const dataKey = (name: string) => (DATABASE_ID ? `${name}@${DATABASE_ID}` : name);
+
 export function getAdminDb(): Firestore {
-  const databaseId = process.env.FIREBASE_DATABASE_ID;
-  return databaseId
-    ? getFirestore(getAdminApp(), databaseId)
-    : getFirestore(getAdminApp());
+  return DATABASE_ID ? getFirestore(getAdminApp(), DATABASE_ID) : getFirestore(getAdminApp());
 }
 
 export function getAdminStorage(): Storage {

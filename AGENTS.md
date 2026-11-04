@@ -538,6 +538,28 @@ members use personal Gmail, and the hint hid their accounts.
   should loop over the same write + `ensureLogin` as "Add a member", with
   `source: "import"`.
 
+**Member resources are edited in the admin** (`/portal/admin/resources`,
+under Members; `settings/memberResources`, [lib/content/member-resources.ts](lib/content/member-resources.ts)):
+the Slack invite (the dashboard's Slack tile), the Wi-Fi network and
+password, the hours, the resource links and the FAQ on /portal/resources —
+what used to need a developer. Before the first save the portal shows the
+text it shipped with (data/mock/portal.ts), and the first save writes it all
+down, so there is no "copy from the site" step. Every save is a TRANSACTION
+over the one doc: the links and the FAQ are arrays, and two staff saving at
+once would otherwise each write a copy missing the other's change. The
+Wi-Fi password is members-only — both pages that read it check the session
+first. A link with no address lists under "Coming soon"; FAQ "move" swaps
+within its own section.
+
+**Every staff change is in the activity log** ([lib/admin/activity.ts](lib/admin/activity.ts),
+the `activity` collection): who, what, to which thing, when — the
+Overview's "Recent activity" tile and `/portal/admin/activity` (filter by
+area). Call `logActivity(user, …)` AFTER a write succeeds; it never throws,
+so a lost history line never refuses the edit. A new admin write should log
+too. Not every save: a Field Note's draft autosaves every 30s, so drafts log
+when created, published, unpublished, featured or deleted — not per save.
+One `orderBy("at")`, filtered after the read, so no composite index.
+
 **Site content edited in the admin: `events` and `portfolio`**
 ([lib/content/](lib/content/)). The pattern, for anything added next:
 
@@ -641,8 +663,9 @@ read at `/field-notes` (a sideways shelf of covers, newest first) and
 - **Sample notes are review-only** (data/mock/field-notes.ts, six of them, with photos from the library and the /since-2011 wall in public/mock/field-notes/):
   `listForReaders` / `getNoteForReaders` add them on review builds
   (`ON_LIVE_DOMAIN` false), noindex and no JSON-LD. No on-page notice —
-  Jesse briefs the reviewers instead, so the layout reads as it will ship. They are never written to Firestore — the live site and every
-  review build share it, so a published sample would go public — and the
+  Jesse briefs the reviewers instead, so the layout reads as it will ship. They are never written to Firestore — the live site shares its
+  database with every review build that has no preview database of its own
+  (see "Preview data"), so a published sample could go public — and the
   sitemap, llms.txt and JSON-LD read the real-only `listPublished`. Sample
   authors get illustrated avatars, never photos.
 - **Deleting a note straight from Firestore leaves it in the public cache**
@@ -763,6 +786,39 @@ read at `/field-notes` (a sideways shelf of covers, newest first) and
   `requireAdmin()`, and `/preview` is disallowed in robots.
 - **`cn()` gotcha, found here:** tailwind-merge drops a `leading-*` that comes
   BEFORE a `text-*` size. Put line-height after the size.
+
+## Preview data
+
+**A preview can have its own database, and should.** Every deployment used
+to read and write ONE Firestore, so a reviewer publishing a test note on a
+branch preview published it everywhere. `FIREBASE_DATABASE_ID` points a
+deployment at a separate named database ([lib/firebase/admin.ts](lib/firebase/admin.ts));
+set it to `preview` on Vercel's **Preview** environment and previews stop
+touching live data. The live site leaves it unset (the default database).
+
+- **Set-up, once:** create a Firestore database named `preview` in the
+  `geekdomdotcom` project (Firebase console → Firestore → add database), set
+  `FIREBASE_DATABASE_ID=preview` for Preview in Vercel, redeploy, then
+  `npm run preview:seed` ([scripts/seed-preview-data.mjs](scripts/seed-preview-data.mjs)).
+- **The seed copies content, never people:** events, portfolio and settings
+  (the photo-wall manifest, email copy, member resources). Never members,
+  applications or activity — and never `fieldNotes`, because a note's
+  files live under its id in the one Blob store every deployment shares:
+  deleting a copied note in a preview would delete the live note's photos.
+  It only fills EMPTY collections, so running it again changes nothing.
+- **Still shared, by design:** Firebase Auth (one sign-in for every
+  deployment — adding a member in a preview creates a real login, which has
+  no role on the live site without a live `members` record), Vercel Blob,
+  and Firebase Storage. Hence:
+- **The photo-wall sync refuses to run on preview data** — a sync deletes
+  the Blob files its own manifest no longer needs, which on a preview under
+  a changed grade would be the live wall's files.
+- **Cache keys carry the database** (`dataKey()`): unchanged for the
+  default, suffixed for a named one, so a preview's reads can never be
+  served from — or into — the live site's cached data.
+- **Every admin page says which database it's editing** on any copy that
+  isn't the production deployment: "Preview data" (its own) or "Live data"
+  (a preview without one, and local dev — `.env.local` uses the live one).
 
 ## Repo gotchas
 

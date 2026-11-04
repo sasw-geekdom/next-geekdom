@@ -170,12 +170,6 @@ export const MOCK_FIELD_NOTE = {
   href: "#",
 };
 
-/** The member Slack — not set up yet. Channel names are placeholders. */
-export const MOCK_SLACK = {
-  inviteUrl: null as string | null,
-  channels: ["#introductions", "#asks-and-offers", "#events", "#wins", "#jobs"],
-};
-
 export interface FaqItem {
   q: string;
   a: string;

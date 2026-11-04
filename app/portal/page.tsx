@@ -7,7 +7,8 @@ import { getUpcomingEvents } from "@/lib/content/events";
 import { getGalleryImages } from "@/lib/gallery";
 import { eventTimeLabel } from "@/lib/content/dates";
 import { FOUNDED_YEAR, LUMA_CALENDAR_URL, SOCIALS } from "@/lib/site";
-import { MOCK_DIRECTORY, MOCK_FIELD_NOTE, MOCK_SLACK } from "@/data/mock/portal";
+import { MOCK_DIRECTORY, MOCK_FIELD_NOTE } from "@/data/mock/portal";
+import { getMemberResources } from "@/lib/content/member-resources";
 import { ARROW, HEADING, LINK_ARROW, LINK_ARROW_ON_INK, MONO } from "@/components/site/section";
 import { MemberBadge } from "@/components/ui/badge";
 import { Tile } from "@/components/portal/tile";
@@ -44,18 +45,20 @@ function longDate(iso: string | null): string {
     └─────────────────────────────────────────┘
 
   REAL where it can be: the membership is the member's record; the events
-  are the same list the homepage renders. Slack and Field Notes don't exist
-  yet, so those tiles are SAMPLE content (data/mock/portal.ts) and say so.
+  are the same list the homepage renders; the Slack invite is staff-edited
+  (Member resources). The Field Notes tile and New in the Club are still
+  SAMPLE content (data/mock/portal.ts) and say so.
 
   `requireMember()` again, not only in the layout: a layout doesn't re-run on
   client navigation, so each page checks its own session (Next 16 auth guide).
 */
 export default async function PortalHome() {
   const user = await requireMember();
-  const [member, events, wall] = await Promise.all([
+  const [member, events, wall, resources] = await Promise.all([
     getMemberByEmail(user.email),
     getUpcomingEvents(),
     getGalleryImages(), // never throws; [] until the wall is synced
+    getMemberResources(), // never throws; the Slack invite is staff-edited
   ]);
   const archive = wall.slice(0, 5);
   const staff = isAdmin(user);
@@ -72,7 +75,7 @@ export default async function PortalHome() {
       title={first ? `Welcome back, ${first}.` : "Welcome back."}
       notice={
         <>
-          Slack, Field Notes and New in the Club are samples — none exists yet.
+          Field Notes and New in the Club are samples here for now.
         Your membership and this month&rsquo;s events are real.
         </>
       }
@@ -148,8 +151,8 @@ export default async function PortalHome() {
             </p>
           </div>
           <div className="mt-auto pt-6">
-            {MOCK_SLACK.inviteUrl ? (
-              <a href={MOCK_SLACK.inviteUrl} target="_blank" rel="noreferrer noopener" className={LINK_ARROW_ON_INK}>
+            {resources.slackInviteUrl ? (
+              <a href={resources.slackInviteUrl} target="_blank" rel="noreferrer noopener" className={LINK_ARROW_ON_INK}>
                 Open Slack
                 <ArrowUpRight aria-hidden="true" className={ARROW.external} />
               </a>

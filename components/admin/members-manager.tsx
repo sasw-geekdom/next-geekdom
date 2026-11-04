@@ -587,7 +587,9 @@ function MemberList({
               Since {longDate(m.joinedAt)}
             </span>
             <span className="hidden text-sm text-muted-foreground md:block">{loginLabel(m.login)}</span>
-            <span className="row-start-1 justify-self-end md:col-start-4">
+            {/* Column AND row on a phone: pinned to a row only, the grid placed
+                it first and pushed the name into the second column. */}
+            <span className="col-start-2 row-start-1 justify-self-end md:col-start-4">
               <MemberBadge status={m.status} />
             </span>
           </button>

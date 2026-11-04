@@ -12,6 +12,7 @@ import { blobUrlsOf, checklist, contentSchema } from "@/lib/field-notes/schemas"
 import { deleteNoteFiles, gradePhoto, prepareCard, storeCard, sweepNote, type MediaResult } from "@/lib/field-notes/media";
 import { renderCard } from "@/lib/field-notes/og-card";
 import type { NoteContent, NoteImage } from "@/lib/field-notes/types";
+import { logActivity } from "@/lib/admin/activity";
 
 /*
   WRITES FOR FIELD NOTES. Same order as every content action here:
@@ -63,6 +64,7 @@ export async function createNote(): Promise<ActionResult> {
     updatedAt: FieldValue.serverTimestamp(),
   };
   await ref.set(doc);
+  await logActivity(user, { area: "field-notes", action: "started", label: "A new draft", href: `/portal/admin/field-notes/${ref.id}` });
   refresh();
   return { ok: true, id: ref.id };
 }
@@ -109,7 +111,7 @@ async function slugTaken(id: string, slug: string): Promise<boolean> {
 }
 
 export async function publishNote(id: string, content: unknown): Promise<ActionResult> {
-  await requireAdmin();
+  const user = await requireAdmin();
   if (!validId(id)) return { ok: false, error: "Missing note." };
   const parsed = parse(content);
   if (!parsed.ok) return parsed.result;
@@ -150,13 +152,20 @@ export async function publishNote(id: string, content: unknown): Promise<ActionR
 
   // Draft and snapshot are now the same content, so `c` is everything to keep.
   await sweepNote(id, [...blobUrlsOf(c), ogImage]).catch(() => 0);
+  await logActivity(user, {
+    area: "field-notes",
+    action: before.status === "published" ? "published changes to" : "published",
+    label: c.title,
+    href: `/portal/admin/field-notes/${id}`,
+  });
   refresh(id);
   return { ok: true, id };
 }
 
 export async function unpublishNote(id: string): Promise<ActionResult> {
-  await requireAdmin();
+  const user = await requireAdmin();
   if (!validId(id)) return { ok: false, error: "Missing note." };
+  const title = (await getNoteDoc(id))?.title || "Untitled Field Note";
   await col().doc(id).update({
     status: "draft",
     publishedJson: FieldValue.delete(),
@@ -165,6 +174,7 @@ export async function unpublishNote(id: string): Promise<ActionResult> {
     featured: FieldValue.delete(),
     updatedAt: FieldValue.serverTimestamp(),
   });
+  await logActivity(user, { area: "field-notes", action: "unpublished", label: title, href: `/portal/admin/field-notes/${id}` });
   refresh(id);
   return { ok: true, id };
 }
@@ -174,7 +184,7 @@ export async function unpublishNote(id: string): Promise<ActionResult> {
  * every other pin, so there's never more than one.
  */
 export async function setFeatured(id: string, on: boolean): Promise<ActionResult> {
-  await requireAdmin();
+  const user = await requireAdmin();
   if (!validId(id)) return { ok: false, error: "Missing note." };
   const doc = await getNoteDoc(id);
   if (!doc) return { ok: false, error: "Missing note." };
@@ -184,15 +194,18 @@ export async function setFeatured(id: string, on: boolean): Promise<ActionResult
   pinned.docs.forEach((d) => d.id !== id && batch.update(d.ref, { featured: FieldValue.delete() }));
   batch.update(col().doc(id), { featured: on ? true : FieldValue.delete() });
   await batch.commit();
+  await logActivity(user, { area: "field-notes", action: on ? "featured" : "unfeatured", label: doc.title || "Untitled Field Note", href: `/portal/admin/field-notes/${id}` });
   refresh(id);
   return { ok: true, id };
 }
 
 export async function deleteNote(id: string): Promise<ActionResult> {
-  await requireAdmin();
+  const user = await requireAdmin();
   if (!validId(id)) return { ok: false, error: "Missing note." };
+  const title = (await getNoteDoc(id))?.title || "Untitled Field Note";
   await deleteNoteFiles(id).catch(() => 0);
   await col().doc(id).delete();
+  await logActivity(user, { area: "field-notes", action: "deleted", label: title });
   refresh();
   return { ok: true };
 }

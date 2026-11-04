@@ -1,7 +1,7 @@
 import "server-only";
 
 import { unstable_cache } from "next/cache";
-import { getAdminDb } from "@/lib/firebase/admin";
+import { dataKey, getAdminDb } from "@/lib/firebase/admin";
 import { COLLECTIONS, type PortfolioDoc } from "@/lib/firebase/collections";
 import { PORTFOLIO, type PortfolioCompany } from "@/lib/site";
 
@@ -94,7 +94,7 @@ const readPortfolio = unstable_cache(
       companies: all.filter((c) => !c.hidden).map(toPublic),
     };
   },
-  ["portfolio:public"],
+  [dataKey("portfolio:public")],
   { tags: [PORTFOLIO_TAG] },
 );
 
