@@ -312,7 +312,13 @@ same bug.
   picker and Company (required for Team and Enterprise).
 - **Applications are ours again, end to end** (November 2026). Geekdom moved
   off Typeform and Airtable and runs the whole review in the admin. /apply
-  renders [apply-form.tsx](components/forms/apply-form.tsx), which posts to
+  is the heading and ONE red "Start application" button that opens
+  [apply-takeover.tsx](components/forms/apply-takeover.tsx): the whole
+  viewport, one question at a time — the Typeform experience Geekdom
+  liked, on our own form (Enter moves on, Shift+Enter is a new line,
+  letters pick a choice; closing keeps the answers for the visit; the
+  cursor starts on the PICKED choice, or on the group when none is, so
+  Enter never ticks an answer by accident). It posts to
   [/api/apply](app/api/apply/route.ts): saved for initial review, a
   "we have your application" email to the applicant, a "new application"
   email to `APPLICATION_REVIEW_EMAILS` (Monica; falls back to

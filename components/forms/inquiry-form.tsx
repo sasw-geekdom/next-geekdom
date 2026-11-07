@@ -131,7 +131,7 @@ function InquiryForm({ kind }: { kind: InquiryKind }) {
         </>
       )}
 
-      {/* Honeypot — see components/forms/apply-form.tsx. */}
+      {/* Honeypot — see components/forms/apply-takeover.tsx. */}
       <div aria-hidden="true" className="absolute left-[-9999px] h-px w-px overflow-hidden">
         <label htmlFor={id("company_url")}>Company URL</label>
         <input id={id("company_url")} name="company_url" type="text" tabIndex={-1} autoComplete="off" />

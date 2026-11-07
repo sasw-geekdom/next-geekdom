@@ -6,7 +6,7 @@ import {
   Section,
 } from "@/components/site/section";
 import { cn } from "@/lib/utils";
-import { ApplyForm } from "@/components/forms/apply-form";
+import { ApplyTakeover } from "@/components/forms/apply-takeover";
 import { PLAN_IDS, type PlanId } from "@/lib/membership";
 import { Editorial } from "@/components/site/editorial";
 
@@ -24,11 +24,10 @@ export default async function ApplyPage(props: PageProps<"/apply">) {
   const initialPlan: PlanId = PLAN_IDS.includes(plan as PlanId) ? (plan as PlanId) : "solo";
   return (
     /*
-      NO MARK BESIDE THE FORM. /account carries a mark in a side rail (the
-      404 and the sign-in did too, and were rebuilt without it); this page
-      doesn't, because a fourteen-field form
-      keeps somebody here for ten minutes and wants the whole width and
-      nothing else in view.
+      THE HEADING, THEN ONE BUTTON. Geekdom liked their Typeform's
+      experience: a red "Start application" on a quiet page, and the
+      application taking over the whole screen, one question at a time.
+      ApplyTakeover is that, on our own form and our own workflow.
     */
     <Section tone="bone">
       {/*
@@ -39,7 +38,7 @@ export default async function ApplyPage(props: PageProps<"/apply">) {
         Geekdom asked not to give), "about five minutes" (the doc and /club
         say ten), and the price, which now lives only on /club.
       */}
-      <header className="mb-12 max-w-3xl">
+      <header className="max-w-3xl">
         <Eyebrow>Apply</Eyebrow>
         <h1 className={cn("mt-4", HEADING.heading, "text-graphite")}>
           Apply to <span className="text-clay">Geekdom.</span>
@@ -55,14 +54,14 @@ export default async function ApplyPage(props: PageProps<"/apply">) {
       </header>
 
       {/*
-        OUR OWN FORM AGAIN (November 2026): Geekdom moved off Typeform and
-        Airtable to run the whole review in the admin. It posts to
-        /api/apply, which saves the application for initial review and sends
-        the "we have your application" email. Capped at the prose measure —
-        a ten-minute form wants a comfortable column, not the full width.
+        OUR OWN FORM (November 2026): Geekdom moved off Typeform and Airtable
+        to run the whole review in the admin. It posts to /api/apply, which
+        saves the application for initial review and sends the "we have your
+        application" email. ?plan= (from /club's plan rows) is preselected.
       */}
-      <div className="max-w-3xl">
-        <ApplyForm initialPlan={initialPlan} />
+      <div className="mt-10 flex flex-col items-start gap-3">
+        <ApplyTakeover initialPlan={initialPlan} />
+        <p className="text-sm text-muted-foreground">About ten minutes, one question at a time.</p>
       </div>
     </Section>
   );
