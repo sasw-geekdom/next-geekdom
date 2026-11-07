@@ -1,7 +1,9 @@
 import type {
   ApplicationStatus,
+  MemberProfile,
   MemberStatus,
 } from "@/lib/firebase/collections";
+import type { PlanId } from "@/lib/membership";
 
 /**
  * Plain, client-safe shapes.
@@ -16,22 +18,36 @@ export interface Application {
   id: string;
   name: string;
   email: string;
+  firstName?: string;
+  lastName?: string;
   phone?: string;
+  city?: string;
   company?: string;
-  role?: string;
   website?: string;
-  linkedin?: string;
-  audience: string;
-  stage: string;
+  heardAbout?: string;
+  heardAboutOther?: string;
+  brag?: string;
   building: string;
-  needs: string;
-  referredBy?: string;
+  shipped?: string;
+  links?: string;
+  describes: string[];
+  describesOther?: string;
+  whyGeekdom?: string;
+  giveBack?: string;
+  excited?: string;
+  otherCommunities?: string;
+  anythingElse?: string;
   formerMember: boolean;
+  source: "apply" | "airtable";
+  plan: PlanId;
   status: ApplicationStatus;
   notes?: string;
   reviewedBy: string | null;
   reviewedAt: string | null;
+  /** Every step taken, oldest first. */
+  decisions: { stage: string; outcome: string; by: string; at: string; note?: string }[];
   invitedAt: string | null;
+  paidAt: string | null;
   createdAt: string;
 }
 
@@ -47,9 +63,16 @@ export interface Member {
   cancelAtPeriodEnd: boolean;
   joinedAt: string;
   updatedAt: string;
-  source: "stripe" | "admin" | "import";
+  source: "stripe" | "admin" | "import" | "application" | "team";
   tags: string[];
   notes: string;
+  plan: PlanId;
+  company: string;
+  /** Set on a teammate: the owner's member id. */
+  teamOwnerId: string | null;
+  profile: MemberProfile | null;
+  onboarding: { done: string[]; dismissed: boolean; firstSeenAt: string | null };
+  portalInvitedAt: string | null;
 }
 
 export interface DashboardStats {

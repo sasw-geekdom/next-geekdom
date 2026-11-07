@@ -405,45 +405,6 @@ p {
   into a clean instant swap instead of a flicker.
 */
 /*
-  THE TYPEFORM POPUP (/apply's "Start application"). Typeform draws its
-  overlay frame with rounded corners; this is our page, and Geekdom's rule is
-  "No rounded corners… 90 degrees." Everything INSIDE the frame is styled in
-  Geekdom's Typeform account. `!important` because Typeform's popup.css loads
-  after ours.
-*/
-.tf-v1-popup .tf-v1-iframe-wrapper,
-.tf-v1-popup iframe {
-  border-radius: 0 !important;
-}
-
-/*
-  FULL PAGE, AT GEEKDOM'S REQUEST: "when the application starts they want
-  the Typeform full page." Their live embed is now configured the same way
-  in Typeform. So on every screen the popup fills the viewport, edge to edge
-  — it was a centered 880x680 window for a while, which read as less of a
-  takeover on a laptop; the client asked for the takeover.
-
-  THE CLOSE BUTTON MOVES INSIDE. Typeform parks its × 34px ABOVE the frame
-  in white, which works with a margin of dimmed page around the window and
-  vanishes (off-screen, white on white) once the frame is the whole page.
-  Inside the top-right corner in Graphite, the placement Typeform itself
-  uses on phones.
-*/
-.tf-v1-popup .tf-v1-iframe-wrapper {
-  width: 100vw !important;
-  height: 100svh !important;
-}
-/* `:root` for specificity: Typeform's popup.css sets the × to white with
-   !important at desktop widths and loads after this file, so an equal
-   selector loses the tie. */
-:root .tf-v1-popup .tf-v1-close {
-  top: 14px !important;
-  right: 16px !important;
-  z-index: 1;
-  color: var(--graphite) !important;
-}
-
-/*
   THE SOFT SCROLL-IN. An element rises 24px and fades in as it enters the
   viewport, driven by its own scroll position rather than a timer — so it
   moves exactly as fast as the reader scrolls and never replays.
@@ -581,6 +542,39 @@ p {
 }
 @media (prefers-reduced-motion: reduce) {
   .lightbox {
+    transition: none;
+  }
+}
+
+/*
+  THE BRANDED CONFIRM (components/ui/confirm-dialog.tsx): fades and settles
+  in, the drawer's technique — @starting-style for the entrance,
+  allow-discrete so the exit plays; without them it simply appears.
+*/
+.confirm-dialog {
+  opacity: 0;
+  translate: 0 8px;
+  transition:
+    opacity 180ms ease-out,
+    translate 180ms ease-out,
+    overlay 180ms allow-discrete,
+    display 180ms allow-discrete;
+}
+.confirm-dialog[open] {
+  opacity: 1;
+  translate: 0 0;
+}
+@starting-style {
+  .confirm-dialog[open] {
+    opacity: 0;
+    translate: 0 8px;
+  }
+}
+.confirm-dialog::backdrop {
+  background: rgb(27 27 27 / 0.45);
+}
+@media (prefers-reduced-motion: reduce) {
+  .confirm-dialog {
     transition: none;
   }
 }

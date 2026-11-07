@@ -3,6 +3,8 @@ import "server-only";
 import Stripe from "stripe";
 import { SITE_URL } from "@/lib/site";
 import type { MemberStatus } from "@/lib/firebase/collections";
+import type { PlanId } from "@/lib/membership";
+import { env } from "@/lib/env";
 
 /**
  * Stripe client, constructed lazily.
@@ -34,13 +36,26 @@ export function getStripe(): Stripe {
   return client;
 }
 
-/** The single recurring price backing the one membership. */
-export function membershipPriceId(): string {
-  const id = process.env.STRIPE_MEMBERSHIP_PRICE_ID;
+/**
+ * THE RECURRING PRICE FOR A PLAN — one Stripe price per paid plan.
+ * Solo falls back to STRIPE_MEMBERSHIP_PRICE_ID, the price from before there
+ * were plans. Enterprise has none: its terms are agreed off the site.
+ */
+function priceIdFor(plan: PlanId): string | undefined {
+  if (plan === "solo") return env(process.env.STRIPE_PRICE_SOLO) ?? env(process.env.STRIPE_MEMBERSHIP_PRICE_ID);
+  if (plan === "team") return env(process.env.STRIPE_PRICE_TEAM);
+  return undefined;
+}
+
+/** Can this plan take payment yet? (Stripe key + the plan's price both set.) */
+export function canCheckout(plan: PlanId): boolean {
+  return Boolean(env(process.env.STRIPE_SECRET_KEY) && priceIdFor(plan));
+}
+
+function membershipPriceId(plan: PlanId): string {
+  const id = priceIdFor(plan);
   if (!id) {
-    throw new Error(
-      "STRIPE_MEMBERSHIP_PRICE_ID is not set — create the recurring price in Stripe and add it to the environment.",
-    );
+    throw new Error(`No Stripe price for the ${plan} plan — set STRIPE_PRICE_${plan.toUpperCase()}.`);
   }
   return id;
 }
@@ -115,16 +130,17 @@ export async function createCheckoutSession(opts: {
   email: string;
   name?: string;
   applicationId?: string;
+  plan: PlanId;
 }): Promise<Stripe.Checkout.Session> {
   const customer = await getOrCreateCustomer(opts.email, opts.name);
 
   return getStripe().checkout.sessions.create({
     mode: "subscription",
     customer: customer.id,
-    line_items: [{ price: membershipPriceId(), quantity: 1 }],
+    line_items: [{ price: membershipPriceId(opts.plan), quantity: 1 }],
     // Stripe fills {CHECKOUT_SESSION_ID} in on redirect.
     success_url: `${SITE_URL}/welcome?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${SITE_URL}/membership`,
+    cancel_url: `${SITE_URL}/club`,
     allow_promotion_codes: true,
     billing_address_collection: "auto",
     // Duplicated onto the subscription because `customer.subscription.updated`
@@ -133,11 +149,13 @@ export async function createCheckoutSession(opts: {
       metadata: {
         applicationId: opts.applicationId ?? "",
         name: opts.name ?? "",
+        plan: opts.plan,
       },
     },
     metadata: {
       applicationId: opts.applicationId ?? "",
       name: opts.name ?? "",
+      plan: opts.plan,
     },
   });
 }

@@ -2,18 +2,14 @@ import { NextResponse } from "next/server";
 import { isBot } from "@/lib/botid";
 import { Timestamp } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
-import { COLLECTIONS, type ApplicationDoc } from "@/lib/firebase/collections";
+import { COLLECTIONS, normalizeApplicationStatus, type ApplicationDoc } from "@/lib/firebase/collections";
 import {
   applicationSchema,
   fieldErrors,
   stripUndefined,
 } from "@/lib/validation/schemas";
-import { sendSafely, TEAM_NOTIFY_TO } from "@/lib/email/resend";
-import {
-  applicationReceivedEmail,
-  teamNotifyEmail,
-} from "@/lib/email/templates";
-import { SITE_URL } from "@/lib/site";
+import { INITIAL_REVIEW_TO, sendSafely } from "@/lib/email/resend";
+import { applicationReceivedEmail, newApplicationEmail } from "@/lib/email/application-templates";
 import { IS_PREVIEW } from "@/lib/preview";
 
 /** Window in which a repeat submission from the same email is treated as a dupe. */
@@ -76,26 +72,38 @@ export async function POST(request: Request) {
     // second click would otherwise put the same person in the queue twice, and
     // staff would read the same application twice.
     const since = Timestamp.fromMillis(Date.now() - DUPLICATE_WINDOW_MS);
-    const existing = await getAdminDb()
-      .collection(COLLECTIONS.applications)
-      .where("email", "==", input.email)
-      .where("createdAt", ">=", since)
-      .limit(1)
-      .get();
+    // Every earlier application from this address: for the double-submit
+    // guard, and to see whether this person was banned. One equality filter,
+    // so no composite index.
+    const earlier = (
+      await getAdminDb().collection(COLLECTIONS.applications).where("email", "==", input.email).get()
+    ).docs.map((d) => d.data() as ApplicationDoc);
 
-    if (!existing.empty) {
+    if (earlier.some((a) => a.createdAt.toMillis() >= since.toMillis())) {
       // Deliberately a success: from the applicant's point of view their
       // application is in, which is true. Re-sending the confirmation would
       // just double the mail.
       return NextResponse.json({ ok: true, duplicate: true });
     }
 
+    /*
+      A BANNED PERSON APPLYING AGAIN goes straight to Banned, and nothing
+      tells them so: they get the same "we have your application" as anyone,
+      and staff aren't notified. Staff can still find and reopen it.
+    */
+    const banned = earlier.some((a) => normalizeApplicationStatus(a.status) === "banned");
+
     const doc = stripUndefined<Partial<ApplicationDoc>>({
       ...input,
-      status: "new",
+      source: "apply",
+      status: banned ? "banned" : "initial_review",
       reviewedBy: null,
       reviewedAt: null,
+      decisions: banned
+        ? [{ stage: "staff", outcome: "banned", by: "Automatically — this email was banned before", at: Timestamp.now() }]
+        : [],
       invitedAt: null,
+      paidAt: null,
       createdAt: Timestamp.now(),
     });
 
@@ -104,20 +112,17 @@ export async function POST(request: Request) {
     // Email is best-effort — `sendSafely` never throws. The application is
     // already saved, and a mail outage must not make the applicant think the
     // submission failed and try again.
-    const confirmation = applicationReceivedEmail({
-      name: input.name,
-      email: input.email,
-    });
-    const notify = teamNotifyEmail({
+    const confirmation = applicationReceivedEmail({ name: input.name, plan: input.plan });
+    const notify = newApplicationEmail({
+      id: ref.id,
       name: input.name,
       email: input.email,
       company: input.company,
-      audience: input.audience,
-      stage: input.stage,
+      plan: input.plan,
+      city: input.city,
+      describes: input.describes,
+      brag: input.brag,
       building: input.building,
-      needs: input.needs,
-      formerMember: input.formerMember,
-      adminUrl: `${SITE_URL}/admin/applications/${ref.id}`,
     });
 
     await Promise.all([
@@ -125,12 +130,14 @@ export async function POST(request: Request) {
         to: input.email,
         subject: confirmation.subject,
         html: confirmation.html,
+        text: confirmation.text,
       }),
-      TEAM_NOTIFY_TO.length
+      INITIAL_REVIEW_TO.length && !banned
         ? sendSafely({
-            to: TEAM_NOTIFY_TO,
+            to: INITIAL_REVIEW_TO,
             subject: notify.subject,
             html: notify.html,
+            text: notify.text,
             // Replying to the notification reaches the applicant directly,
             // which is what staff instinctively try to do.
             replyTo: input.email,

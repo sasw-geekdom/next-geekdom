@@ -7,7 +7,7 @@ import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { syncGallery } from "@/lib/admin/gallery-actions";
 import type { SyncResult } from "@/lib/gallery-sync";
-import { FIGURE, MONO } from "@/components/site/section";
+import { FIGURE } from "@/components/site/section";
 import { cn } from "@/lib/utils";
 
 /**
@@ -96,7 +96,7 @@ export function GalleryManager({
       <ol className="list-decimal space-y-1 pl-5 text-sm text-muted-foreground marker:text-rule">
         <li>
           Upload originals to the{" "}
-          <code className={cn(MONO.label, "normal-case tracking-normal text-graphite")}>
+          <code className={"font-mono text-[13px] text-graphite"}>
             since-2011/
           </code>{" "}
           folder in Firebase Storage (JPG, PNG, WebP, or HEIC).

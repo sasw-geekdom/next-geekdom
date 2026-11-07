@@ -7,17 +7,21 @@ import { MONO } from "@/components/site/section";
   or Graphite (`ink`) for the one tile that should read as a different kind
   of thing, the way the Studio panel does on the homepage. A mono label on
   top and an optional action at the top right, so every tile scans the same.
+  `plainLabel` (the admin only) sets the label in sentence-case Rubik — the
+  admin's workspace convention; the member portal keeps the mono label.
 */
 export function Tile({
   label,
   action,
   ink = false,
+  plainLabel = false,
   className,
   children,
 }: {
   label: string;
   action?: React.ReactNode;
   ink?: boolean;
+  plainLabel?: boolean;
   className?: string;
   children: React.ReactNode;
 }) {
@@ -30,7 +34,7 @@ export function Tile({
       )}
     >
       <div className="flex items-center justify-between gap-4">
-        <h2 className={cn(MONO.label, ink ? "text-bone/70" : "text-muted-foreground")}>{label}</h2>
+        <h2 className={cn(plainLabel ? "text-[13px] font-medium" : MONO.label, ink ? "text-bone/70" : "text-muted-foreground")}>{label}</h2>
         {action}
       </div>
       <div className="mt-5 flex flex-1 flex-col">{children}</div>

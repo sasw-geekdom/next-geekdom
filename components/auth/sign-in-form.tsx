@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import {
   isSignInWithEmailLink,
   signInWithEmailLink,
@@ -81,7 +81,6 @@ function explain(e: unknown, fallback: string): string {
 type Pending = "link" | "google" | "finishing" | null;
 
 export function SignInForm() {
-  const router = useRouter();
   const params = useSearchParams();
 
   /**
@@ -120,10 +119,18 @@ export function SignInForm() {
         throw new Error(body.error ?? "Sign-in failed.");
       }
 
-      router.replace(from);
-      router.refresh();
+      /*
+        A FULL PAGE LOAD, not router.replace + router.refresh. Those two ran
+        at once, and the refresh re-requested /sign-in — which, with the new
+        cookie, answers with a redirect — so two client navigations raced and
+        the router could be left waiting ("stuck rendering" after sign-in).
+        Right after the login cookie changes, a hard load is the reliable
+        way in: one request, the new session, no stale router cache.
+      */
+      setPending("finishing");
+      window.location.assign(from);
     },
-    [from, router],
+    [from],
   );
 
   const finishLink = React.useCallback(

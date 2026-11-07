@@ -1,7 +1,14 @@
 import { requireMember } from "@/lib/auth/session";
 import { getMemberByEmail } from "@/lib/admin/queries";
-import { priceLabel } from "@/lib/membership";
+import { formatPrice, hasTeam, planOf } from "@/lib/membership";
+import { getTeam } from "@/lib/team";
+import { getAdminDb } from "@/lib/firebase/admin";
+import { COLLECTIONS, type MemberDoc } from "@/lib/firebase/collections";
+import { TeamCard } from "@/components/portal/team-card";
+import { addMyTeammate, removeMyTeammate } from "@/lib/portal/team-actions";
 import { MOCK_BILLING, MOCK_MEMBER_CARD, MOCK_MY_PROFILE } from "@/data/mock/portal";
+import { saveMyProfile } from "@/lib/portal/profile-actions";
+import type { Audience } from "@/lib/membership";
 import { HEADING, LINK, MONO } from "@/components/site/section";
 import { PortalPage } from "@/components/portal/portal-page";
 import { ProfileCard } from "@/components/portal/profile-card";
@@ -31,22 +38,26 @@ function longDate(iso: string | null): string | null {
 }
 
 /*
-  PROFILE AND BILLING, ON ONE SCREEN — next-angels' layout.
+  YOUR PROFILE — what other members see first, your membership beside it.
 
-    ┌──────────────────┬──────────────────────────────┐
-    │ Membership card  │ Billing                      │
-    ├──────────────────┤  plan · next payment · card  │
-    │ Directory profile│  Manage billing              │
-    │ (card) [Edit] ───┼──▶ slide-out form            │
-    │                  │  Payment history (inside)    │
-    └──────────────────┴──────────────────────────────┘
+    ┌──────────────────────────────┬──────────────────────┐
+    │ Directory profile   [Edit]   │ ▓ Club · Solo        │  Graphite band:
+    │  portrait · name · role      │ ▓ Active · since …   │  plan, status
+    │  headline · ask me about     ├──────────────────────┤
+    │  "Complete your profile…"    │ Price · Next payment │  then billing,
+    │  listed / links              │ Card  [Manage billing]│ one source of
+    ├──────────────────────────────┤ Payment history      │  dates
+    │ Your team (owners)           │                      │
+    └──────────────────────────────┴──────────────────────┘
 
-  It was three stacked sections with a ten-field form inline, and a member
-  scrolled the length of the form to reach billing. Now the form opens in
-  the slide-out from the profile card, and the card is its own preview.
+  It was a Graphite membership card AND a billing section that each had the
+  plan and a date — and disagreed ("Renews —" beside "Next payment Nov
+  23"). One panel now, and the profile — the part members actually work on
+  — takes the wide column. On a phone the profile comes first.
 
   Billing is real when the member has a Stripe customer and Stripe is
-  connected; otherwise SAMPLE data, labeled. Staff see it as a preview.
+  connected; until then it's SAMPLE data, said inside the billing panel
+  (not as a page banner). Staff see the page as a labeled preview.
 */
 export default async function ProfilePage(props: PageProps<"/portal/profile">) {
   const user = await requireMember();
@@ -55,6 +66,21 @@ export default async function ProfilePage(props: PageProps<"/portal/profile">) {
   // The member's own card, or — for a team account — a SAMPLE member's,
   // so staff can review what members see (data/mock/portal.ts).
   const card = member ?? MOCK_MEMBER_CARD;
+  const plan = planOf(member?.plan);
+  // Their plan's monthly figure, from PLANS — never typed.
+  const amount = plan.priceCents === null ? "" : formatPrice(plan.priceCents);
+  const priceText = plan.priceCents === null ? "Terms agreed with Geekdom" : `${amount}/month`;
+
+  // An OWNER of a Team or Enterprise membership manages its people here;
+  // a TEAMMATE sees whose membership they're on, and no billing.
+  const team = member && !member.teamOwnerId && hasTeam(member.plan) ? await getTeam(member.id) : null;
+  const teamOwner = member?.teamOwnerId
+    ? ((await getAdminDb().collection(COLLECTIONS.members).doc(member.teamOwnerId).get()).data() as MemberDoc | undefined)
+    : undefined;
+  const onTeamOf = teamOwner ? teamOwner.company || `${teamOwner.name}'s team` : null;
+
+  const nextPayment = longDate(card.currentPeriodEnd ?? MOCK_BILLING.nextPayment);
+  const sampleBilling = !member?.stripeSubscriptionId;
 
   return (
     <PortalPage
@@ -62,109 +88,133 @@ export default async function ProfilePage(props: PageProps<"/portal/profile">) {
       title="Your profile."
       notice={
         member
-          ? "Profile edits aren't stored yet, and billing is a sample until you're on Stripe."
-          : "You're on the Geekdom team — no membership or billing on this account. The membership card and billing show a preview of what members see."
+          ? undefined
+          : "You're on the Geekdom team — no membership or billing on this account. The membership and billing show a preview of what members see."
       }
     >
-      <div className="grid gap-4 lg:grid-cols-5">
-        {/* ── Left: membership + directory profile ─────────────────────── */}
-        <div className="flex flex-col gap-4 lg:col-span-2">
-          {/*
-            THE MEMBERSHIP CARD — join date, renewal, status. A member sees
-            their own. A team account has no membership (and often no display
-            name), so staff see the card with SAMPLE member data, labeled as a
-            preview — that's how the Geekdom team reviews what members see.
-          */}
-          <section className="border border-graphite bg-graphite p-6 text-bone sm:p-7">
-            <div className="flex items-start justify-between gap-4">
-              <p className={cn(MONO.label, "text-bone/70")}>Geekdom Club · Member</p>
-              {/* Inside the card, not above it: a label above pushed the card
-                  down out of line with the billing section beside it. */}
-              {!member && (
-                <span className={cn(MONO.micro, "shrink-0 border border-bone/30 px-1.5 py-0.5 text-bone/80")}>
-                  Preview
-                </span>
-              )}
-            </div>
-            <p className={cn(HEADING.subhead, "mt-4 text-bone")}>{card.name}</p>
-            <p className="mt-1 text-sm text-bone/70">{card.email}</p>
-            <dl className="mt-6 grid grid-cols-2 gap-4 border-t border-bone/15 pt-5 text-sm">
-              <div>
-                <dt className={cn(MONO.label, "text-bone/60")}>Member since</dt>
-                <dd className="mt-1 text-bone">{longDate(card.joinedAt)}</dd>
-              </div>
-              <div>
-                <dt className={cn(MONO.label, "text-bone/60")}>{card.cancelAtPeriodEnd ? "Ends" : "Renews"}</dt>
-                <dd className="mt-1 text-bone">{longDate(card.currentPeriodEnd) ?? "—"}</dd>
-              </div>
-              <div className="col-span-2">
-                <dt className={cn(MONO.label, "text-bone/60")}>Status</dt>
-                {/* Text, not the status pill: its admin colors don't read on Graphite. */}
-                <dd className="mt-1 text-bone">{STATUS_LABEL[card.status]}</dd>
-              </div>
-            </dl>
-          </section>
+      <div className="grid items-start gap-4 lg:grid-cols-5">
+        {/* ── The profile: how other members see you ────────────────────── */}
+        <div className="flex flex-col gap-4 lg:col-span-3">
+          {/* A member's own stored profile; staff see the sample as a preview. */}
+          <ProfileCard
+            initial={
+              member
+                ? {
+                    name: member.name,
+                    headline: member.profile?.headline ?? "",
+                    role: member.profile?.role ?? "",
+                    company: member.profile?.company || member.company || "",
+                    audience: (member.profile?.audience || "Founder") as Audience,
+                    askMeAbout: member.profile?.askMeAbout ?? [],
+                    lookingFor: member.profile?.lookingFor ?? "",
+                    bio: member.profile?.bio ?? "",
+                    website: member.profile?.website ?? "",
+                    linkedin: member.profile?.linkedin ?? "",
+                    listed: member.profile?.listed !== false,
+                  }
+                : { ...MOCK_MY_PROFILE, name: user.name ?? "" }
+            }
+            save={member ? saveMyProfile : undefined}
+          />
 
-          <ProfileCard initial={{ ...MOCK_MY_PROFILE, name: member?.name ?? user.name ?? "" }} />
+          {team && (
+            <TeamCard
+              team={{ ownerName: team.ownerName, company: team.company, seats: team.seats, teammates: team.teammates }}
+              add={addMyTeammate}
+              remove={removeMyTeammate}
+            />
+          )}
         </div>
 
-        {/* ── Right: billing, history inside ───────────────────────────── */}
-        <section id="billing" className="scroll-mt-24 border border-border bg-bone-light p-6 sm:p-7 lg:col-span-3">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <h2 className={cn(MONO.label, "text-muted-foreground")}>Billing</h2>
-            {/* The in-app billing drawer (a mock until the Stripe keys are in). */}
-            <ManageBillingButton
-              mock={{
-                price: priceLabel() ?? "",
-                amount: priceLabel()?.split("/")[0] ?? "",
-                nextPayment: longDate(card.currentPeriodEnd ?? MOCK_BILLING.nextPayment) ?? "",
-                card: MOCK_BILLING.card,
-                invoices: MOCK_BILLING.invoices,
-              }}
-            />
-          </div>
-          {billing === "error" && (
-            <p role="alert" className="mt-4 text-sm text-geekdom-red">
-              Couldn&rsquo;t open billing just now. Try again in a minute.
+        {/* ── Membership and billing, one panel ─────────────────────────── */}
+        <section id="billing" className="scroll-mt-24 border border-border bg-bone-light lg:col-span-2">
+          {/* The membership band — what was the Graphite card, without repeating your name. */}
+          <div className="bg-graphite px-6 py-5 text-bone sm:px-7">
+            <div className="flex items-start justify-between gap-4">
+              <p className={cn(MONO.label, "text-bone/70")}>Geekdom Club · {member ? plan.name : "Member"}</p>
+              {!member && <span className={cn(MONO.micro, "shrink-0 border border-bone/30 px-1.5 py-0.5 text-bone/80")}>Preview</span>}
+            </div>
+            <p className={cn(HEADING.subhead, "mt-3 text-bone")}>{STATUS_LABEL[card.status]}</p>
+            <p className="mt-1 text-sm text-bone/70">
+              Member since {longDate(card.joinedAt)}
+              {onTeamOf ? ` · on ${onTeamOf}'s membership` : member?.company ? ` · ${member.company}` : ""}
             </p>
-          )}
+          </div>
 
-          <dl className="mt-6 grid gap-px border border-border bg-border sm:grid-cols-3">
-            <div className="bg-bone p-5">
-              <dt className={cn(MONO.label, "text-muted-foreground")}>Plan</dt>
-              <dd className="mt-2 text-graphite">Club membership</dd>
-              <dd className="tabular-nums text-sm text-muted-foreground">{priceLabel()}</dd>
-            </div>
-            <div className="bg-bone p-5">
-              <dt className={cn(MONO.label, "text-muted-foreground")}>Next payment</dt>
-              <dd className="mt-2 tabular-nums text-graphite">
-                {longDate(card.currentPeriodEnd ?? MOCK_BILLING.nextPayment)}
-              </dd>
-              <dd className="text-sm text-muted-foreground">Billed monthly</dd>
-            </div>
-            <div className="bg-bone p-5">
-              <dt className={cn(MONO.label, "text-muted-foreground")}>Card</dt>
-              <dd className="mt-2 tabular-nums text-graphite">
-                {MOCK_BILLING.card.brand} •••• {MOCK_BILLING.card.last4}
-              </dd>
-              <dd className="tabular-nums text-sm text-muted-foreground">Expires {MOCK_BILLING.card.exp}</dd>
-            </div>
-          </dl>
-          <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-            Update your card, download receipts and invoices, or cancel — all from
-            &ldquo;Manage billing.&rdquo; Questions? <a href={`mailto:${CLUB_EMAIL}`} className={LINK}>{CLUB_EMAIL}</a>.
-          </p>
+          <div className="p-6 sm:p-7">
+            {onTeamOf ? (
+              /* A TEAMMATE pays nothing and sees no billing: the owner holds it. */
+              <>
+                <h2 className={cn(MONO.label, "text-muted-foreground")}>Billing</h2>
+                <p className="mt-3 leading-relaxed text-graphite">
+                  Your membership is part of {onTeamOf}&rsquo;s {plan.name} plan, and {teamOwner?.name} handles the billing.
+                </p>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                  Questions? <a href={`mailto:${CLUB_EMAIL}`} className={LINK}>{CLUB_EMAIL}</a>.
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center justify-between gap-4">
+                  <h2 className={cn(MONO.label, "text-muted-foreground")}>Billing</h2>
+                  {/* The in-app billing drawer (a mock until the Stripe keys are in). */}
+                  <ManageBillingButton
+                    mock={{
+                      price: priceText,
+                      amount,
+                      nextPayment: nextPayment ?? "",
+                      card: MOCK_BILLING.card,
+                      invoices: MOCK_BILLING.invoices,
+                    }}
+                  />
+                </div>
+                {billing === "error" && (
+                  <p role="alert" className="mt-4 text-sm text-geekdom-red">
+                    Couldn&rsquo;t open billing just now. Try again in a minute.
+                  </p>
+                )}
 
-          <h3 className={cn(MONO.label, "mt-8 text-muted-foreground")}>Payment history</h3>
-          <ul className="mt-3 border-b border-border">
-            {MOCK_BILLING.history.map((p) => (
-              <li key={p.date} className="grid grid-cols-[1fr_auto_auto] items-center gap-6 border-t border-border py-3">
-                <span className="tabular-nums text-graphite">{longDate(p.date)}</span>
-                <span className="tabular-nums text-muted-foreground">{priceLabel()?.split("/")[0]}</span>
-                <span className={cn(MONO.label, "text-muted-foreground")}>{p.status}</span>
-              </li>
-            ))}
-          </ul>
+                <dl className="mt-5 grid grid-cols-[7.5rem_minmax(0,1fr)] gap-x-4 gap-y-3 text-sm">
+                  <dt className="text-muted-foreground">Plan</dt>
+                  <dd className="tabular-nums text-graphite">
+                    {plan.name} · {priceText}
+                  </dd>
+                  <dt className="text-muted-foreground">{card.cancelAtPeriodEnd ? "Ends" : "Next payment"}</dt>
+                  <dd className="tabular-nums text-graphite">{nextPayment ?? "—"}</dd>
+                  <dt className="text-muted-foreground">Card</dt>
+                  <dd className="tabular-nums text-graphite">
+                    {MOCK_BILLING.card.brand} •••• {MOCK_BILLING.card.last4}
+                    <span className="text-muted-foreground"> · expires {MOCK_BILLING.card.exp}</span>
+                  </dd>
+                </dl>
+
+                <h3 className={cn(MONO.label, "mt-7 text-muted-foreground")}>Payment history</h3>
+                <ul className="mt-2">
+                  {MOCK_BILLING.history.map((h) => (
+                    <li key={h.date} className="flex items-center justify-between gap-4 border-t border-border py-2.5 text-sm first:border-t-0">
+                      <span className="tabular-nums text-graphite">{longDate(h.date)}</span>
+                      <span className="tabular-nums text-muted-foreground">
+                        {amount} · {h.status.toLowerCase()}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+
+                <p className="mt-5 border-t border-border pt-4 text-sm leading-relaxed text-muted-foreground">
+                  Update your card, get receipts, or cancel from Manage billing. Questions?{" "}
+                  <a href={`mailto:${CLUB_EMAIL}`} className={LINK}>
+                    {CLUB_EMAIL}
+                  </a>
+                  .
+                </p>
+                {sampleBilling && (
+                  <p className="mt-3 border border-dashed border-border px-3 py-2 text-[13px] text-muted-foreground">
+                    Sample billing — your real plan, card and receipts appear here once billing is connected.
+                  </p>
+                )}
+              </>
+            )}
+          </div>
         </section>
       </div>
     </PortalPage>

@@ -1,5 +1,6 @@
 "use client";
 
+import { ADMIN_LABEL } from "@/components/admin/admin-ui";
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -30,7 +31,6 @@ import { FieldGroup, FoldingGroup } from "@/components/admin/field-group";
 import { FrameView } from "@/components/field-notes/frame-view";
 import { TextFrameEditor } from "@/components/admin/field-notes/text-editor";
 import { CardUploadField, PhotoField, VideoUploadField } from "@/components/admin/field-notes/media-field";
-import { MONO } from "@/components/site/section";
 import { deleteNote, publishNote, saveDraft, unpublishNote } from "@/lib/field-notes/actions";
 import {
   EMPTY_DOC,
@@ -409,7 +409,7 @@ export function NoteEditor({ note }: { note: AdminNote }) {
           {/* ── Frames ──────────────────────────────────────────────────── */}
           <div className="min-w-0">
             <div className="flex items-center justify-between gap-3">
-              <h2 className={cn(MONO.label, "text-muted-foreground")}>
+              <h2 className={cn(ADMIN_LABEL, "text-muted-foreground")}>
                 Frames · {c.frames.length}/{LIMITS.frames}
               </h2>
               <p className="hidden items-center gap-1.5 text-xs text-muted-foreground sm:flex">
@@ -467,7 +467,7 @@ export function NoteEditor({ note }: { note: AdminNote }) {
                         overId === f.id && dragId !== f.id && "outline-2 -outline-offset-2 outline-clay",
                       )}
                     />
-                    <span className={cn(MONO.micro, "mt-1.5 block text-muted-foreground")}>
+                    <span className={cn(ADMIN_LABEL, "mt-1.5 block text-muted-foreground")}>
                       {i + 1} · {FRAME_LABELS[f.type]}
                     </span>
                   </button>
@@ -788,7 +788,7 @@ export function NoteEditor({ note }: { note: AdminNote }) {
           {/* ── Side panel ──────────────────────────────────────────────── */}
           <aside className="flex flex-col lg:sticky lg:top-24 lg:self-start">
             <section aria-labelledby="fn-checklist" className="border border-border bg-bone-light p-5">
-              <h2 id="fn-checklist" className={cn(MONO.label, "text-muted-foreground")}>
+              <h2 id="fn-checklist" className={cn(ADMIN_LABEL, "text-muted-foreground")}>
                 {ready ? "Ready to publish" : "Before you publish"}
               </h2>
               <ul className="mt-3 flex flex-col gap-2">

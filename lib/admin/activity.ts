@@ -32,6 +32,8 @@ export const AREA_LABELS: Record<ActivityArea, string> = {
   applications: "Applications",
   "photo-wall": "Photo wall",
   "member-resources": "Member resources",
+  inquiries: "Requests",
+  rooms: "Rooms",
 };
 
 export interface ActivityEntry {

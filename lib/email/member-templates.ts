@@ -41,7 +41,7 @@ export const EMAIL_ORIGIN = /localhost|127\.0\.0\.1/.test(SITE_URL)
   ? "https://next-geekdom.vercel.app"
   : SITE_URL.replace(/\/$/, "");
 
-const url = (path: string) => `${EMAIL_ORIGIN}${path}`;
+export const url = (path: string) => `${EMAIL_ORIGIN}${path}`;
 
 export interface Email {
   subject: string;
@@ -52,7 +52,7 @@ export interface Email {
   text: string;
 }
 
-// ─── Building blocks ────────────────────────────────────────────────────────
+// ─── Building blocks (exported: the application emails share them) ─────────
 
 function layout(preheader: string, body: string): string {
   return `<!doctype html>
@@ -87,24 +87,24 @@ function layout(preheader: string, body: string): string {
 </html>`;
 }
 
-function eyebrow(text: string): string {
+export function eyebrow(text: string): string {
   return `<p style="margin:0 0 14px;font-family:${MONO};font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:${CONCRETE};">${text}</p>`;
 }
 
-function h1(text: string): string {
+export function h1(text: string): string {
   return `<h1 style="margin:0 0 20px;font-family:${SANS};font-size:28px;line-height:1.2;font-weight:500;letter-spacing:-0.02em;color:${GRAPHITE};">${text}</h1>`;
 }
 
-function p(text: string): string {
+export function p(text: string): string {
   return `<p style="margin:0 0 16px;font-family:${SANS};font-size:16px;line-height:1.6;color:${GRAPHITE};">${text}</p>`;
 }
 
-function muted(text: string): string {
+export function muted(text: string): string {
   return `<p style="margin:0 0 16px;font-family:${SANS};font-size:14px;line-height:1.6;color:${CONCRETE};">${text}</p>`;
 }
 
 /** A square Graphite button — table-wrapped so Outlook keeps the padding. */
-function button(href: string, label: string): string {
+export function button(href: string, label: string): string {
   return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:28px 0 8px;">
     <tr><td style="background:${GRAPHITE};">
       <a href="${href}" style="display:inline-block;padding:14px 26px;font-family:${SANS};font-size:16px;font-weight:500;color:${BONE};text-decoration:none;">${label}</a>
@@ -113,7 +113,7 @@ function button(href: string, label: string): string {
 }
 
 /** A key/value block — receipts, end dates. */
-function details(rows: [string, string][]): string {
+export function details(rows: [string, string][]): string {
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 20px;border-top:1px solid ${RULE};">
     ${rows
       .map(
@@ -126,15 +126,15 @@ function details(rows: [string, string][]): string {
   </table>`;
 }
 
-function rule(): string {
+export function rule(): string {
   return `<div style="margin:28px 0 20px;border-top:1px solid ${RULE};"></div>`;
 }
 
-function first(name: string): string {
+export function first(name: string): string {
   return escapeHtml(name.trim().split(/\s+/)[0] || "there");
 }
 
-function email(subject: string, preheader: string, body: string, text: string): Email {
+export function email(subject: string, preheader: string, body: string, text: string): Email {
   return { subject, preheader, html: layout(preheader, body), text: `${text}\n\n—\nGeekdom · ${LOCATION.street}, ${LOCATION.city}\n${CONTACT_EMAIL}` };
 }
 
@@ -154,20 +154,58 @@ export function signInLinkEmail(v: { link: string }): Email {
   );
 }
 
-/** An admin added them, or the CSV import ran. */
+/**
+ * THE LAUNCH INVITATION — sent in waves from /portal/admin/members/invitations to
+ * members who already have a login (the import made it). Says the portal is
+ * open, how to get in (no password), and — because the directory is
+ * opt-out — that they're listed and where to change it.
+ */
 export function portalInviteEmail(v: { name: string }): Email {
   const signIn = url("/sign-in");
   return email(
-    "Your Geekdom member portal is ready",
-    "Your membership now has a home online — the directory, this month's events, and your billing.",
-    eyebrow("Member portal") +
-      h1(`${first(v.name)}, your member portal is ready.`) +
-      p("Your Geekdom membership now has a home online: the member directory, what's on this month, and your profile and billing in one place.") +
-      p("No password to set up. Sign in with this email address and we'll send you a link.") +
-      button(signIn, "Open the member portal") +
+    "Your Geekdom member portal is open",
+    "The directory, this month's events and your membership — in one place. Sign in with this email, no password.",
+    eyebrow("Geekdom Club · Member portal") +
+      h1(`${first(v.name)}, your member portal is open.`) +
+      p("Geekdom has a new home for members: who's in the room, what's on this month, and your profile and membership — in one place.") +
+      p("There's no password to set up. Sign in with this email address and we'll send you a link. A short checklist shows you around the first time.") +
+      button(signIn, "Sign in to the member portal") +
       rule() +
-      muted("First thing to do: fill in your directory profile, so the members you haven't met yet know what to ask you about."),
-    `${first(v.name)}, your member portal is ready.\n\nSign in with this email address — no password needed: ${signIn}`,
+      muted("You're listed in the member directory, with what you told us when you applied. You can change your profile — or hide yourself — any time at Profile."),
+    `${first(v.name)}, your Geekdom member portal is open.\n\nSign in with this email address — no password needed: ${signIn}\n\nYou're listed in the member directory with what you told us when you applied; change it or hide yourself any time at Profile.`,
+  );
+}
+
+/** Added to someone's Team or Enterprise membership. */
+export function teamInviteEmail(v: { name: string; ownerName: string; company: string }): Email {
+  const signIn = url("/sign-in");
+  const whose = v.company ? escapeHtml(v.company) : `${escapeHtml(v.ownerName)}'s team`;
+  const whosePlain = v.company || `${v.ownerName}'s team`;
+  return email(
+    `You're on ${whosePlain}'s Geekdom membership`,
+    "You have your own member login — the clubhouse, the directory and this month's events.",
+    eyebrow("Geekdom Club · Team") +
+      h1(`${first(v.name)}, you're a Geekdom member.`) +
+      p(`${escapeHtml(v.ownerName)} added you to ${whose}'s membership. You have your own login: the clubhouse on the third floor, the member directory and this month's events.`) +
+      p("No password to set up. Sign in with this email address and we'll send you a link.") +
+      button(signIn, "Sign in to the member portal") +
+      rule() +
+      muted("First thing to do: fill in your directory profile, so members know what to ask you about."),
+    `${v.ownerName} added you to ${whosePlain}'s Geekdom membership.\n\nSign in with this email address — no password needed: ${signIn}`,
+  );
+}
+
+/** Taken off a team: their access through it has ended. */
+export function teamRemovedEmail(v: { name: string; company: string }): Email {
+  const whose = v.company || "your team";
+  return email(
+    "Your Geekdom access has changed",
+    `Your membership through ${whose} has ended.`,
+    eyebrow("Geekdom Club · Team") +
+      h1(`${first(v.name)}, your team access has ended.`) +
+      p(`You've been taken off ${escapeHtml(whose)}'s Geekdom membership, so your member login no longer opens the portal.`) +
+      p(`Want your own membership? <a href="${url("/apply")}" style="color:inherit;">Apply here</a> — or write to us if this looks like a mistake.`),
+    `You've been taken off ${whose}'s Geekdom membership. Want your own? ${url("/apply")}`,
   );
 }
 

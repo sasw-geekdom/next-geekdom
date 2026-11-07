@@ -7,12 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Field, Input, Textarea } from "@/components/ui/field";
 import { Combobox } from "@/components/ui/combobox";
 import { Drawer } from "@/components/ui/drawer";
-import { MemberBadge } from "@/components/ui/badge";
-import { FieldGroup, FoldingGroup } from "@/components/admin/field-group";
-import { MONO } from "@/components/site/section";
+import { ADMIN_CHIP, ADMIN_LABEL, MemberStatusLabel, RowButton, Table, Td, Th, Tr, tableDate, type SortDir } from "@/components/admin/admin-ui";
 import { cn } from "@/lib/utils";
 import { centralParts } from "@/lib/content/dates";
-import { createMemberLogin, saveMember } from "@/lib/admin/member-actions";
+import { addTeammateForOwner, createMemberLogin, removeTeammateForOwner, saveMember } from "@/lib/admin/member-actions";
+import { hasTeam, PLANS, planOf, type PlanId } from "@/lib/membership";
+import { TeamCard } from "@/components/portal/team-card";
 import type { Member } from "@/lib/admin/types";
 import type { MemberStatus } from "@/lib/firebase/collections";
 
@@ -84,6 +84,21 @@ function inView(m: MemberRow, view: View): boolean {
   return true;
 }
 
+/*
+  SORTING — in the browser, like the search. Newest first by default; a
+  header click flips its column. "Portal" sorts by last sign-in, with
+  never-signed-in and no-login after everyone who has.
+*/
+type Sort = "name" | "plan" | "joined" | "portal";
+const NATURAL: Record<Sort, SortDir> = { name: "asc", plan: "asc", joined: "desc", portal: "desc" };
+
+function sortKey(m: MemberRow, by: Sort): string {
+  if (by === "name") return m.name.toLowerCase();
+  if (by === "plan") return planOf(m.plan).name;
+  if (by === "joined") return m.joinedAt ?? "";
+  return m.login.state === "active" ? `2${m.login.lastSignIn}` : m.login.state === "invited" ? "1" : "0";
+}
+
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
@@ -106,7 +121,7 @@ function longDate(iso: string | null): string {
 function loginLabel(l: LoginState): string {
   if (l.state === "none") return "No login";
   if (l.state === "invited") return "Never signed in";
-  return `Signed in ${longDate(l.lastSignIn)}`;
+  return `Signed in ${tableDate(l.lastSignIn)}`;
 }
 
 interface Draft {
@@ -119,11 +134,15 @@ interface Draft {
   day: string;
   tags: string[];
   notes: string;
+  plan: PlanId;
+  company: string;
 }
+
+const PLAN_OPTIONS = PLANS.map((p) => ({ value: p.id, label: p.name }));
 
 function blank(): Draft {
   const t = centralParts(new Date().toISOString());
-  return { name: "", email: "", status: "active", year: t.year, month: t.month, day: t.day, tags: [], notes: "" };
+  return { name: "", email: "", status: "active", year: t.year, month: t.month, day: t.day, tags: [], notes: "", plan: "solo", company: "" };
 }
 
 function fromRow(m: MemberRow): Draft {
@@ -139,6 +158,8 @@ function fromRow(m: MemberRow): Draft {
     day: j.day,
     tags: m.tags,
     notes: m.notes,
+    plan: m.plan,
+    company: m.company,
   };
 }
 
@@ -156,6 +177,16 @@ export function MembersManager({
   const [view, setView] = React.useState<View>("all");
   const [tag, setTag] = React.useState("all");
   const [formerOpen, setFormerOpen] = React.useState(false);
+  const [sort, setSort] = React.useState<{ by: Sort; dir: SortDir }>({ by: "joined", dir: "desc" });
+  const sortBy = (by: Sort) => ({
+    dir: sort.by === by ? sort.dir : null,
+    onClick: () => setSort((s) => (s.by === by ? { by, dir: s.dir === "asc" ? "desc" : "asc" } : { by, dir: NATURAL[by] })),
+  });
+  const ordered = (list: MemberRow[]) =>
+    [...list].sort((a, b) => {
+      const c = sortKey(a, sort.by).localeCompare(sortKey(b, sort.by));
+      return sort.dir === "asc" ? c : -c;
+    });
 
   const [draft, setDraft] = React.useState<Draft | null>(() => (startAdding ? blank() : null));
   const [drawerOpen, setDrawerOpen] = React.useState(startAdding);
@@ -217,6 +248,8 @@ export function MembersManager({
         day: draft.day,
         tags: draft.tags,
         notes: draft.notes,
+        plan: draft.plan,
+        company: draft.company,
       });
       if (res.ok) {
         setNotice({
@@ -255,6 +288,8 @@ export function MembersManager({
   });
 
   const stripeManaged = Boolean(editing?.stripeSubscriptionId);
+  // Save is for a change: an untouched record shows Close, not Save.
+  const dirty = Boolean(draft && editing && JSON.stringify(draft) !== JSON.stringify(fromRow(editing)));
   const statusOptions =
     editing && !EDITABLE_STATUSES.some((s) => s.value === editing.status)
       ? [{ value: editing.status, label: STATUS_LABEL[editing.status] }, ...EDITABLE_STATUSES]
@@ -327,7 +362,7 @@ export function MembersManager({
         </div>
       </div>
 
-      <p className={cn(MONO.label, "text-muted-foreground")}>
+      <p className={cn(ADMIN_LABEL, "-mb-3 text-muted-foreground")}>
         {filtering
           ? `${shownCurrent.length} of ${current.length} current members`
           : `${current.length} current members`}
@@ -349,7 +384,7 @@ export function MembersManager({
             : "No current members match. Clear the search or change the view."}
         </p>
       ) : (
-        <MemberList members={shownCurrent} onOpen={(m) => open(fromRow(m))} />
+        <MemberList members={ordered(shownCurrent)} sortBy={sortBy} onOpen={(m) => open(fromRow(m))} />
       )}
 
       {/*
@@ -364,7 +399,7 @@ export function MembersManager({
           className="group/former border-t border-border"
         >
           <summary className="flex cursor-pointer list-none items-center justify-between py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-offset-2 focus-visible:ring-offset-bone [&::-webkit-details-marker]:hidden">
-            <span className={cn(MONO.label, "text-muted-foreground")}>
+            <span className={cn(ADMIN_LABEL, "text-muted-foreground")}>
               Former members · {filtering && (query || tag !== "all") ? `${shownFormer.length} of ${former.length}` : former.length}
             </span>
             <ChevronDown
@@ -380,7 +415,7 @@ export function MembersManager({
           {shownFormer.length === 0 ? (
             <p className="pb-6 text-sm text-muted-foreground">No former members match.</p>
           ) : (
-            <MemberList members={shownFormer} onOpen={(m) => open(fromRow(m))} muted />
+            <MemberList members={ordered(shownFormer)} sortBy={sortBy} onOpen={(m) => open(fromRow(m))} muted />
           )}
         </details>
       )}
@@ -388,38 +423,67 @@ export function MembersManager({
       <Drawer
         open={drawerOpen}
         onClose={close}
-        eyebrow={draft?.id ? "Member" : "New member"}
         title={draft?.id ? editing?.name ?? "Member" : "Add a member"}
+        description={
+          editing ? (
+            <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span>{editing.email}</span>
+              <MemberStatusLabel status={editing.status} />
+            </span>
+          ) : (
+            "They can sign in as soon as you add them. No email is sent."
+          )
+        }
         footer={
           <>
-            <Button type="submit" form="member-form" variant="ink" disabled={pending}>
+            <Button type="submit" form="member-form" variant="ink" disabled={pending || (Boolean(draft?.id) && !dirty)}>
               {pending ? "Saving…" : draft?.id ? "Save changes" : "Add member"}
             </Button>
             <Button type="button" variant="ghost" onClick={close} disabled={pending}>
-              Cancel
+              {draft?.id && !dirty ? "Close" : "Cancel"}
             </Button>
+            {draft?.id && dirty && <span className="text-[13px] text-muted-foreground">Unsaved changes</span>}
           </>
         }
       >
         {draft && (
           <form id="member-form" onSubmit={onSave} noValidate className="flex flex-col gap-8">
-            <FieldGroup title="Member">
-              <Field label="Name" htmlFor="m-name" error={errors.name} required>
+            {/*
+              AT A GLANCE — the facts staff open a member to check, before any
+              control. A record first, a form second (Linear's side panel).
+            */}
+            {editing && (
+              <dl className="grid grid-cols-2 gap-px border border-border bg-border sm:grid-cols-4">
+                {(
+                  [
+                    ["Plan", `${planOf(editing.plan).name}${editing.teamOwnerId ? " · teammate" : ""}`],
+                    ["Joined", tableDate(editing.joinedAt)],
+                    ["Portal", editing.login.state === "active" ? `Signed in ${tableDate(editing.login.lastSignIn)}` : editing.login.state === "invited" ? "Never signed in" : "No login"],
+                    [
+                      "Getting started",
+                      !editing.onboarding.firstSeenAt ? "Not opened" : editing.onboarding.done.length >= 4 ? "Done" : `${editing.onboarding.done.length} of 4 steps`,
+                    ],
+                  ] as [string, string][]
+                ).map(([k, v]) => (
+                  <div key={k} className="bg-bone-light px-3 py-2.5">
+                    <dt className="text-[13px] text-muted-foreground">{k}</dt>
+                    <dd className="mt-0.5 truncate text-sm text-graphite">{v}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+
+            <RecordSection title="Member">
+              <Row label="Name" htmlFor="m-name" error={errors.name} required>
                 <Input
                   id="m-name"
                   value={draft.name}
                   onChange={(e) => set("name")(e.target.value)}
                   aria-invalid={Boolean(errors.name)}
-                  data-autofocus
+                  {...(draft.id ? {} : { "data-autofocus": true })}
                 />
-              </Field>
-              <Field
-                label="Email"
-                htmlFor="m-email"
-                error={errors.email}
-                required
-                hint="The address they sign in with. One membership per email."
-              >
+              </Row>
+              <Row label="Email" htmlFor="m-email" error={errors.email} required hint="They sign in with it. One membership per email.">
                 <Input
                   id="m-email"
                   type="email"
@@ -429,116 +493,103 @@ export function MembersManager({
                   onChange={(e) => set("email")(e.target.value)}
                   aria-invalid={Boolean(errors.email)}
                 />
-              </Field>
-            </FieldGroup>
+              </Row>
+            </RecordSection>
 
-            <div className="border-t border-border">
-              <FoldingGroup
-                title="Membership"
-                summary={`${STATUS_LABEL[draft.status as MemberStatus] ?? draft.status} · since ${
-                  MONTHS[Number(draft.month) - 1]?.label.slice(0, 3)
-                } ${Number(draft.day)}, ${draft.year}`}
-                defaultOpen={!draft.id}
+            <RecordSection title="Membership">
+              {editing?.teamOwnerId ? (
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  On{" "}
+                  <span className="text-graphite">{members.find((m) => m.id === editing.teamOwnerId)?.name ?? "another member"}</span>
+                  &rsquo;s {planOf(editing.plan).name} membership. Their plan and access follow the team&rsquo;s.
+                </p>
+              ) : (
+                <>
+                  <Row label="Plan" htmlFor="m-plan" error={errors.plan}>
+                    <Combobox id="m-plan" name="plan" options={PLAN_OPTIONS} value={draft.plan} onChange={(v) => set("plan")(v as PlanId)} searchable={false} />
+                  </Row>
+                  {(draft.plan !== "solo" || draft.company) && (
+                    <Row label="Company" htmlFor="m-company" error={errors.company}>
+                      <Input id="m-company" value={draft.company} onChange={(e) => set("company")(e.target.value)} autoComplete="off" />
+                    </Row>
+                  )}
+                </>
+              )}
+              <Row
+                label="Status"
+                htmlFor="m-status"
+                error={errors.status}
+                hint={
+                  stripeManaged
+                    ? "Billed through Stripe — follows their subscription."
+                    : "Paused or canceled members can't sign in; Active restores access."
+                }
               >
-                <Field
-                  label="Status"
-                  htmlFor="m-status"
-                  error={errors.status}
-                  hint={
-                    stripeManaged
-                      ? "Billed through Stripe — status follows their subscription and can't be changed here."
-                      : "Active members can sign in. Paused or canceled members can't — they move to Former members, and setting them back to Active restores access."
-                  }
-                >
-                  <Combobox
-                    id="m-status"
-                    name="status"
-                    options={statusOptions}
-                    value={draft.status}
-                    onChange={set("status")}
-                    disabled={stripeManaged}
-                  />
-                </Field>
-                <Field label="Member since" htmlFor="m-month" error={errors.day ?? errors.month ?? errors.year} required>
-                  <div className="grid grid-cols-[1.4fr_1fr_1fr] gap-2">
-                    <Combobox id="m-month" name="month" options={MONTHS} value={draft.month} onChange={set("month")} searchable={false} />
-                    <Combobox name="day" options={DAYS} value={draft.day} onChange={set("day")} searchable={false} invalid={Boolean(errors.day)} />
-                    <Combobox name="year" options={YEARS} value={draft.year} onChange={set("year")} />
-                  </div>
-                </Field>
-                {editing && (
-                  <dl className="grid grid-cols-[8rem_1fr] gap-y-2 text-sm">
-                    <dt className="text-muted-foreground">{editing.cancelAtPeriodEnd ? "Ends" : "Renews"}</dt>
-                    <dd className="text-graphite">{longDate(editing.currentPeriodEnd)}</dd>
-                    <dt className="text-muted-foreground">Billing</dt>
-                    <dd className="text-graphite">
-                      {editing.stripeCustomerId ? (
-                        <a
-                          href={`https://dashboard.stripe.com/customers/${editing.stripeCustomerId}`}
-                          target="_blank"
-                          rel="noreferrer noopener"
-                          className="inline-flex items-center gap-1.5 underline decoration-clay decoration-2 underline-offset-2"
-                        >
-                          Open in Stripe
-                          <ExternalLink className="h-3.5 w-3.5" strokeWidth={1.7} aria-hidden="true" />
-                        </a>
-                      ) : (
-                        "Not on Stripe yet"
-                      )}
-                    </dd>
-                    <dt className="text-muted-foreground">Added by</dt>
-                    <dd className="text-graphite">
-                      {editing.source === "admin" ? "Staff" : editing.source === "import" ? "Member import" : "Stripe checkout"}
-                    </dd>
-                  </dl>
-                )}
-              </FoldingGroup>
+                <Combobox id="m-status" name="status" options={statusOptions} value={draft.status} onChange={set("status")} disabled={stripeManaged} />
+              </Row>
+              <Row label="Member since" htmlFor="m-month" error={errors.day ?? errors.month ?? errors.year} required>
+                <div className="grid grid-cols-[1.4fr_1fr_1fr] gap-2">
+                  <Combobox id="m-month" name="month" options={MONTHS} value={draft.month} onChange={set("month")} searchable={false} />
+                  <Combobox name="day" options={DAYS} value={draft.day} onChange={set("day")} searchable={false} invalid={Boolean(errors.day)} />
+                  <Combobox name="year" options={YEARS} value={draft.year} onChange={set("year")} />
+                </div>
+              </Row>
+            </RecordSection>
 
-              <FoldingGroup
-                title="Portal login"
-                summary={editing ? loginLabel(editing.login) : "Created when you add them"}
-              >
-                {editing ? (
-                  <>
-                    <p className="text-sm leading-relaxed text-muted-foreground">
-                      {editing.login.state === "none"
-                        ? "No sign-in account for this email yet. Create one so they can sign in at /sign-in."
-                        : editing.login.state === "invited"
-                          ? `Their account exists; they haven't signed in yet. They sign in at /sign-in with ${editing.email}.`
-                          : `Last signed in ${longDate(editing.login.lastSignIn)}.`}
-                    </p>
+            {editing && (
+              <RecordSection title="Portal and billing">
+                <dl className="grid grid-cols-[8.5rem_minmax(0,1fr)] gap-x-4 gap-y-2.5 text-sm">
+                  <dt className="text-muted-foreground">Sign-in</dt>
+                  <dd className="text-graphite">
+                    {editing.login.state === "none"
+                      ? "No sign-in account yet"
+                      : editing.login.state === "invited"
+                        ? "Account ready — they haven't signed in"
+                        : `Last signed in ${longDate(editing.login.lastSignIn)}`}
                     {editing.login.state === "none" && (
-                      <Button type="button" variant="outline" size="sm" className="self-start" onClick={onCreateLogin} disabled={pending}>
+                      <Button type="button" variant="outline" size="sm" className="mt-2 flex" onClick={onCreateLogin} disabled={pending}>
                         Create login
                       </Button>
                     )}
-                    <p className="text-xs leading-relaxed text-muted-foreground">
-                      Emailing them a sign-in link from here arrives with Geekdom&rsquo;s
-                      email sending (send.geekdom.com).
-                    </p>
-                  </>
-                ) : (
-                  <p className="text-sm leading-relaxed text-muted-foreground">
-                    Adding them creates their sign-in account — no email is sent.
-                    They sign in at /sign-in with this email and get a link.
-                  </p>
-                )}
-              </FoldingGroup>
+                  </dd>
+                  <dt className="text-muted-foreground">Invitation</dt>
+                  <dd className="text-graphite">{editing.portalInvitedAt ? `Sent ${longDate(editing.portalInvitedAt)}` : "Not sent"}</dd>
+                  {editing.currentPeriodEnd && (
+                    <>
+                      <dt className="text-muted-foreground">{editing.cancelAtPeriodEnd ? "Ends" : "Renews"}</dt>
+                      <dd className="text-graphite">{longDate(editing.currentPeriodEnd)}</dd>
+                    </>
+                  )}
+                  <dt className="text-muted-foreground">Billing</dt>
+                  <dd className="text-graphite">
+                    {editing.stripeCustomerId ? (
+                      <a
+                        href={`https://dashboard.stripe.com/customers/${editing.stripeCustomerId}`}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="inline-flex items-center gap-1.5 underline decoration-clay decoration-1 underline-offset-2"
+                      >
+                        Open in Stripe
+                        <ExternalLink className="h-3.5 w-3.5" strokeWidth={1.7} aria-hidden="true" />
+                      </a>
+                    ) : (
+                      "Not on Stripe yet"
+                    )}
+                  </dd>
+                  <dt className="text-muted-foreground">Added by</dt>
+                  <dd className="text-graphite">
+                    {{ admin: "Staff", import: "Member import", application: "Approved application", team: "Their team", stripe: "Stripe checkout" }[editing.source]}
+                  </dd>
+                </dl>
+              </RecordSection>
+            )}
 
-              <FoldingGroup
-                title="Staff only"
-                summary={
-                  [draft.tags.length ? `${draft.tags.length} tag${draft.tags.length > 1 ? "s" : ""}` : "", draft.notes.trim() ? "notes" : ""]
-                    .filter(Boolean)
-                    .join(" · ") || "No tags or notes"
-                }
-              >
-                <TagInput value={draft.tags} onChange={set("tags")} known={tags} />
-                <Field label="Notes" htmlFor="m-notes" error={errors.notes} hint="Never shown to the member.">
-                  <Textarea id="m-notes" value={draft.notes} onChange={(e) => set("notes")(e.target.value)} className="min-h-28" />
-                </Field>
-              </FoldingGroup>
-            </div>
+            <RecordSection title="Staff only" note="Never shown to the member.">
+              <TagInput value={draft.tags} onChange={set("tags")} known={tags} />
+              <Field label="Notes" htmlFor="m-notes" error={errors.notes}>
+                <Textarea id="m-notes" value={draft.notes} onChange={(e) => set("notes")(e.target.value)} className="min-h-24" />
+              </Field>
+            </RecordSection>
 
             {drawerError && (
               <p role="alert" className="text-sm text-geekdom-red">
@@ -546,6 +597,30 @@ export function MembersManager({
               </p>
             )}
           </form>
+        )}
+        {/*
+          THE TEAM, for an owner — outside the form above, because it carries
+          its own add form (forms can't nest). Built from the list already on
+          the page: teammates are the members pointing at this one.
+        */}
+        {draft && editing && !editing.teamOwnerId && hasTeam(editing.plan) && (
+          <div className="mt-8">
+            <RecordSection title="Team">
+              <TeamCard
+                tone="plain"
+                team={{
+                  ownerName: editing.name,
+                  company: editing.company,
+                  seats: planOf(editing.plan).seats,
+                  teammates: members
+                    .filter((m) => m.teamOwnerId === editing.id)
+                    .map((m) => ({ id: m.id, name: m.name, email: m.email, status: m.status })),
+                }}
+                add={(input) => addTeammateForOwner(editing.id, input)}
+                remove={(id) => removeTeammateForOwner(editing.id, id)}
+              />
+            </RecordSection>
+          </div>
         )}
       </Drawer>
     </div>
@@ -555,47 +630,109 @@ export function MembersManager({
 function MemberList({
   members,
   onOpen,
+  sortBy,
   muted = false,
 }: {
   members: MemberRow[];
   onOpen: (m: MemberRow) => void;
+  sortBy: (by: Sort) => { dir: SortDir | null; onClick: () => void };
   muted?: boolean;
 }) {
   return (
-    <ul className="border-b border-border">
-      {members.map((m) => (
-        <li key={m.id} className={cn("border-t border-border", muted && "opacity-70")}>
-          <button
-            type="button"
-            onClick={() => onOpen(m)}
-            className="grid w-full grid-cols-[1fr_auto] items-center gap-x-4 gap-y-1 px-1 py-4 text-left transition-colors hover:bg-bone-light focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-inset md:grid-cols-[minmax(0,1fr)_10rem_11rem_8rem]"
-          >
-            <span className="min-w-0">
-              <span className="block truncate font-medium text-graphite">{m.name}</span>
-              <span className="block truncate text-sm text-muted-foreground">{m.email}</span>
-              {m.tags.length > 0 && (
-                <span className="mt-1.5 flex flex-wrap gap-1">
-                  {m.tags.map((t) => (
-                    <span key={t} className={cn(MONO.micro, "border border-border px-1.5 py-0.5 text-graphite")}>
-                      {t}
-                    </span>
-                  ))}
+    <Table className={cn(muted && "opacity-75")}>
+      <thead>
+        <tr>
+          <Th sort={sortBy("name")}>Name</Th>
+          <Th className="hidden w-[24%] md:table-cell">Email</Th>
+          <Th className="hidden w-28 lg:table-cell" sort={sortBy("plan")}>Plan</Th>
+          <Th className="hidden w-32 md:table-cell" sort={sortBy("joined")}>Joined</Th>
+          <Th className="hidden w-40 lg:table-cell" sort={sortBy("portal")}>Portal</Th>
+          <Th className="w-28">Status</Th>
+        </tr>
+      </thead>
+      <tbody>
+        {members.map((m) => (
+          <Tr key={m.id}>
+            <Td>
+              <span className="flex min-w-0 items-center gap-2">
+                <span className="truncate">
+                  <RowButton onClick={() => onOpen(m)}>{m.name}</RowButton>
                 </span>
-              )}
-            </span>
-            <span className="hidden text-sm tabular-nums text-muted-foreground md:block">
-              Since {longDate(m.joinedAt)}
-            </span>
-            <span className="hidden text-sm text-muted-foreground md:block">{loginLabel(m.login)}</span>
-            {/* Column AND row on a phone: pinned to a row only, the grid placed
-                it first and pushed the name into the second column. */}
-            <span className="col-start-2 row-start-1 justify-self-end md:col-start-4">
-              <MemberBadge status={m.status} />
-            </span>
-          </button>
-        </li>
-      ))}
-    </ul>
+                {/* Tags inline, so a tagged row is no taller than any other. */}
+                {m.tags.map((t) => (
+                  <span key={t} className={cn(ADMIN_CHIP, "hidden sm:inline-flex")}>
+                    {t}
+                  </span>
+                ))}
+              </span>
+            </Td>
+            <Td className="hidden text-muted-foreground md:table-cell">{m.email}</Td>
+            <Td className="hidden lg:table-cell">
+              {planOf(m.plan).name}
+              {m.teamOwnerId && <span className="text-muted-foreground"> · teammate</span>}
+            </Td>
+            <Td className="hidden tabular-nums text-muted-foreground md:table-cell">{tableDate(m.joinedAt)}</Td>
+            <Td className="hidden text-muted-foreground lg:table-cell">{loginLabel(m.login)}</Td>
+            <Td>
+              <MemberStatusLabel status={m.status} />
+            </Td>
+          </Tr>
+        ))}
+      </tbody>
+    </Table>
+  );
+}
+
+/*
+  THE MEMBER RECORD'S PARTS. A section is a sentence-case heading over a
+  hairline (the admin's labels, not the shared FieldGroup's mono legend);
+  a row puts its label on the left and its control on the right, so the
+  record reads like Linear's properties panel rather than a stacked form.
+  Below sm the label sits above.
+*/
+function RecordSection({ title, note, children }: { title: string; note?: string; children: React.ReactNode }) {
+  return (
+    <section>
+      <div className="mb-4 flex items-baseline justify-between gap-4 border-b border-border pb-2">
+        <h3 className={cn(ADMIN_LABEL, "text-graphite")}>{title}</h3>
+        {note && <p className="text-[13px] text-muted-foreground">{note}</p>}
+      </div>
+      <div className="flex flex-col gap-4">{children}</div>
+    </section>
+  );
+}
+
+function Row({
+  label,
+  htmlFor,
+  error,
+  hint,
+  required = false,
+  children,
+}: {
+  label: string;
+  htmlFor: string;
+  error?: string;
+  hint?: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) {
+  const id = `${htmlFor}-msg`;
+  return (
+    <div className="grid gap-1.5 sm:grid-cols-[8.5rem_minmax(0,1fr)] sm:items-start sm:gap-4">
+      <label htmlFor={htmlFor} className="text-sm text-muted-foreground sm:pt-3">
+        {label}
+        {required && <span className="text-geekdom-red"> *</span>}
+      </label>
+      <div className="min-w-0">
+        {children}
+        {(error || hint) && (
+          <p id={id} className={cn("mt-1.5 text-[13px]", error ? "text-geekdom-red" : "text-muted-foreground")}>
+            {error ?? hint}
+          </p>
+        )}
+      </div>
+    </div>
   );
 }
 

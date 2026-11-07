@@ -2,11 +2,13 @@ import Link from "next/link";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { requireMember } from "@/lib/auth/session";
 import { LOCATION } from "@/lib/site";
-import { FAQ_GROUPS, getMemberResources } from "@/lib/content/member-resources";
+import { FAQ_GROUPS, faqForMembers, getMemberResources } from "@/lib/content/member-resources";
 import { ARROW, HEADING, LINK_ARROW_ON_INK, MONO } from "@/components/site/section";
 import { PortalPage } from "@/components/portal/portal-page";
 import { Tile } from "@/components/portal/tile";
 import { cn } from "@/lib/utils";
+import { CopyText } from "@/components/portal/copy-text";
+import { BOOKING_WINDOW } from "@/lib/rooms/rules";
 
 export const metadata = { title: "FAQ and resources" };
 
@@ -36,20 +38,25 @@ export default async function ResourcesPage() {
   const slack = res.slackInviteUrl
     ? [{ id: "slack", title: "Member Slack", description: "Where members ask, offer and find each other between visits.", href: res.slackInviteUrl }]
     : [];
-  const live = [...slack, ...res.links.filter((r) => r.href && !r.href.startsWith("mailto:"))];
-  const soon = [...(res.slackInviteUrl ? [] : [{ title: "Member Slack" }]), ...res.links.filter((r) => !r.href)];
-  const faq = FAQ_GROUPS.map((group) => ({ group, items: res.faq.filter((f) => f.group === group) })).filter((g) => g.items.length);
-  const unconfirmed = res.faq.some((f) => f.confirm) || !res.wifiNetwork;
+  // BOOK A ROOM IS BUILT IN, like Slack: it's a page of the portal, so it's
+  // always live here — and a staff-saved "Book a room" placeholder with no
+  // address (from before rooms existed) no longer reads "Coming soon".
+  const rooms = { id: "rooms", title: "Book a room", description: `Four conference rooms, ${BOOKING_WINDOW.daysLabel}, ${BOOKING_WINDOW.label}.`, href: "/portal/rooms" };
+  const notRooms = (r: { title: string; href: string }) => !/book a room/i.test(r.title);
+  const live = [rooms, ...slack, ...res.links.filter((r) => r.href && !r.href.startsWith("mailto:") && notRooms(r))];
+  const soon = [...(res.slackInviteUrl ? [] : [{ title: "Member Slack" }]), ...res.links.filter((r) => !r.href && notRooms(r))];
+  // The Wi-Fi question is answered from the Wi-Fi fields (faqForMembers).
+  const answers = faqForMembers(res);
+  const faq = FAQ_GROUPS.map((group) => ({ group, items: answers.filter((f) => f.group === group) })).filter((g) => g.items.length);
 
   return (
     <PortalPage
       eyebrow="FAQ and resources"
       title="How the Club works."
-      notice={unconfirmed ? "Answers marked “To confirm” are placeholders for Geekdom to write." : undefined}
     >
       <div className="grid items-start gap-4 lg:grid-cols-3">
         {/* ── Left: resources, then the FAQ ─────────────────────────────── */}
-        <div className="flex flex-col gap-4 lg:col-span-2">
+        <div className="order-2 flex flex-col gap-4 lg:order-none lg:col-span-2">
           <Tile label="Resources">
             <ul className="border-b border-border">
               {live.map((r) => {
@@ -119,10 +126,20 @@ export default async function ResourcesPage() {
               ))}
             </div>
           </Tile>
+
+          {/* On a phone the question tile comes after the FAQ, where it's needed. */}
+          <Tile label="Still have a question?" ink className="lg:hidden">
+            <p className="leading-relaxed text-bone/80">Ask the Club team — anything about the space or your membership.</p>
+            <a href="mailto:club@geekdom.com" className={cn("mt-5", LINK_ARROW_ON_INK)}>
+              club@geekdom.com
+              <ArrowUpRight aria-hidden="true" className={ARROW.external} />
+            </a>
+          </Tile>
         </div>
 
         {/* ── Right: the basics, in view while the FAQ scrolls ─────────── */}
-        <div className="flex flex-col gap-4 lg:sticky lg:top-20">
+        {/* First on a phone: the Wi-Fi and the hours are what members open this page for. */}
+        <div className="order-1 flex flex-col gap-4 lg:sticky lg:top-20 lg:order-none">
           <Tile label="At a glance">
             <dl className="flex flex-col gap-4 text-sm">
               <div>
@@ -143,11 +160,10 @@ export default async function ResourcesPage() {
                   <dd className="mt-1 leading-relaxed text-graphite">
                     {res.wifiNetwork}
                     {res.wifiPassword && (
-                      <>
-                        <br />
-                        <span className="text-muted-foreground">Password</span>{" "}
-                        <span className="select-all font-mono text-[0.8125rem]">{res.wifiPassword}</span>
-                      </>
+                      <span className="mt-0.5 flex flex-wrap items-center gap-x-2">
+                        <span className="text-muted-foreground">Password</span>
+                        <CopyText value={res.wifiPassword} label="Wi-Fi password" />
+                      </span>
                     )}
                   </dd>
                 ) : (
@@ -160,7 +176,7 @@ export default async function ResourcesPage() {
             </dl>
           </Tile>
 
-          <Tile label="Still have a question?" ink>
+          <Tile label="Still have a question?" ink className="hidden lg:flex">
             <p className="leading-relaxed text-bone/80">Ask the Club team — anything about the space or your membership.</p>
             <a href="mailto:club@geekdom.com" className={cn("mt-5", LINK_ARROW_ON_INK)}>
               club@geekdom.com

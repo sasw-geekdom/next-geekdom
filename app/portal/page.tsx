@@ -7,10 +7,17 @@ import { getUpcomingEvents } from "@/lib/content/events";
 import { getGalleryImages } from "@/lib/gallery";
 import { eventTimeLabel } from "@/lib/content/dates";
 import { FOUNDED_YEAR, LUMA_CALENDAR_URL, SOCIALS } from "@/lib/site";
-import { MOCK_DIRECTORY, MOCK_FIELD_NOTE } from "@/data/mock/portal";
+import { indexOrder, listForReaders } from "@/lib/field-notes/notes";
+import { bookerFor, upcomingFor, weekUsage } from "@/lib/rooms/rooms";
+import { BOOKING_WINDOW, ROOM_RULES, centralDay, dayLabel, lengthLabel, timeLabel, weekKey } from "@/lib/rooms/rules";
+import { planOf } from "@/lib/membership";
+import { listDirectory } from "@/lib/directory";
+import { stepsFor } from "@/lib/onboarding";
+import { OnboardingPanel, type OnboardingStepView } from "@/components/portal/onboarding-panel";
+import { getAdminDb } from "@/lib/firebase/admin";
+import { COLLECTIONS } from "@/lib/firebase/collections";
 import { getMemberResources } from "@/lib/content/member-resources";
 import { ARROW, HEADING, LINK_ARROW, LINK_ARROW_ON_INK, MONO } from "@/components/site/section";
-import { MemberBadge } from "@/components/ui/badge";
 import { Tile } from "@/components/portal/tile";
 import { PortalPage } from "@/components/portal/portal-page";
 import { SlackMark } from "@/components/portal/slack-mark";
@@ -29,140 +36,128 @@ function longDate(iso: string | null): string {
 }
 
 /*
-  THE MEMBER DASHBOARD — a bento, after next-angels' dashboard: tiles of
-  different sizes that each answer one question, rather than one long page.
+  THE MEMBER DASHBOARD — a bento: tiles of different sizes that each answer
+  one question, ordered by what changes most.
 
-    ┌──────────────────────────┬──────────────┐
-    │ Your membership          │ Member Slack │  compact CTA (Graphite)
-    ├──────────────────────────┼──────────────┤
-    │ This month in the Club   │ Follow (row) │  events: the largest tile —
-    │                          ├──────────────┤  what changes most
-    │                          │ Field Notes  │
-    ├──────────────────────────┴──────────────┤
-    │ New in the Club — four newest, full     │  the people tile
-    ├─────────────────────────────────────────┤
-    │ Need something?  (a slim row)           │
-    └─────────────────────────────────────────┘
+    Welcome back, Ana.
+    Solo membership · since Nov 6, 2026 · Profile & billing →   (one line)
+    [Get started — first visits only]
+    ┌──────────────────────────────┬──────────────┐
+    │ This month in the Club       │ Book a room  │  what's on · your rooms
+    ├──────────────────────────────┴──────────────┤
+    │ New in the Club — four newest               │  the people tile
+    ├──────────────────────────────┬──────────────┤
+    │ Field Notes — the latest     │ Member Slack │
+    │                              │ Follow       │
+    ├──────────────────────────────┴──────────────┤
+    │ Since 2011 · Need something?                │
+    └─────────────────────────────────────────────┘
 
-  REAL where it can be: the membership is the member's record; the events
-  are the same list the homepage renders; the Slack invite is staff-edited
-  (Member resources). The Field Notes tile and New in the Club are still
-  SAMPLE content (data/mock/portal.ts) and say so.
+  The membership was a two-column tile for three facts that live on
+  Profile; it's one line under the welcome now (past due gets its own
+  notice). Book a room sits beside the events — the other thing that
+  changes week to week. Field Notes is the REAL latest note (it was a
+  hard-coded sample with a dead link, which is why the page carried a
+  "Sample content" banner). Everything here is real.
 
   `requireMember()` again, not only in the layout: a layout doesn't re-run on
   client navigation, so each page checks its own session (Next 16 auth guide).
 */
 export default async function PortalHome() {
   const user = await requireMember();
-  const [member, events, wall, resources] = await Promise.all([
+  // Server time, once.
+  const now = new Date().getTime();
+  const [member, events, wall, resources, directory, notes, booker] = await Promise.all([
     getMemberByEmail(user.email),
     getUpcomingEvents(),
     getGalleryImages(), // never throws; [] until the wall is synced
     getMemberResources(), // never throws; the Slack invite is staff-edited
+    listDirectory().catch(() => []),
+    listForReaders().catch(() => []),
+    bookerFor(user).catch(() => null),
   ]);
+  const thisWeek = weekKey(new Date(now).toISOString());
+  const [myRooms, usage] = booker
+    ? await Promise.all([upcomingFor(booker.id, now).catch(() => []), weekUsage(booker.id, [thisWeek]).catch(() => ({}) as Record<string, number>)])
+    : [[], {} as Record<string, number>];
+  const hoursLeft = Math.max(0, ROOM_RULES.weeklyMinutes - (usage[thisWeek] ?? 0));
+  // The note /field-notes leads with: the featured one, else the newest.
+  const note = indexOrder(notes)[0];
+  const cover = note?.frames[0]?.type === "cover" ? note.frames[0].image : undefined;
   const archive = wall.slice(0, 5);
   const staff = isAdmin(user);
   const first = (member?.name ?? user.name ?? "").split(" ")[0];
-  // The four newest SAMPLE members (the hand-written ten), with portraits.
-  const newest = [...MOCK_DIRECTORY]
-    .sort((a, b) => b.memberSince.localeCompare(a.memberSince))
-    .slice(0, 4)
-    .map((m) => ({ ...m, avatar: m.avatar ?? `/mock/avatars/${m.id}.svg` }));
+
+  /*
+    FIRST VISIT: "Welcome", not "Welcome back" — and the visit is recorded
+    so the next one says back. Members only; staff have no member record.
+  */
+  const firstVisit = Boolean(member && !member.onboarding.firstSeenAt);
+  if (member && firstVisit) {
+    await getAdminDb()
+      .collection(COLLECTIONS.members)
+      .doc(member.id)
+      .set({ onboarding: { firstSeenAt: new Date() } }, { merge: true })
+      .catch(() => {});
+  }
+  // The "Get started" checklist (lib/onboarding.ts) — Slack only once there's an invite.
+  const onboardingSteps: OnboardingStepView[] = member
+    ? stepsFor(Boolean(resources.slackInviteUrl)).map((id) => {
+        if (id === "profile") return { id, href: "/portal/profile" };
+        if (id === "directory") return { id, href: `/portal/directory?m=${member.id}` };
+        if (id === "events") return { id, href: LUMA_CALENDAR_URL, external: true };
+        if (id === "slack") return { id, href: resources.slackInviteUrl, external: true };
+        return { id, href: "/portal/resources" };
+      })
+    : [];
+  // The four newest LISTED members — the people tile (lib/directory.ts).
+  const newest = [...directory].sort((a, b) => b.memberSince.localeCompare(a.memberSince)).slice(0, 4);
+
+  const plan = planOf(member?.plan);
 
   return (
-    <PortalPage
-      eyebrow="Member portal"
-      title={first ? `Welcome back, ${first}.` : "Welcome back."}
-      notice={
-        <>
-          Field Notes and New in the Club are samples here for now.
-        Your membership and this month&rsquo;s events are real.
-        </>
-      }
-    >
+    <PortalPage eyebrow="Member portal" title={first ? `Welcome${firstVisit ? "" : " back"}, ${first}.` : "Welcome."}>
+      {/* The membership, in one line — the details are on Profile. */}
+      <p className="-mt-4 mb-6 flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground">
+        {member ? (
+          <>
+            <span>
+              {plan.name} membership · since {longDate(member.joinedAt)}
+              {member.status === "inactive" ? " · paused" : member.status === "canceled" ? " · canceled" : ""}
+            </span>
+            <Link href="/portal/profile" className={cn("text-sm", LINK_ARROW)}>
+              Profile and billing
+              <ArrowRight aria-hidden="true" className={ARROW.internal} />
+            </Link>
+          </>
+        ) : staff ? (
+          <>
+            <span>
+              Geekdom team{user.role === "superadmin" ? " · Superadmin" : ""} — you see the portal as members do.
+            </span>
+            <Link href="/portal/admin" className={cn("text-sm", LINK_ARROW)}>
+              Open the admin
+              <ArrowRight aria-hidden="true" className={ARROW.internal} />
+            </Link>
+          </>
+        ) : null}
+      </p>
+      {member?.status === "past_due" && (
+        <p role="status" className="mb-6 border border-dashed border-graphite px-4 py-3 text-sm text-graphite">
+          Your last payment didn&rsquo;t go through, so your card needs updating. You still have full access.{" "}
+          <Link href="/portal/profile#billing" className="underline decoration-clay decoration-1 underline-offset-2">
+            Update it in billing
+          </Link>
+          .
+        </p>
+      )}
+
+      {member && (
+        <OnboardingPanel steps={onboardingSteps} done={member.onboarding.done} dismissed={member.onboarding.dismissed} />
+      )}
+
       <div className="grid gap-4 lg:grid-cols-3">
-        {/* ── Your membership ─────────────────────────────────────────── */}
-        {/*
-          A MEMBER sees their membership. GEEKDOM STAFF see a team card —
-          they're part of the room, not visitors to it, so the tile names
-          them as the team rather than explaining what their account lacks
-          (staff are recognized by email domain and have no member record:
-          no join date, renewal or billing to show).
-        */}
-        <Tile label={member || !staff ? "Your membership" : "Geekdom team"} className="lg:col-span-2">
-          {member ? (
-            <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className={cn(HEADING.subhead, "text-graphite")}>{member.name}</p>
-                <p className="mt-2 text-muted-foreground">
-                  Member since {longDate(member.joinedAt)}
-                  {member.currentPeriodEnd &&
-                    ` · ${member.cancelAtPeriodEnd ? "Ends" : "Renews"} ${longDate(member.currentPeriodEnd)}`}
-                </p>
-                <div className="mt-3">
-                  <MemberBadge status={member.status} />
-                </div>
-              </div>
-              <div className="flex flex-col gap-2 sm:items-end">
-                <Link href="/portal/profile" className={LINK_ARROW}>
-                  Edit your profile
-                  <ArrowRight aria-hidden="true" className={ARROW.internal} />
-                </Link>
-                <Link href="/portal/profile#billing" className={LINK_ARROW}>
-                  Billing
-                  <ArrowRight aria-hidden="true" className={ARROW.internal} />
-                </Link>
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className={cn(HEADING.subhead, "text-graphite")}>{user.name ?? user.email}</p>
-                <p className="mt-2 text-muted-foreground">
-                  {user.email}
-                  {user.role === "superadmin" && " · Superadmin"}
-                </p>
-              </div>
-              <div className="flex flex-col gap-2 sm:items-end">
-                <Link href="/portal/profile" className={LINK_ARROW}>
-                  Edit your profile
-                  <ArrowRight aria-hidden="true" className={ARROW.internal} />
-                </Link>
-                <Link href="/portal/admin" className={LINK_ARROW}>
-                  Open the admin
-                  <ArrowRight aria-hidden="true" className={ARROW.internal} />
-                </Link>
-              </div>
-            </div>
-          )}
-        </Tile>
-
-        {/* ── Member Slack (sample) — a compact call to action ────────── */}
-        {/*
-          It was the tallest tile on the page for a CTA that reads "opening
-          soon". Now: the mark, one line, the button. One-color mark on
-          Graphite, per Slack's guidelines (components/portal/slack-mark.tsx).
-        */}
-        <Tile label="Member Slack" ink>
-          <div className="flex items-start gap-4">
-            <SlackMark className="h-8 w-8 shrink-0 text-bone" />
-            <p className="leading-relaxed text-bone/80">
-              Ask for an intro, offer what you know, see who&rsquo;s on the floor today.
-            </p>
-          </div>
-          <div className="mt-auto pt-6">
-            {resources.slackInviteUrl ? (
-              <a href={resources.slackInviteUrl} target="_blank" rel="noreferrer noopener" className={LINK_ARROW_ON_INK}>
-                Open Slack
-                <ArrowUpRight aria-hidden="true" className={ARROW.external} />
-              </a>
-            ) : (
-              <p className="text-sm text-bone/60">Opening soon — the invite will be here.</p>
-            )}
-          </div>
-        </Tile>
-
-        {/* ── This month in the Club (real) ───────────────────────────── */}
+        {/* ── This month in the Club ──────────────────────────────────── */}
         <Tile
           label="This month in the Club"
           className="lg:col-span-2"
@@ -175,7 +170,7 @@ export default async function PortalHome() {
           }
         >
           {events.length === 0 ? (
-            <p className="text-muted-foreground">Nothing listed yet this month.</p>
+            <p className="text-muted-foreground">Nothing listed yet this month. The calendar has everything on the floor.</p>
           ) : (
             <ul className="border-b border-border">
               {events.slice(0, 4).map((ev) => (
@@ -190,12 +185,8 @@ export default async function PortalHome() {
                       {ev.dateLabel} · {eventTimeLabel(ev.startsAt)}
                     </span>
                     <span className="min-w-0">
-                      <span className="leading-snug text-graphite decoration-clay decoration-2 underline-offset-4 group-hover:underline">
-                        {ev.title}
-                      </span>
-                      {ev.host && (
-                        <span className="mt-0.5 block text-sm text-muted-foreground">Hosted by {ev.host}</span>
-                      )}
+                      <span className="leading-snug text-graphite decoration-clay decoration-2 underline-offset-4 group-hover:underline">{ev.title}</span>
+                      {ev.host && <span className="mt-0.5 block text-sm text-muted-foreground">Hosted by {ev.host}</span>}
                     </span>
                     <ArrowUpRight aria-hidden="true" className={cn(ARROW.external, "self-center text-muted-foreground")} />
                     <span className="sr-only"> (opens in a new tab)</span>
@@ -206,55 +197,45 @@ export default async function PortalHome() {
           )}
         </Tile>
 
-        {/*
-          THE RIGHT COLUMN beside the events: Follow Geekdom (compact) over
-          Field Notes, which takes the remaining height — together they match
-          the events tile instead of one stretched, mostly empty box.
-        */}
-        <div className="flex flex-col gap-4">
-        {/* ── Follow Geekdom ───────────────────────────────────────────── */}
-        {/*
-          Geekdom's channels, from SOCIALS (the footer's list) as arrow links —
-          the site's pattern for everything that isn't Apply. Compact, in a row: it
-          was a full-height tile that left most of itself empty. A "latest
-          video" from YouTube can grow it once the channel feed is connected.
-        */}
-        <Tile label="Follow Geekdom" className="flex-none">
-          <ul className="flex flex-wrap gap-x-6 gap-y-3">
-            {SOCIALS.map((s) => (
-              <li key={s.label}>
-                <a href={s.href} target="_blank" rel="noreferrer noopener" className={LINK_ARROW}>
-                  {s.label}
-                  <ArrowUpRight aria-hidden="true" className={ARROW.external} />
-                  <span className="sr-only"> (opens in a new tab)</span>
-                </a>
-              </li>
-            ))}
-          </ul>
+        {/* ── Book a room — your next bookings, or the way in ─────────── */}
+        <Tile label="Book a room">
+          {!booker ? (
+            <p className="text-sm text-muted-foreground">Conference rooms are for current members.</p>
+          ) : myRooms.length === 0 ? (
+            <>
+              <p className="text-graphite">No room booked.</p>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                Four conference rooms for up to 20, {BOOKING_WINDOW.daysLabel}, {BOOKING_WINDOW.label}. Instant — no approval.
+              </p>
+            </>
+          ) : (
+            <ul>
+              {myRooms.slice(0, 3).map((b) => (
+                <li key={b.id} className="border-t border-border py-2.5 first:border-t-0 first:pt-0">
+                  <span className="block font-medium text-graphite">{b.roomName}</span>
+                  <span className="block text-sm tabular-nums text-muted-foreground">
+                    {dayLabel(centralDay(b.start))} · {timeLabel(b.start)} – {timeLabel(b.end)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {booker && (
+            <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-5">
+              <Link href="/portal/rooms" className={LINK_ARROW}>
+                {myRooms.length ? "Book another" : "Book a room"}
+                <ArrowRight aria-hidden="true" className={ARROW.internal} />
+              </Link>
+              <span className="text-sm tabular-nums text-muted-foreground">{hoursLeft ? lengthLabel(hoursLeft) : "No time"} left this week</span>
+            </div>
+          )}
         </Tile>
-        {/* ── Field Notes (sample) ────────────────────────────────────── */}
-        <Tile label="Field Notes" className="flex-1">
-          <p className={cn(MONO.label, "text-muted-foreground")}>
-            {longDate(MOCK_FIELD_NOTE.date)} · {MOCK_FIELD_NOTE.readMinutes} min
-          </p>
-          <p className={cn("mt-3 text-graphite", HEADING.item)}>{MOCK_FIELD_NOTE.title}</p>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{MOCK_FIELD_NOTE.excerpt}</p>
-          <div className="mt-auto pt-5">
-            <span className={cn(LINK_ARROW, "cursor-default text-sm opacity-60")} aria-disabled="true">
-              Read the note
-              <ArrowRight aria-hidden="true" className={ARROW.internal} />
-            </span>
-          </div>
-        </Tile>
-        </div>
 
-        {/* ── New in the Club (sample) — the people tile ─────────────── */}
+        {/* ── New in the Club — the people tile ────────────────────────── */}
         {/*
-          THE DASHBOARD'S BIGGEST GAP WAS PEOPLE. Everything else here is
-          Geekdom talking to the member; this is the one tile about other
-          members — the Club's whole promise is a thinking partner, a person.
-          The three newest listed members, each a link to their profile in the
-          directory. Sample members until the real directory (Phase 3).
+          Everything else here is Geekdom talking to the member; this is the
+          one tile about other members — the Club's whole promise is a
+          thinking partner, a person. The four newest listed members.
         */}
         <Tile
           label="New in the Club"
@@ -266,6 +247,7 @@ export default async function PortalHome() {
             </Link>
           }
         >
+          {newest.length === 0 && <p className="text-sm text-muted-foreground">No one is listed in the directory yet.</p>}
           <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {newest.map((m) => (
               <li key={m.id}>
@@ -274,14 +256,21 @@ export default async function PortalHome() {
                   className="group flex h-full flex-col border border-border bg-bone p-4 transition-colors hover:border-graphite focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-offset-2 focus-visible:ring-offset-bone-light"
                 >
                   <span className="flex items-center gap-3">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={m.avatar} alt="" width={44} height={44} className="h-11 w-11 shrink-0 border border-border bg-bone object-cover" />
+                    {m.avatar ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={m.avatar} alt="" width={44} height={44} className="h-11 w-11 shrink-0 border border-border bg-bone object-cover" />
+                    ) : (
+                      <span aria-hidden="true" className={cn(MONO.label, "flex h-11 w-11 shrink-0 items-center justify-center bg-graphite text-bone")}>
+                        {m.name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase()}
+                      </span>
+                    )}
                     <span className="min-w-0">
                       <span className="block truncate font-medium text-graphite">{m.name}</span>
-                      <span className="block truncate text-sm text-muted-foreground">{m.role}</span>
+                      <span className="block truncate text-sm text-muted-foreground">{[m.role, m.company].filter(Boolean).join(" · ")}</span>
                     </span>
                   </span>
-                  <span className="mt-3 block text-sm leading-relaxed text-graphite">{m.headline}</span>
+                  {/* Three lines at most, so the four cards stay one height. */}
+                  <span className="mt-3 line-clamp-3 block text-sm leading-relaxed text-graphite">{m.headline}</span>
                   <span className={cn(LINK_ARROW, "mt-auto pt-4 text-sm")}>
                     Say hello
                     <ArrowRight aria-hidden="true" className={ARROW.internal} />
@@ -291,6 +280,79 @@ export default async function PortalHome() {
             ))}
           </ul>
         </Tile>
+
+        {/* ── Field Notes — the real latest note ──────────────────────── */}
+        <Tile
+          label="Field Notes"
+          className="lg:col-span-2"
+          action={
+            <Link href="/field-notes" className={cn("text-sm", LINK_ARROW)}>
+              All notes
+              <ArrowRight aria-hidden="true" className={ARROW.internal} />
+            </Link>
+          }
+        >
+          {!note ? (
+            <p className="text-sm text-muted-foreground">Stories from the room, coming soon.</p>
+          ) : (
+            <Link
+              href={`/field-notes/${note.slug}`}
+              className="group grid gap-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-offset-2 focus-visible:ring-offset-bone-light sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]"
+            >
+              {cover && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={cover.srcSm} alt="" width={cover.width} height={cover.height} loading="lazy" className="aspect-[4/3] w-full border border-border object-cover" />
+              )}
+              <span className="flex min-w-0 flex-col">
+                <span className={cn(MONO.label, "text-muted-foreground")}>
+                  {longDate(note.publishedAt)}
+                  {note.author ? ` · ${note.author}` : ""}
+                </span>
+                <span className={cn("mt-2 text-graphite decoration-clay decoration-2 underline-offset-4 group-hover:underline", HEADING.item)}>{note.title}</span>
+                {note.dek && <span className="mt-2 text-sm leading-relaxed text-muted-foreground">{note.dek}</span>}
+                <span className={cn(LINK_ARROW, "mt-auto pt-4 text-sm")}>
+                  Read the note
+                  <ArrowRight aria-hidden="true" className={ARROW.internal} />
+                </span>
+              </span>
+            </Link>
+          )}
+        </Tile>
+
+        {/* ── Slack over Follow ───────────────────────────────────────── */}
+        <div className="flex flex-col gap-4">
+          {/* One-color mark on Graphite, per Slack's guidelines (components/portal/slack-mark.tsx). */}
+          <Tile label="Member Slack" ink className="flex-1">
+            <div className="flex items-start gap-4">
+              <SlackMark className="h-8 w-8 shrink-0 text-bone" />
+              <p className="leading-relaxed text-bone/80">Ask for an intro, offer what you know, see who&rsquo;s on the floor today.</p>
+            </div>
+            <div className="mt-auto pt-6">
+              {resources.slackInviteUrl ? (
+                <a href={resources.slackInviteUrl} target="_blank" rel="noreferrer noopener" className={LINK_ARROW_ON_INK}>
+                  Open Slack
+                  <ArrowUpRight aria-hidden="true" className={ARROW.external} />
+                </a>
+              ) : (
+                <p className="text-sm text-bone/60">Opening soon — the invite will be here.</p>
+              )}
+            </div>
+          </Tile>
+          {/* Geekdom's channels, from SOCIALS (the footer's list), as arrow links. */}
+          <Tile label="Follow Geekdom" className="flex-none">
+            <ul className="flex flex-wrap gap-x-6 gap-y-3">
+              {SOCIALS.map((s) => (
+                <li key={s.label}>
+                  <a href={s.href} target="_blank" rel="noreferrer noopener" className={LINK_ARROW}>
+                    {s.label}
+                    <ArrowUpRight aria-hidden="true" className={ARROW.external} />
+                    <span className="sr-only"> (opens in a new tab)</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </Tile>
+        </div>
 
         {/* ── Since 2011 — the archive, for the people in it ──────────── */}
         {/*

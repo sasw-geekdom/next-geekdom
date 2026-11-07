@@ -1,4 +1,5 @@
-import { Download } from "lucide-react";
+import Link from "next/link";
+import { Download, Send } from "lucide-react";
 import { listMembers } from "@/lib/admin/queries";
 import { loginStates } from "@/lib/admin/member-logins";
 import { MembersManager, type MemberRow } from "@/components/admin/members-manager";
@@ -30,22 +31,29 @@ export default async function MembersPage(props: PageProps<"/portal/admin/member
   return (
     <>
       <PageHeader
-        eyebrow="Members"
         title="Members"
         description={`${active} current · ${members.length - active} former`}
         actions={
-          /*
-            A plain <a>, not <Link>: a file download from a route handler.
-            Client-side navigation would fetch the CSV as an RSC payload.
-          */
-          // eslint-disable-next-line @next/next/no-html-link-for-pages
-          <a
-            href="/api/admin/export/members"
-            className={buttonClass("outline", "sm", "border-border bg-bone-light")}
-          >
-            <Download className="h-3.5 w-3.5" strokeWidth={1.8} />
-            Export CSV
-          </a>
+          <div className="flex flex-wrap gap-2">
+            {/*
+              THE LAUNCH INVITATIONS live here, not in the sidebar: they're for
+              the members who joined before the workflow existed
+              (lib/invitations.ts).
+            */}
+            <Link href="/portal/admin/members/invitations" className={buttonClass("outline", "sm", "border-border bg-bone-light")}>
+              <Send className="h-3.5 w-3.5" strokeWidth={1.8} />
+              Invitations
+            </Link>
+            {/*
+              A plain <a>, not <Link>: a file download from a route handler.
+              Client-side navigation would fetch the CSV as an RSC payload.
+            */}
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+            <a href="/api/admin/export/members" className={buttonClass("outline", "sm", "border-border bg-bone-light")}>
+              <Download className="h-3.5 w-3.5" strokeWidth={1.8} />
+              Export CSV
+            </a>
+          </div>
         }
       />
       <AdminSection>

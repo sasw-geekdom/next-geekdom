@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { MONO } from "@/components/site/section";
 import { cn } from "@/lib/utils";
 import { AREA_LABELS, type ActivityEntry } from "@/lib/admin/activity";
+import { ADMIN_LABEL } from "@/components/admin/admin-ui";
 
 /*
   THE EDIT HISTORY, AS ROWS — the Overview's "Recent activity" tile and the
@@ -41,12 +41,12 @@ export function ActivityList({ entries, compact = false }: { entries: ActivityEn
               compact ? "sm:grid-cols-[1fr_auto]" : "sm:grid-cols-[9rem_10rem_1fr]",
             )}
           >
-            {!compact && <span className={cn(MONO.label, "text-muted-foreground tabular-nums sm:pt-0.5")}>{when(e.at)}</span>}
+            {!compact && <span className={cn(ADMIN_LABEL, "text-muted-foreground tabular-nums sm:pt-0.5")}>{when(e.at)}</span>}
             {!compact && <span className="text-sm text-muted-foreground">{AREA_LABELS[e.area]}</span>}
             <p className="min-w-0 text-sm leading-relaxed text-muted-foreground">
               <span className="font-medium text-graphite">{e.actor}</span> {e.action} {label}
             </p>
-            {compact && <span className={cn(MONO.label, "text-muted-foreground tabular-nums")}>{when(e.at)}</span>}
+            {compact && <span className={cn(ADMIN_LABEL, "text-muted-foreground tabular-nums")}>{when(e.at)}</span>}
           </li>
         );
       })}

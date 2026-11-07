@@ -21,7 +21,7 @@ export default async function AdminActivityPage(props: PageProps<"/portal/admin/
 
   return (
     <>
-      <PageHeader eyebrow="Admin portal" title="Activity" description="Every change made in the admin, and who made it." />
+      <PageHeader title="Activity" description="Every change made in the admin, and who made it." />
       <AdminSection>
         {areas.length > 1 && (
           <nav aria-label="Filter by area" className="mb-6 flex flex-wrap gap-2">

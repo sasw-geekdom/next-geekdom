@@ -5,7 +5,6 @@
   say so on screen (components/portal/sample-notice.tsx).
 
   What replaces each export:
-    MOCK_DIRECTORY   members who opt in to the directory (Phase 3)
     MOCK_FIELD_NOTE  the latest Field Notes post, once /field-notes exists
     MOCK_SLACK       Geekdom's real Slack invite link and channels
     MOCK_FAQ         Geekdom's answers — see `confirm`
@@ -16,149 +15,6 @@
 */
 
 import type { Audience } from "@/lib/membership";
-
-export interface DirectoryMember {
-  id: string;
-  name: string;
-  /** One line, in their words: what they're building or doing. */
-  headline: string;
-  role: string;
-  company?: string;
-  audience: Audience;
-  /** "Ask me about" — what they're happy to help with. */
-  askMeAbout: string[];
-  /** What they're looking for right now. */
-  lookingFor?: string;
-  bio: string;
-  website?: string;
-  linkedin?: string;
-  memberSince: string; // ISO
-  /** A portrait URL. Sample members get an ILLUSTRATED portrait, never a photo. */
-  avatar?: string;
-}
-
-export const MOCK_DIRECTORY: DirectoryMember[] = [
-  {
-    id: "m-1",
-    name: "Avery Castellano",
-    headline: "Building scheduling software for home-health agencies.",
-    role: "Founder & CEO",
-    company: "Rounds (sample)",
-    audience: "Founder",
-    askMeAbout: ["Healthcare sales", "Hiring a first engineer", "Pre-seed fundraising"],
-    lookingFor: "Two design partners among San Antonio home-health agencies.",
-    bio: "Ten years running operations for a home-health agency before starting Rounds. At the Club most weekday mornings.",
-    website: "https://example.com",
-    linkedin: "https://www.linkedin.com/",
-    memberSince: "2025-03-04T18:00:00.000Z",
-  },
-  {
-    id: "m-2",
-    name: "Marcus Oyelaran",
-    headline: "Staff engineer, happiest deep in a data pipeline.",
-    role: "Staff Engineer",
-    company: "Northpoint Logistics (sample)",
-    audience: "Engineer or builder",
-    askMeAbout: ["Data engineering", "Postgres", "Code review for early teams"],
-    bio: "Remote for a Dallas company; comes to Geekdom for the room. Mentors at Startup Bootcamp.",
-    linkedin: "https://www.linkedin.com/",
-    memberSince: "2024-09-12T18:00:00.000Z",
-  },
-  {
-    id: "m-3",
-    name: "Priya Raman",
-    headline: "Product designer turning clinical workflows into calm software.",
-    role: "Independent Product Designer",
-    audience: "Creator",
-    askMeAbout: ["Product design", "User research", "Design systems"],
-    lookingFor: "One more early-stage client for Q1.",
-    bio: "Formerly design lead at a health-tech scale-up. Runs the occasional design critique in the Club.",
-    website: "https://example.com",
-    memberSince: "2025-01-21T18:00:00.000Z",
-  },
-  {
-    id: "m-4",
-    name: "Diego Villarreal",
-    headline: "Operator who's scaled two B2B teams from five to fifty.",
-    role: "Fractional COO",
-    audience: "Operator",
-    askMeAbout: ["Ops and finance setup", "First sales hire", "Board decks"],
-    bio: "Works with three Studio-stage companies at a time. Ask him about a spreadsheet and lose an afternoon.",
-    linkedin: "https://www.linkedin.com/",
-    memberSince: "2023-06-02T18:00:00.000Z",
-  },
-  {
-    id: "m-5",
-    name: "Hannah Brightwater",
-    headline: "Angel investor, mostly B2B software in Texas.",
-    role: "Angel Investor",
-    audience: "Investor",
-    askMeAbout: ["Pitch feedback", "SAFE terms", "Investor updates"],
-    bio: "Former founder (acquired). Writes six to eight checks a year and holds office hours at the Club.",
-    memberSince: "2022-11-15T18:00:00.000Z",
-  },
-  {
-    id: "m-6",
-    name: "Tomás Echeverría",
-    headline: "Leads innovation partnerships for a regional health system.",
-    role: "Director of Innovation",
-    company: "Alamo Health (sample)",
-    audience: "Corporate or civic leader",
-    askMeAbout: ["Selling into hospitals", "Pilot programs", "Procurement"],
-    lookingFor: "Startups working on nurse retention.",
-    bio: "The person to meet before you pitch a hospital. Prefers coffee to email.",
-    linkedin: "https://www.linkedin.com/",
-    memberSince: "2024-02-27T18:00:00.000Z",
-  },
-  {
-    id: "m-7",
-    name: "Keiko Hartwell",
-    headline: "Building a marketplace for local makers.",
-    role: "Co-founder",
-    company: "Maker Row (sample)",
-    audience: "Founder",
-    askMeAbout: ["Marketplaces", "Shopify", "Community-led growth"],
-    bio: "Second-time founder. First company was a food truck, which she says taught her more than business school.",
-    website: "https://example.com",
-    memberSince: "2025-07-08T18:00:00.000Z",
-  },
-  {
-    id: "m-8",
-    name: "Jordan Pike",
-    headline: "Full-stack engineer, open to the right early team.",
-    role: "Software Engineer",
-    audience: "Engineer or builder",
-    askMeAbout: ["Next.js", "Shipping MVPs", "AI tooling"],
-    lookingFor: "A founding-engineer role at a San Antonio startup.",
-    bio: "Moved to San Antonio last year. Joined the Club to find the people building here.",
-    linkedin: "https://www.linkedin.com/",
-    memberSince: "2026-02-10T18:00:00.000Z",
-  },
-  {
-    id: "m-9",
-    name: "Renata Solís",
-    headline: "Brand strategist for founders who sell to other businesses.",
-    role: "Founder",
-    company: "Solís Studio (sample)",
-    audience: "Creator",
-    askMeAbout: ["Positioning", "Naming", "Website copy"],
-    bio: "Has rewritten more homepages than she can count. Will tell you, kindly, what yours actually says.",
-    website: "https://example.com",
-    memberSince: "2023-10-19T18:00:00.000Z",
-  },
-  {
-    id: "m-10",
-    name: "Sam Whitfield",
-    headline: "Runs revenue at a cybersecurity startup.",
-    role: "VP of Sales",
-    company: "Bastion Labs (sample)",
-    audience: "Operator",
-    askMeAbout: ["Enterprise sales", "Security buyers", "Pricing"],
-    bio: "San Antonio's cyber scene is why he moved here. Hosts a monthly sales roundtable for members.",
-    linkedin: "https://www.linkedin.com/",
-    memberSince: "2024-05-30T18:00:00.000Z",
-  },
-];
 
 /** The latest Field Notes post — invented. */
 export const MOCK_FIELD_NOTE = {
@@ -191,9 +47,9 @@ export const MOCK_FAQ: { group: string; items: FaqItem[] }[] = [
         confirm: true,
       },
       {
-        q: "How do I book a call room or the event space?",
-        a: "Phone booths and call rooms are first come, first served; booking for meeting and event space is Geekdom's to describe.",
-        confirm: true,
+        q: "How do I book a conference room?",
+        a: "Under Book a room. Pick a day and a free time — it's yours straight away. Up to 2 hours at a time, up to 14 days ahead, 4 hours a week. Phone booths and call rooms are first come, first served.",
+        confirm: false,
       },
       {
         q: "What's the Wi-Fi?",
@@ -238,7 +94,7 @@ export const MOCK_RESOURCES: ResourceLink[] = [
   { title: "Events calendar", description: "Everything on the floor this month, on Luma.", href: "https://luma.com/geekdom", external: true },
   { title: "Getting here", description: "The address, the map and the elevator to the third floor.", href: "/contact" },
   { title: "House guidelines", description: "How the clubhouse works, so it keeps working for everyone.", href: null },
-  { title: "Book a room", description: "Meeting and event space for members.", href: null },
+  { title: "Book a room", description: "The conference rooms, up to 14 days ahead.", href: "/portal/rooms" },
   { title: "Contact the Club team", description: "club@geekdom.com — questions, ideas, anything.", href: "mailto:club@geekdom.com" },
 ];
 

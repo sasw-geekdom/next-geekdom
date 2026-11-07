@@ -3,6 +3,8 @@ import type { NextRequest } from "next/server";
 import { requireAdminApi } from "@/lib/auth/session";
 import { listApplications, listMembers } from "@/lib/admin/queries";
 import { csvFilename, toCsv } from "@/lib/admin/csv";
+import { logActivity } from "@/lib/admin/activity";
+import { APPLICATION_LABELS } from "@/components/ui/badge";
 import {
   APPLICATION_STATUSES,
   type ApplicationStatus,
@@ -20,6 +22,9 @@ import {
  * same thing while only staff could sign in — and stopped being the moment
  * members could: any member could GET the whole roster and every
  * application as a CSV. `requireAdminApi()` is the role check.
+ *
+ * EVERY EXPORT IS LOGGED (who, what, how many rows): it's the one admin
+ * action that takes people's personal details off the site.
  *
  * A 401 is returned rather than a redirect — this URL is opened directly by the
  * browser, and bouncing to an HTML login page would download it as a .csv.
@@ -41,28 +46,46 @@ export async function GET(
       ? (raw as ApplicationStatus)
       : undefined;
 
-    const rows = await listApplications({ status, limit: 5000 });
+    // Filtered after the read, like the list page — no composite index.
+    const rows = (await listApplications({ limit: 5000 })).filter((r) => !status || r.status === status);
 
-    const csv = toCsv(rows, [
+    // Geekdom's questions, in their order (lib/application-questions.ts).
+    const flat = rows.map((r) => ({ ...r, describes: r.describes.join("; ") }));
+    const csv = toCsv(flat, [
       { key: "createdAt", label: "Applied" },
       { key: "name", label: "Name" },
       { key: "email", label: "Email" },
+      { key: "plan", label: "Membership" },
       { key: "phone", label: "Phone" },
+      { key: "city", label: "City" },
       { key: "company", label: "Company" },
-      { key: "role", label: "Role" },
-      { key: "audience", label: "They are" },
-      { key: "stage", label: "Stage" },
-      { key: "building", label: "Building" },
-      { key: "needs", label: "Needs" },
-      { key: "referredBy", label: "Referred by" },
-      { key: "formerMember", label: "Former member" },
-      { key: "website", label: "Website" },
-      { key: "linkedin", label: "LinkedIn" },
+      { key: "website", label: "LinkedIn or personal site" },
+      { key: "heardAbout", label: "How did you hear about Geekdom?" },
+      { key: "heardAboutOther", label: "Other (how did you hear?)" },
+      { key: "brag", label: "Brag about yourself in one sentence." },
+      { key: "building", label: "What are you building?" },
+      { key: "shipped", label: "Shipped, sold or built in the last 90 days" },
+      { key: "links", label: "Links to work" },
+      { key: "describes", label: "Which best describes you?" },
+      { key: "describesOther", label: "Other (which describes you?)" },
+      { key: "whyGeekdom", label: "Why Geekdom?" },
+      { key: "giveBack", label: "What will you give back?" },
+      { key: "excited", label: "Most excited to do in the next 6 months" },
+      { key: "otherCommunities", label: "Other communities or programs" },
+      { key: "anythingElse", label: "Anything else" },
+      { key: "formerMember", label: "Current Geekdom member" },
       { key: "status", label: "Status" },
       { key: "reviewedBy", label: "Reviewed by" },
       { key: "notes", label: "Notes" },
+      { key: "source", label: "Source" },
     ]);
 
+    await logActivity(user, {
+      area: "applications",
+      action: "exported",
+      label: `${rows.length} ${rows.length === 1 ? "application" : "applications"}${status ? ` (${APPLICATION_LABELS[status]})` : ""} to CSV`,
+      href: "/portal/admin/applications",
+    });
     return csvResponse(csv, `geekdom-applications${status ? `-${status}` : ""}`);
   }
 
@@ -80,6 +103,12 @@ export async function GET(
       { key: "stripeSubscriptionId", label: "Stripe subscription" },
     ]);
 
+    await logActivity(user, {
+      area: "members",
+      action: "exported",
+      label: `the member roster (${rows.length} ${rows.length === 1 ? "member" : "members"}) to CSV`,
+      href: "/portal/admin/members",
+    });
     return csvResponse(csv, "geekdom-members");
   }
 

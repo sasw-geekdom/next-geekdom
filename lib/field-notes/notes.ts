@@ -119,8 +119,10 @@ const readPublished = unstable_cache(
       .filter((n): n is PublishedNote => n !== null)
       .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
   },
-  [dataKey("field-notes:published")],
-  { tags: [FIELD_NOTES_TAG] },
+  [dataKey("field-notes:published:v2")],
+  // Five minutes, not never — a publish from another copy of the site
+  // (preview, local) must reach this one too. See member-resources.ts.
+  { tags: [FIELD_NOTES_TAG], revalidate: 300 },
 );
 
 /** Live notes, newest first. For the public index. */

@@ -17,33 +17,51 @@ import { ProfileEditor, type ProfileDraft } from "@/components/portal/profile-ed
   links, listed or not — and EDIT opens the form in the slide-out. The card
   is the preview; after saving it shows the change.
 
-  Saving is still a design preview: nothing is stored until Phase 3.
+  Saving stores it (saveMyProfile) for a member; a staff account sees a
+  preview it can't store. Photos aren't stored yet — initials stand in.
 */
 
 function initials(name: string) {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "?";
 }
 
-export function ProfileCard({ initial }: { initial: ProfileDraft }) {
+export function ProfileCard({
+  initial,
+  save,
+}: {
+  initial: ProfileDraft;
+  /** Stores the profile (a member's own). Absent = a design preview (staff). */
+  save?: (d: ProfileDraft) => Promise<{ ok: boolean; message: string }>;
+}) {
   const [profile, setProfile] = React.useState(initial);
+  const [result, setResult] = React.useState<{ ok: boolean; message: string } | null>(null);
   const [open, setOpen] = React.useState(false);
   const [saved, setSaved] = React.useState(false);
   // A fresh editor each time the drawer opens, starting from the card.
   const [editorKey, setEditorKey] = React.useState(0);
+  const edit = () => {
+    setEditorKey((k) => k + 1);
+    setSaved(false);
+    setOpen(true);
+  };
+
+  /*
+    WHAT'S MISSING, as a nudge — members find each other by these, and an
+    imported profile often has only a name and a headline. Each opens the
+    editor. Shown only while something's missing, and only to the member.
+  */
+  const missing = [
+    !profile.headline && "a headline",
+    !profile.role && "your role",
+    profile.askMeAbout.length === 0 && "what to ask you about",
+    !profile.bio && "a short bio",
+  ].filter((x): x is string => Boolean(x));
 
   return (
     <section className="flex flex-col border border-border bg-bone-light p-6 sm:p-7">
       <div className="flex items-center justify-between gap-4">
         <h2 className={cn(MONO.label, "text-muted-foreground")}>Directory profile</h2>
-        <Button
-          variant="ink"
-          size="sm"
-          onClick={() => {
-            setEditorKey((k) => k + 1);
-            setSaved(false);
-            setOpen(true);
-          }}
-        >
+        <Button variant="ink" size="sm" onClick={edit}>
           <Pencil className="h-3.5 w-3.5" strokeWidth={1.8} />
           Edit
         </Button>
@@ -77,6 +95,24 @@ export function ProfileCard({ initial }: { initial: ProfileDraft }) {
         </div>
       )}
 
+      {missing.length > 0 && (
+        <div className="mt-6 border border-dashed border-border px-4 py-3">
+          <p className="text-sm text-graphite">Complete your profile — members find each other by what&rsquo;s here.</p>
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            Add{" "}
+            {missing.map((m, i) => (
+              <React.Fragment key={m}>
+                {i > 0 && (i === missing.length - 1 ? " and " : ", ")}
+                <button type="button" onClick={edit} className="text-graphite underline decoration-clay decoration-1 underline-offset-2">
+                  {m}
+                </button>
+              </React.Fragment>
+            ))}
+            .
+          </p>
+        </div>
+      )}
+
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
         <p className="text-sm text-muted-foreground">
           {profile.listed
@@ -100,9 +136,14 @@ export function ProfileCard({ initial }: { initial: ProfileDraft }) {
           </div>
         )}
       </div>
-      {saved && (
+      {saved && !save && (
         <p role="status" className="mt-3 text-sm text-muted-foreground">
-          Design preview — the card shows your change, but it isn&rsquo;t stored yet.
+          Preview only — staff accounts have no profile to store.
+        </p>
+      )}
+      {result && (
+        <p role={result.ok ? "status" : "alert"} className={cn("mt-3 text-sm", result.ok ? "text-muted-foreground" : "text-geekdom-red")}>
+          {result.message}
         </p>
       )}
 
@@ -126,10 +167,12 @@ export function ProfileCard({ initial }: { initial: ProfileDraft }) {
           key={editorKey}
           initial={profile}
           formId="profile-form"
-          onSave={(d) => {
+          onSave={async (d) => {
             setProfile(d);
             setSaved(true);
             setOpen(false);
+            setResult(null);
+            if (save) setResult(await save(d));
           }}
         />
       </Drawer>

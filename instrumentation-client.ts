@@ -27,5 +27,7 @@ initBotId({
     { path: "/api/apply", method: "POST" },
     { path: "/api/billing/portal", method: "POST" },
     { path: "/api/auth/email-link", method: "POST" },
+    // Event requests and Studio partner inquiries (lib/inquiries.ts).
+    { path: "/api/inquiries", method: "POST" },
   ],
 });

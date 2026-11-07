@@ -94,8 +94,11 @@ const readPortfolio = unstable_cache(
       companies: all.filter((c) => !c.hidden).map(toPublic),
     };
   },
-  [dataKey("portfolio:public")],
-  { tags: [PORTFOLIO_TAG] },
+  [dataKey("portfolio:public:v2")],
+  // Five minutes, not never: a save clears only the cache of the copy it was
+  // made on (live, preview, local all share one database), so the others
+  // need an expiry to catch up. See member-resources.ts.
+  { tags: [PORTFOLIO_TAG], revalidate: 300 },
 );
 
 /** The wall's companies, in the admin's order, hidden ones left out. */

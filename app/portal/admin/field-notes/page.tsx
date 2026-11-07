@@ -15,7 +15,6 @@ export default async function AdminFieldNotesPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Site content"
         title="Field Notes"
         description="The blog, as carousels — each note a set of frames read sideways."
       />

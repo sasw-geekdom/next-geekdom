@@ -1,5 +1,7 @@
 import { z } from "zod";
-import { AUDIENCES, STAGES } from "@/lib/membership";
+import { PLAN_IDS } from "@/lib/membership";
+import { DESCRIBES, HEARD_ABOUT } from "@/lib/application-questions";
+import { EVENT_TYPES, HEADCOUNTS, PARTNER_INTERESTS } from "@/lib/inquiries";
 import { APPLICATION_STATUSES } from "@/lib/firebase/collections";
 
 /*
@@ -40,46 +42,81 @@ const optionalText = (max: number) =>
     .optional()
     .transform((v) => (v ? v : undefined));
 
-const optionalUrl = z
-  .string()
-  .trim()
-  .max(300)
-  .optional()
-  .transform((v) => (v ? v : undefined))
-  .refine((v) => v === undefined || /^https?:\/\/.+\..+/.test(v), {
-    message: "Enter a full URL, starting with https://",
-  });
-
 // ─── Membership application ─────────────────────────────────────────────────
 
-export const applicationSchema = z.object({
-  name,
-  email,
-  phone: optionalText(40),
-  company: optionalText(160),
-  role: optionalText(120),
-  website: optionalUrl,
-  linkedin: optionalUrl,
-
-  audience: z.enum(AUDIENCES, { message: "Pick the one that fits best." }),
-  stage: z.enum(STAGES, { message: "Pick a stage." }),
-
-  building: z
-    .string({ error: "Tell us what you're building." })
+const longText = (label: string, min = 10) =>
+  z
+    .string({ error: label })
     .trim()
-    .min(40, "Give us a couple of sentences — 40 characters minimum.")
-    .max(2000),
-  needs: z
-    .string({ error: "Tell us what you're looking for." })
-    .trim()
-    .min(20, "Tell us what you're looking for.")
-    .max(2000),
+    .min(min, label)
+    .max(4000);
 
-  referredBy: optionalText(160),
-  formerMember: z.boolean().default(false),
-});
+/** Geekdom's own questions — lib/application-questions.ts. */
+export const applicationSchema = z
+  .object({
+    plan: z.enum(PLAN_IDS, { message: "Pick a membership." }),
+    firstName: z.string({ error: "Add your first name." }).trim().min(1, "Add your first name.").max(60),
+    lastName: z.string({ error: "Add your last name." }).trim().min(1, "Add your last name.").max(60),
+    email,
+    phone: z.string({ error: "Add a phone number." }).trim().min(7, "Add a phone number.").max(40),
+    city: z.string({ error: "Add your city." }).trim().min(2, "Add your city.").max(80),
+    company: optionalText(160),
+    website: z
+      .string({ error: "Add your LinkedIn or personal site." })
+      .trim()
+      .min(4, "Add your LinkedIn or personal site.")
+      .max(300),
+    heardAbout: z.enum(HEARD_ABOUT, { message: "Pick one." }),
+    heardAboutOther: optionalText(200),
+    brag: longText("Brag about yourself in one sentence.", 10),
+    building: longText("Tell us what you're building."),
+    shipped: longText("Tell us what you've shipped, sold or built lately."),
+    links: optionalText(1000),
+    describes: z.array(z.enum(DESCRIBES)).min(1, "Pick at least one."),
+    describesOther: optionalText(200),
+    whyGeekdom: longText("Tell us why Geekdom."),
+    giveBack: longText("Tell us what you'll give back."),
+    excited: longText("Tell us what you're most excited to do."),
+    otherCommunities: optionalText(1000),
+    anythingElse: optionalText(2000),
+    formerMember: z.boolean().default(false),
+  })
+  .superRefine((v, ctx) => {
+    // A Team or Enterprise membership is a company's: say which.
+    if (v.plan !== "solo" && !v.company) {
+      ctx.addIssue({ code: "custom", path: ["company"], message: "Add your company — Team and Enterprise memberships are for a company." });
+    }
+  })
+  .transform((v) => ({ ...v, name: `${v.firstName} ${v.lastName}`.trim() }));
 
 export type ApplicationInput = z.infer<typeof applicationSchema>;
+
+// ─── Inquiries: event requests and Studio partners ──────────────────────────
+
+const inquiryBase = {
+  company: z.string({ error: "Add your company." }).trim().min(2, "Add your company.").max(160),
+  name,
+  email,
+};
+
+export const inquirySchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("event"),
+    ...inquiryBase,
+    eventType: z.enum(EVENT_TYPES, { message: "Pick the kind of event." }),
+    headcount: z.enum(HEADCOUNTS, { message: "Pick roughly how many people." }),
+    when: z.string({ error: "Tell us roughly when." }).trim().min(2, "Tell us roughly when.").max(200),
+    details: optionalText(2000),
+  }),
+  z.object({
+    kind: z.literal("partner"),
+    ...inquiryBase,
+    interest: z.enum(PARTNER_INTERESTS, { message: "Pick how you'd like to work with Studio companies." }),
+    details: optionalText(2000),
+  }),
+]);
+
+export type InquiryInput = z.infer<typeof inquirySchema>;
 
 // ─── Admin: application review ──────────────────────────────────────────────
 

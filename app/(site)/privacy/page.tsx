@@ -130,7 +130,7 @@ export default function PrivacyPage() {
         <p>
           Applications are kept while we review them and for as long as the
           decision is useful to us — a declined application tells us we&rsquo;ve
-          already spoken, and a waitlisted one is the list. If you&rsquo;d rather
+          already spoken. If you&rsquo;d rather
           we didn&rsquo;t keep yours, say so and we&rsquo;ll delete it.
         </p>
         <p>

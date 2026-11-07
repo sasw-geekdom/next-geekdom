@@ -16,7 +16,6 @@ export default async function AdminPortfolioPage(props: PageProps<"/portal/admin
   return (
     <>
       <PageHeader
-        eyebrow="Site content"
         title="Built at Geekdom"
         description="The companies on the homepage wall. Studio-backed ones also appear on /studio."
       />

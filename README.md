@@ -32,7 +32,7 @@ platform. See the Voice section of [AGENTS.md](AGENTS.md).
   all data; **Firestore** (default database); **Storage** for assets
 - **Stripe** — one recurring membership price, Checkout + the hosted billing portal
 - **Resend** — branded transactional email
-- **Luma** — powers the events section
+- **Luma** — hosts the public calendar; the site links to it (no API)
 - **Vercel BotID** — invisible CAPTCHA on both public POST endpoints
 
 ## How the membership actually works
@@ -72,7 +72,7 @@ with the apply-first flow intact.
   tense on its own.
 - **`/membership`** — what the one membership includes, what it explicitly isn't.
 - **`/the-floor`** — the third floor and the rhythm that fills it.
-- **`/events`** — the Luma calendar, server-rendered and indexable, ISR at 5 min.
+- **`/events`** — redirects to the public Luma calendar.
 - **`/whats-changing`** — the letter to members, reproduced in full.
 - **`/faq`** — the practical questions the letter raises.
 - **`/apply`**, **`/account`**, **`/welcome`** — the membership flow.
@@ -88,7 +88,7 @@ with the apply-first flow intact.
   decision panel that sends the right email for each outcome.
 - **Members** — roster with subscription status, renewal dates, and deep links
   into Stripe (billing changes belong in Stripe's own UI, not a copy of it).
-- **Events** — read-only view of the Luma calendar.
+- **This month in the Club** — the homepage event list, edited in the admin.
 - CSV export for applications and members, formula-injection safe.
 
 ## Getting started
@@ -113,8 +113,7 @@ Copy [.env.example](.env.example) to `.env.local` and fill it in. On Vercel, set
 the same keys in **Project Settings → Environment Variables**.
 
 The app is built so that a missing key degrades rather than crashes: every SDK
-client is constructed lazily, `/events` falls back to a link to the public Luma
-calendar, and email failures never fail the request that triggered them. The
+client is constructed lazily, and email failures never fail the request that triggered them. The
 build itself needs no secrets.
 
 ### Preview mode
@@ -122,10 +121,6 @@ build itself needs no secrets.
 Set `NEXT_PUBLIC_PREVIEW_MODE=1` to run the whole site for design and copy
 review before any service is wired up:
 
-- `/events` and the homepage calendar render [sample events](lib/sample/events.ts)
-  instead of an empty state, so the event card can actually be judged. Dates are
-  computed relative to the request, not hard-coded, so the preview doesn't empty
-  out a week after it's written.
 - `/apply` completes into its success state and `/apply/thanks` — **after**
   validation, so the error states stay reachable. Nothing is written.
 - The whole deployment goes `noindex` and `Disallow: /`, in both robots.txt and
@@ -149,11 +144,6 @@ forgotten flag cannot put sample data on the real site. See
    Its signing secret is `STRIPE_WEBHOOK_SECRET`.
 3. Locally: `stripe listen --forward-to localhost:3000/api/stripe/webhook`.
 4. Enable the **billing portal** in the Stripe dashboard, or `/account` 500s.
-
-### Luma setup
-
-API keys are **per calendar** and require Luma Plus. Create one at
-`luma.com/calendar/manage/api-keys` → `LUMA_API_KEY`.
 
 ### BotID
 
@@ -199,7 +189,6 @@ lib/
   validation/        # zod schemas
   site.ts            # identity, dates, nav
   membership.ts      # the one membership: price, benefits, audiences
-  luma.ts            # the events API
 proxy.ts             # /admin/* fast-path guard (Next 16 renamed middleware → proxy)
 ```
 

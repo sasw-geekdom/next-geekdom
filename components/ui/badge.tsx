@@ -67,15 +67,22 @@ export function Badge({
 /*
   Status → tone mappings live here rather than at each call site so the queue,
   the detail page, and the CSV legend can't drift into disagreeing about what
-  color "waitlisted" is.
-
+  color a status is.
 */
 const APPLICATION_TONES: Record<ApplicationStatus, Tone> = {
-  new: "alert",
-  reviewing: "pending",
+  initial_review: "alert",
+  team_review: "pending",
   approved: "good",
   declined: "neutral",
-  waitlisted: "info",
+  banned: "solid",
+};
+
+export const APPLICATION_LABELS: Record<ApplicationStatus, string> = {
+  initial_review: "Initial review",
+  team_review: "Team review",
+  approved: "Approved",
+  declined: "Declined",
+  banned: "Banned",
 };
 
 const MEMBER_TONES: Record<MemberStatus, Tone> = {
@@ -98,9 +105,7 @@ const MEMBER_LABELS: Record<MemberStatus, string> = {
 
 export function ApplicationBadge({ status }: { status: ApplicationStatus }) {
   return (
-    <Badge tone={APPLICATION_TONES[status]} className="capitalize">
-      {status}
-    </Badge>
+    <Badge tone={APPLICATION_TONES[status]}>{APPLICATION_LABELS[status]}</Badge>
   );
 }
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { ADMIN_LABEL } from "@/components/admin/admin-ui";
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, GripVertical, Pencil, Plus, Trash2 } from "lucide-react";
@@ -9,7 +10,6 @@ import { Combobox } from "@/components/ui/combobox";
 import { Switch } from "@/components/ui/switch";
 import { Drawer } from "@/components/ui/drawer";
 import { FieldGroup } from "@/components/admin/field-group";
-import { MONO } from "@/components/site/section";
 import { cn } from "@/lib/utils";
 import { LOGO_HEIGHTS } from "@/lib/content/portfolio-options";
 import {
@@ -616,7 +616,7 @@ function LogoField({
 
 function Tag({ children }: { children: React.ReactNode }) {
   return (
-    <span className={cn(MONO.micro, "border border-border bg-bone-light px-1.5 py-0.5 text-graphite")}>
+    <span className={cn(ADMIN_LABEL, "border border-border bg-bone-light px-1.5 py-0.5 text-graphite")}>
       {children}
     </span>
   );
@@ -655,7 +655,7 @@ function Cell({
       <span className="flex h-10 w-full items-center justify-center">
         {!painted ? name : isSymbol ? <span className="flex items-center gap-2.5">{painted}{name}</span> : painted}
       </span>
-      <span className={cn(MONO.label, "text-muted-foreground")}>
+      <span className={cn(ADMIN_LABEL, "text-muted-foreground")}>
         {company.stage} · {company.founded}
       </span>
     </div>

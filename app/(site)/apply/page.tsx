@@ -6,8 +6,8 @@ import {
   Section,
 } from "@/components/site/section";
 import { cn } from "@/lib/utils";
-import { TypeformPopupButton } from "@/components/forms/typeform-popup-button";
-import { TYPEFORM_FORM_ID } from "@/lib/site";
+import { ApplyForm } from "@/components/forms/apply-form";
+import { PLAN_IDS, type PlanId } from "@/lib/membership";
 import { Editorial } from "@/components/site/editorial";
 
 export const metadata: Metadata = pageMetadata({
@@ -18,7 +18,10 @@ export const metadata: Metadata = pageMetadata({
     "Apply to the Club at Geekdom — one membership, by application, on the third floor in San Antonio. A person reads every application and answers within two weeks.",
 });
 
-export default function ApplyPage() {
+export default async function ApplyPage(props: PageProps<"/apply">) {
+  // /apply?plan=team — /club's plan cards link here with their plan chosen.
+  const { plan } = await props.searchParams;
+  const initialPlan: PlanId = PLAN_IDS.includes(plan as PlanId) ? (plan as PlanId) : "solo";
   return (
     /*
       NO MARK BESIDE THE FORM. /account carries a mark in a side rail (the
@@ -52,13 +55,15 @@ export default function ApplyPage() {
       </header>
 
       {/*
-        GEEKDOM'S TYPEFORM, as `Source Copy v1` specified — opened as a
-        full-screen popup from our own button rather than embedded inline, so
-        the page stays in the brand until the visitor starts. See
-        TypeformPopupButton. The custom <ApplyForm /> is still in the repo,
-        unrendered — see the /apply notes in AGENTS.md before deleting it.
+        OUR OWN FORM AGAIN (November 2026): Geekdom moved off Typeform and
+        Airtable to run the whole review in the admin. It posts to
+        /api/apply, which saves the application for initial review and sends
+        the "we have your application" email. Capped at the prose measure —
+        a ten-minute form wants a comfortable column, not the full width.
       */}
-      <TypeformPopupButton formId={TYPEFORM_FORM_ID} thanksHref="/apply/thanks" />
+      <div className="max-w-3xl">
+        <ApplyForm initialPlan={initialPlan} />
+      </div>
     </Section>
   );
 }

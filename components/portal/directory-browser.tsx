@@ -9,7 +9,7 @@ import { FieldGroup } from "@/components/admin/field-group";
 import { HEADING, LINK, MONO } from "@/components/site/section";
 import { cn } from "@/lib/utils";
 import { AUDIENCES } from "@/lib/membership";
-import type { DirectoryMember } from "@/data/mock/portal";
+import type { DirectoryMember } from "@/lib/directory";
 
 /*
   THE MEMBER DIRECTORY, built for 400+ people — next-angels' master/detail.
@@ -44,12 +44,18 @@ function since(iso: string) {
   );
 }
 
+/** The row's second line: role · company, else the headline. */
+function subline(m: DirectoryMember): string {
+  const work = [m.role, m.company].filter(Boolean).join(" · ");
+  return work || m.headline || "";
+}
+
 function initials(name: string) {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
 }
 
 function Portrait({ m, size }: { m: DirectoryMember; size: "row" | "pane" }) {
-  const box = size === "row" ? "h-11 w-11" : "h-24 w-24";
+  const box = size === "row" ? "h-10 w-10" : "h-20 w-20";
   return m.avatar ? (
     // A plain <img>: these are small local SVGs, and members' uploaded photos
     // will come from Blob — next/image adds nothing for either at this size.
@@ -72,6 +78,7 @@ export function DirectoryBrowser({
 }) {
   const [query, setQuery] = React.useState("");
   const [audience, setAudience] = React.useState("all");
+  const hasAudience = members.some((m) => m.audience);
   const [selectedId, setSelectedId] = React.useState<string | null>(initialId ?? null);
   const [drawerOpen, setDrawerOpen] = React.useState(false);
 
@@ -126,13 +133,17 @@ export function DirectoryBrowser({
             </button>
           )}
         </div>
-        <Combobox
-          name="audience"
-          className="sm:w-60"
-          options={[{ value: "all", label: "Everyone" }, ...AUDIENCES.map((a) => ({ value: a, label: a }))]}
-          value={audience}
-          onChange={setAudience}
-        />
+        {/* Only once someone has said what describes them — imported profiles
+            have no audience, so every choice but Everyone found no one. */}
+        {hasAudience && (
+          <Combobox
+            name="audience"
+            className="sm:w-60"
+            options={[{ value: "all", label: "Everyone" }, ...AUDIENCES.filter((a) => members.some((m) => m.audience === a)).map((a) => ({ value: a, label: a }))]}
+            value={audience}
+            onChange={setAudience}
+          />
+        )}
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -192,17 +203,16 @@ export function DirectoryBrowser({
                           onClick={() => choose(m)}
                           aria-current={active ? "true" : undefined}
                           className={cn(
-                            "flex w-full items-center gap-3.5 border-l-2 px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-inset",
+                            "flex w-full items-center gap-3 border-l-2 px-4 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-inset",
                             active ? "border-clay bg-bone" : "border-transparent hover:bg-bone",
                           )}
                         >
                           <Portrait m={m} size="row" />
                           <span className="min-w-0">
                             <span className="block truncate font-medium text-graphite">{m.name}</span>
-                            <span className="block truncate text-sm text-muted-foreground">
-                              {m.role}
-                              {m.company ? ` · ${m.company}` : ""}
-                            </span>
+                            {/* Role and company, or — as most imported profiles have
+                                neither — the headline, so the list says who to talk to. */}
+                            {(subline(m)) && <span className="block truncate text-sm text-muted-foreground">{subline(m)}</span>}
                           </span>
                         </button>
                       </li>
@@ -233,36 +243,45 @@ export function DirectoryBrowser({
 }
 
 function MemberDetail({ m, inDrawer = false }: { m: DirectoryMember; inDrawer?: boolean }) {
+  const work = [m.role, m.company].filter(Boolean).join(" · ");
+  // Only what the member filled in — an empty "Ask me about" heading read as
+  // a broken page. A sparse profile says so once, kindly.
+  const sparse = !m.askMeAbout.length && !m.lookingFor && !m.bio;
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-7">
       <div className="flex items-center gap-5">
         <Portrait m={m} size="pane" />
         <div className="min-w-0">
-          {!inDrawer && <p className={cn(MONO.label, "text-muted-foreground")}>{m.audience}</p>}
-          {!inDrawer && <p className={cn(HEADING.subhead, "mt-1 text-graphite")}>{m.name}</p>}
-          <p className="mt-1 text-graphite">
-            {m.role}
-            {m.company ? ` · ${m.company}` : ""}
+          {!inDrawer && <p className={cn(HEADING.subhead, "text-graphite")}>{m.name}</p>}
+          {work && <p className="mt-1 text-graphite">{work}</p>}
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            {m.audience ? `${m.audience} · ` : ""}Member since {since(m.memberSince)}
           </p>
-          <p className="text-sm text-muted-foreground">Member since {since(m.memberSince)}</p>
         </div>
       </div>
-      <p className="text-xl leading-snug text-graphite">{m.headline}</p>
-      <FieldGroup title="Ask me about">
-        <div className="flex flex-wrap gap-1.5">
-          {m.askMeAbout.map((t) => (
-            <span key={t} className="border border-border bg-bone px-2.5 py-1 text-sm text-graphite">{t}</span>
-          ))}
-        </div>
-      </FieldGroup>
+      {m.headline && <p className="text-lg leading-snug text-graphite">{m.headline}</p>}
+      {m.askMeAbout.length > 0 && (
+        <FieldGroup title="Ask me about">
+          <div className="flex flex-wrap gap-1.5">
+            {m.askMeAbout.map((t) => (
+              <span key={t} className="border border-border bg-bone px-2.5 py-1 text-sm text-graphite">{t}</span>
+            ))}
+          </div>
+        </FieldGroup>
+      )}
       {m.lookingFor && (
         <FieldGroup title="Looking for">
           <p className="leading-relaxed text-graphite">{m.lookingFor}</p>
         </FieldGroup>
       )}
-      <FieldGroup title="About">
-        <p className="leading-relaxed text-muted-foreground">{m.bio}</p>
-      </FieldGroup>
+      {m.bio && (
+        <FieldGroup title="About">
+          <p className="leading-relaxed text-muted-foreground">{m.bio}</p>
+        </FieldGroup>
+      )}
+      {sparse && (
+        <p className="text-sm text-muted-foreground">{m.name.split(" ")[0]} hasn&rsquo;t added more to their profile yet.</p>
+      )}
       {/*
         PROFILE LINKS as a row of icons. LinkedIn's official [in] logo in
         black — one of its three allowed colors, unaltered, as a link to the

@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
   It replaced a bare sign-out icon (a door with an arrow) parked at the far
   edge of the bar, apart from the name it belonged to: an icon that had to
   be guessed, in the wrong place. Now identity and its actions sit together —
-  who you're signed in as, Profile, Admin portal (staff), and "Sign out"
+  who you're signed in as, Profile, Admin portal (staff), geekdom.com, and "Sign out"
   spelled out.
 
   A custom menu, not a native one, per the portal's rule. Opens on click,
@@ -143,12 +143,14 @@ export function AccountMenu({
                 Admin portal
               </Link>
             )}
-            {inSidebar && (
-              <a href="/" target="_blank" rel="noreferrer noopener" role="menuitem" className={item} onClick={() => close()}>
-                <ArrowUpRight className="h-4 w-4 text-muted-foreground" strokeWidth={1.7} aria-hidden="true" />
-                Public site
-              </a>
-            )}
+            {/* The way back to the public site, for members as well as staff (it
+                was admin-only, so the member portal had no way out but signing
+                out). A new tab, so the portal stays where they left it. */}
+            <a href="/" target="_blank" rel="noreferrer noopener" role="menuitem" className={item} onClick={() => close()}>
+              <ArrowUpRight className="h-4 w-4 text-muted-foreground" strokeWidth={1.7} aria-hidden="true" />
+              geekdom.com
+              <span className="sr-only"> (opens in a new tab)</span>
+            </a>
           </div>
           <div className="border-t border-border pt-1">
             <button

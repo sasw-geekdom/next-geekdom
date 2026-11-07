@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
 import { MembershipJsonLd } from "@/components/site/structured-data";
@@ -8,27 +9,24 @@ import {
   Section,
   SectionTitle,
   Subhead,
-  HEADING,
   MONO,
   ARROW,
   LINK_ARROW,
 } from "@/components/site/section";
 import { Editorial } from "@/components/site/editorial";
-import { TypeformPopupButton } from "@/components/forms/typeform-popup-button";
-import { MOCK_EVENTS_FORM } from "@/data/mock/forms";
+import { InquiryButton } from "@/components/forms/inquiry-form";
 import { Photo } from "@/components/site/photo";
 import { SpreadHero } from "@/components/site/spread-hero";
 import { PHOTOS } from "@/lib/photos";
 import {
   BENEFITS,
-  priceLabel,
-  priceSentence,
+  formatPrice,
   GENEROSITY_BAR,
   GOOD_FIT,
+  PLANS,
 } from "@/lib/membership";
 import {
   CLUB,
-  EVENTS_TYPEFORM_ID,
   LOCATION,
   LUMA_CALENDAR_URL,
 } from "@/lib/site";
@@ -81,10 +79,6 @@ export const metadata: Metadata = pageMetadata({
 
 
 export default function ClubPage() {
-  // null while pricing is unannounced — see lib/membership.ts. The page reads
-  // correctly either way rather than shipping a placeholder number.
-  const price = priceLabel();
-
   return (
     <>
       {/*
@@ -406,8 +400,8 @@ export default function ClubPage() {
         the figure sits at the top of the card, one quiet line above "Billed
         monthly", where it answers a question the reader is already asking.
 
-        Built from `priceSentence()` and never typed — a literal would drift
-        from Stripe silently.
+        Built from `PLANS` and never typed — a literal would drift from
+        Stripe silently.
       */}
       {/*
         BONE, NOT BONE-LIGHT. Moving "The bar is generosity" above the
@@ -460,33 +454,35 @@ export default function ClubPage() {
             <div className="border border-border bg-bone p-7">
               <p className={cn(MONO.eyebrow, "text-concrete")}>Geekdom Club</p>
 
-              {price ? (
-                <>
-                  <p
-                    className={cn(
-                      "mt-4 tabular-nums",
-                      HEADING.subhead,
-                      "text-graphite",
-                    )}
-                  >
-                    {priceSentence()}
-                  </p>
-                  <p className="mt-3 leading-relaxed text-muted-foreground">
-                    Billed monthly. Nothing is charged until you&rsquo;re
-                    accepted, and you can cancel any time.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <p className={cn("mt-4", HEADING.item, "text-graphite")}>
-                    Pricing coming soon
-                  </p>
-                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                    Apply now and we&rsquo;ll send the membership details along
-                    with your invitation. Nothing is charged until you accept.
-                  </p>
-                </>
-              )}
+              {/*
+                THREE PLANS, ONE APPLICATION (November 2026). Each row links
+                to /apply with its plan chosen; the one red button below
+                applies without choosing. Figures come from PLANS — never typed.
+              */}
+              <ul className="mt-4 border-b border-border">
+                {PLANS.map((plan) => (
+                  <li key={plan.id} className="border-t border-border">
+                    <Link
+                      href={`/apply?plan=${plan.id}`}
+                      className="group flex items-baseline justify-between gap-4 py-3.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-offset-2 focus-visible:ring-offset-bone"
+                    >
+                      <span className="min-w-0">
+                        <span className="block font-medium text-graphite decoration-clay decoration-2 underline-offset-4 group-hover:underline">
+                          {plan.name}
+                        </span>
+                        <span className="block text-sm leading-snug text-muted-foreground">{plan.blurb.replace(" Let's talk.", "")}</span>
+                      </span>
+                      <span className="shrink-0 text-sm tabular-nums text-graphite">
+                        {plan.priceCents === null ? "Let’s talk" : `${formatPrice(plan.priceCents)}/mo`}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+                Billed monthly. Nothing is charged until you&rsquo;re accepted,
+                and you can cancel any time.
+              </p>
 
               <ButtonLink href="/apply" size="lg" className="mt-6 w-full">
                 Apply for membership
@@ -494,8 +490,8 @@ export default function ClubPage() {
 
               <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
                 Applications are read by a person on the Geekdom team. If
-                it&rsquo;s a fit, we&rsquo;ll send you an invitation to activate
-                your membership.
+                it&rsquo;s a fit, we&rsquo;ll email you to start your
+                membership.
               </p>
 
               <div className="mt-6 border-t border-border pt-5 text-sm text-muted-foreground">
@@ -528,8 +524,8 @@ export default function ClubPage() {
         NO NUMBERS. Capacity, rooms and rates aren't on the site anywhere, so
         none are invented here; the form is where a company says what it needs.
         The control is an arrow link, not a button — Red is for Apply — and it
-        opens Geekdom's events Typeform once EVENTS_TYPEFORM_ID is set
-        (lib/site.ts); until then it goes to /contact.
+        opens our own event-request form in a slide-out; requests are reviewed
+        at /portal/admin/requests (lib/inquiries.ts).
       */}
       <Section tone="bone-light">
         <div className="grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
@@ -558,7 +554,7 @@ export default function ClubPage() {
               For company and team events — we don&rsquo;t host private parties.
             </p>
             <div className="mt-8">
-              <TypeformPopupButton formId={EVENTS_TYPEFORM_ID} appearance="link" label="Plan an event" mock={MOCK_EVENTS_FORM} />
+              <InquiryButton kind="event" label="Plan an event" />
             </div>
           </div>
 

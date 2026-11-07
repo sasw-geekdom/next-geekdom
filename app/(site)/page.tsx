@@ -548,8 +548,8 @@ export default async function HomePage() {
         GEEKDOM'S SOURCE COPY, IN ITS LIST LAYOUT: a header, dated one-line
         entries — each linking to its page on the Startup + Tech Week site —
         and one link out to the public calendar. It replaced a Luma card
-        grid under "Come see how the room feels" — Luma isn't connected, so in
-        production that grid never rendered and the section was a fallback
+        grid under "Come see how the room feels" — Luma was never
+        connected (and won't be), so that grid never rendered and the section was a fallback
         sentence. The list is edited in the admin (/portal/admin/events, the
         `events` collection), with THIS_MONTH in lib/site.ts as its fallback.
       */}

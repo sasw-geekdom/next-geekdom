@@ -4,9 +4,11 @@ import {
   BookOpen,
   CalendarDays,
   Contact,
+  DoorOpen,
   Images,
   Inbox,
   LayoutGrid,
+  MessageSquare,
   NotebookPen,
   Shapes,
   UserRound,
@@ -37,6 +39,8 @@ export const MEMBER_NAV: NavGroup[] = [
     items: [
       { href: "/portal", label: "Dashboard", short: "Home", icon: LayoutGrid },
       { href: "/portal/directory", label: "Directory", icon: Contact },
+      // Phase 4: the conference rooms (lib/rooms/).
+      { href: "/portal/rooms", label: "Book a room", short: "Rooms", icon: DoorOpen },
       { href: "/portal/resources", label: "FAQ & resources", short: "FAQ", icon: BookOpen },
       { href: "/portal/profile", label: "Profile", icon: UserRound },
     ],
@@ -48,13 +52,33 @@ export const MEMBER_NAV: NavGroup[] = [
   staff or superadmin, and every page under /portal/admin re-checks that on
   the server. Hiding the Admin switch is UX; it is not the gate.
 */
+/*
+  GROUPED BY THE KIND OF WORK:
+    Reviews       — things waiting on a yes or no (applications, requests)
+    Members       — the people (the roster, what members read)
+    Site content  — what the public site shows
+  Invitations is NOT here: it's the launch tool for members who joined
+  before the workflow existed, so it's a button on the Members page (and
+  lives under /members, which keeps Members highlighted while it's open).
+*/
 export const ADMIN_NAV: NavGroup[] = [
+  {
+    items: [{ href: "/portal/admin", label: "Overview", icon: LayoutGrid }],
+  },
+  {
+    label: "Reviews",
+    items: [
+      { href: "/portal/admin/applications", label: "Applications", icon: Inbox },
+      // Event requests (/club) and Studio partner requests (/studio).
+      { href: "/portal/admin/requests", label: "Requests", icon: MessageSquare },
+    ],
+  },
   {
     label: "Members",
     items: [
-      { href: "/portal/admin", label: "Overview", icon: LayoutGrid },
-      { href: "/portal/admin/applications", label: "Applications", icon: Inbox },
       { href: "/portal/admin/members", label: "Members", icon: Users },
+      // Conference-room bookings and the rooms themselves.
+      { href: "/portal/admin/rooms", label: "Rooms", icon: DoorOpen },
       // What members read on FAQ & resources, and the dashboard's Slack tile.
       { href: "/portal/admin/resources", label: "Member resources", icon: BookOpen },
     ],

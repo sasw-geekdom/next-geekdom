@@ -15,9 +15,11 @@ import { cn } from "@/lib/utils";
 */
 export function NewNoteButton({
   variant = "ink",
+  size,
   className,
 }: {
   variant?: "ink" | "outline";
+  size?: "sm" | "md";
   className?: string;
 }) {
   const router = useRouter();
@@ -29,6 +31,7 @@ export function NewNoteButton({
       <Button
         type="button"
         variant={variant}
+        size={size}
         disabled={pending}
         className={className}
         onClick={() => {
@@ -40,7 +43,7 @@ export function NewNoteButton({
           });
         }}
       >
-        <Plus className="h-4 w-4" strokeWidth={1.8} />
+        <Plus className={size === "sm" ? "h-3.5 w-3.5" : "h-4 w-4"} strokeWidth={1.8} />
         {pending ? "Creating…" : "New Field Note"}
       </Button>
       {error && (

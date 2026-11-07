@@ -1,16 +1,14 @@
 "use client";
 
+import { ADMIN_LABEL, Status, type StatusKind } from "@/components/admin/admin-ui";
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { ArrowDown, ArrowUp, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Eye, EyeOff, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Textarea } from "@/components/ui/field";
 import { Combobox } from "@/components/ui/combobox";
 import { Switch } from "@/components/ui/switch";
 import { Drawer } from "@/components/ui/drawer";
-import { Badge } from "@/components/ui/badge";
-import { FieldGroup } from "@/components/admin/field-group";
-import { MONO } from "@/components/site/section";
 import { cn } from "@/lib/utils";
 import {
   deleteFaq,
@@ -27,9 +25,11 @@ import type { ActionResult } from "@/lib/content/types";
 /*
   THE MEMBER PORTAL'S BASICS, EDITED — what members would otherwise email
   club@ for: the Slack invite, the Wi-Fi, the hours, the resource links and
-  the FAQ. Three lists, one slide-out (the admin's pattern: never an inline
-  form above the list). Saving updates /portal/resources and the dashboard's
-  Slack tile on the next request.
+  the FAQ. Laid out like the rest of the admin: the two lists as cards of
+  44px rows (click a row to edit it; move and remove appear on hover), the
+  basics as a properties card in a side column, one slide-out for every
+  edit. Saving updates /portal/resources and the dashboard's Slack tile on
+  the next request (other copies of the site within a minute).
 
   Before the first save the portal shows the text it shipped with; the list
   here is that text, and the first save writes it all down.
@@ -44,13 +44,23 @@ type Basics = Pick<MemberResources, "slackInviteUrl" | "wifiNetwork" | "wifiPass
 type LinkDraft = Omit<ResourceLinkItem, "id"> & { id?: string };
 type FaqDraft = Omit<FaqEntry, "id"> & { id?: string };
 
-export function MemberResourcesManager({ resources, groups }: { resources: MemberResources; groups: readonly string[] }) {
+export function MemberResourcesManager({
+  resources,
+  groups,
+  autoAnswers = {},
+}: {
+  resources: MemberResources;
+  groups: readonly string[];
+  /** FAQ id → the answer members actually read, where it's built from other fields (the Wi-Fi). */
+  autoAnswers?: Record<string, string>;
+}) {
   const router = useRouter();
   const [pending, startTransition] = React.useTransition();
   const [editing, setEditing] = React.useState<Editing | null>(null);
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [errors, setErrors] = React.useState<Record<string, string>>({});
   const [notice, setNotice] = React.useState<{ tone: "ok" | "error"; text: string } | null>(null);
+  const [showPassword, setShowPassword] = React.useState(false);
   const close = React.useCallback(() => setDrawerOpen(false), []);
 
   function open(e: Editing) {
@@ -91,114 +101,148 @@ export function MemberResourcesManager({ resources, groups }: { resources: Membe
 
   const b = resources;
   const byGroup = groups.map((g) => ({ group: g, items: b.faq.filter((f) => f.group === g) }));
+  const editBasics = () =>
+    open({ kind: "basics", draft: { slackInviteUrl: b.slackInviteUrl, wifiNetwork: b.wifiNetwork, wifiPassword: b.wifiPassword, hours: b.hours } });
+  const editingAuto = editing?.kind === "faq" && editing.draft.id ? autoAnswers[editing.draft.id] : undefined;
 
   return (
-    <div className="flex flex-col gap-12">
+    <div className="flex flex-col gap-6">
       {notice && (
         <p role={notice.tone === "error" ? "alert" : "status"} className={cn("text-sm", notice.tone === "error" ? "text-geekdom-red" : "text-graphite")}>
           {notice.text}
         </p>
       )}
 
-      {/* ── The basics ─────────────────────────────────────────────────── */}
-      <section>
-        <SectionHead title="The basics">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={pending}
-            onClick={() => open({ kind: "basics", draft: { slackInviteUrl: b.slackInviteUrl, wifiNetwork: b.wifiNetwork, wifiPassword: b.wifiPassword, hours: b.hours } })}
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="flex min-w-0 flex-col gap-6">
+          {/* ── Resource links ── */}
+          <Card
+            title="Resource links"
+            count={b.links.length}
+            action={
+              <Button variant="ink" size="sm" disabled={pending} onClick={() => open({ kind: "link", draft: { title: "", description: "", href: "" } })}>
+                <Plus className="h-3.5 w-3.5" strokeWidth={1.8} />
+                Add a link
+              </Button>
+            }
+            note="A link with no address shows under “Coming soon”. Email links show in the “Still have a question?” tile instead."
           >
-            <Pencil className="h-3.5 w-3.5" strokeWidth={1.8} />
-            Edit
-          </Button>
-        </SectionHead>
-        <dl className="mt-3 grid border-y border-border sm:grid-cols-2 lg:grid-cols-4">
-          <Fact label="Member Slack" value={b.slackInviteUrl || null} empty="Not open yet" />
-          <Fact label="Wi-Fi network" value={b.wifiNetwork || null} empty="To confirm" />
-          <Fact label="Wi-Fi password" value={b.wifiPassword || null} empty="To confirm" mono />
-          <Fact label="Hours" value={b.hours} />
-        </dl>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The Slack link opens the dashboard&rsquo;s Slack tile. Wi-Fi shows only to signed-in members, on FAQ &amp; resources.
-        </p>
-      </section>
+            {b.links.length === 0 ? (
+              <Empty>No links yet.</Empty>
+            ) : (
+              <ul>
+                {b.links.map((l, i) => (
+                  <Row
+                    key={l.id}
+                    title={l.title}
+                    // "Book a room" is built into the portal (/portal/rooms) and
+                    // always live there, whatever this saved row says.
+                    sub={/book a room/i.test(l.title) ? "Built into the portal — always links to Book a room. You can remove this row." : l.href || l.description}
+                    status={/book a room/i.test(l.title) ? { kind: "info", text: "Built in" } : l.href ? null : { kind: "closed", text: "Coming soon" }}
+                    first={i === 0}
+                    last={i === b.links.length - 1}
+                    disabled={pending}
+                    onUp={() => run(() => moveResource("link", l.id, -1), "Moved.")}
+                    onDown={() => run(() => moveResource("link", l.id, 1), "Moved.")}
+                    onEdit={() => open({ kind: "link", draft: { ...l } })}
+                    onDelete={() => window.confirm(`Remove “${l.title}”?`) && run(() => deleteLink(l.id), "Removed.")}
+                  />
+                ))}
+              </ul>
+            )}
+          </Card>
 
-      {/* ── Resource links ─────────────────────────────────────────────── */}
-      <section>
-        <SectionHead title="Resource links">
-          <Button variant="ink" size="sm" disabled={pending} onClick={() => open({ kind: "link", draft: { title: "", description: "", href: "" } })}>
-            <Plus className="h-3.5 w-3.5" strokeWidth={1.8} />
-            Add a link
-          </Button>
-        </SectionHead>
-        <ul className="mt-3 border-b border-border">
-          {b.links.map((l, i) => (
-            <Row
-              key={l.id}
-              title={l.title}
-              sub={l.href || l.description}
-              badge={l.href ? null : "Coming soon"}
-              first={i === 0}
-              last={i === b.links.length - 1}
-              disabled={pending}
-              onUp={() => run(() => moveResource("link", l.id, -1), "Moved.")}
-              onDown={() => run(() => moveResource("link", l.id, 1), "Moved.")}
-              onEdit={() => open({ kind: "link", draft: { ...l } })}
-              onDelete={() => window.confirm(`Remove “${l.title}”?`) && run(() => deleteLink(l.id), "Removed.")}
-            />
-          ))}
-        </ul>
-        <p className="mt-2 text-sm text-muted-foreground">A link with no address shows under &ldquo;Coming soon&rdquo;. Email links show in the &ldquo;Still have a question?&rdquo; tile instead.</p>
-      </section>
-
-      {/* ── The FAQ ────────────────────────────────────────────────────── */}
-      <section>
-        <SectionHead title="Questions members ask">
-          <Button
-            variant="ink"
-            size="sm"
-            disabled={pending}
-            onClick={() => open({ kind: "faq", draft: { group: groups[0], q: "", a: "", confirm: false } })}
+          {/* ── The FAQ ── */}
+          <Card
+            title="Questions members ask"
+            count={b.faq.length}
+            action={
+              <Button variant="ink" size="sm" disabled={pending} onClick={() => open({ kind: "faq", draft: { group: groups[0], q: "", a: "", confirm: false } })}>
+                <Plus className="h-3.5 w-3.5" strokeWidth={1.8} />
+                Add a question
+              </Button>
+            }
           >
-            <Plus className="h-3.5 w-3.5" strokeWidth={1.8} />
-            Add a question
-          </Button>
-        </SectionHead>
-        <div className="mt-3 flex flex-col gap-6">
-          {byGroup.map(({ group, items }) => (
-            <div key={group}>
-              <h3 className={cn(MONO.micro, "text-muted-foreground")}>{group}</h3>
-              {items.length === 0 ? (
-                <p className="mt-2 border border-dashed border-border px-5 py-6 text-sm text-muted-foreground">No questions in this section.</p>
-              ) : (
-                <ul className="mt-2 border-b border-border">
-                  {items.map((f, i) => (
-                    <Row
-                      key={f.id}
-                      title={f.q}
-                      sub={f.a}
-                      badge={f.confirm ? "To confirm" : null}
-                      first={i === 0}
-                      last={i === items.length - 1}
-                      disabled={pending}
-                      onUp={() => run(() => moveResource("faq", f.id, -1), "Moved.")}
-                      onDown={() => run(() => moveResource("faq", f.id, 1), "Moved.")}
-                      onEdit={() => open({ kind: "faq", draft: { ...f } })}
-                      onDelete={() => window.confirm(`Remove “${f.q}”?`) && run(() => deleteFaq(f.id), "Removed.")}
-                    />
-                  ))}
-                </ul>
-              )}
-            </div>
-          ))}
+            {byGroup.map(({ group, items }) => (
+              <div key={group}>
+                <h3 className="border-b border-border bg-bone px-4 py-2 text-[13px] font-medium text-muted-foreground">
+                  {group} <span className="tabular-nums">· {items.length}</span>
+                </h3>
+                {items.length === 0 ? (
+                  <Empty>No questions in this section.</Empty>
+                ) : (
+                  <ul>
+                    {items.map((f, i) => {
+                      const auto = autoAnswers[f.id];
+                      return (
+                        <Row
+                          key={f.id}
+                          title={f.q}
+                          // The password stays behind "The basics"' Show button, not in a preview line.
+                          sub={auto && b.wifiPassword ? auto.replace(b.wifiPassword, "•".repeat(8)) : (auto ?? f.a)}
+                          status={auto ? { kind: "info", text: "From the Wi-Fi fields" } : f.confirm ? { kind: "todo", text: "To confirm" } : null}
+                          first={i === 0}
+                          last={i === items.length - 1}
+                          disabled={pending}
+                          onUp={() => run(() => moveResource("faq", f.id, -1), "Moved.")}
+                          onDown={() => run(() => moveResource("faq", f.id, 1), "Moved.")}
+                          onEdit={() => open({ kind: "faq", draft: { ...f } })}
+                          onDelete={() => window.confirm(`Remove “${f.q}”?`) && run(() => deleteFaq(f.id), "Removed.")}
+                        />
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            ))}
+          </Card>
         </div>
-      </section>
+
+        {/* ── The basics — a properties card beside the lists ── */}
+        <aside className="lg:sticky lg:top-6">
+          <Card
+            title="The basics"
+            action={
+              <Button variant="outline" size="sm" disabled={pending} onClick={editBasics}>
+                <Pencil className="h-3.5 w-3.5" strokeWidth={1.8} />
+                Edit
+              </Button>
+            }
+            note="The Slack link powers the dashboard’s Slack tile. Wi-Fi shows only to signed-in members, on FAQ & resources — and answers the FAQ’s Wi-Fi question."
+          >
+            <dl className="grid grid-cols-[7rem_minmax(0,1fr)] gap-x-3 gap-y-3 px-4 py-4 text-sm">
+              <dt className="text-muted-foreground">Member Slack</dt>
+              <dd className="min-w-0">{b.slackInviteUrl ? <span className="block truncate text-graphite">{b.slackInviteUrl.replace(/^https?:\/\//, "")}</span> : <Status kind="closed">Not open yet</Status>}</dd>
+              <dt className="text-muted-foreground">Wi-Fi network</dt>
+              <dd className="min-w-0 truncate text-graphite">{b.wifiNetwork || <Status kind="todo">To confirm</Status>}</dd>
+              <dt className="text-muted-foreground">Wi-Fi password</dt>
+              <dd className="flex min-w-0 items-center gap-2">
+                {b.wifiPassword ? (
+                  <>
+                    <span className="truncate font-mono text-[13px] text-graphite">{showPassword ? b.wifiPassword : "•".repeat(Math.min(12, b.wifiPassword.length))}</span>
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      aria-label={showPassword ? "Hide the Wi-Fi password" : "Show the Wi-Fi password"}
+                      className="shrink-0 text-muted-foreground hover:text-graphite"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" strokeWidth={1.7} /> : <Eye className="h-4 w-4" strokeWidth={1.7} />}
+                    </button>
+                  </>
+                ) : (
+                  <Status kind="todo">To confirm</Status>
+                )}
+              </dd>
+              <dt className="text-muted-foreground">Hours</dt>
+              <dd className="min-w-0 text-graphite">{b.hours}</dd>
+            </dl>
+          </Card>
+        </aside>
+      </div>
 
       <Drawer
         open={drawerOpen}
         onClose={close}
-        eyebrow="Member resources"
         title={
           editing?.kind === "basics"
             ? "Slack, Wi-Fi and hours"
@@ -218,32 +262,32 @@ export function MemberResourcesManager({ resources, groups }: { resources: Membe
         }
       >
         {editing && (
-          <form id="resources-form" onSubmit={onSave} noValidate className="flex flex-col gap-10">
+          <form id="resources-form" onSubmit={onSave} noValidate className="flex flex-col gap-8">
             {editing.kind === "basics" && (
               <>
-                <FieldGroup title="Member Slack">
+                <DrawerSection title="Member Slack">
                   <Field label="Invite link" htmlFor="mr-slack" error={errors.slackInviteUrl} hint="Leave blank until Slack opens — the dashboard says “Opening soon”.">
                     <Input id="mr-slack" type="url" inputMode="url" value={editing.draft.slackInviteUrl} onChange={(e) => set("slackInviteUrl", e.target.value)} placeholder="https://join.slack.com/t/…" data-autofocus />
                   </Field>
-                </FieldGroup>
-                <FieldGroup title="Wi-Fi">
+                </DrawerSection>
+                <DrawerSection title="Wi-Fi" note="Also answers the FAQ’s Wi-Fi question.">
                   <Field label="Network" htmlFor="mr-wifi" error={errors.wifiNetwork}>
                     <Input id="mr-wifi" value={editing.draft.wifiNetwork} onChange={(e) => set("wifiNetwork", e.target.value)} placeholder="Geekdom-Members" />
                   </Field>
                   <Field label="Password" htmlFor="mr-wifi-pw" error={errors.wifiPassword} hint="Shown only to signed-in members.">
                     <Input id="mr-wifi-pw" value={editing.draft.wifiPassword} onChange={(e) => set("wifiPassword", e.target.value)} autoComplete="off" spellCheck={false} />
                   </Field>
-                </FieldGroup>
-                <FieldGroup title="Hours">
+                </DrawerSection>
+                <DrawerSection title="Hours">
                   <Field label="When members can come in" htmlFor="mr-hours" error={errors.hours} required>
                     <Input id="mr-hours" value={editing.draft.hours} onChange={(e) => set("hours", e.target.value)} />
                   </Field>
-                </FieldGroup>
+                </DrawerSection>
               </>
             )}
 
             {editing.kind === "link" && (
-              <FieldGroup title="Link">
+              <DrawerSection title="Link">
                 <Field label="Title" htmlFor="mr-title" error={errors.title} required>
                   <Input id="mr-title" value={editing.draft.title} onChange={(e) => set("title", e.target.value)} placeholder="House guidelines" data-autofocus />
                 </Field>
@@ -253,11 +297,11 @@ export function MemberResourcesManager({ resources, groups }: { resources: Membe
                 <Field label="Address" htmlFor="mr-href" error={errors.href} hint="An https:// link, a mailto: address, or a page here starting with /. Blank = coming soon.">
                   <Input id="mr-href" value={editing.draft.href} onChange={(e) => set("href", e.target.value)} placeholder="https://…" />
                 </Field>
-              </FieldGroup>
+              </DrawerSection>
             )}
 
             {editing.kind === "faq" && (
-              <FieldGroup title="Question">
+              <DrawerSection title="Question">
                 <Field label="Section" htmlFor="mr-group" error={errors.group} required>
                   <Combobox
                     id="mr-group"
@@ -271,15 +315,20 @@ export function MemberResourcesManager({ resources, groups }: { resources: Membe
                 <Field label="Question" htmlFor="mr-q" error={errors.q} required>
                   <Input id="mr-q" value={editing.draft.q} onChange={(e) => set("q", e.target.value)} data-autofocus />
                 </Field>
-                <Field label="Answer" htmlFor="mr-a" error={errors.a} required>
+                {editingAuto && (
+                  <div className="border border-dashed border-border px-4 py-3 text-sm">
+                    <p className="font-medium text-graphite">Members read this answer, built from the Wi-Fi fields:</p>
+                    <p className="mt-1 text-muted-foreground">{editingAuto}</p>
+                    <p className="mt-2 text-[13px] text-muted-foreground">Change the Wi-Fi under The basics. The answer below is used only if those fields are empty.</p>
+                  </div>
+                )}
+                <Field label={editingAuto ? "Answer if the Wi-Fi fields are empty" : "Answer"} htmlFor="mr-a" error={errors.a} required>
                   <Textarea id="mr-a" rows={6} value={editing.draft.a} onChange={(e) => set("a", e.target.value)} />
                 </Field>
-                <Switch
-                  checked={editing.draft.confirm}
-                  onChange={(v) => set("confirm", v)}
-                  label="Still to confirm — members see a “To confirm” tag"
-                />
-              </FieldGroup>
+                {!editingAuto && (
+                  <Switch checked={editing.draft.confirm} onChange={(v) => set("confirm", v)} label="Still to confirm — members see a “To confirm” tag" />
+                )}
+              </DrawerSection>
             )}
           </form>
         )}
@@ -288,30 +337,61 @@ export function MemberResourcesManager({ resources, groups }: { resources: Membe
   );
 }
 
-function SectionHead({ title, children }: { title: string; children?: React.ReactNode }) {
+/** A titled card: header bar (title, count, action), the content, an optional footnote. */
+function Card({
+  title,
+  count,
+  action,
+  note,
+  children,
+}: {
+  title: string;
+  count?: number;
+  action?: React.ReactNode;
+  note?: string;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="flex items-center justify-between gap-4">
-      <h2 className={cn(MONO.label, "text-muted-foreground")}>{title}</h2>
+    <section className="border border-border bg-bone-light">
+      <div className="flex min-h-13 items-center justify-between gap-4 border-b border-border px-4 py-2.5">
+        <h2 className="text-sm font-medium text-graphite">
+          {title}
+          {count !== undefined && <span className="ml-2 tabular-nums text-muted-foreground">{count}</span>}
+        </h2>
+        {action}
+      </div>
       {children}
-    </div>
+      {note && <p className="border-t border-border px-4 py-2.5 text-[13px] text-muted-foreground">{note}</p>}
+    </section>
   );
 }
 
-function Fact({ label, value, empty, mono = false }: { label: string; value: string | null; empty?: string; mono?: boolean }) {
+function Empty({ children }: { children: React.ReactNode }) {
+  return <p className="px-4 py-6 text-sm text-muted-foreground">{children}</p>;
+}
+
+/** A drawer section — the admin's sentence-case label, not the shared mono legend. */
+function DrawerSection({ title, note, children }: { title: string; note?: string; children: React.ReactNode }) {
   return (
-    <div className="min-w-0 border-t border-border py-4 first:border-t-0 sm:border-t-0 sm:pr-6">
-      <dt className={cn(MONO.micro, "text-muted-foreground")}>{label}</dt>
-      <dd className={cn("mt-1 truncate text-graphite", mono && "font-mono text-sm")}>
-        {value ?? <span className={cn(MONO.micro, "border border-dashed border-border px-1.5 py-0.5")}>{empty}</span>}
-      </dd>
-    </div>
+    <section>
+      <div className="mb-4 flex items-baseline justify-between gap-4 border-b border-border pb-2">
+        <h3 className={cn(ADMIN_LABEL, "text-graphite")}>{title}</h3>
+        {note && <p className="text-[13px] text-muted-foreground">{note}</p>}
+      </div>
+      <div className="flex flex-col gap-5">{children}</div>
+    </section>
   );
 }
 
+/*
+  One link or question. The row is the edit button (Linear: click to
+  open); move and remove sit on the right, shown on hover or focus on a
+  desktop and always on touch screens, so a list of ten isn't forty icons.
+*/
 function Row({
   title,
   sub,
-  badge,
+  status,
   first,
   last,
   disabled,
@@ -322,7 +402,7 @@ function Row({
 }: {
   title: string;
   sub: string;
-  badge: string | null;
+  status: { kind: StatusKind; text: string } | null;
   first: boolean;
   last: boolean;
   disabled: boolean;
@@ -331,28 +411,33 @@ function Row({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const icon = "inline-flex h-8 w-8 items-center justify-center text-muted-foreground transition-colors hover:bg-bone-light hover:text-graphite disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay";
   return (
-    <li className="grid grid-cols-[1fr_auto] items-center gap-x-4 border-t border-border py-3.5">
-      <div className="min-w-0">
-        <p className="flex items-center gap-2 text-graphite">
-          <span className="truncate">{title}</span>
-          {badge && <Badge tone="neutral">{badge}</Badge>}
+    <li className="group relative flex min-h-12 items-center gap-3 border-t border-border px-4 py-2 first:border-t-0 hover:bg-bone">
+      <div className="min-w-0 flex-1">
+        <p className="flex min-w-0 items-center gap-3">
+          <button
+            type="button"
+            onClick={onEdit}
+            disabled={disabled}
+            className="truncate text-left text-sm font-medium text-graphite after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-clay"
+          >
+            {title}
+          </button>
+          {status && <Status kind={status.kind} className="shrink-0 text-[13px] text-muted-foreground">{status.text}</Status>}
         </p>
-        <p className="truncate text-sm text-muted-foreground">{sub}</p>
+        {sub && <p className="truncate text-[13px] text-muted-foreground">{sub}</p>}
       </div>
-      <div className="flex items-center gap-1">
-        <Button variant="ghost" size="icon" onClick={onUp} disabled={disabled || first} aria-label={`Move “${title}” up`}>
+      <div className="relative z-10 flex shrink-0 items-center [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-focus-within:opacity-100 [@media(hover:hover)]:group-hover:opacity-100">
+        <button type="button" className={icon} onClick={onUp} disabled={disabled || first} aria-label={`Move “${title}” up`}>
           <ArrowUp className="h-4 w-4" strokeWidth={1.7} />
-        </Button>
-        <Button variant="ghost" size="icon" onClick={onDown} disabled={disabled || last} aria-label={`Move “${title}” down`}>
+        </button>
+        <button type="button" className={icon} onClick={onDown} disabled={disabled || last} aria-label={`Move “${title}” down`}>
           <ArrowDown className="h-4 w-4" strokeWidth={1.7} />
-        </Button>
-        <Button variant="ghost" size="icon" onClick={onEdit} disabled={disabled} aria-label={`Edit “${title}”`}>
-          <Pencil className="h-4 w-4" strokeWidth={1.7} />
-        </Button>
-        <Button variant="ghost" size="icon" onClick={onDelete} disabled={disabled} aria-label={`Remove “${title}”`}>
+        </button>
+        <button type="button" className={icon} onClick={onDelete} disabled={disabled} aria-label={`Remove “${title}”`}>
           <Trash2 className="h-4 w-4" strokeWidth={1.7} />
-        </Button>
+        </button>
       </div>
     </li>
   );

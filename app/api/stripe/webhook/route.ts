@@ -5,7 +5,11 @@ import { getAdminDb } from "@/lib/firebase/admin";
 import { COLLECTIONS, type MemberDoc } from "@/lib/firebase/collections";
 import { getStripe, periodEnd, toMemberStatus } from "@/lib/stripe/server";
 import { sendSafely } from "@/lib/email/resend";
-import { welcomeEmail } from "@/lib/email/templates";
+import { memberWelcomeEmail } from "@/lib/email/member-templates";
+import { PLAN_IDS, type PlanId } from "@/lib/membership";
+import { syncTeamStatus } from "@/lib/team";
+import type { ApplicationDoc } from "@/lib/firebase/collections";
+import { logActivity } from "@/lib/admin/activity";
 
 /**
  * Stripe webhook — the only thing that promotes an applicant to a member.
@@ -145,9 +149,16 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const name =
     session.metadata?.name || session.customer_details?.name || email;
   const applicationId = session.metadata?.applicationId || null;
+  const planMeta = session.metadata?.plan;
+  const plan: PlanId | undefined = PLAN_IDS.includes(planMeta as PlanId) ? (planMeta as PlanId) : undefined;
 
   const { ref, existing } = await findMember(customerId, email || undefined);
   const known = existing?.data() as MemberDoc | undefined;
+  // A Team or Enterprise membership is a company's — carry it over from the application.
+  const application = applicationId
+    ? ((await getAdminDb().collection(COLLECTIONS.applications).doc(applicationId).get()).data() as ApplicationDoc | undefined)
+    : undefined;
+  const company = application?.company;
 
   const record: Partial<MemberDoc> = {
     // An existing member keeps the name staff gave them; Stripe's
@@ -162,6 +173,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       ? toTimestamp(periodEnd(subscription))
       : null,
     cancelAtPeriodEnd: subscription?.cancel_at_period_end ?? false,
+    ...(plan ? { plan } : {}),
+    ...(company && !known?.company ? { company } : {}),
     updatedAt: Timestamp.now(),
   };
 
@@ -174,12 +187,41 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   }
 
   await ref.set(record, { merge: true });
+  // A returning owner's teammates come back with them.
+  if (record.status) await syncTeamStatus(ref.id, record.status);
+
+  // The application they came through is now a membership — its history
+  // shows "Paid", and its payment-link control goes away.
+  if (applicationId) {
+    await getAdminDb()
+      .collection(COLLECTIONS.applications)
+      .doc(applicationId)
+      .set({ paidAt: Timestamp.now() }, { merge: true })
+      .catch((e) => console.error("[stripe] couldn't mark application paid", applicationId, e));
+  }
+
+  // THE END OF THE APPLICATION WORKFLOW, in the activity log beside the
+  // decisions that led here. Once: Stripe redelivers events, so only when
+  // this application wasn't already paid, or (no application) this is a
+  // new member. "Stripe" is the actor — no staff member did this.
+  if ((application && !application.paidAt) || (!application && !existing)) {
+    await logActivity(
+      { email: "stripe", name: "Stripe" },
+      {
+        area: "members",
+        action: "confirmed a payment from",
+        label: `${record.name}${plan ? ` (${plan === "team" ? "Team" : plan === "enterprise" ? "Enterprise" : "Solo"})` : ""} — now a member`,
+        href: applicationId ? `/portal/admin/applications/${applicationId}` : "/portal/admin/members",
+      },
+    );
+  }
 
   // Welcome mail only on the first checkout. Stripe redelivers events, and a
   // member should not get "Welcome to Geekdom" twice.
   if (!existing && email) {
-    const mail = welcomeEmail({ name });
-    await sendSafely({ to: email, subject: mail.subject, html: mail.html });
+    // The branded welcome: sign in, fill in your profile, find your people.
+    const mail = memberWelcomeEmail({ name });
+    await sendSafely({ to: email, subject: mail.subject, html: mail.html, text: mail.text });
   }
 }
 
@@ -203,16 +245,20 @@ async function syncSubscription(subscription: Stripe.Subscription) {
     return;
   }
 
+  const status = toMemberStatus(subscription.status);
   await ref.set(
     {
       stripeSubscriptionId: subscription.id,
-      status: toMemberStatus(subscription.status),
+      status,
       currentPeriodEnd: toTimestamp(periodEnd(subscription)),
       cancelAtPeriodEnd: subscription.cancel_at_period_end,
       updatedAt: Timestamp.now(),
     },
     { merge: true },
   );
+  // The owner's status is the team's: past due, canceled or paused, the
+  // teammates follow (lib/team.ts).
+  await syncTeamStatus(ref.id, status);
 }
 
 function toTimestamp(date: Date | null): Timestamp | null {

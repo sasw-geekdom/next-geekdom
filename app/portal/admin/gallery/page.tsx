@@ -30,7 +30,6 @@ export default async function AdminGalleryPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Site content"
         title="Photo wall"
         description={`The ${years}-years archive behind /since-2011. The page is live but not linked from the site for now — its footer door is parked until the wall has photographs.`}
       />

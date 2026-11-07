@@ -21,8 +21,7 @@ import { getPortfolio } from "@/lib/content/portfolio";
 import { VideoCard } from "@/components/site/video-card";
 import { StudioFilmJsonLd } from "@/components/site/structured-data";
 import { Photo } from "@/components/site/photo";
-import { TypeformPopupButton } from "@/components/forms/typeform-popup-button";
-import { MOCK_PARTNER_FORM } from "@/data/mock/forms";
+import { InquiryButton } from "@/components/forms/inquiry-form";
 import { PHOTOS } from "@/lib/photos";
 import { MOCK_FOUNDER_VOICES } from "@/data/mock/voices";
 import {
@@ -31,7 +30,6 @@ import {
   STUDIO_PARTNERS,
   STUDIO_FILM,
   LUMA_CALENDAR_URL,
-  STUDIO_PARTNER_TYPEFORM_ID,
 } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
@@ -648,12 +646,11 @@ export default async function StudioPage() {
               </p>
             </div>
             {/*
-              GEEKDOM'S PARTNER TYPEFORM, opened as a popup the way /apply's
-              is. Until STUDIO_PARTNER_TYPEFORM_ID is set (lib/site.ts) it's
-              the doc's original "Contact us → /contact".
+              OUR OWN PARTNER FORM, in a slide-out; requests are reviewed at
+              /portal/admin/requests (lib/inquiries.ts).
             */}
             <div className="shrink-0">
-              <TypeformPopupButton formId={STUDIO_PARTNER_TYPEFORM_ID} appearance="link" label="Contact us" mock={MOCK_PARTNER_FORM} />
+              <InquiryButton kind="partner" label="Contact us" />
             </div>
           </div>
         </div>

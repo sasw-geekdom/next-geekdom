@@ -1,5 +1,6 @@
 "use client";
 
+import { ADMIN_LABEL } from "@/components/admin/admin-ui";
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { ArrowUpRight, ChevronDown, Pencil, Plus, Trash2 } from "lucide-react";
@@ -8,7 +9,6 @@ import { Field, Input } from "@/components/ui/field";
 import { Combobox } from "@/components/ui/combobox";
 import { Drawer } from "@/components/ui/drawer";
 import { FieldGroup } from "@/components/admin/field-group";
-import { MONO } from "@/components/site/section";
 import { cn } from "@/lib/utils";
 import {
   centralParts,
@@ -343,7 +343,7 @@ export function EventManager({
       {past.length > 0 && (
         <details className="group/past border-t border-border">
           <summary className="flex cursor-pointer list-none items-center justify-between py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-offset-2 focus-visible:ring-offset-bone [&::-webkit-details-marker]:hidden">
-            <span className={cn(MONO.label, "text-muted-foreground")}>
+            <span className={cn(ADMIN_LABEL, "text-muted-foreground")}>
               Past events · {past.length}
             </span>
             <ChevronDown
@@ -385,7 +385,7 @@ function EventList({
 }) {
   return (
     <section>
-      {title && <h2 className={cn(MONO.label, "text-muted-foreground")}>{title}</h2>}
+      {title && <h2 className={cn(ADMIN_LABEL, "text-muted-foreground")}>{title}</h2>}
       {events.length === 0 ? (
         <p className="mt-3 border border-dashed border-border bg-bone-light px-6 py-10 text-sm text-muted-foreground">
           {empty}
@@ -400,7 +400,7 @@ function EventList({
                 muted && "opacity-60",
               )}
             >
-              <span className={cn(MONO.label, "text-muted-foreground")}>
+              <span className={cn(ADMIN_LABEL, "text-muted-foreground")}>
                 {ev.dateLabel} · {eventTimeLabel(ev.startsAt)}
               </span>
               <div className="col-span-2 min-w-0 sm:col-span-1">

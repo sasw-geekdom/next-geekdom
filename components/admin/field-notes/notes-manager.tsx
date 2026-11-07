@@ -1,5 +1,6 @@
 "use client";
 
+import { ADMIN_LABEL } from "@/components/admin/admin-ui";
 import * as React from "react";
 import Link from "next/link";
 import { Star } from "lucide-react";
@@ -7,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { setFeatured } from "@/lib/field-notes/actions";
 import { FrameView } from "@/components/field-notes/frame-view";
-import { MONO } from "@/components/site/section";
 import { NewNoteButton } from "@/components/admin/field-notes/new-note-button";
 import { cn } from "@/lib/utils";
 import type { AdminNote } from "@/lib/field-notes/types";
@@ -109,7 +109,7 @@ export function NotesManager({ notes }: { notes: AdminNote[] }) {
         { title: "Published", list: live, empty: "Nothing published yet." },
       ].map(({ title, list, empty }) => (
         <section key={title}>
-          <h2 className={cn(MONO.label, "text-muted-foreground")}>
+          <h2 className={cn(ADMIN_LABEL, "text-muted-foreground")}>
             {title} · {list.length}
           </h2>
           {list.length === 0 ? (

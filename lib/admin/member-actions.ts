@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { Timestamp } from "firebase-admin/firestore";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import * as z from "zod";
 import { requireAdmin } from "@/lib/auth/session";
 import { getAdminDb } from "@/lib/firebase/admin";
@@ -11,6 +11,8 @@ import { fromCentral } from "@/lib/content/dates";
 import { ensureLogin } from "@/lib/admin/member-logins";
 import type { ActionResult } from "@/lib/content/types";
 import { logActivity } from "@/lib/admin/activity";
+import { addTeammate, getTeam, removeTeammate, syncTeamStatus } from "@/lib/team";
+import { hasTeam, PLAN_IDS } from "@/lib/membership";
 
 /*
   "ADD A MEMBER" AND EDITING ONE, from /portal/admin/members.
@@ -53,6 +55,8 @@ const memberSchema = z.object({
     .max(20)
     .transform((t) => [...new Set(t.map((x) => x.toLowerCase()))].sort()),
   notes: z.string().trim().max(4000, "Keep notes under 4,000 characters."),
+  plan: z.enum(PLAN_IDS, { error: "Pick a plan." }).default("solo"),
+  company: z.string().trim().max(160).default(""),
 });
 
 export type MemberInput = z.input<typeof memberSchema>;
@@ -99,12 +103,17 @@ export async function saveMember(input: MemberInput): Promise<ActionResult> {
       ? before.status
       : data.status;
 
-  const record: Partial<MemberDoc> = {
+  // Record<…, unknown>, not Partial<MemberDoc>: a cleared company is a
+  // FieldValue.delete(), which isn't a string.
+  const record: Record<string, unknown> = {
     name: data.name,
     email: data.email,
     status,
     tags: data.tags,
     notes: data.notes,
+    // A teammate's plan is their team's; staff change it on the owner.
+    ...(before?.teamOwnerId ? {} : { plan: data.plan }),
+    ...(data.company ? { company: data.company } : before?.company ? { company: FieldValue.delete() } : {}),
     joinedAt: Timestamp.fromDate(new Date(joined)),
     updatedAt: Timestamp.now(),
   };
@@ -122,6 +131,9 @@ export async function saveMember(input: MemberInput): Promise<ActionResult> {
   // The login follows the email. Created for a new member; moved when an
   // email is corrected, so the person keeps one account.
   const login = await ensureLogin(data.email, data.name, before?.email);
+
+  // An OWNER's status is their team's (lib/team.ts).
+  if (!before?.teamOwnerId && hasTeam(data.plan)) await syncTeamStatus(ref.id, status);
 
   const STATUS_WORD: Partial<Record<string, string>> = { inactive: "paused", canceled: "canceled", active: "reactivated" };
   await logActivity(user, {
@@ -150,3 +162,38 @@ export async function createMemberLogin(id: string): Promise<ActionResult> {
   refresh();
   return login.ok ? { ok: true } : { ok: false, error: login.error };
 }
+
+/*
+  STAFF MANAGE A TEAM from the owner's slide-out on Members — the same
+  rules as the owner's own Profile → Your team (lib/team.ts).
+*/
+export async function addTeammateForOwner(ownerId: string, input: { name: string; email: string }) {
+  const user = await requireAdmin();
+  if (typeof ownerId !== "string" || !ownerId) return { ok: false as const, error: "Missing member." };
+  const res = await addTeammate(ownerId, { name: String(input?.name ?? ""), email: String(input?.email ?? "") });
+  if (res.ok) {
+    await logActivity(user, { area: "members", action: "added to a team", label: String(input.name), href: "/portal/admin/members" });
+    refresh();
+    revalidatePath("/portal/profile");
+  }
+  return res;
+}
+
+export async function removeTeammateForOwner(ownerId: string, teammateId: string) {
+  const user = await requireAdmin();
+  if (typeof ownerId !== "string" || typeof teammateId !== "string") return { ok: false as const, error: "Missing member." };
+  const res = await removeTeammate(ownerId, teammateId);
+  if (res.ok) {
+    await logActivity(user, { area: "members", action: "removed from a team", label: res.message.replace(" is off the team.", ""), href: "/portal/admin/members" });
+    refresh();
+    revalidatePath("/portal/profile");
+  }
+  return res;
+}
+
+/** The team an owner holds, for the Members slide-out. */
+export async function teamForOwner(ownerId: string) {
+  await requireAdmin();
+  return typeof ownerId === "string" && ownerId ? getTeam(ownerId) : null;
+}
+

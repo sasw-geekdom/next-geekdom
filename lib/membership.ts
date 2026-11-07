@@ -1,15 +1,53 @@
 /**
- * The membership.
+ * THE MEMBERSHIPS — three plans, one application and one review workflow.
  *
- * Singular on purpose — the members letter is explicit: "One membership. No
- * dedicated desks. No offices." There is no tier array here and there should
- * not be one. If Geekdom ever adds a second tier, that's a real product change
- * and this file should grow a proper list rather than getting a second
- * hardcoded constant bolted on beside this one.
+ * It was singular ("One membership. No dedicated desks. No offices.") until
+ * Geekdom moved to three plans in November 2026: Solo, Team and Enterprise.
+ * They differ in who they're for and what they cost, not in what the Club
+ * is — the benefits list is the same for all three.
  *
  * Pure module (no server-only imports) so the pricing copy renders in the
  * browser, in email templates, and in the admin portal from one source.
  */
+export const PLAN_IDS = ["solo", "team", "enterprise"] as const;
+export type PlanId = (typeof PLAN_IDS)[number];
+
+export interface Plan {
+  id: PlanId;
+  name: string;
+  /** Monthly, in cents. Null = no listed price ("Let's talk"). */
+  priceCents: number | null;
+  /** One line under the name, on /club and the apply form. */
+  blurb: string;
+  /**
+   * People on the membership, the owner included. 1 = just them; null = no
+   * fixed cap (Enterprise, sized with Geekdom). Teammates are members in
+   * their own right — see lib/team.ts.
+   */
+  seats: number | null;
+}
+
+/**
+ * KEEP THE FIGURES IN STEP WITH STRIPE. Nothing enforces it: these are
+ * display copy, and the amount charged is whatever the plan's Stripe price
+ * (`STRIPE_PRICE_SOLO`, `STRIPE_PRICE_TEAM`) says. Enterprise has no price
+ * and no checkout — terms are agreed with Geekdom directly.
+ */
+export const PLANS: Plan[] = [
+  { id: "solo", name: "Solo", priceCents: 10_000, blurb: "For one founder or builder.", seats: 1 },
+  { id: "team", name: "Team", priceCents: 20_000, blurb: "For a company of up to 10 people.", seats: 10 },
+  { id: "enterprise", name: "Enterprise", priceCents: null, blurb: "For larger teams and corporate partners. Let's talk.", seats: null },
+];
+
+export const planOf = (id: string | undefined | null): Plan => PLANS.find((p) => p.id === id) ?? PLANS[0];
+
+/** Can this plan's owner add teammates? */
+export const hasTeam = (id: string | undefined | null) => planOf(id).seats !== 1;
+
+/** "$100 per month", or "Let's talk" for a plan with no listed price. */
+export function planPrice(plan: Plan): string {
+  return plan.priceCents === null ? "Let’s talk" : `${formatPrice(plan.priceCents)} per ${MEMBERSHIP_INTERVAL}`;
+}
 
 /**
  * Monthly price in cents, or `null` while pricing is unannounced.
@@ -28,6 +66,9 @@
  * `isPriceAnnounced()` and falls back to "pricing coming soon" with the
  * apply-first flow intact.
  */
+/* The SOLO price — what "the membership price" meant before there were plans,
+   and still what the single-price surfaces (terms, structured data, the
+   billing mock) show. */
 export const MEMBERSHIP_PRICE_CENTS: number | null = 10_000;
 
 export const MEMBERSHIP_INTERVAL = "month" as const;

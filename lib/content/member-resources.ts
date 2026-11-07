@@ -98,7 +98,31 @@ export async function readMemberResources(): Promise<MemberResources> {
   return mergeMemberResources(snap.exists ? (snap.data() as Partial<MemberResources>) : undefined);
 }
 
-const cached = unstable_cache(readMemberResources, [dataKey("member-resources")], { tags: [MEMBER_RESOURCES_TAG] });
+/*
+  EXPIRES AFTER A MINUTE, not never. Every copy of the site (the live one,
+  previews, local) reads ONE database but keeps ITS OWN cache, and a save
+  clears only the cache of the copy it was made on — so Wi-Fi changed in
+  one copy stayed old in the others forever. The page is members-only and
+  rendered per request anyway, so a read a minute costs nothing.
+*/
+// ":v2" retires the entries cached before the expiry existed — Next keeps
+// honoring an old entry's "never", so a new key is what clears every copy.
+const cached = unstable_cache(readMemberResources, [dataKey("member-resources:v2")], { tags: [MEMBER_RESOURCES_TAG], revalidate: 60 });
+
+/** The FAQ question that the Wi-Fi fields answer. Matched on its wording. */
+export const isWifiQuestion = (q: string) => /wi-?fi/i.test(q);
+
+/*
+  THE FAQ AS MEMBERS READ IT. "What's the Wi-Fi?" is answered FROM THE
+  WI-FI FIELDS once they're set — it was a separate hand-written answer, so
+  updating the network and password left the FAQ saying "posted here once
+  Geekdom provides them". One place to edit, never two that disagree.
+*/
+export function faqForMembers(res: MemberResources): FaqEntry[] {
+  if (!res.wifiNetwork) return res.faq;
+  const answer = `The network is ${res.wifiNetwork}${res.wifiPassword ? ` and the password is ${res.wifiPassword}` : ""}. It's also under “At a glance” on this page.`;
+  return res.faq.map((f) => (isWifiQuestion(f.q) ? { ...f, a: answer, confirm: false } : f));
+}
 
 /** For the member portal: cached, and never throws. */
 export async function getMemberResources(): Promise<MemberResources> {

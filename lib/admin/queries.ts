@@ -2,7 +2,7 @@ import "server-only";
 
 import { Timestamp } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
-import {
+import { normalizeApplicationStatus,
   COLLECTIONS,
   type ApplicationDoc,
   type ApplicationStatus,
@@ -26,22 +26,35 @@ function toApplication(
     id,
     name: doc.name,
     email: doc.email,
+    firstName: doc.firstName,
+    lastName: doc.lastName,
     phone: doc.phone,
+    city: doc.city,
     company: doc.company,
-    role: doc.role,
     website: doc.website,
-    linkedin: doc.linkedin,
-    audience: doc.audience,
-    stage: doc.stage,
+    heardAbout: doc.heardAbout,
+    heardAboutOther: doc.heardAboutOther,
+    brag: doc.brag,
     building: doc.building,
-    needs: doc.needs,
-    referredBy: doc.referredBy,
+    shipped: doc.shipped,
+    links: doc.links,
+    describes: doc.describes ?? [],
+    describesOther: doc.describesOther,
+    whyGeekdom: doc.whyGeekdom,
+    giveBack: doc.giveBack,
+    excited: doc.excited,
+    otherCommunities: doc.otherCommunities,
+    anythingElse: doc.anythingElse,
     formerMember: doc.formerMember,
-    status: doc.status,
+    source: doc.source ?? "apply",
+    plan: doc.plan ?? "solo",
+    status: normalizeApplicationStatus(doc.status),
     notes: doc.notes,
     reviewedBy: doc.reviewedBy ?? null,
     reviewedAt: iso(doc.reviewedAt),
+    decisions: (doc.decisions ?? []).map((d) => ({ ...d, at: iso(d.at) ?? "" })),
     invitedAt: iso(doc.invitedAt),
+    paidAt: iso(doc.paidAt),
     createdAt: iso(doc.createdAt) ?? new Date(0).toISOString(),
   };
 }
@@ -63,6 +76,16 @@ function toMember(id: string, doc: MemberDoc): Member {
     source: doc.source ?? "stripe",
     tags: doc.tags ?? [],
     notes: doc.notes ?? "",
+    plan: doc.plan ?? "solo",
+    company: doc.company ?? "",
+    teamOwnerId: doc.teamOwnerId ?? null,
+    profile: doc.profile ?? null,
+    onboarding: {
+      done: doc.onboarding?.done ?? [],
+      dismissed: Boolean(doc.onboarding?.dismissed),
+      firstSeenAt: iso(doc.onboarding?.firstSeenAt),
+    },
+    portalInvitedAt: iso(doc.portalInvitedAt),
   };
 }
 

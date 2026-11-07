@@ -127,7 +127,7 @@ export function PortalShell({
     return (
       <div className="flex min-h-screen flex-col bg-bone">
         <header className="sticky top-0 z-30 border-b border-border bg-bone">
-          <div className="mx-auto flex h-16 w-full max-w-7xl items-center gap-8 px-6 lg:px-10">
+          <div className="mx-auto flex h-16 w-full max-w-7xl items-center gap-4 px-6 md:gap-8 lg:px-10">
             {/*
               NAMED AS THE MEMBER PORTAL, beside the wordmark — the bare
               wordmark read as the public site, so nothing said you were
@@ -194,7 +194,10 @@ export function PortalShell({
 
         <nav
           aria-label="Portal"
-          className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-border bg-bone md:hidden"
+          // One column per page — it was a fixed four, and a fifth (Rooms)
+          // pushed Profile off the bar.
+          style={{ gridTemplateColumns: `repeat(${memberItems.length}, minmax(0, 1fr))` }}
+          className="fixed inset-x-0 bottom-0 z-30 grid border-t border-border bg-bone md:hidden"
         >
           {memberItems.map((item) => {
             const isActive = active === item.href;
@@ -246,7 +249,7 @@ export function PortalShell({
       <aside
         id="portal-nav"
         className={cn(
-          "shrink-0 flex-col border-border bg-bone-light lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-64 lg:border-r",
+          "shrink-0 flex-col border-border bg-bone-light lg:sticky lg:top-0 lg:flex lg:h-dvh lg:w-64 lg:border-r",
           open ? "flex border-b" : "hidden",
         )}
       >
@@ -260,11 +263,11 @@ export function PortalShell({
         </div>
         {switchLabeled && <div className="px-3 pt-3 lg:pb-5 lg:pt-0">{switchLabeled}</div>}
 
-        <nav aria-label={admin ? "Admin" : "Portal"} className="px-3 py-3 lg:py-0">
+        <nav aria-label={admin ? "Admin" : "Portal"} className="px-3 py-3 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:overscroll-contain lg:py-0 lg:pb-4">
           {groups.map((group, i) => (
             <div key={group.label ?? i} className={cn(i > 0 && "mt-6")}>
               {group.label && (
-                <p className={cn(MONO.label, "px-3 pb-2 text-muted-foreground")}>
+                <p className="px-3 pb-1.5 text-[13px] font-medium text-muted-foreground">
                   {group.label}
                 </p>
               )}
@@ -304,7 +307,8 @@ export function PortalShell({
           rail. It was name, email, a "Staff" label and two loose text links —
           a different pattern for the same job. Opens upward here.
         */}
-        <div className="mt-6 border-t border-border px-3 py-4 lg:mt-auto">
+        {/* Pinned: the nav above scrolls on a short window, never this. */}
+        <div className="mt-6 shrink-0 border-t border-border px-3 py-4 lg:mt-0">
           <AccountMenu
             name={user.name}
             email={user.email}

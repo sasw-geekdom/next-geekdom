@@ -30,6 +30,7 @@ export function Drawer({
   onClose,
   eyebrow,
   title,
+  description,
   footer,
   children,
   className,
@@ -38,6 +39,8 @@ export function Drawer({
   onClose: () => void;
   eyebrow?: string;
   title: React.ReactNode;
+  /** One line under the title (the admin's member record: email · status). Optional. */
+  description?: React.ReactNode;
   /** Pinned under the scrolling body — the form's Save and Cancel. */
   footer?: React.ReactNode;
   children: React.ReactNode;
@@ -74,6 +77,9 @@ export function Drawer({
     <dialog
       ref={ref}
       aria-labelledby={titleId}
+      // On the public site Lenis glides the page; inside a modal it must leave
+      // the panel's own scroll alone (the inquiry forms open here).
+      data-lenis-prevent=""
       // Escape fires `cancel`; route it through onClose so the parent owns
       // the state instead of the dialog closing itself behind React's back.
       onCancel={(e) => {
@@ -100,6 +106,7 @@ export function Drawer({
             <h2 id={titleId} className={cn(HEADING.subhead, eyebrow && "mt-1.5")}>
               {title}
             </h2>
+            {description && <div className="mt-1 text-sm text-muted-foreground">{description}</div>}
           </div>
           <button
             type="button"

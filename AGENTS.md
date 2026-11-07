@@ -45,9 +45,10 @@ may want something else in that slot — ask, don't fill it.
 **"This month in the Club" is edited in the admin** (`/portal/admin/events`,
 the `events` collection), with `THIS_MONTH` in [lib/site.ts](lib/site.ts) as
 its fallback — see "Member portal and admin" below. Rows leave the site when
-their event ends. Luma isn't connected. When it is, merge its events into the
-list instead of swapping the list for cards, because some entries aren't
-Geekdom-hosted.
+their event ends. **Luma is not connected to the app and won't be** (Geekdom's
+call): the calendar lives on Luma and the site only links to it
+(`LUMA_CALENDAR_URL`). The API client, the admin's read-only Luma list and
+the sample events were deleted — don't rebuild them.
 
 - **The Club and the Studio sit side by side as two panels, with no
   photographs** — `Offering` in the homepage. Geekdom found the old
@@ -299,47 +300,92 @@ same bug.
   Geekdom.", the Fraunces line "Membership is by application. We respond
   within two weeks.", and one paragraph ("about ten minutes"). No price and no
   explanation of why there's an application — Geekdom asked for neither.
-- **The form is Geekdom's Typeform, opened as a popup from our own button**
-  ([typeform-popup-button.tsx](components/forms/typeform-popup-button.tsx),
-  `TYPEFORM_FORM_ID` in [lib/site.ts](lib/site.ts)). /apply shows only the
-  source-copy header and a Geekdom Red "Start application"; the Typeform
-  opens FULL PAGE when clicked, on every screen — Geekdom's request, and how
-  they configured their live embed. (A centered 880x680 window was tried
-  first.) The × is moved inside the frame in Graphite — see globals.css. An inline embed was tried first and
-  put Typeform's own styling in the middle of a Bone page. Load-bearing:
-  - It is a real `<a href>` to the form, so it works before (or without) the
-    script; once Typeform is ready the click opens the popup instead.
-  - `data-tf-popup` + `tf.load()` from `<Script onReady>` — the declarative
-    path loads popup.css, and `onReady` re-runs on client-side navigation.
-  - Callbacks are global names, one pair per control (from `useId`), so
-    several forms can live on the site; on /apply, submit + close sends the
-    visitor to /apply/thanks (`thanksHref`).
-  - **The same component opens Geekdom's other Typeforms** — /club's "Host
-    an event" and /studio's corporate-partner ask — as an ARROW LINK
-    (`appearance="link"`), because Red is Apply's alone. Their ids are
-    `EVENTS_TYPEFORM_ID` / `STUDIO_PARTNER_TYPEFORM_ID` in lib/site.ts,
-    `null` until Geekdom sends the forms. While null, REVIEW builds
-    (localhost, Vercel previews — `ON_LIVE_DOMAIN` false) open a clickable
-    MOCKUP (components/forms/typeform-mock.tsx) with the questions we propose
-    in data/mock/forms.ts — the spec Geekdom builds the real form from — and
-    geekdom.com gets an arrow link to /contact. The mock sends nothing and
-    must never show on the live domain: a form that looks real and collects
-    nothing is worse than a contact link.
-  - `TYPEFORM_FORM_ID` is the FORM id (`xzboPb6K`), read from the live
-    embed Geekdom sent (`01M3AFG25RTFW121XX356HREK9`), which resolves to it.
-  - The overlay's corners are squared in globals.css. Everything inside the
-    frame (colors, Inter, copy, its rounded button) is Geekdom's Typeform.
-- **The custom `<ApplyForm />` is unrendered, not deleted.** It fed the whole
-  membership pipeline — `/api/apply` → the admin review queue → acceptance
-  email → Stripe checkout → the webhook that creates the member. Typeform
-  submissions go to Typeform/Airtable instead, so none of that runs from
-  /apply now. Reconnecting it (a Typeform webhook into `/api/apply`, or the
-  admin creating applications) is the integration step, deferred with the
-  others until the design is agreed.
-- **`formerMember` ("I was a Geekdom coworking member.") was load-bearing** in
-  the custom form — it reaches the admin detail view, the CSV export and the
-  team email. If Typeform is ever wired into the pipeline, map an equivalent
-  question onto it.
+- **/apply asks GEEKDOM'S OWN QUESTIONS, word for word** —
+  [lib/application-questions.ts](lib/application-questions.ts), read off
+  their Airtable, so imported and new applications read the same: first
+  and last name, phone, city, LinkedIn or personal site, how they heard,
+  the one-sentence brag, what they're building, what they've shipped in
+  90 days, links, "which best describes you" (a checkbox group — Geekdom's
+  nine options verbatim, commas and all), why Geekdom, what they'll give
+  back, the next 6 months, other communities, anything else, and "I'm a
+  current Geekdom member" (stored as `formerMember`). Ours on top: the plan
+  picker and Company (required for Team and Enterprise).
+- **Applications are ours again, end to end** (November 2026). Geekdom moved
+  off Typeform and Airtable and runs the whole review in the admin. /apply
+  renders [apply-form.tsx](components/forms/apply-form.tsx), which posts to
+  [/api/apply](app/api/apply/route.ts): saved for initial review, a
+  "we have your application" email to the applicant, a "new application"
+  email to `APPLICATION_REVIEW_EMAILS` (Monica; falls back to
+  `TEAM_NOTIFY_EMAILS`).
+- **Three plans, one application** (`PLANS` in [lib/membership.ts](lib/membership.ts)):
+  Solo ($100), Team ($200), Enterprise (no listed price). The form opens on
+  a plan picker (`/apply?plan=team` preselects; /club's plan rows link that
+  way); Team and Enterprise require a company. Figures come from `PLANS`,
+  never typed. `MEMBERSHIP_PRICE_CENTS` is still the Solo price, for the
+  single-price surfaces (terms, structured data, the billing mock).
+- **The review is two steps, each a staff decision with its email**
+  ([lib/admin/actions.ts](lib/admin/actions.ts), `moveApplication`):
+
+      initial_review ─yes─▶ team_review ─yes─▶ approved
+            └──no──▶ declined ◀──no──┘     ban: anywhere, no email
+
+  Initial review is Monica's step but ANY staff can act (so nothing stalls
+  when she's away); the history and the activity log record who decided.
+  Yes at initial emails the team; no at either step sends the applicant a
+  kind decline. Approve sends the congratulations: Solo/Team get their
+  Stripe payment link in it ("pay, then portal" — they become members when
+  the webhook confirms payment, then sign in and fill in their profile);
+  ENTERPRISE IS A MEMBER AT APPROVAL (record + login created, terms agreed
+  off the site) and the email links straight to sign-in. While Stripe isn't
+  connected, the email says the payment link follows and staff use "Send
+  payment link" once it is.
+  - **Every move is checked in a transaction** against the table of
+    allowed starting statuses, so a double click or two staff at once can't
+    send two emails; emails, Stripe and member creation run after the
+    commit and never undo it.
+  - **Banned**: no email. A later application from that address is saved
+    straight to Banned, staff aren't notified, and the applicant gets the
+    ordinary "we have it" email — nothing tips them off. Reopen undoes it.
+  - **Old statuses are read, never written**: "new"/"reviewing" read as
+    initial review, "waitlisted" as declined (`normalizeApplicationStatus`).
+  - The list is stage tabs with counts, filtered after one read (a status
+    filter + date sort would need a composite index). The detail page shows
+    the plan and the full history — each step, who, when, and its note.
+- **The emails are in [application-templates.ts](lib/email/application-templates.ts)**,
+  on the member emails' brand (Bone, square, the red wordmark, Graphite
+  buttons). The old rounded-corner application templates were deleted.
+  Never the generosity line in a decline — said to someone being turned
+  away it reads as a verdict.
+- **`EMAIL_REDIRECT_TO` is the test safety**
+  ([lib/email/resend.ts](lib/email/resend.ts)): on any copy that isn't
+  geekdom.com, every email goes to that one inbox, with the real recipients
+  in the subject. Set it on Vercel's Preview environment and when testing
+  locally (`delivered@resend.dev` is Resend's test inbox) — otherwise a
+  reviewer approving a test application emails a real person, or club@.
+  Read at send time; ignored on the live domain.
+- **`formerMember` ("I was a Geekdom coworking member.") is load-bearing**
+  — it reaches the admin detail view and the CSV export.
+- **Event requests and Studio partner inquiries are ours too**
+  ([lib/inquiries.ts](lib/inquiries.ts)). /club's "Plan an event" and
+  /studio's "Contact us" are arrow links (Red is Apply's alone) that open
+  [inquiry-form.tsx](components/forms/inquiry-form.tsx) in the slide-out
+  — a native `<dialog>` in the top layer, so it escapes the sections'
+  reveal transforms, with `data-lenis-prevent`. They post to
+  [/api/inquiries](app/api/inquiries/route.ts) — LISTED in
+  instrumentation-client.ts's BotID `protect`, like every route that calls
+  `isBot()` — which saves the request and emails "we have it" to the
+  sender and a notice to `EVENTS_NOTIFY_EMAILS` / `PARTNER_NOTIFY_EMAILS`
+  (both fall back to `TEAM_NOTIFY_EMAILS`).
+  - **One review step, not the Club's two**: they're requests to talk, not
+    memberships. new → accepted ("let's plan it" / "let's talk") or
+    declined, each emailing the sender (lib/email/inquiry-templates.ts);
+    reopen moves it back to New quietly. Same transaction-checked moves and
+    activity logging as applications. Reviewed at /portal/admin/inquiries
+    (kind tabs — Event requests, Studio partners — and status chips), under
+    Reviews → Requests; the Overview has a row of what's new.
+  - **Typeform is gone from the site** — the popup component, the review
+    mockups, their questions and its CSS were deleted. The inquiry forms
+    ask the questions that were proposed to Geekdom in those mockups.
 
 ## Share cards and metadata
 
@@ -429,40 +475,99 @@ members use personal Gmail, and the hint hid their accounts.
   renders only for staff, but that is UX: every admin page and action calls
   `requireAdmin()`, which sends a signed-in member to `/portal`. Tested: a
   member replaying a staff save action is redirected and nothing is written.
-- **The admin follows the portal's rules**: Graphite buttons only (no red
-  "Sync photos" / "Approve"), arrow links for secondary actions, square
-  status badges, dashed notices (no off-palette tints), content capped at
-  max-w-7xl, an eyebrow on every PageHeader (compact 24px title on purpose —
-  it's a workspace), and the same account menu at the foot of the sidebar
-  (opens upward). The Overview leads with members and site content — not
-  application counts, which stay at zero while applications live in
-  Typeform → Airtable — with quick actions that open the right drawer via
-  `?add=1`. /portal/admin/applications explains, to Geekdom's team, the two
-  ways to connect it (Typeform webhook to the site — recommended, keeps
-  Airtable fed too — or reading from Airtable).
+- **The admin sidebar is grouped by the kind of work** (`ADMIN_NAV` in
+  lib/portal/nav.ts): Overview on top; **Reviews** — Applications and
+  Requests (event and Studio partner requests; the code still calls them
+  inquiries, lib/inquiries.ts), the things waiting on a yes or no;
+  **Members** — the roster and Member resources; **Site content**.
+  Invitations has no sidebar entry: it's the launch tool for members who
+  joined before the workflow, opened from a button on Members and living
+  at /portal/admin/members/invitations so Members stays highlighted.
+- **The admin follows the brand, but works like a tool** (Linear / Vercel
+  dashboard conventions; Jesse's call, November 2026). ADMIN ONLY — the
+  public site and the member portal keep the brand's reading conventions.
+  - **Kept from the brand**: palette, Rubik, square corners, Graphite buttons
+    only (no red "Sync photos" / "Approve"), arrow links for secondary
+    actions, dashed notices (no off-palette tints), content capped at
+    max-w-7xl, the same account menu at the foot of the sidebar.
+  - **Lists are tables** ([admin-ui.tsx](components/admin/admin-ui.tsx):
+    `Table`, `Th`, `Tr`, `Td`, `RowLink`/`RowButton`): 44px rows, a sticky
+    header row, fixed layout (each `Th` sets its width, long text
+    truncates), the whole row clickable. Sort where it helps — in the URL on
+    server pages (Applications: `?sort=&dir=`), in state on client lists
+    (Members). Hide the least useful columns below md/lg rather than letting
+    a phone scroll sideways.
+  - **Don't show a column that says the same thing on every row**: the
+    Status column appears only on an "All" tab; Company only when someone
+    in view gave one.
+  - **Status is a square marker + a word** (`Status`, `ApplicationStatusLabel`,
+    `MemberStatusLabel`, `InquiryStatusLabel`), never a tinted chip, and
+    never wraps. Only a real problem is red (past due); waiting in a queue
+    is Clay ("todo"), not an alert. `MemberBadge` stays for the member
+    portal.
+  - **Labels are sentence-case Rubik 13px** (`ADMIN_LABEL`), not tracked
+    uppercase mono; Tile takes `plainLabel` in the admin. `FieldGroup` keeps
+    its mono legend because the member portal's drawers share it.
+  - **No eyebrow on PageHeader** — the sidebar already names the group.
+    Compact 24px title, on purpose. Views are underlined `Tabs` (with
+    counts); a second filter row is `Segments`.
+  - **A review is a PAGE, not a drawer** (an application, a request —
+    [review-layout.tsx](components/admin/review-layout.tsx)): drawers are
+    for editing a record; reviewing is reading long answers beside a
+    decision that emails someone. Answers left, grouped by what decides
+    it (Who they are / Why Geekdom / Anything else, Geekdom's wording);
+    the decision, staff notes, details and history in a right column that
+    scrolls on its own. Ban is a quiet link at its foot.
+  - **Previous / Next walk the list the reviewer came from** — the row
+    link carries the tab and sort, and both sides order through
+    [review-queue.ts](lib/admin/review-queue.ts), so they can't disagree.
+    j / k do the same outside a text field. A decision moves on to the
+    next item (else the one before, else the list) and says what it did
+    there (`?done=`, cleared from the address once shown).
+  - **The Overview leads with "Needs attention"** — Linear's inbox: one
+    row per kind of waiting work, each a count with a link to do it, and a
+    row with nothing in it isn't shown (overdue applicants, initial and
+    team review with the oldest's age, approved-but-unpaid, new requests,
+    past due, nothing upcoming on the homepage, Field Notes with
+    unpublished changes). "Waiting longer than two weeks" holds Geekdom to
+    /apply's own promise. Then three numbers that move — current members
+    (+ joined in 30 days), applications through /apply in 30 days vs the
+    30 before, and portal sign-ins (the launch question) — then events,
+    activity, recently joined and Field Notes. The add actions are in the
+    header (`?add=1` opens the right drawer).
 - **The top bar's right side**: "Admin portal" (staff only — it pairs with
   the "Member portal" label; not "Admin", not "management platform"), then
   the ACCOUNT MENU ([account-menu.tsx](components/portal/account-menu.tsx)):
-  initials + name opens Profile, Admin portal (staff) and "Sign out" in
+  initials + name opens Profile, Admin portal (staff), geekdom.com (a new
+  tab — the portal's only way back to the public site) and "Sign out" in
   words. It replaced a bare sign-out icon parked away from the name.
 - **Two layouts in one shell** ([portal-shell.tsx](components/portal/portal-shell.tsx)):
-  the MEMBER portal is a top bar (four pages, full width — the directory
-  needs it) with a bottom tab bar on phones; the ADMIN keeps the sidebar.
-- **The dashboard is a bento** ([app/portal/page.tsx](app/portal/page.tsx)):
-  membership + a compact Graphite Slack CTA; this month's events as the
-  LARGEST tile (it changes most — not Field Notes, which updates rarely)
-  with a right column of a compact Follow Geekdom row (SOCIALS as arrow
-  links) over Field Notes; New in the Club full width (four newest); a slim
-  "Need something?" row. Don't let a small tile stretch to a tall row's
-  height — stack it with another instead. **New in the Club is the people tile and the
-  reason it exists**: everything else is Geekdom broadcasting, and the
-  Club's promise is a person. No Studio tile — that's the Club→Studio
-  pathway Geekdom ruled out.
-- **The profile fits one screen** (next-angels' layout): a Graphite
-  membership card and the directory-profile card on the left, billing with
-  payment history inside it on the right. The ten-field form opens in the
-  slide-out from the card's Edit button — never inline again; that was the
-  scroll. The top bar says "Member portal" beside the wordmark.
+  the MEMBER portal is a top bar (five pages — Book a room joined in
+  Phase 4 — full width, the directory needs it) with a bottom tab bar on phones; the ADMIN keeps the sidebar.
+- **The dashboard is a bento** ([app/portal/page.tsx](app/portal/page.tsx)),
+  ordered by what changes most: the membership as ONE LINE under the
+  welcome (plan · since · "Profile and billing →"; past due gets its own
+  notice — it was a two-column tile for three facts that live on Profile);
+  This month in the Club beside **Book a room** (your next bookings and
+  hours left this week, or the way in); New in the Club full width (four
+  newest — the people tile, and the reason the dashboard exists:
+  everything else is Geekdom broadcasting, and the Club's promise is a
+  person); the REAL latest Field Note (featured, else newest — it was a
+  hard-coded sample with a dead link) beside Slack over Follow; Since 2011;
+  a slim "Need something?" row. No "Sample content" banner — nothing on
+  it is a sample. No Studio tile — that's the Club→Studio pathway Geekdom
+  ruled out.
+- **The profile leads with the DIRECTORY PROFILE** (the wide column — it's
+  how other members see you, and the part a member works on), with a
+  "Complete your profile" line naming what's missing (headline, role, ask
+  me about, bio — each opens the editor). Beside it ONE membership panel:
+  a Graphite band (plan, status, member since), then billing — plan,
+  next payment, card, Manage billing, payment history. It was a Graphite
+  card AND a billing section that each carried a date and disagreed
+  ("Renews —" beside "Next payment"). The ten-field form opens in the
+  slide-out from the card's Edit — never inline. Sample billing is said
+  INSIDE the billing panel, not as a page banner; staff keep the preview
+  notice. On a phone the profile comes first.
 - **Billing is fully in-app — members never see Stripe's hosted portal**
   (Geekdom decision). "Manage billing" opens the billing slide-out
   ([billing-drawer.tsx](components/portal/billing-drawer.tsx)): plan, card +
@@ -487,14 +592,32 @@ members use personal Gmail, and the hint hid their accounts.
   sticky letter headings (`top-16`, under the 64px top bar) with an A–Z
   jump bar, a sticky profile pane on desktop, the slide-out on phones.
   Search covers "Ask me about" so "who knows X?" is answered by typing X.
-- **Sample members get ILLUSTRATED portraits, never photos**
-  (`public/mock/avatars/`, DiceBear Notionists, CC0, generated by a one-off
-  script with `data/mock/directory-more.ts`). Invented names on
-  real-looking faces would be invented people. Real members upload their
-  own photo; frames stay square.
+  Each row's second line is role · company, else the HEADLINE — most
+  imported profiles have neither role nor company, and a list of bare
+  names said nothing about who to talk to. The pane shows only sections
+  the member filled in (an empty "Ask me about" heading read as broken),
+  with one quiet line for a sparse profile. The audience filter appears only once a member
+  has set one, and lists only audiences in use (none imported had one).
+- **The directory is REAL MEMBERS, LISTED BY DEFAULT** (Geekdom's call,
+  November 2026) — [lib/directory.ts](lib/directory.ts): every current
+  member whose `profile.listed` isn't false; they opt out at Profile →
+  Edit. PROFILE FIELDS ONLY (headline, role, company, "ask me about", bio,
+  links) — never an email or a phone. The profile is stored on the member
+  (`MemberDoc.profile`, saved by `saveMyProfile`, the member resolved from
+  the session); the dashboard's "New in the Club" is the four newest
+  listed. The sixty invented sample people were deleted. Photos aren't
+  stored yet — initials stand in (`public/mock/avatars/` remains only for
+  the sample Field Notes authors, illustrated, never photos).
 - **Outside `(site)`** — no public navbar, footer or Lenis. Same brand: Bone,
   Rubik and Plex Mono, square corners (the admin's old `rounded-*` was swept
   out), Graphite `ink` for main actions because Geekdom Red is reserved.
+- **No `window.confirm` on member-facing actions** — use
+  [confirm-dialog.tsx](components/ui/confirm-dialog.tsx): a centered native
+  `<dialog>`, square on Bone, the thing as a small receipt, one plain line
+  on what happens, the action in Graphite and the safe choice ("Keep it")
+  holding the cursor; errors stay in it, success closes it. Cancelling a
+  booking and taking someone off a team use it. (The admin still has a few
+  native confirms; swap them when touched.)
 - **Custom dropdowns only, never a native `<select>` or date picker** —
   Jesse's call. Use [combobox.tsx](components/ui/combobox.tsx) (now with a
   controlled `value` and a `searchable` override) and
@@ -507,12 +630,35 @@ members use personal Gmail, and the hint hid their accounts.
   `FieldGroup`s, Save/Cancel pinned in its footer. Not inline forms above the
   list — Jesse found that "staggered". Mark the first field `data-autofocus`;
   React's `autoFocus` loses to `showModal()`.
-- **A Geekdom membership is one person**: one `members` record, one
+- **Teams: a Team membership is up to 10 people, the owner included;
+  Enterprise has no fixed cap** (`seats` in `PLANS`; Enterprise's cap is
+  ours, pending Geekdom). [lib/team.ts](lib/team.ts). EACH PERSON IS STILL
+  A MEMBER IN THEIR OWN RIGHT — their own `members` record, login and
+  directory profile — so sign-in and the directory need no special case. A
+  teammate's record carries `teamOwnerId` (the member who applied and
+  pays); the OWNER'S STATUS IS THE TEAM'S: `syncTeamStatus` copies it to
+  every teammate from the Stripe webhook and from staff saving the owner,
+  so a paused, canceled or past-due owner takes the team with them and a
+  reactivated one brings them back (tested). The owner adds and removes
+  people at Profile → Your team (`TeamCard`, actions resolve the owner from
+  the SESSION, never the request); staff do the same from the owner's
+  slide-out on Members. Adding is one transaction (seat count + write, so
+  two adds can't overfill) and reuses a FORMER member's record for that
+  email — an email with a current membership of its own is refused.
+  Removing cancels the teammate and moves the link to `formerTeamOwnerId`.
+  Teammates see whose membership they're on and no billing. Invitation and
+  removal emails are in member-templates.ts.
+- **Otherwise a Geekdom membership is one person**: one `members` record, one
   Firebase login. Staff add, edit and deactivate members at
   `/portal/admin/members` ([members-manager.tsx](components/admin/members-manager.tsx),
   [member-actions.ts](lib/admin/member-actions.ts)) — borrowed from
-  next-angels' CRM: search + status/sign-in/tag filters, a folding
-  slide-out per member, staff-only tags and notes, and each person's login
+  next-angels' CRM: search + status/sign-in/tag filters, a slide-out
+  per member that reads as a RECORD first (Linear's side panel: email and
+  status under the name, an at-a-glance strip — plan, joined, portal,
+  getting started — then Member / Membership / Portal and billing / Staff
+  only / Team, label left and control right, nothing folded; the cursor
+  only jumps into Name when ADDING; Save stays disabled until something
+  changes, and Cancel reads Close), staff-only tags and notes, and each person's login
   state (no login / never signed in / last signed in) from ONE paged
   `listUsers`, not a lookup per member.
   - **Adding a member creates their Firebase login** (no email sent), which
@@ -534,9 +680,93 @@ members use personal Gmail, and the hint hid their accounts.
     is linked, not duplicated. Only a total miss creates a `cus_`-keyed doc.
   - Join dates are stored at noon Central (midnight UTC is the day before
     here).
-- **Geekdom's CSV (~400 members) is a one-time import** — not built yet; it
-  should loop over the same write + `ensureLogin` as "Add a member", with
-  `source: "import"`.
+- **First-login onboarding is a checklist, not a tooltip tour**
+  ([lib/onboarding.ts](lib/onboarding.ts), `OnboardingPanel` on the
+  dashboard): check your profile, see the directory, find an event, join
+  Slack (only once the invite link is set), know the basics. Each step's
+  link marks it done and goes there; Skip marks it without going; "Not now"
+  folds it to one line; finished, it never shows again. Saving a profile
+  ticks the profile step. Progress is `MemberDoc.onboarding` (follows them
+  across devices; staff see it in the member slide-out). The first visit
+  says "Welcome", every later one "Welcome back". Members only.
+- **The launch invitations are sent in waves from /portal/admin/members/invitations**
+  ([lib/invitations.ts](lib/invitations.ts)): pick a wave (not invited yet,
+  haven't signed in, everyone, or a tag), tick or untick people, and see
+  the email exactly as it renders — every admin reviews it there, so there
+  is no preview send (one existed and was removed). **LOCKED UNTIL
+  LAUNCH:** `INVITES_LIVE` is false, so nothing can be sent; the server
+  refuses a real wave however it's asked. Live, a wave sends at most 40 per click, one at a time,
+  skipping anyone already invited or signed in, and stamps
+  `portalInvitedAt`. The email (`portalInviteEmail`) tells them they're
+  listed in the directory and where to change it — the directory is
+  opt-out, so that line must stay.
+- **Geekdom's Airtable is imported by script**, not by hand:
+  `npm run import:airtable -- "<MASTER - ALL.csv>"` is a DRY RUN (counts
+  only, names the database); add `--commit` to write
+  ([scripts/import-airtable.mjs](scripts/import-airtable.mjs)). The CSV is
+  the Airtable view's "Download CSV" — real people's details, so it lives
+  OUTSIDE the repo. "Recommendation" is the initial review's call and
+  "Status: Approved" + "Response Sent" the team's, so: approved + sent →
+  approved application + ACTIVE Solo member (joined the day the response
+  went out, login created unverified like "Add a member", profile seeded
+  from the application — headline = the "brag" cut to 160, bio = what
+  they're building — LISTED); approved but never told, and recommended
+  Approve → team review; recommended Deny (never told) → initial review
+  with the recommendation in the notes, so the decline email goes out
+  through the workflow; "Banned Camp" → banned. NO EMAIL IS SENT.
+  Re-runnable: an email already imported, or an existing member, is
+  skipped. First run (November 2026): 74 rows → 53 members.
+
+**Conference rooms (Phase 4) are booked in the portal** — `/portal/rooms`
+("Book a room" in the member nav), run from `/portal/admin/rooms` (Members
+→ Rooms). [lib/rooms/](lib/rooms/).
+- **The rules are in [rules.ts](lib/rooms/rules.ts)** (Jesse's call,
+  November 2026; Geekdom can change them): 30-minute steps, 2 hours at most,
+  up to 14 days ahead (today + 13), 4 hours per member per week (Sun–Sat
+  Central, PER PERSON — each teammate has their own), instant (no
+  approval), **Monday to Friday, 7 AM – 9 PM** (`BOOKING_WINDOW`,
+  enforced server-side; weekends came off because staff aren't in).
+  The Club is open 24/7, but staff are in 9–5 and the window covers nearly
+  every meeting; for a weekend or outside the hours, members email club@
+  (the page says so) and
+  staff block the room for them — blocks can go at any hour. Central time
+  throughout; the schedule shows the window, anything outside it is in the
+  admin's table.
+- **No double booking, by construction**: every 30-minute slot a booking
+  takes is a doc, `roomSlots/{roomId}_{slotIso}`, created in the booking's
+  transaction — two members racing for a slot, one wins (tested). The cap
+  the same way: `roomWeeks/{memberId}_{sunday}` holds a member's slots that
+  week (4 hours, and no holding two rooms at once). Cancelling deletes the
+  slots and gives the minutes back. The page's free/busy is a convenience;
+  `bookRoom` re-checks everything.
+- **Every admin (staff and superadmin) can book too**, as themselves, under
+  the same rules — `bookerFor()` in [rooms.ts](lib/rooms/rooms.ts), id
+  `staff_{uid}`, no members record (which would put them in the roster,
+  directory and counts). Staff who are also members book as the member.
+- **Members see free and booked, never WHO**; staff see names. The optional
+  "what's it for" note is staff-only.
+- **Staff can block time** (a Geekdom event, maintenance — up to 12 hours,
+  any day, no cap) and cancel any booking; cancelling a member's emails
+  them (with an optional reason). A member cancelling their own gets no
+  email; booking sends a receipt ([room-templates.ts](lib/email/room-templates.ts)).
+  Staff actions are in the activity log ("Rooms"); member bookings aren't.
+- **The rooms are PLACEHOLDERS** with Thanksgiving names — Cranberry and
+  Cornbread (up to 10, 60-inch TV), Pumpkin and Harvest (up to 20, 75-inch
+  TV) — until Geekdom names them;
+  `DEFAULT_ROOMS` in [rooms.ts](lib/rooms/rooms.ts) is the list until the
+  first admin save writes all four down (ids never change under a booking).
+- **The day picker is a Monday-to-Friday calendar**, one row per week:
+  one weekday header, short tiles with just the date, days before today or
+  past the 14-day horizon faint, today marked by a Clay rule under its
+  date (the REAL today — on a weekend it isn't a tile), a Clay square on
+  days you have a room, and one line under it with the picked day's
+  week's time left. A weekend `?day=` opens the first bookable day.
+  Earlier tries: a row of 14 tiles (ran off the column), a labeled
+  week-by-week calendar (~315px), two rows starting today (columns moved
+  every day), Sun–Sat (before weekends came off). The phone tab bar sizes
+  to its items (it was a fixed four).
+- Availability reads are uncached on purpose — a stale "free" would send a
+  member into a conflict.
 
 **Member resources are edited in the admin** (`/portal/admin/resources`,
 under Members; `settings/memberResources`, [lib/content/member-resources.ts](lib/content/member-resources.ts)):
@@ -548,8 +778,15 @@ down, so there is no "copy from the site" step. Every save is a TRANSACTION
 over the one doc: the links and the FAQ are arrays, and two staff saving at
 once would otherwise each write a copy missing the other's change. The
 Wi-Fi password is members-only — both pages that read it check the session
-first. A link with no address lists under "Coming soon"; FAQ "move" swaps
-within its own section.
+first. **"What's the Wi-Fi?" is answered FROM the Wi-Fi fields**
+(`faqForMembers`, matched on the question's wording) — it was its own
+hand-written answer, so updating the Wi-Fi left the FAQ on its placeholder.
+The admin shows that row as "From the Wi-Fi fields". A link with no address lists under "Coming soon"; FAQ "move" swaps
+within its own section. **Book a room is a BUILT-IN resource** on FAQ & resources (like Slack):
+always live, linking to /portal/rooms; a saved "Book a room" row (a
+pre-rooms placeholder) is ignored there and badged "Built in" in the admin.
+On a phone, "At a glance" (Wi-Fi with a Copy button, hours, address) comes
+first, and "Still have a question?" follows the FAQ.
 
 **Every staff change is in the activity log** ([lib/admin/activity.ts](lib/admin/activity.ts),
 the `activity` collection): who, what, to which thing, when — the
@@ -558,7 +795,13 @@ area). Call `logActivity(user, …)` AFTER a write succeeds; it never throws,
 so a lost history line never refuses the edit. A new admin write should log
 too. Not every save: a Field Note's draft autosaves every 30s, so drafts log
 when created, published, unpublished, featured or deleted — not per save.
-One `orderBy("at")`, filtered after the read, so no composite index.
+One `orderBy("at")`, filtered after the read, so no composite index. Also logged:
+**staff notes** on an application or request — THAT they changed, never
+the text (notes about a person stay on their record), and only when they
+actually changed; **every CSV export**, with its row count (the one action
+that takes personal details off the site); and **a Stripe payment that
+makes someone a member**, with "Stripe" as the actor, once per payment
+(guarded against Stripe's redeliveries).
 
 **Site content edited in the admin: `events` and `portfolio`**
 ([lib/content/](lib/content/)). The pattern, for anything added next:
@@ -567,6 +810,13 @@ One `orderBy("at")`, filtered after the read, so no composite index.
   doesn't enable `cacheComponents`, and turning it on would forbid the
   homepage's `revalidate` export. The cached function THROWS on error so a
   failure isn't cached as the answer.
+- **Give every cache an expiry, never "forever".** The live site, previews
+  and local dev share ONE database but each keeps ITS OWN cache, and
+  `updateTag` clears only the copy the save was made on — so Wi-Fi edited
+  on one copy stayed old on the others indefinitely. Member resources
+  expire in 60s, portfolio and Field Notes in 5 min, events in an hour.
+  Changing an existing cache's options doesn't retire entries already
+  stored: bump its key (`:v2`) when you do.
 - **Fall back to the static data in `lib/site.ts`** when the collection is
   empty or Firestore is unreachable, so `next build` without credentials
   still renders the page (tested: `/` stays `○ 1h`). The static lists are
@@ -816,9 +1066,9 @@ touching live data. The live site leaves it unset (the default database).
 - **Cache keys carry the database** (`dataKey()`): unchanged for the
   default, suffixed for a named one, so a preview's reads can never be
   served from — or into — the live site's cached data.
-- **Every admin page says which database it's editing** on any copy that
-  isn't the production deployment: "Preview data" (its own) or "Live data"
-  (a preview without one, and local dev — `.env.local` uses the live one).
+- **The admin shows no "Live data" / "Preview data" banner** — it came off
+  at Jesse's request. Remember it yourself: local dev (`.env.local`) and any
+  preview without `FIREBASE_DATABASE_ID` edit the LIVE database.
 
 ## Repo gotchas
 
@@ -860,16 +1110,11 @@ touching live data. The live site leaves it unset (the default database).
   `apiVersion` to the constructor either — stripe-node pins its own, and the
   TypeScript types are generated against exactly that pin.
 
-- **The Luma API is not the one in most tutorials.** Base URL is
-  `https://public-api.luma.com`, the endpoint is `GET /v1/calendars/events/list`
-  (not `/public/v1/calendar/list-events`), entries are **flat** rather than
-  wrapped in `{ api_id, event }`, and the identifier field is `id`, not
-  `api_id`. The live spec is at `https://public-api.luma.com/openapi.json` and
-  needs no auth — check it before changing [lib/luma.ts](lib/luma.ts).
-
-- **The Stripe webhook is the only thing that creates a member.** `/welcome` is
-  a dumb landing page anyone can visit; it deliberately reads and writes
-  nothing. Never promote an applicant to a member from a client redirect.
+- **A member is created by the Stripe webhook (Solo, Team), by an approved
+  Enterprise application, or by staff — never by a client redirect.**
+  `/welcome` is a dumb landing page anyone can visit; it deliberately reads
+  and writes nothing. The webhook also records the plan (from checkout
+  metadata), stamps the application `paidAt`, and sends the branded welcome.
 
 - **Read the raw body in the webhook.** `await request.text()`, never
   `.json()` — Stripe signs the exact bytes it sent, and re-serializing fails

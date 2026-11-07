@@ -2,7 +2,8 @@ import "server-only";
 
 import type { Timestamp } from "firebase-admin/firestore";
 import type { Role } from "@/lib/auth/roles";
-import type { Audience, Stage } from "@/lib/membership";
+import type { PlanId } from "@/lib/membership";
+import type { InquiryKind, InquiryStatus } from "@/lib/inquiries";
 
 // Central registry of Firestore collection names — one place to rename.
 export const COLLECTIONS = {
@@ -19,7 +20,60 @@ export const COLLECTIONS = {
   authThrottle: "authThrottle",
   // Who changed what in the admin — see lib/admin/activity.ts.
   activity: "activity",
+  // Event requests and Studio partner inquiries — see lib/inquiries.ts.
+  inquiries: "inquiries",
+  // Conference-room booking — see lib/rooms/.
+  rooms: "rooms",
+  bookings: "bookings",
+  /** One doc per room per 30-minute slot taken: `${roomId}_${slotIso}`. The double-booking lock. */
+  roomSlots: "roomSlots",
+  /** One doc per member per week: the slots they hold — the 4-hour cap and no double-booking yourself. */
+  roomWeeks: "roomWeeks",
 } as const;
+
+/**
+ * An event request (/club) or a Studio partner inquiry (/studio), reviewed
+ * in one step at /portal/admin/requests. Kind-specific answers sit beside
+ * the shared contact fields; the ones a kind doesn't ask are absent.
+ */
+export interface InquiryDoc {
+  kind: InquiryKind;
+  status: InquiryStatus;
+  company: string;
+  name: string;
+  email: string;
+  /** event */
+  eventType?: string;
+  headcount?: string;
+  when?: string;
+  /** partner */
+  interest?: string;
+  /** Both: the free-text "anything else" / "what should we know". */
+  details?: string;
+  notes?: string;
+  /** Every step, oldest first — same shape as an application's. */
+  decisions?: { outcome: string; by: string; at: Timestamp; note?: string }[];
+  createdAt: Timestamp;
+}
+
+/**
+ * A member's directory profile. LISTED BY DEFAULT (Geekdom's call): a member
+ * appears in the directory unless they switch `listed` off. No email or
+ * phone — the directory never shows contact details.
+ */
+export interface MemberProfile {
+  headline: string;
+  role: string;
+  company: string;
+  /** "You're mostly a…" — the directory's filter. Empty until they pick one. */
+  audience: string;
+  askMeAbout: string[];
+  lookingFor: string;
+  bio: string;
+  website: string;
+  linkedin: string;
+  listed: boolean;
+}
 
 /** Doc id in `settings` holding the member portal's editable basics. */
 export const MEMBER_RESOURCES_DOC = "memberResources";
@@ -29,7 +83,7 @@ export interface ActivityDoc {
   at: Timestamp;
   /** Who did it, as they were signed in at the time. */
   actor: { email: string; name: string | null };
-  area: "events" | "field-notes" | "portfolio" | "members" | "applications" | "photo-wall" | "member-resources";
+  area: "events" | "field-notes" | "portfolio" | "members" | "applications" | "photo-wall" | "member-resources" | "inquiries" | "rooms";
   /** Past tense, lower case: "published", "added", "deleted"… */
   action: string;
   /** What it was done to, in words: the note's title, the member's name. */
@@ -94,58 +148,101 @@ export const GALLERY_SETTINGS_DOC = "gallery";
 // ─── Applications ───────────────────────────────────────────────────────────
 
 /**
- * Where an application sits in review.
+ * WHERE AN APPLICATION SITS — Geekdom's two-step review (November 2026,
+ * replacing Typeform → Airtable):
  *
- * `approved` means staff said yes and an invite went out; it does NOT mean the
- * person is a member. They become one when Stripe confirms the subscription,
- * at which point a `members` doc appears. Keeping the two states in separate
- * collections is deliberate — an approved applicant who never pays should not
- * show up on the roster.
+ *   initial_review → team_review → approved
+ *          ↘ declined      ↘ declined          banned: anywhere, no email
+ *
+ * `approved` means the team said yes and the congratulations went out; it
+ * does NOT mean the person is a member. Solo and Team become members when
+ * Stripe confirms the subscription (the webhook writes `members`); an
+ * approved Enterprise applicant is added as a member at approval, because
+ * their terms are agreed off the site.
+ *
+ * OLD VALUES ARE READ, NEVER WRITTEN: "new" and "reviewing" read as
+ * initial_review, "waitlisted" as declined (`normalizeApplicationStatus`).
  */
-export type ApplicationStatus =
-  | "new"
-  | "reviewing"
-  | "approved"
-  | "declined"
-  | "waitlisted";
+export type ApplicationStatus = "initial_review" | "team_review" | "approved" | "declined" | "banned";
 
 export const APPLICATION_STATUSES: ApplicationStatus[] = [
-  "new",
-  "reviewing",
+  "initial_review",
+  "team_review",
   "approved",
   "declined",
-  "waitlisted",
+  "banned",
 ];
 
+/** A stored status, old or new, as one of today's five. */
+export function normalizeApplicationStatus(raw: unknown): ApplicationStatus {
+  if (raw === "new" || raw === "reviewing") return "initial_review";
+  if (raw === "waitlisted") return "declined";
+  return APPLICATION_STATUSES.includes(raw as ApplicationStatus) ? (raw as ApplicationStatus) : "initial_review";
+}
+
+/** One step taken on an application — the history the detail page shows. */
+export interface ApplicationDecision {
+  stage: "initial" | "team" | "staff";
+  /** advanced (to team review), approved, declined, banned, reopened, payment link sent… */
+  outcome: string;
+  by: string;
+  at: Timestamp;
+  note?: string;
+}
+
+/**
+ * An application — Geekdom's own questions (lib/application-questions.ts),
+ * from /apply or imported from their Airtable (`source: "airtable"`).
+ */
 export interface ApplicationDoc {
+  /** First + last, for everything that shows one name. */
   name: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   phone?: string;
+  city?: string;
+  /** Required for Team and Enterprise. Not asked by Geekdom's Typeform. */
   company?: string;
-  role?: string;
+  /** "LinkedIn or personal site". */
   website?: string;
-  linkedin?: string;
-  audience: Audience;
-  stage: Stage;
-  /** "What are you building?" — the question staff actually reads. */
+  heardAbout?: string;
+  heardAboutOther?: string;
+  brag?: string;
+  /** "What are you building?" */
   building: string;
-  /** "What do you need from the room?" */
-  needs: string;
-  referredBy?: string;
-  /** Was this person a coworking member before the transition? */
+  shipped?: string;
+  links?: string;
+  describes?: string[];
+  describesOther?: string;
+  whyGeekdom?: string;
+  giveBack?: string;
+  excited?: string;
+  otherCommunities?: string;
+  anythingElse?: string;
+  /** Which membership they're applying for. Absent on pre-plan applications = Solo. */
+  plan?: PlanId;
+  /** "I'm a current Geekdom member" — a member of the coworking-era Geekdom. */
   formerMember: boolean;
+  /** Where it came from: /apply, or Geekdom's Airtable (the import). */
+  source?: "apply" | "airtable";
 
-  status: ApplicationStatus;
+  /** Stored as written; read through `normalizeApplicationStatus`. */
+  status: ApplicationStatus | "new" | "reviewing" | "waitlisted";
   /** Free-text staff notes, appended in the admin portal. */
   notes?: string;
+  /** The last decision's who and when (the full trail is `decisions`). */
   reviewedBy?: string | null;
   reviewedAt?: Timestamp | null;
+  decisions?: ApplicationDecision[];
 
   /**
-   * Set when an invite email goes out. Also the idempotency guard — approving
-   * twice must not send two checkout links.
+   * When the payment link (Solo, Team) went out. Also the idempotency guard
+   * — approving twice must not send two checkout links.
    */
   invitedAt?: Timestamp | null;
+  /** Stamped by the Stripe webhook when they pay — the application became a member. */
+  paidAt?: Timestamp | null;
 
   createdAt: Timestamp;
 }
@@ -188,7 +285,28 @@ export interface MemberDoc {
   updatedAt: Timestamp;
 
   /** How the record began: the Stripe webhook, an admin, or the CSV import. */
-  source?: "stripe" | "admin" | "import";
+  source?: "stripe" | "admin" | "import" | "application" | "team";
+  /** Their membership plan. Absent on members from before plans = Solo. */
+  plan?: PlanId;
+  /** The company a Team or Enterprise membership belongs to. */
+  company?: string;
+  /**
+   * TEAMMATES point at their team's OWNER (the member who applied and pays).
+   * Their access follows the owner's status (lib/team.ts). Absent on owners
+   * and on Solo members; removed (with `formerTeamOwnerId` kept) when a
+   * teammate is taken off the team.
+   */
+  teamOwnerId?: string;
+  formerTeamOwnerId?: string;
+  /** Their directory profile, edited at Profile. Listed unless they opt out. */
+  profile?: MemberProfile;
+  /**
+   * First-login onboarding (lib/onboarding.ts): the steps they've done or
+   * skipped, and whether they folded the panel away with "Not now".
+   */
+  onboarding?: { done: string[]; dismissed?: boolean; firstSeenAt?: Timestamp };
+  /** When the launch invitation (lib/invitations.ts) went to them. */
+  portalInvitedAt?: Timestamp;
   /** Staff-only grouping ("founding member", "former coworking"). Never shown to members. */
   tags?: string[];
   /** Staff-only notes. Never shown to members. */
@@ -243,4 +361,38 @@ export interface PortfolioDoc {
    */
   order?: number;
   updatedAt: Timestamp;
+}
+
+// ─── Conference rooms (lib/rooms/) ──────────────────────────────────────────
+
+export interface RoomDoc {
+  name: string;
+  capacity: number;
+  /** "75-inch TV", "Whiteboard", "Video-call camera"… */
+  features: string[];
+  description: string;
+  /** Off = not bookable, kept for its history. */
+  active: boolean;
+  order: number;
+}
+
+export interface BookingDoc {
+  roomId: string;
+  /** As it was when booked, so a renamed room doesn't rewrite history. */
+  roomName: string;
+  start: Timestamp;
+  end: Timestamp;
+  minutes: number;
+  status: "booked" | "canceled";
+  /** A member's booking, or staff blocking the room (a Geekdom event, maintenance). */
+  kind: "member" | "block";
+  memberId: string | null;
+  memberName: string | null;
+  memberEmail: string | null;
+  /** Optional "what's it for" — staff see it, other members never do. For a block, its reason. */
+  note: string;
+  createdAt: Timestamp;
+  createdBy: string;
+  canceledAt?: Timestamp;
+  canceledBy?: string;
 }
