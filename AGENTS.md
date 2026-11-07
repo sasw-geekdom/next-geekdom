@@ -771,6 +771,15 @@ members use personal Gmail, and the hint hid their accounts.
   week-by-week calendar (~315px), two rows starting today (columns moved
   every day), Sun–Sat (before weekends came off). The phone tab bar sizes
   to its items (it was a fixed four).
+- **The admin Rooms page is a work tool, and a calm one**: one column —
+  a WEEK STRIP picks the day (Sun–Sat, a count only on days with
+  bookings, ‹ › by week, Today; weekends quieter), the date with its
+  numbers in ONE LINE ("1 booking · 1 hr · Cranberry busiest"), the
+  day's reservations as a table (ended rows faded, "In use" on what's
+  happening now), then the room-by-room schedule. The rooms and the rules
+  are settings, so they live in a "Rooms" slide-out, not a side column. A
+  four-box stats row and an always-on rooms/rules column were tried and
+  made the page busy. One query for the week (`bookingsBetween`).
 - Availability reads are uncached on purpose — a stale "free" would send a
   member into a conflict.
 

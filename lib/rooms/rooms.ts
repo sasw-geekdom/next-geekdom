@@ -90,6 +90,24 @@ export async function bookingsForDay(day: string): Promise<Booking[]> {
     .sort((a, b) => a.start.localeCompare(b.start));
 }
 
+/**
+ * Every live booking that touches the Central days from `fromDay` up to
+ * (not including) `toDay` — the admin's week strip counts, in one query.
+ */
+export async function bookingsBetween(fromDay: string, toDay: string): Promise<Booking[]> {
+  const from = Date.parse(dayStartIso(fromDay));
+  const to = Date.parse(dayStartIso(toDay));
+  const snap = await getAdminDb()
+    .collection(COLLECTIONS.bookings)
+    .where("start", ">=", Timestamp.fromMillis(from - 12 * 3600_000))
+    .where("start", "<", Timestamp.fromMillis(to))
+    .get();
+  return snap.docs
+    .map((d) => toBooking(d.id, d.data() as BookingDoc))
+    .filter((b) => b.status === "booked" && Date.parse(b.end) > from)
+    .sort((a, b) => a.start.localeCompare(b.start));
+}
+
 /** A member's bookings that haven't ended, soonest first. */
 export async function upcomingFor(memberId: string, now: number): Promise<Booking[]> {
   const snap = await getAdminDb().collection(COLLECTIONS.bookings).where("memberId", "==", memberId).get();

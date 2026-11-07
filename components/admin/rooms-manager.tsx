@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, Pencil, Plus, Users } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonClass } from "@/components/ui/button";
 import { Field, Input, Textarea } from "@/components/ui/field";
 import { Combobox } from "@/components/ui/combobox";
 import { Switch } from "@/components/ui/switch";
@@ -13,28 +13,32 @@ import { RoomTimeline } from "@/components/rooms/room-timeline";
 import { ADMIN_LABEL, Status, Table, Td, Th, Tr } from "@/components/admin/admin-ui";
 import { cn } from "@/lib/utils";
 import { blockRoom, cancelBooking, saveRoom } from "@/lib/rooms/actions";
-import { BLOCK_MAX_MINUTES, BOOKING_WINDOW, ROOM_RULES, addDays, dayLabel, lengthLabel, slotsOfDay, timeLabel } from "@/lib/rooms/rules";
+import { BLOCK_MAX_MINUTES, BOOKING_WINDOW, ROOM_RULES, addDays, dayLabel, isBookableWeekday, lengthLabel, slotsOfDay, timeLabel } from "@/lib/rooms/rules";
 import type { Booking, Room } from "@/lib/rooms/rooms";
 
 /*
-  THE ROOMS ADMIN. One day at a time (‹ › and Today, in the address so a
-  day can be shared): the schedule across every room with who has each
-  booking, the same bookings as a table to cancel from, and — beside it —
-  the rooms and the rules. Three slide-outs: block time, cancel (with a
+  THE ROOMS ADMIN, a work tool (Linear/Vercel): a week strip to pick the
+  day — each day's count on it, ‹ › by week, Today — then the day's
+  summary (bookings, hours, busiest room, blocks) and its reservations as
+  a table at the TOP, then the schedule across every room. The rooms and
+  the rules sit beside it. The day is in the address, so it can be shared. Three slide-outs: block time, cancel (with a
   reason the member is emailed), and edit a room.
 */
 
 type Pane =
   | { kind: "block"; roomId: string; day: string; start: string; minutes: number; note: string }
   | { kind: "cancel"; booking: Booking; reason: string }
-  | { kind: "room"; id?: string; name: string; capacity: string; features: string; description: string; active: boolean };
+  | { kind: "room"; id?: string; name: string; capacity: string; features: string; description: string; active: boolean }
+  /** The rooms and the rules — settings, out of the day's view. */
+  | { kind: "rooms" };
 
 export function RoomsManager({
   now,
   today,
   day,
-  prevDay,
-  nextDay,
+  weekDays,
+  prevWeek,
+  nextWeek,
   slots,
   rooms,
   bookings,
@@ -43,8 +47,10 @@ export function RoomsManager({
   now: number;
   today: string;
   day: string;
-  prevDay: string;
-  nextDay: string;
+  /** The week the day sits in, Sunday to Saturday, with each day's counts. */
+  weekDays: { day: string; bookings: number; blocks: number }[];
+  prevWeek: string;
+  nextWeek: string;
   slots: string[];
   rooms: Room[];
   bookings: Booking[];
@@ -112,6 +118,14 @@ export function RoomsManager({
   }
 
   const blockSlots = pane?.kind === "block" ? slotsOfDay(pane.day) : [];
+
+  // The day's summary.
+  const memberBookings = bookings.filter((b) => b.kind === "member");
+  const blocks = bookings.filter((b) => b.kind === "block");
+  const memberMinutes = memberBookings.reduce((n, b) => n + b.minutes, 0);
+  const byRoom = new Map<string, number>();
+  for (const b of memberBookings) byRoom.set(b.roomName, (byRoom.get(b.roomName) ?? 0) + b.minutes);
+  const busiest = [...byRoom.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
   const BLOCK_DAYS = Array.from({ length: 60 }, (_, i) => addDays(today, i));
 
   return (
@@ -122,33 +136,146 @@ export function RoomsManager({
         </p>
       )}
 
-      {/* The day */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Link href={`/portal/admin/rooms?day=${prevDay}`} scroll={false} aria-label="Previous day" className="inline-flex h-8 w-8 items-center justify-center border border-border bg-bone-light hover:bg-bone">
+      {/*
+        THE WEEK STRIP — the date picker, Linear-style: seven days with each
+        one's count, ‹ › for the week, Today. You see where the busy days
+        are before you click. Weekends are listed (staff can block them)
+        but read quieter: members can't book them.
+      */}
+      <div className="flex flex-wrap items-center gap-3">
+        {/* Its own full row on a phone; beside the buttons from sm up. */}
+        <div className="flex w-full min-w-0 items-stretch sm:w-auto sm:flex-1">
+          <Link href={`/portal/admin/rooms?day=${prevWeek}`} scroll={false} aria-label="Previous week" className="inline-flex w-9 shrink-0 items-center justify-center border border-border bg-bone-light hover:bg-bone">
             <ChevronLeft className="h-4 w-4" strokeWidth={1.7} />
           </Link>
-          <Link href={`/portal/admin/rooms?day=${nextDay}`} scroll={false} aria-label="Next day" className="-ml-px inline-flex h-8 w-8 items-center justify-center border border-border bg-bone-light hover:bg-bone">
+          <nav aria-label="Day" className="grid min-w-0 flex-1 grid-cols-7 border-y border-border bg-bone-light">
+            {weekDays.map((w) => {
+              const selected = w.day === day;
+              const weekend = !isBookableWeekday(w.day);
+              return (
+                <Link
+                  key={w.day}
+                  href={`/portal/admin/rooms?day=${w.day}`}
+                  scroll={false}
+                  aria-current={selected ? "date" : undefined}
+                  aria-label={`${dayLabel(w.day, "long")}: ${w.bookings} ${w.bookings === 1 ? "booking" : "bookings"}${w.blocks ? `, ${w.blocks} blocked` : ""}`}
+                  className={cn(
+                    "relative flex min-w-0 flex-col items-center justify-center border-r border-border px-1 py-1.5 last:border-r-0 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-clay",
+                    selected ? "bg-graphite text-bone" : weekend ? "text-muted-foreground hover:bg-bone" : "text-graphite hover:bg-bone",
+                    w.day === today && !selected && "shadow-[inset_0_-2px_0_var(--color-clay)]",
+                  )}
+                >
+                  <span className={cn("text-[11px]", selected ? "text-bone/70" : "text-muted-foreground")}>
+                    {w.day === today ? "Today" : dayLabel(w.day).split(",")[0]}
+                  </span>
+                  <span className="text-sm font-medium tabular-nums">{Number(w.day.slice(8))}</span>
+                  <span className={cn("text-[11px] tabular-nums", selected ? "text-bone/80" : w.bookings ? "text-graphite" : "text-muted-foreground/60")}>
+                    {w.bookings ? <><span className="sm:hidden">{w.bookings}</span><span className="hidden sm:inline">{w.bookings} booked</span></> : "\u00a0"}
+                  </span>
+                </Link>
+              );
+            })}
+          </nav>
+          <Link href={`/portal/admin/rooms?day=${nextWeek}`} scroll={false} aria-label="Next week" className="inline-flex w-9 shrink-0 items-center justify-center border border-border bg-bone-light hover:bg-bone">
             <ChevronRight className="h-4 w-4" strokeWidth={1.7} />
           </Link>
-          <h2 className="ml-2 text-base font-medium text-graphite">{dayLabel(day, "long")}</h2>
+        </div>
+        <div className="flex items-center gap-2">
           {day !== today && (
-            <Link href="/portal/admin/rooms" scroll={false} className="ml-1 text-sm text-muted-foreground underline decoration-border underline-offset-2 hover:text-graphite">
+            <Link href="/portal/admin/rooms" scroll={false} className={buttonClass("outline", "sm", "border-border bg-bone-light")}>
               Today
             </Link>
           )}
+          <Button variant="outline" size="sm" className="border-border bg-bone-light" onClick={() => show({ kind: "rooms" })} disabled={pending}>
+            Rooms
+          </Button>
+          <Button variant="ink" size="sm" onClick={() => show(blank())} disabled={pending}>
+            <Plus className="h-3.5 w-3.5" strokeWidth={1.8} />
+            Block time
+          </Button>
         </div>
-        <Button variant="ink" size="sm" onClick={() => show(blank())} disabled={pending}>
-          <Plus className="h-3.5 w-3.5" strokeWidth={1.8} />
-          Block time
-        </Button>
       </div>
 
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="flex min-w-0 flex-col gap-6">
-          {/* The schedule */}
-          <section className="border border-border bg-bone-light p-4">
-            <ul className="flex flex-col gap-4">
+      <div className="flex min-w-0 flex-col gap-6">
+        <div className="contents">
+          {/* ── THE DAY'S SUMMARY — the numbers, then the reservations ── */}
+          <section aria-labelledby="day-title">
+            {/* The day, and its numbers in one line — four boxes repeated the table. */}
+            <div className="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <h2 id="day-title" className="text-base font-medium text-graphite">
+                {dayLabel(day, "long")}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {memberBookings.length === 0
+                  ? "No bookings"
+                  : `${memberBookings.length} ${memberBookings.length === 1 ? "booking" : "bookings"} · ${lengthLabel(memberMinutes)}${busiest && byRoom.size > 1 ? ` · ${busiest} busiest` : ""}`}
+                {blocks.length ? ` · ${blocks.length} blocked` : ""}
+              </p>
+            </div>
+
+            {bookings.length === 0 ? (
+              <p className="mt-4 border border-dashed border-border px-6 py-8 text-center text-sm text-muted-foreground">
+                No reservations{isBookableWeekday(day) ? "" : " — members can't book weekends"}.
+              </p>
+            ) : (
+              <Table className="mt-4">
+                <thead>
+                  <tr>
+                    <Th className="w-48">Time</Th>
+                    <Th className="w-28">Room</Th>
+                    <Th>Booked by</Th>
+                    <Th className="hidden w-[20%] md:table-cell">Note</Th>
+                    <Th className="w-28" align="right">
+                      <span className="sr-only">Actions</span>
+                    </Th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {bookings.map((b) => {
+                    const ended = Date.parse(b.end) <= now;
+                    const live = !ended && Date.parse(b.start) <= now;
+                    return (
+                      <Tr key={b.id} className={cn(ended && "text-muted-foreground")}>
+                        <Td className={cn("tabular-nums", ended && "text-muted-foreground")}>
+                          {timeLabel(b.start)} – {timeLabel(b.end)}
+                        </Td>
+                        <Td className={cn(ended && "text-muted-foreground")}>{b.roomName}</Td>
+                        <Td className={cn(ended && "text-muted-foreground")}>
+                          {b.kind === "block" ? (
+                            <Status kind="blocked">Blocked by staff</Status>
+                          ) : (
+                            <>
+                              {b.memberName} <span className="text-muted-foreground">· {lengthLabel(b.minutes)}</span>
+                            </>
+                          )}
+                        </Td>
+                        <Td className="hidden text-muted-foreground md:table-cell">{b.note || "—"}</Td>
+                        <Td align="right">
+                          {ended ? (
+                            <span className="text-[13px] text-muted-foreground">Ended</span>
+                          ) : (
+                            <span className="inline-flex items-center gap-3">
+                              {live && <Status kind="progress" className="text-[13px]">In use</Status>}
+                              <button type="button" onClick={() => show({ kind: "cancel", booking: b, reason: "" })} className="text-sm text-graphite underline decoration-clay decoration-1 underline-offset-2">
+                                {b.kind === "block" ? "Remove" : "Cancel"}
+                              </button>
+                            </span>
+                          )}
+                        </Td>
+                      </Tr>
+                    );
+                  })}
+                </tbody>
+              </Table>
+            )}
+          </section>
+
+          {/* ── THE SCHEDULE — every room across the bookable window ── */}
+          <section className="border border-border bg-bone-light">
+            <h2 className="border-b border-border px-4 py-2.5 text-sm font-medium text-graphite">
+              Schedule <span className="ml-1 font-normal text-muted-foreground">· {BOOKING_WINDOW.label}</span>
+            </h2>
+            <ul className="flex flex-col gap-4 p-4">
               {rooms.filter((r) => r.active).map((r) => (
                 <li key={r.id}>
                   <p className="mb-1.5 flex items-baseline gap-2 text-sm">
@@ -167,61 +294,40 @@ export function RoomsManager({
               ))}
             </ul>
           </section>
-
-          {/* The same day as a table */}
-          {bookings.length === 0 ? (
-            <p className="border border-dashed border-border px-6 py-10 text-center text-sm text-muted-foreground">No bookings on this day.</p>
-          ) : (
-            <Table>
-              <thead>
-                <tr>
-                  <Th className="w-40">Time</Th>
-                  <Th className="w-28">Room</Th>
-                  <Th>Booked by</Th>
-                  <Th className="hidden w-[26%] md:table-cell">Note</Th>
-                  <Th className="w-24" align="right">
-                    <span className="sr-only">Actions</span>
-                  </Th>
-                </tr>
-              </thead>
-              <tbody>
-                {bookings.map((b) => {
-                  const ended = Date.parse(b.end) <= now;
-                  return (
-                    <Tr key={b.id} className={cn(ended && "text-muted-foreground")}>
-                      <Td className="tabular-nums">
-                        {timeLabel(b.start)} – {timeLabel(b.end)}
-                      </Td>
-                      <Td>{b.roomName}</Td>
-                      <Td>
-                        {b.kind === "block" ? (
-                          <Status kind="blocked">Blocked by staff</Status>
-                        ) : (
-                          <>
-                            {b.memberName} <span className="text-muted-foreground">· {lengthLabel(b.minutes)}</span>
-                          </>
-                        )}
-                      </Td>
-                      <Td className="hidden text-muted-foreground md:table-cell">{b.note || "—"}</Td>
-                      <Td align="right">
-                        {ended ? (
-                          <span className="text-[13px] text-muted-foreground">Ended</span>
-                        ) : (
-                          <button type="button" onClick={() => show({ kind: "cancel", booking: b, reason: "" })} className="text-sm text-graphite underline decoration-clay decoration-1 underline-offset-2">
-                            {b.kind === "block" ? "Remove" : "Cancel"}
-                          </button>
-                        )}
-                      </Td>
-                    </Tr>
-                  );
-                })}
-              </tbody>
-            </Table>
-          )}
         </div>
 
-        {/* The rooms and the rules */}
-        <aside className="flex flex-col gap-6">
+      </div>
+
+      <Drawer
+        open={open}
+        onClose={close}
+        title={pane?.kind === "rooms" ? "Rooms and rules" : pane?.kind === "block" ? "Block time" : pane?.kind === "cancel" ? (pane.booking.kind === "block" ? "Remove this block" : "Cancel this booking") : pane?.id ? `Edit ${pane.name || "room"}` : "Add a room"}
+        description={
+          pane?.kind === "cancel"
+            ? `${pane.booking.roomName} · ${dayLabel(day)} · ${timeLabel(pane.booking.start)} – ${timeLabel(pane.booking.end)}`
+            : pane?.kind === "block"
+              ? "Hold a room for a Geekdom event or maintenance. Members can't book over it."
+              : undefined
+        }
+        footer={
+          pane?.kind === "rooms" ? (
+            <Button type="button" variant="ghost" onClick={close}>
+              Close
+            </Button>
+          ) : (
+          <>
+            <Button type="submit" form="rooms-form" variant="ink" disabled={pending}>
+              {pending ? "Working…" : pane?.kind === "block" ? "Block it" : pane?.kind === "cancel" ? (pane.booking.kind === "block" ? "Remove block" : "Cancel and email them") : "Save"}
+            </Button>
+            <Button type="button" variant="ghost" onClick={close} disabled={pending}>
+              {pane?.kind === "cancel" ? "Keep it" : "Cancel"}
+            </Button>
+          </>
+          )
+        }
+      >
+        {pane?.kind === "rooms" && (
+        <div className="flex flex-col gap-6">
           <section className="border border-border bg-bone-light">
             <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-2.5">
               <h2 className="text-sm font-medium text-graphite">
@@ -267,32 +373,9 @@ export function RoomsManager({
               For a weekend, or outside {BOOKING_WINDOW.label}, members email the Club team: block the room for them here — blocks can go on any day at any hour and skip the 14-day and weekly limits. The schedule shows {BOOKING_WINDOW.label}; anything outside it is in the table. Members see free and booked time, never who booked.
             </p>
           </section>
-        </aside>
-      </div>
-
-      <Drawer
-        open={open}
-        onClose={close}
-        title={pane?.kind === "block" ? "Block time" : pane?.kind === "cancel" ? (pane.booking.kind === "block" ? "Remove this block" : "Cancel this booking") : pane?.id ? `Edit ${pane.name || "room"}` : "Add a room"}
-        description={
-          pane?.kind === "cancel"
-            ? `${pane.booking.roomName} · ${dayLabel(day)} · ${timeLabel(pane.booking.start)} – ${timeLabel(pane.booking.end)}`
-            : pane?.kind === "block"
-              ? "Hold a room for a Geekdom event or maintenance. Members can't book over it."
-              : undefined
-        }
-        footer={
-          <>
-            <Button type="submit" form="rooms-form" variant="ink" disabled={pending}>
-              {pending ? "Working…" : pane?.kind === "block" ? "Block it" : pane?.kind === "cancel" ? (pane.booking.kind === "block" ? "Remove block" : "Cancel and email them") : "Save"}
-            </Button>
-            <Button type="button" variant="ghost" onClick={close} disabled={pending}>
-              {pane?.kind === "cancel" ? "Keep it" : "Cancel"}
-            </Button>
-          </>
-        }
-      >
-        {pane && (
+        </div>
+        )}
+        {pane && pane.kind !== "rooms" && (
           <form id="rooms-form" onSubmit={submit} noValidate className="flex flex-col gap-5">
             {pane.kind === "block" && (
               <>
