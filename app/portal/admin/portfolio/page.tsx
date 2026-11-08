@@ -2,7 +2,7 @@ import { listPortfolio } from "@/lib/content/portfolio";
 import { PortfolioManager } from "@/components/admin/portfolio-manager";
 import { PageHeader, AdminSection } from "@/components/admin/page-header";
 
-export const metadata = { title: "Built at Geekdom" };
+export const metadata = { title: "Portfolio" };
 
 /**
  * "Built at Geekdom" — the portfolio wall on the homepage (and its Studio
@@ -16,8 +16,8 @@ export default async function AdminPortfolioPage(props: PageProps<"/portal/admin
   return (
     <>
       <PageHeader
-        title="Built at Geekdom"
-        description="The companies on the homepage wall. Studio-backed ones also appear on /studio."
+        title="Portfolio"
+        description="Geekdom's companies — on the homepage under “Built at Geekdom”, and the Studio-backed ones on /studio under “Studio Companies”."
       />
       <AdminSection>
         <PortfolioManager companies={companies} startAdding={add === "1"} />

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { getSiteCopy } from "@/lib/content/site-copy";
 import Image from "next/image";
 import { pageMetadata } from "@/lib/seo";
 import { ArrowUpRight } from "lucide-react";
@@ -26,7 +27,6 @@ import { PHOTOS } from "@/lib/photos";
 import { MOCK_FOUNDER_VOICES } from "@/data/mock/voices";
 import {
   STUDIO,
-  STUDIO_CRITERIA,
   STUDIO_PARTNERS,
   STUDIO_FILM,
   LUMA_CALENDAR_URL,
@@ -66,7 +66,8 @@ export const metadata: Metadata = pageMetadata({
  * "accelerator" among the things Geekdom explicitly is not.
  */
 export default async function StudioPage() {
-  const companies = await getPortfolio();
+  // The words Geekdom edits in the admin (Site content → Site copy).
+  const [companies, t] = await Promise.all([getPortfolio(), getSiteCopy()]);
   return (
     <>
       {/*
@@ -81,8 +82,8 @@ export default async function StudioPage() {
         now black and white under the brand grade (a founder spotlight).
       */}
       <SpreadHero
-        eyebrow="Studio"
-        title="Where we go all in with the founders we believe in."
+        eyebrow={t("studio.hero.eyebrow")}
+        title={t("studio.hero.headline")}
         photo={PHOTOS.openlaneTeam}
         objectPosition="object-[50%_30%]"
       >
@@ -91,7 +92,7 @@ export default async function StudioPage() {
           is the Studio's whole argument in six words.
         */}
         <Editorial className="text-2xl leading-[1.45] text-graphite sm:text-3xl">
-          More than a check. More than mentorship.
+{t("studio.hero.tagline")}
         </Editorial>
       </SpreadHero>
 
@@ -113,24 +114,17 @@ export default async function StudioPage() {
         <div className="max-w-3xl">
           {/* Geekdom's wording, verbatim. */}
           <p className="text-2xl leading-snug text-graphite sm:text-[1.75rem]">
-            Geekdom Studio is where we back a small number of San Antonio
-            founders each year with capital, hands-on operator support, and
-            access to the people who make the work go faster.
+{t("studio.opening.lede")}
           </p>
           {/* Geekdom's addition, verbatim. */}
           <p className="mt-8 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-            The focus is on go-to-market, product, and getting founders
-            connected to customers, operators, and investors.
+{t("studio.opening.p1")}
           </p>
           <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-            There&rsquo;s no open application and no cohorts. Founders are
-            scouted and invited. Club membership isn&rsquo;t a prerequisite,
-            but most Studio relationships start there.
+            {t("studio.opening.p2")}
           </p>
           <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-            Beyond the portfolio, the Studio also runs open programming
-            throughout the year — Office Hours, Startup Bootcamp, and select
-            workshops — for the broader community.
+            {t("studio.opening.p3")}
           </p>
         </div>
       </Section>
@@ -185,19 +179,13 @@ export default async function StudioPage() {
         */}
         <div className="grid gap-12 lg:grid-cols-[28rem_minmax(0,34rem)] lg:gap-16">
           <div>
-            <Eyebrow>Leading the Studio</Eyebrow>
+            <Eyebrow>{t("studio.eir.eyebrow")}</Eyebrow>
             <SectionTitle>{STUDIO.eir.name}</SectionTitle>
             <p className="mt-8 text-lg leading-relaxed text-muted-foreground">
-              {STUDIO.eir.name} leads the Studio. He co-founded TeamPassword in
-              2012, bootstrapped it alongside a day job for four years, went
-              full-time in 2016, and sold it to San Antonio&rsquo;s Jungle Disk
-              in 2018. He&rsquo;s spent the years since shipping products,
-              writing about SaaS, and working alongside founders in the city.
+              {t("studio.eir.p1")}
             </p>
             <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
-              He works with Studio companies the way he built his own — sleeves
-              up, on the specific work that turns early traction into real
-              scale.
+              {t("studio.eir.p2")}
             </p>
 
             {/*
@@ -206,8 +194,7 @@ export default async function StudioPage() {
               Brian before launch"); this replaces it.
             */}
             <PullQuote className="mt-8 lg:text-xl">
-              Early-stage startups need one thing: money. They get it from
-              customers, investors, and partners. We help them land all three.
+              {t("studio.eir.quote")}
             </PullQuote>
           </div>
 
@@ -261,12 +248,10 @@ export default async function StudioPage() {
           h2 stays for document structure and carries the doc's own section
           name; it is visually hidden because the eyebrow already shows it.
         */}
-        <Eyebrow>Who we invest in</Eyebrow>
+        <Eyebrow>{t("studio.invest.eyebrow")}</Eyebrow>
         <h2 className="sr-only">Who we invest in</h2>
         <Lede>
-          We focus on local founders and startups well positioned to sell into
-          local corporate partners, work with senior operator talent in our
-          networks, and receive follow-on funding from local investors.
+          {t("studio.invest.lede")}
         </Lede>
 
         {/*
@@ -276,7 +261,7 @@ export default async function StudioPage() {
           typical, and collapsing it to either one changes what it says.
         */}
         <ul className="mt-12 grid gap-x-12 sm:grid-cols-2">
-          {STUDIO_CRITERIA.map((criterion) => (
+          {t.list("studio.invest.criteria").map((criterion) => (
             <li
               key={criterion}
               className="border-t border-border py-4 text-lg leading-snug text-graphite"
@@ -316,22 +301,19 @@ export default async function StudioPage() {
       <Section tone="graphite">
         <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
           <div>
-            <Eyebrow onInk>Capital</Eyebrow>
+            <Eyebrow onInk>{t("studio.capital.eyebrow")}</Eyebrow>
             {/* Geekdom's wording, verbatim. */}
             <SectionTitle className="text-bone">
-              The check is just the starting point.
+{t("studio.capital.title")}
             </SectionTitle>
           </div>
           <div className="flex flex-col gap-6">
             {/* Geekdom's wording, verbatim. */}
             <p className="text-lg leading-relaxed text-bone/70">
-              The {STUDIO.fund} is how we make our initial investment in each
-              Studio company.
+              {t("studio.capital.p1")}
             </p>
             <p className="text-lg leading-relaxed text-bone/70">
-              The local corporate, operator, and investor relationships make
-              the next round or contract possible. Our goal is to get you to
-              capital and customers faster than you can on your own.
+              {t("studio.capital.p2")}
             </p>
           </div>
         </div>
@@ -346,7 +328,7 @@ export default async function StudioPage() {
 
       {/* ── Studio companies ─────────────────────────────────────────── */}
       <Section tone="bone-light">
-        <Eyebrow>Studio Companies</Eyebrow>
+        <Eyebrow>{t("studio.companies.eyebrow")}</Eyebrow>
         <h2 className="sr-only">Studio Companies</h2>
 
         {/*
@@ -409,7 +391,7 @@ export default async function StudioPage() {
 
       {/* ── Open programming ─────────────────────────────────────────── */}
       <Section tone="bone">
-        <Eyebrow>Open to the community</Eyebrow>
+        <Eyebrow>{t("studio.open.eyebrow")}</Eyebrow>
         <h2 className="sr-only">Open programming</h2>
         {/*
           THE CLAIM, PHOTOGRAPHED. This section asserted that anyone can walk
@@ -427,18 +409,13 @@ export default async function StudioPage() {
         <div className="mt-10 grid items-start gap-12 lg:grid-cols-[1fr_0.9fr] lg:gap-16">
           <div>
             <Lede className="mt-0">
-              The Studio hosts a small amount of open programming each year —{" "}
-              {STUDIO.openPrograms.slice(0, -1).join(", ")}, and{" "}
-              {STUDIO.openPrograms.at(-1)?.toLowerCase()}. These are open to
-              the broader community, not just Studio companies.
+              {t("studio.open.p1")}
             </Lede>
             {/* The last two sentences ("The application tells us who you
                 are…" / "Studio invitations get made from there.") came off at
                 Geekdom's request. */}
             <Lede className="mt-5">
-              If you&rsquo;re building something and wondering whether the
-              Studio might be a fit, come to a public event and apply to the
-              Club.
+              {t("studio.open.p2")}
             </Lede>
           </div>
 
@@ -456,11 +433,10 @@ export default async function StudioPage() {
 
       {/* ── Built with ───────────────────────────────────────────────── */}
       <Section tone="bone-light">
-        <Eyebrow>Built with</Eyebrow>
+        <Eyebrow>{t("studio.partners.eyebrow")}</Eyebrow>
         <h2 className="sr-only">Built with</h2>
         <Lede>
-          The Studio is supported by partners who believe San Antonio&rsquo;s
-          founder community is worth investing in.
+          {t("studio.partners.lede")}
         </Lede>
         {/*
           LOGOS, WITH A DESCRIPTOR UNDER EACH RATHER THAN THE NAME. Both marks
@@ -549,7 +525,7 @@ export default async function StudioPage() {
         a paragraph.
       */}
       <Section tone="bone">
-        <Eyebrow>How to get involved</Eyebrow>
+        <Eyebrow>{t("studio.involved.eyebrow")}</Eyebrow>
         <h2 className="sr-only">How to get involved</h2>
 
         {/*
@@ -577,15 +553,12 @@ export default async function StudioPage() {
           fail to line up with.
         */}
         <div className="mt-14 max-w-2xl">
-          <Subhead>If you&rsquo;re a founder</Subhead>
+          <Subhead>{t("studio.founder.title")}</Subhead>
           <p className="mt-4 leading-relaxed text-muted-foreground">
-            The Studio isn&rsquo;t something you apply to directly. We scout
-            founders and companies to be invited in. The best Studio
-            investments start as relationships.
+            {t("studio.founder.p1")}
           </p>
           <p className="mt-4 leading-relaxed text-muted-foreground">
-            Club membership isn&rsquo;t a prerequisite, but most Studio
-            relationships start there.
+{t("studio.founder.p2")}
           </p>
           {/*
             NO "APPLY TO THE CLUB" HERE. A red Apply-to-the-Club button under
@@ -599,7 +572,7 @@ export default async function StudioPage() {
             rel="noreferrer noopener"
             className={cn("mt-8 inline-flex", LINK_ARROW)}
           >
-            See upcoming events
+            {t("studio.founder.link")}
             <ArrowUpRight aria-hidden="true" className={ARROW.external} />
           </a>
           {/*
@@ -612,7 +585,7 @@ export default async function StudioPage() {
             it made the block busy, and the criteria are right above it.)
           */}
           <p className="mt-6 text-muted-foreground">
-            Or introduce yourself — send your deck to{" "}
+            {t("studio.founder.deck")}{" "}
             <a
               href={`mailto:${STUDIO.email}?subject=${encodeURIComponent("Introduction — [your company]")}`}
               className={LINK}
@@ -637,12 +610,9 @@ export default async function StudioPage() {
         <div className="mt-12 border border-border bg-bone-light p-8 sm:p-10">
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-12">
             <div>
-              <Subhead>If you&rsquo;re a corporate partner</Subhead>
+              <Subhead>{t("studio.partner.title")}</Subhead>
               <p className="mt-4 max-w-2xl leading-relaxed text-muted-foreground">
-                We work with a small number of corporate partners each year to
-                support Studio companies with pilots, talent access, and
-                follow-on introductions. If that sounds like a fit, we&rsquo;d
-                like to talk.
+                {t("studio.partner.body")}
               </p>
             </div>
             {/*
@@ -650,7 +620,7 @@ export default async function StudioPage() {
               /portal/admin/requests (lib/inquiries.ts).
             */}
             <div className="shrink-0">
-              <InquiryButton kind="partner" label="Contact us" />
+              <InquiryButton kind="partner" label={t("studio.partner.cta")} />
             </div>
           </div>
         </div>

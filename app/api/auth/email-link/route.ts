@@ -4,7 +4,7 @@ import { Timestamp } from "firebase-admin/firestore";
 import * as z from "zod";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { COLLECTIONS, type MemberDoc, type MemberStatus } from "@/lib/firebase/collections";
-import { resolveAdminRole } from "@/lib/auth/roles";
+import { adminRoleFor } from "@/lib/auth/admin-access";
 import { ensureLogin } from "@/lib/admin/member-logins";
 import { sendSafely } from "@/lib/email/resend";
 import { signInLinkEmail } from "@/lib/email/member-templates";
@@ -110,7 +110,8 @@ export async function POST(request: Request) {
 
     // Eligible: staff, or a current member.
     let name = "";
-    let eligible = Boolean(resolveAdminRole(email));
+    // Staff, including people added on the Team screen and not anyone removed there.
+    let eligible = Boolean(await adminRoleFor(email));
     if (!eligible) {
       const snap = await db
         .collection(COLLECTIONS.members)

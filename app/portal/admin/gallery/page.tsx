@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { ArrowUpRight } from "lucide-react";
 import { FOUNDED_YEAR } from "@/lib/site";
 
-export const metadata = { title: "Photo wall" };
+export const metadata = { title: "Photo archive" };
 
 /**
  * The archive behind /since-2011.
@@ -30,8 +30,8 @@ export default async function AdminGalleryPage() {
   return (
     <>
       <PageHeader
-        title="Photo wall"
-        description={`The ${years}-years archive behind /since-2011. The page is live but not linked from the site for now — its footer door is parked until the wall has photographs.`}
+        title="Photo archive"
+        description={`${years} years of Geekdom photos, shown on /since-2011 — reached from the old Geekdom wordmark in the site's footer, the member dashboard and the 404 page.`}
       />
 
       <AdminSection>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getSiteCopy } from "@/lib/content/site-copy";
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
 import { MembershipJsonLd } from "@/components/site/structured-data";
@@ -19,14 +20,10 @@ import { Photo } from "@/components/site/photo";
 import { SpreadHero } from "@/components/site/spread-hero";
 import { PHOTOS } from "@/lib/photos";
 import {
-  BENEFITS,
   formatPrice,
-  GENEROSITY_BAR,
-  GOOD_FIT,
   PLANS,
 } from "@/lib/membership";
 import {
-  CLUB,
   LOCATION,
   LUMA_CALENDAR_URL,
 } from "@/lib/site";
@@ -78,7 +75,9 @@ export const metadata: Metadata = pageMetadata({
 */
 
 
-export default function ClubPage() {
+export default async function ClubPage() {
+  // The words Geekdom edits in the admin (Site content → Site copy).
+  const t = await getSiteCopy();
   return (
     <>
       {/*
@@ -108,14 +107,12 @@ export default function ClubPage() {
         keeps the tables and the people rather than the ceiling ducts.
       */}
       <SpreadHero
-        eyebrow="The Club · Members only"
+        eyebrow={t("club.hero.eyebrow")}
         photo={PHOTOS.clubRoom}
         objectPosition="object-[50%_55%]"
         title={
-          <>
-            Where {"San\u00A0Antonio\u2019s"} founders and builders find their
-            room.
-          </>
+          // "San Antonio" never splits across a line.
+          t("club.hero.headline").replace(/San Antonio/g, "San\u00A0Antonio")
         }
       />
 
@@ -149,7 +146,7 @@ export default function ClubPage() {
       <Section tone="bone">
         <h2 className="sr-only">Opening</h2>
         <div className="max-w-3xl">
-          {CLUB.opening.map((para, i) => (
+          {[t("club.opening.lede"), t("club.opening.p1"), t("club.opening.p2"), t("club.opening.p3")].map((para, i) => (
             <p
               key={para}
               className={cn(
@@ -202,7 +199,7 @@ export default function ClubPage() {
           Social, 8 to 9:30") came out at Geekdom's request; the section is
           now the rhythm and the online layer.
         */}
-        <Eyebrow>The rhythm</Eyebrow>
+        <Eyebrow>{t("club.rhythm.eyebrow")}</Eyebrow>
         <h2 className="sr-only">A month in the Club</h2>
         {/*
           mt-6 — the gap every eyebrow-then-body pair on the site uses (24px,
@@ -212,14 +209,10 @@ export default function ClubPage() {
         */}
         <div className="mt-6 max-w-2xl">
           <p className="text-lg leading-relaxed text-muted-foreground">
-            The Club runs on a monthly rhythm of programming — socials,
-            meetups, office hours, build sessions — plus special events open to
-            members first.
+            {t("club.rhythm.p1")}
           </p>
           <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
-            Beyond the space, we&rsquo;re building the online layer too: a
-            member Slack, a directory, and a portal so the community keeps
-            working when you&rsquo;re not in the building.
+            {t("club.rhythm.p2")}
           </p>
         </div>
 
@@ -237,7 +230,7 @@ export default function ClubPage() {
 
       {/* ── Who the Club is for ──────────────────────────────────────── */}
       <Section tone="bone">
-        <Eyebrow>Who the Club is for</Eyebrow>
+        <Eyebrow>{t("club.who.eyebrow")}</Eyebrow>
         {/*
           THIS SECTION HAD NO HEADING AT ALL. It opened on an eyebrow and went
           straight to the Fraunces line, so in the document outline its two
@@ -249,12 +242,12 @@ export default function ClubPage() {
           room" is the roster; this is the bar. Two eyebrows that both start
           "Who…" were doing nothing to tell them apart.
         */}
-        <SectionTitle>The bar is generosity.</SectionTitle>
+        <SectionTitle>{t("club.who.title")}</SectionTitle>
         <Editorial
           as="p"
           className="mt-5 max-w-3xl text-3xl leading-[1.3] text-graphite sm:text-4xl"
         >
-          {GENEROSITY_BAR}
+          {t("club.who.quote")}
         </Editorial>
         {/*
           BOTH PARAGRAPHS ARE THE DOC'S NOW, VERBATIM, and they come from two
@@ -278,15 +271,10 @@ export default function ClubPage() {
           in Fraunces directly above.
         */}
         <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-          We&rsquo;re looking for people who show up for the community, not
-          just for themselves.
+          {t("club.who.p1")}
         </p>
         <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-          Our members are eclectic. Engineers, tinkerers, founders, investors,
-          tech workers, students, senior operators—builders of all breeds. We
-          lean into a give first culture where everyone is willing to help the
-          person next to them. We show up with curiosity, ambition, and a
-          belief that no good idea gets built alone.
+          {t("club.who.p2")}
         </p>
 
       {/*
@@ -306,10 +294,10 @@ export default function ClubPage() {
         */}
         <div className="mt-14">
           <h3 className={cn(MONO.label, "text-muted-foreground")}>
-            A good fit
+            {t("club.who.fitTitle")}
           </h3>
           <ul className="mt-5 grid border-b border-border sm:grid-cols-2 sm:gap-x-10">
-            {GOOD_FIT.map((item) => (
+            {t.list("club.who.fit").map((item) => (
               <li
                 key={item}
                 className="border-t border-border py-4 text-lg leading-snug text-graphite"
@@ -349,15 +337,12 @@ export default function ClubPage() {
       <Section tone="bone-light">
         <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
           <div>
-            <Eyebrow>The clubhouse</Eyebrow>
+            <Eyebrow>{t("club.house.eyebrow")}</Eyebrow>
             <SectionTitle>
-              The third floor is where the Club lives.
+              {t("club.house.title")}
             </SectionTitle>
             <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
-              A place you come to do your best thinking, have your most
-              important conversations, and be around people who raise your
-              game — in the historic {LOCATION.building} downtown, where San
-              Antonio builders have been gathering for over a decade.
+              {t("club.house.body")}
             </p>
 
             {/* A link, not a button — Geekdom keeps buttons for Apply. */}
@@ -368,7 +353,7 @@ export default function ClubPage() {
                 rel="noreferrer noopener"
                 className={LINK_ARROW}
               >
-                Browse the calendar
+                {t("club.house.link")}
                 <ArrowUpRight aria-hidden="true" className={ARROW.external} />
               </a>
             </div>
@@ -411,21 +396,21 @@ export default function ClubPage() {
         just patching the seam.
       */}
       <Section tone="bone">
-        <Eyebrow>Membership</Eyebrow>
-        <SectionTitle>Application-based.</SectionTitle>
+        <Eyebrow>{t("club.membership.eyebrow")}</Eyebrow>
+        <SectionTitle>{t("club.membership.title")}</SectionTitle>
 
         <div className="mt-16 grid gap-12 lg:grid-cols-[1fr_360px] lg:gap-16">
           {/* What you get */}
           <div>
-            <Subhead>What&rsquo;s included</Subhead>
+            <Subhead>{t("club.membership.includedTitle")}</Subhead>
             {/*
               GEEKDOM'S TEN, IN THEIR ORDER, titles only — see `BENEFITS` in
               lib/membership.ts. Two columns of hairline rows.
             */}
             <ul className="mt-8 grid border-b border-border sm:grid-cols-2 sm:gap-x-10">
-              {BENEFITS.map((benefit) => (
+              {t.list("club.membership.included").map((benefit) => (
                 <li
-                  key={benefit.title}
+                  key={benefit}
                   className="flex items-center gap-3 border-t border-border py-4"
                 >
                   <Check
@@ -434,7 +419,7 @@ export default function ClubPage() {
                     aria-hidden="true"
                   />
                   <span className="text-lg leading-snug text-graphite">
-                    {benefit.title}
+                    {benefit}
                   </span>
                 </li>
               ))}
@@ -480,18 +465,15 @@ export default function ClubPage() {
                 ))}
               </ul>
               <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-                Billed monthly. Nothing is charged until you&rsquo;re accepted,
-                and you can cancel any time.
+                {t("club.membership.billing")}
               </p>
 
               <ButtonLink href="/apply" size="lg" className="mt-6 w-full">
-                Apply for membership
+                {t("club.membership.cta")}
               </ButtonLink>
 
               <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-                Applications are read by a person on the Geekdom team. If
-                it&rsquo;s a fit, we&rsquo;ll email you to start your
-                membership.
+                {t("club.membership.note")}
               </p>
 
               <div className="mt-6 border-t border-border pt-5 text-sm text-muted-foreground">
@@ -530,20 +512,13 @@ export default function ClubPage() {
       <Section tone="bone-light">
         <div className="grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
           <div>
-            <Eyebrow>Host an event</Eyebrow>
-            <SectionTitle>Bring your team to Geekdom.</SectionTitle>
+            <Eyebrow>{t("club.host.eyebrow")}</Eyebrow>
+            <SectionTitle>{t("club.host.title")}</SectionTitle>
             <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
-              You don&rsquo;t need to be a member to host here. Companies book
-              Geekdom à la carte — for a day away from the office, a working
-              session, or an evening with their customers.
+              {t("club.host.body")}
             </p>
             <ul className="mt-8 border-b border-border">
-              {[
-                "Team offsites",
-                "Planning and strategy days",
-                "Workshops and trainings",
-                "Client and partner events",
-              ].map((kind) => (
+              {t.list("club.host.kinds").map((kind) => (
                 <li key={kind} className="flex items-center gap-3 border-t border-border py-3.5">
                   <Check className="h-4 w-4 shrink-0 text-clay" strokeWidth={2} aria-hidden="true" />
                   <span className="text-lg leading-snug text-graphite">{kind}</span>
@@ -551,10 +526,10 @@ export default function ClubPage() {
               ))}
             </ul>
             <p className="mt-5 text-sm text-muted-foreground">
-              For company and team events — we don&rsquo;t host private parties.
+              {t("club.host.note")}
             </p>
             <div className="mt-8">
-              <InquiryButton kind="event" label="Plan an event" />
+              <InquiryButton kind="event" label={t("club.host.cta")} />
             </div>
           </div>
 

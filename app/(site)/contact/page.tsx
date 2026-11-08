@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { getSiteCopy } from "@/lib/content/site-copy";
+import { CONTACT_COPY_KEYS } from "@/lib/content/site-copy-fields";
 import { pageMetadata } from "@/lib/seo";
 import {
   ARROW,
@@ -41,12 +43,14 @@ export const metadata: Metadata = pageMetadata({
  * press and media inquiries: See our Media page → /media". It renders as
  * prose until /media exists, so this page never points at a 404.
  */
-export default function ContactPage() {
+export default async function ContactPage() {
+  // The words Geekdom edits in the admin (Site content → Site copy).
+  const t = await getSiteCopy();
   return (
     <>
       <Section tone="bone-light">
         <Eyebrow>Contact</Eyebrow>
-        <PageTitle className="mt-6">Get in touch.</PageTitle>
+        <PageTitle className="mt-6">{t("contact.hero.title")}</PageTitle>
         {/* No lede. The doc's header is the eyebrow and the headline; the
             line that sat here ("Four ways in…") was written here, not by
             Geekdom. */}
@@ -63,9 +67,9 @@ export default function ContactPage() {
                 i === CONTACT_BLOCKS.length - 1 && "border-b",
               )}
             >
-              <Subhead className="text-xl">{block.heading}</Subhead>
+              <Subhead className="text-xl">{CONTACT_COPY_KEYS[i] ? t(CONTACT_COPY_KEYS[i].title) : block.heading}</Subhead>
               <p className="mt-3 leading-relaxed text-muted-foreground">
-                {block.body} <ContactLinks block={block} />.
+                {CONTACT_COPY_KEYS[i] ? t(CONTACT_COPY_KEYS[i].body) : block.body} <ContactLinks block={block} />.
               </p>
             </li>
           ))}
@@ -82,7 +86,7 @@ export default function ContactPage() {
         same trade `VideoCard` declines on /studio.
       */}
       <Section tone="bone-light">
-        <Eyebrow>Location</Eyebrow>
+        <Eyebrow>{t("contact.location.eyebrow")}</Eyebrow>
         <h2 className="sr-only">Location</h2>
         <address className="mt-6 not-italic">
           <p className={cn(MONO.label, "text-muted-foreground")}>
@@ -95,7 +99,7 @@ export default function ContactPage() {
           </p>
           {/* Moved here from /club, where it sat as a stopgap. */}
           <p className="mt-2 leading-relaxed text-muted-foreground">
-            Elevator to the {LOCATION.floor.toLowerCase()}.
+            {t("contact.location.directions")}
           </p>
         </address>
         {/* Same construction /club uses, so both land on the same pin. */}
@@ -108,7 +112,7 @@ export default function ContactPage() {
           rel="noreferrer noopener"
           className={cn("mt-7 inline-flex", LINK_ARROW)}
         >
-          Open in Maps
+          {t("contact.location.link")}
           <ArrowUpRight aria-hidden="true" className={ARROW.external} />
         </a>
       </Section>

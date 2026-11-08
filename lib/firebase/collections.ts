@@ -77,13 +77,15 @@ export interface MemberProfile {
 
 /** Doc id in `settings` holding the member portal's editable basics. */
 export const MEMBER_RESOURCES_DOC = "memberResources";
+/** settings/siteCopy — the public pages' edited words (lib/content/site-copy.ts). */
+export const SITE_COPY_DOC = "siteCopy";
 
 /** One staff change, appended by every admin write (lib/admin/activity.ts). */
 export interface ActivityDoc {
   at: Timestamp;
   /** Who did it, as they were signed in at the time. */
   actor: { email: string; name: string | null };
-  area: "events" | "field-notes" | "portfolio" | "members" | "applications" | "photo-wall" | "member-resources" | "inquiries" | "rooms";
+  area: "events" | "field-notes" | "portfolio" | "members" | "applications" | "photo-wall" | "member-resources" | "inquiries" | "rooms" | "site-copy" | "team";
   /** Past tense, lower case: "published", "added", "deleted"… */
   action: string;
   /** What it was done to, in words: the note's title, the member's name. */

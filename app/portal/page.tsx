@@ -133,7 +133,7 @@ export default async function PortalHome() {
         ) : staff ? (
           <>
             <span>
-              Geekdom team{user.role === "superadmin" ? " · Superadmin" : ""} — you see the portal as members do.
+              Geekdom team{user.role === "superadmin" ? " · Owner" : ""} — you see the portal as members do.
             </span>
             <Link href="/portal/admin" className={cn("text-sm", LINK_ARROW)}>
               Open the admin

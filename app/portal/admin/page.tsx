@@ -253,7 +253,7 @@ export default async function AdminOverview() {
             label="Next on the homepage"
             action={
               <Link href="/portal/admin/events" className={cn("text-sm", LINK_ARROW)}>
-                This month
+                Events
                 <ArrowRight aria-hidden="true" className={ARROW.internal} />
               </Link>
             }

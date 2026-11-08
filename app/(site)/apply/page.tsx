@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { getSiteCopy } from "@/lib/content/site-copy";
 import { pageMetadata } from "@/lib/seo";
 import {
   Eyebrow,
@@ -21,6 +22,10 @@ export const metadata: Metadata = pageMetadata({
 export default async function ApplyPage(props: PageProps<"/apply">) {
   // /apply?plan=team — /club's plan cards link here with their plan chosen.
   const { plan } = await props.searchParams;
+  // The words Geekdom edits in the admin (Site content → Site copy).
+  const t = await getSiteCopy();
+  const title = t("apply.hero.title");
+  const split = title.lastIndexOf(" ");
   const initialPlan: PlanId = PLAN_IDS.includes(plan as PlanId) ? (plan as PlanId) : "solo";
   return (
     /*
@@ -41,15 +46,21 @@ export default async function ApplyPage(props: PageProps<"/apply">) {
       <header className="max-w-3xl">
         <Eyebrow>Apply</Eyebrow>
         <h1 className={cn("mt-4", HEADING.heading, "text-graphite")}>
-          Apply to <span className="text-clay">Geekdom.</span>
+          {/* The last word keeps its Clay. */}
+          {split > 0 ? (
+            <>
+              {title.slice(0, split + 1)}
+              <span className="text-clay">{title.slice(split + 1)}</span>
+            </>
+          ) : (
+            title
+          )}
         </h1>
         <Editorial className="mt-5 text-2xl leading-[1.4] text-graphite">
-          Membership is by application. We respond within two weeks.
+          {t("apply.hero.tagline")}
         </Editorial>
         <p className="mt-6 max-w-lg text-lg leading-relaxed text-muted-foreground">
-          Geekdom is a members&rsquo; club for serious founders and builders
-          in San Antonio. The application takes about ten minutes. Our team
-          reads every application. We reply personally either way.
+          {t("apply.hero.body")}
         </p>
       </header>
 
@@ -61,7 +72,7 @@ export default async function ApplyPage(props: PageProps<"/apply">) {
       */}
       <div className="mt-10 flex flex-col items-start gap-3">
         <ApplyTakeover initialPlan={initialPlan} />
-        <p className="text-sm text-muted-foreground">About ten minutes, one question at a time.</p>
+        <p className="text-sm text-muted-foreground">{t("apply.hero.note")}</p>
       </div>
     </Section>
   );

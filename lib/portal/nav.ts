@@ -4,6 +4,7 @@ import {
   BookOpen,
   CalendarDays,
   Contact,
+  History,
   DoorOpen,
   Images,
   Inbox,
@@ -11,6 +12,8 @@ import {
   MessageSquare,
   NotebookPen,
   Shapes,
+  ShieldCheck,
+  Type,
   UserRound,
   Users,
   type LucideIcon,
@@ -57,6 +60,9 @@ export const MEMBER_NAV: NavGroup[] = [
     Reviews       — things waiting on a yes or no (applications, requests)
     Members       — the people (the roster, what members read)
     Site content  — what the public site shows
+    Settings      — the admin itself: who can sign in (Admin access) and
+                    what they did (Activity log). Admin access sat under
+                    Members, but it's about Geekdom's team, not the Club.
   Invitations is NOT here: it's the launch tool for members who joined
   before the workflow existed, so it's a button on the Members page (and
   lives under /members, which keeps Members highlighted while it's open).
@@ -89,10 +95,23 @@ export const ADMIN_NAV: NavGroup[] = [
       // BY HOW OFTEN THEY'RE USED: events expire and need weekly attention,
       // Field Notes are regular work; the wall and the photo archive are
       // mostly set once.
-      { href: "/portal/admin/events", label: "This month", icon: CalendarDays },
+      // The words on the public pages — the scope of work's "maintain
+      // website content without developer assistance".
+      { href: "/portal/admin/copy", label: "Site copy", icon: Type },
+      { href: "/portal/admin/events", label: "Events", icon: CalendarDays },
       { href: "/portal/admin/field-notes", label: "Field Notes", icon: NotebookPen },
-      { href: "/portal/admin/portfolio", label: "Built at Geekdom", icon: Shapes },
-      { href: "/portal/admin/gallery", label: "Photo wall", icon: Images },
+      { href: "/portal/admin/portfolio", label: "Portfolio", icon: Shapes },
+      { href: "/portal/admin/gallery", label: "Photo archive", icon: Images },
+    ],
+  },
+  {
+    // About the admin itself, not the Club — last, like Linear's and
+    // Vercel's settings: who can sign in, and the record of what they did.
+    label: "Settings",
+    items: [
+      // Who can sign in to this admin — owners manage it.
+      { href: "/portal/admin/team", label: "Admin access", icon: ShieldCheck },
+      { href: "/portal/admin/activity", label: "Activity log", icon: History },
     ],
   },
 ];

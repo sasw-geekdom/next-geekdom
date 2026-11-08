@@ -2,7 +2,9 @@
  * Who may sign in, and as what.
  *
  * Three tiers:
- *   superadmin — full access, including approving applications and refunds.
+ *   superadmin — shown as "OWNER" everywhere a person reads it (November
+ *                2026). Everything staff can do, plus managing who has
+ *                admin access (/portal/admin/team).
  *                Listed explicitly, so it works for accounts outside the
  *                Workspace domain (contractors, the person who set this up).
  *   staff      — full admin. Any @geekdom.com Workspace account.

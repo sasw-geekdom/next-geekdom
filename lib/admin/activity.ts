@@ -25,15 +25,17 @@ import type { SessionUser } from "@/lib/auth/roles";
 export type ActivityArea = ActivityDoc["area"];
 
 export const AREA_LABELS: Record<ActivityArea, string> = {
-  events: "This month",
+  events: "Events",
   "field-notes": "Field Notes",
-  portfolio: "Built at Geekdom",
+  portfolio: "Portfolio",
   members: "Members",
   applications: "Applications",
-  "photo-wall": "Photo wall",
+  "photo-wall": "Photo archive",
   "member-resources": "Member resources",
   inquiries: "Requests",
   rooms: "Rooms",
+  "site-copy": "Site copy",
+  team: "Admin access",
 };
 
 export interface ActivityEntry {

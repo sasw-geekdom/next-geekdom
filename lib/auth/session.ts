@@ -6,12 +6,12 @@ import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { COLLECTIONS, type MemberStatus } from "@/lib/firebase/collections";
 import {
   isAdmin,
-  resolveAdminRole,
   type AdminUser,
   type Role,
   type SessionUser,
 } from "@/lib/auth/roles";
 import { SESSION_COOKIE } from "@/lib/auth/constants";
+import { adminRoleFor } from "@/lib/auth/admin-access";
 
 export { SESSION_COOKIE };
 const EXPIRES_IN_MS = 60 * 60 * 24 * 5 * 1000; // 5 days
@@ -35,7 +35,8 @@ const CURRENT: MemberStatus[] = ["active", "trialing", "past_due"];
  * lookup. Admin wins, so a Geekdom employee who is also a member sees both.
  */
 async function resolveRole(email: string | undefined | null): Promise<Role | null> {
-  const admin = resolveAdminRole(email);
+  // Admin rules plus the access list owners manage (lib/auth/admin-access.ts).
+  const admin = await adminRoleFor(email);
   if (admin) return admin;
   if (!email) return null;
 

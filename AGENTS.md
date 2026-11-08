@@ -42,7 +42,7 @@ rule above still applies.
 explicit: "I definitely don't want to talk about why an application." They
 may want something else in that slot — ask, don't fill it.
 
-**"This month in the Club" is edited in the admin** (`/portal/admin/events`,
+**"This month in the Club" is edited in the admin** (Site content → **Events**, `/portal/admin/events` — named for what staff manage, not the section; "This month" read as a monthly page),
 the `events` collection), with `THIS_MONTH` in [lib/site.ts](lib/site.ts) as
 its fallback — see "Member portal and admin" below. Rows leave the site when
 their event ends. **Luma is not connected to the app and won't be** (Geekdom's
@@ -474,6 +474,28 @@ members use personal Gmail, and the hint hid their accounts.
   so lookups are capped at 10 per IP per 15 minutes. Former members (paused,
   canceled) are told their membership isn't active, with club@ to restart it. One link per address per minute (`authThrottle`). Its continue URL is SITE_URL/sign-in, so that domain
   must be in Firebase's authorized domains.
+- **Admin access is managed at `/portal/admin/team`** (Settings → Admin
+  access) — the scope of work's "manage administrative user access"
+  (November 2026). [admin-access.ts](lib/auth/admin-access.ts):
+  `settings/adminAccess` holds `added` (anyone outside @geekdom.com given
+  staff access) and `removed` (an @geekdom.com address switched off without
+  deleting it). **`adminRoleFor()` is the ONE staff check** — the session
+  on every request and the sign-in-link route both call it; don't call
+  `resolveAdminRole` (the env/domain rule) alone anywhere else, or a
+  removed person gets back in. Cached 30s, tag cleared on change.
+  - **Owners (the code's `superadmin` role — always "Owner" on screen,
+    never "Super admin") still come from `SUPER_ADMIN_EMAILS`** (hosting
+    settings): listed, never removable here, so nobody locks out the last
+    one. Only owners can add or remove (`requireRole("superadmin")`), nobody can
+    remove themselves, and an added person is emailed how to sign in
+    (`adminAccessEmail`). Every change is in the activity log ("Admin
+    access"). Other staff see the list read-only. If a limited role comes
+    later, the set reads Owner · Staff · Reviewer.
+  - @geekdom.com staff appear in the list once they have a login (their
+    first sign-in link creates it); people added here appear at once.
+  - Tested: plain staff read-only; add → the person reaches the admin;
+    remove → sent to sign-in; remove an @geekdom.com address → out, listed
+    under "Access removed"; give it back → in again.
 - **`/portal` is the member portal; `/portal/admin` is the admin behind the
   sidebar's labeled "Admin" switch** (a shield, and "← Member portal" inside
   the admin). It was a bare wrench; an unlabeled tool icon reads as the
@@ -485,7 +507,12 @@ members use personal Gmail, and the hint hid their accounts.
   lib/portal/nav.ts): Overview on top; **Reviews** — Applications and
   Requests (event and Studio partner requests; the code still calls them
   inquiries, lib/inquiries.ts), the things waiting on a yes or no;
-  **Members** — the roster and Member resources; **Site content**.
+  **Members** — the roster, Rooms and Member resources; **Site content**;
+  admin links are named for WHAT STAFF MANAGE, not the public section that
+  shows it (Events, not "This month"; Portfolio, not "Built at Geekdom";
+  Photo archive, not "Photo wall") — each page's description says where it
+  appears; **Settings** — Admin access and the Activity log (the admin itself, not
+  the Club — Admin access sat under Members and read as out of place).
   Invitations has no sidebar entry: it's the launch tool for members who
   joined before the workflow, opened from a button on Members and living
   at /portal/admin/members/invitations so Members stays highlighted.
@@ -817,6 +844,36 @@ actually changed; **every CSV export**, with its row count (the one action
 that takes personal details off the site); and **a Stripe payment that
 makes someone a member**, with "Stripe" as the actor, once per payment
 (guarded against Stripe's redeliveries).
+
+**The public pages' WORDS are edited in the admin** (Site content → Site
+copy, `/portal/admin/copy`) — the scope of work's CMS promise, "maintain
+website content without developer assistance" (November 2026).
+[site-copy-fields.ts](lib/content/site-copy-fields.ts) lists every field
+(121, on Home, Club, Studio, About, Contact and Apply's header): its page,
+section, label, a character limit sized to its slot, and its DEFAULT —
+the text the page shipped with. `settings/siteCopy` holds only the EDITS;
+pages read `getSiteCopy()` ([site-copy.ts](lib/content/site-copy.ts),
+cached 60s with a tag, falls back to the defaults, so a build without
+credentials renders today's site word for word).
+- **Words, not layout.** One field per heading, paragraph or list (one item
+  per line). Section order, photos, prices and plans, email addresses and
+  the street address, page titles and search descriptions, the members
+  letter and terms/privacy stay in code — the screen says so at its foot.
+- **A new public text goes in the registry** with today's wording as its
+  default, and the page reads it through `t("page.section.field")` — never
+  a string typed into the JSX again on those six pages.
+- **Small rules survive edits:** the homepage headline keeps its hand-set
+  line breaks only while it's the shipped line; a closing "?" on the
+  homepage close stays Clay; Apply's last word stays Clay; "San Antonio"
+  never splits in /club's headline; About's `{years}` is filled in (a save
+  without it is refused).
+- **Saving the original back, or "Reset to original", removes the edit**,
+  so the field follows the code's default again. Every save is a
+  transaction over the one doc, logged ("Site copy" in the activity log).
+- Tested: all 121 defaults render on their pages unchanged; an edit is live
+  on the page at once, an over-limit edit is refused, reset restores it.
+  /club's clubhouse line used to read "the historic The Rand Building" —
+  the default now says "the historic Rand Building".
 
 **Site content edited in the admin: `events` and `portfolio`**
 ([lib/content/](lib/content/)). The pattern, for anything added next:

@@ -5,7 +5,7 @@ import { PageHeader, AdminSection } from "@/components/admin/page-header";
 import { LUMA_CALENDAR_URL } from "@/lib/site";
 import { buttonClass } from "@/components/ui/button";
 
-export const metadata = { title: "This month in the Club" };
+export const metadata = { title: "Events" };
 
 /**
  * "This month in the Club" — the homepage list, edited here (`events`
@@ -21,8 +21,8 @@ export default async function AdminEventsPage(props: PageProps<"/portal/admin/ev
   return (
     <>
       <PageHeader
-        title="This month in the Club"
-        description="The homepage's event list. Rows leave the site when their event ends."
+        title="Events"
+        description="Shown on the homepage under “This month in the Club” and on the member dashboard. Each event leaves the site when it ends."
         actions={
           <a
             href={LUMA_CALENDAR_URL}

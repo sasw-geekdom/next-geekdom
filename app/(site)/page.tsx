@@ -14,6 +14,7 @@ import {
   MONO,
 } from "@/components/site/section";
 import { Editorial } from "@/components/site/editorial";
+import { getSiteCopy } from "@/lib/content/site-copy";
 import { Photo } from "@/components/site/photo";
 import { TypeHero } from "@/components/site/type-hero";
 import { PortfolioWall } from "@/components/site/portfolio-wall";
@@ -22,15 +23,12 @@ import { MemberVoices } from "@/components/site/member-voices";
 import { PHOTOS } from "@/lib/photos";
 import { pageMetadata, SITE_DESCRIPTION } from "@/lib/seo";
 import {
-  CLUB_HOME,
   FOUNDED_YEAR,
   LOCATION,
   POSITIONING,
   POSITIONING_ACCENT,
   TITLE_LINE,
   SITE_NAME,
-  STUDIO,
-  TAGLINE_LINE,
   LUMA_CALENDAR_URL,
 } from "@/lib/site";
 import { getUpcomingEvents } from "@/lib/content/events";
@@ -300,10 +298,14 @@ function Frame({
 }
 
 export default async function HomePage() {
-  const [events, companies] = await Promise.all([
+  const [events, companies, t] = await Promise.all([
     getUpcomingEvents(),
     getPortfolio(),
+    // The words Geekdom edits in the admin (Site content → Site copy).
+    getSiteCopy(),
   ]);
+  const headline = t("home.hero.headline");
+  const close = t("home.close.title");
 
 
   return (
@@ -397,7 +399,9 @@ export default async function HomePage() {
           stays the single source for where that clause starts.
         */
         title={
-          POSITIONING.endsWith(POSITIONING_ACCENT) ? (
+          // The hand-set line breaks hold for the shipped line; an edited
+          // headline wraps on its own.
+          headline === POSITIONING && POSITIONING.endsWith(POSITIONING_ACCENT) ? (
             <>
               {POSITIONING.slice(0, -POSITIONING_ACCENT.length)}
               <br className="hidden lg:block" />
@@ -411,7 +415,7 @@ export default async function HomePage() {
               )}
             </>
           ) : (
-            POSITIONING
+            headline
           )
         }
         /*
@@ -463,13 +467,12 @@ export default async function HomePage() {
               article is trimmed here rather than changed at the constant,
               which the address line elsewhere needs in full.
             */}
-            {LOCATION.floor}, {LOCATION.building.replace(/^The /, "")}. Houston
-            Street.
+            {t("home.hero.caption")}
           </>
         }
       >
         <Editorial className="max-w-2xl text-2xl leading-[1.45] text-bone/90">
-          {TAGLINE_LINE}
+          {t("home.hero.tagline")}
         </Editorial>
       </TypeHero>
 
@@ -515,20 +518,20 @@ export default async function HomePage() {
         <div className="offer-pair grid gap-5 lg:grid-cols-2 lg:gap-6">
           <Offering
             href="/club"
-            eyebrow="Community"
-            title="The Club"
-            subhead={CLUB_HOME.subhead}
-            body={CLUB_HOME.body}
-            cta="Explore the Club"
+            eyebrow={t("home.club.eyebrow")}
+            title={t("home.club.title")}
+            subhead={t("home.club.subhead")}
+            body={t("home.club.body")}
+            cta={t("home.club.cta")}
           />
           <Offering
             ink
             href="/studio"
-            eyebrow="Venture"
-            title="Studio"
-            subhead="A venture layer for the founders going all in."
-            body={`We back ${STUDIO.foundersPerYear} founders a year with ${STUDIO.checkRange} ${STUDIO.checkTerms} checks from the Community Fund and hands-on work from our EIR. Not an accelerator. Not a cohort. A serious commitment to a small number of founders building toward scale.`}
-            cta="Explore Studio"
+            eyebrow={t("home.studio.eyebrow")}
+            title={t("home.studio.title")}
+            subhead={t("home.studio.subhead")}
+            body={t("home.studio.body")}
+            cta={t("home.studio.cta")}
             className="reveal-late"
           />
         </div>
@@ -554,7 +557,7 @@ export default async function HomePage() {
         `events` collection), with THIS_MONTH in lib/site.ts as its fallback.
       */}
       <Section tone="bone">
-        <SectionTitle>This month in the Club</SectionTitle>
+        <SectionTitle>{t("home.month.title")}</SectionTitle>
         {/* Every row past: the list goes and the calendar link carries it. */}
         {events.length > 0 && (
           <ul className="mt-10 border-b border-border">
@@ -613,7 +616,7 @@ export default async function HomePage() {
           rel="noreferrer noopener"
           className={cn("mt-10", LINK_ARROW)}
         >
-          Explore our public events calendar
+          {t("home.month.link")}
           <ArrowUpRight aria-hidden="true" className={ARROW.external} />
           <span className="sr-only"> (opens in a new tab)</span>
         </a>
@@ -651,7 +654,7 @@ export default async function HomePage() {
         <div className="grid items-start gap-12 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
           <div>
             <Eyebrow>Since {FOUNDED_YEAR}</Eyebrow>
-            <SectionTitle>Geekdom started with an email.</SectionTitle>
+            <SectionTitle>{t("home.origin.title")}</SectionTitle>
             {/*
               GEEKDOM'S WORDING, VERBATIM. `Source Copy v1` opened "Fifteen
               years ago," — computed from FOUNDED_YEAR so it wouldn't go
@@ -663,12 +666,7 @@ export default async function HomePage() {
               added after it ("weird extra stuff and AI edits"), so don't
               append a second paragraph.
             */}
-            <Lede>
-              In 2009, Graham Weston received an email from a founder that said
-              San Antonio was missing a startup and tech community. Geekdom was born as the answer. Today, it powers
-              the next generation of venture companies in San Antonio and the
-              builders behind them.
-            </Lede>
+            <Lede>{t("home.origin.body")}</Lede>
             {/*
               "Read our story → /about" — the doc's CTA for this section. It
               was "Read the letter to our members" pointing at
@@ -677,7 +675,7 @@ export default async function HomePage() {
               always gave it.
             */}
             <Link href="/about" className={cn("mt-8", LINK_ARROW)}>
-              Read our story
+              {t("home.origin.link")}
               <ArrowRight className={ARROW.internal} strokeWidth={2} />
             </Link>
           </div>
@@ -685,7 +683,7 @@ export default async function HomePage() {
             photo={PHOTOS.grahamNick}
             aspect="aspect-[16/9]"
             sizes="(min-width: 1024px) 536px, 100vw"
-            caption="Graham Weston and Nick Longo, 2011"
+            caption={t("home.origin.caption")}
           />
         </div>
       </Section>
@@ -731,16 +729,22 @@ export default async function HomePage() {
       <Section tone="graphite">
         <div className="max-w-3xl">
           <SectionTitle className="text-bone">
-            Building something<span className="text-clay">?</span>
+            {/* A closing "?" keeps its Clay. */}
+            {close.endsWith("?") ? (
+              <>
+                {close.slice(0, -1)}
+                <span className="text-clay">?</span>
+              </>
+            ) : (
+              close
+            )}
           </SectionTitle>
           <Lede className="mt-6 text-bone/70">
-            {/* Geekdom's wording, verbatim. */}
-            Membership is by application. It&rsquo;s how we get to know you.
-            Our team reads every one and follows up personally.
+            {t("home.close.body")}
           </Lede>
           <div className="mt-10 flex flex-col gap-3 sm:flex-row">
             <ButtonLink href="/apply" size="lg" variant="on-ink">
-              Apply to {SITE_NAME}
+              {t("home.close.cta")}
             </ButtonLink>
           </div>
         </div>

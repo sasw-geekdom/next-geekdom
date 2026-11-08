@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { getSiteCopy } from "@/lib/content/site-copy";
+import { CONTACT_COPY_KEYS } from "@/lib/content/site-copy-fields";
 import { pageMetadata } from "@/lib/seo";
 import {
   Eyebrow,
@@ -67,7 +69,9 @@ const YEAR_WORDS: Record<number, string> = {
 
 const BODY = "text-lg leading-relaxed text-muted-foreground";
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  // The words Geekdom edits in the admin (Site content → Site copy).
+  const t = await getSiteCopy();
   const years = new Date().getFullYear() - FOUNDED_YEAR;
   const spelled = YEAR_WORDS[years] ?? String(years);
 
@@ -82,12 +86,12 @@ export default function AboutPage() {
           section leads on.
         */}
         <Editorial className="mt-6 max-w-2xl text-2xl leading-[1.45] text-graphite/90">
-          Geekdom started with an email.
+{t("about.hero.tagline")}
         </Editorial>
       </Section>
 
       <Section tone="bone">
-        <Eyebrow>Founding</Eyebrow>
+        <Eyebrow>{t("about.founding.eyebrow")}</Eyebrow>
         <h2 className="sr-only">Founding</h2>
         {/*
           GEEKDOM'S FOUNDING STORY, VERBATIM, in two parts under their own
@@ -106,15 +110,12 @@ export default function AboutPage() {
         */}
         <div className="mt-6 grid items-start gap-x-16 gap-y-10 lg:grid-cols-[minmax(0,42rem)_minmax(0,1fr)]">
           <div>
-            <h3 className={cn(HEADING.subhead, "text-graphite")}>The email</h3>
+            <h3 className={cn(HEADING.subhead, "text-graphite")}>{t("about.email.title")}</h3>
             <p className={cn("mt-4", BODY)}>
-              In 2009, a founder whose company Rackspace had just acquired
-              sent Graham Weston a now-infamous email explaining why he
-              wasn&rsquo;t moving to San Antonio. The city, he wrote, had no
-              startups and no developers to speak of.
+              {t("about.email.p1")}
             </p>
             <p className={cn("mt-5", BODY)}>
-              That email set Graham on the path that led to Geekdom.
+              {t("about.email.p2")}
             </p>
 
           </div>
@@ -127,25 +128,16 @@ export default function AboutPage() {
 
           <div className="lg:mt-6">
             <h3 className={cn(HEADING.subhead, "text-graphite")}>
-              The place where startups are born
+              {t("about.born.title")}
             </h3>
             <p className={cn("mt-4", BODY)}>
-              Graham brought in Nick Longo to help build what came next.
-              Together they visited New York, Philadelphia, and San Francisco to
-              see how the strongest startup communities actually worked. In
-              2011, they opened Geekdom downtown with a single promise: be the
-              place where startups are born.
+              {t("about.born.p1")}
             </p>
             <p className={cn("mt-5", BODY)}>
-              Soon after, Geekdom hosted Techstars Cloud, which brought founders
-              from around the world to San Antonio.
+              {t("about.born.p2")}
             </p>
             <p className={cn("mt-5", BODY)}>
-              From the beginning, the point wasn&rsquo;t the space. It was the
-              people the space brought together. Founders met their co-founders
-              here. Developers joined companies that went on to raise, hire, and
-              build in San Antonio — Parlevel, Promoter.io, FloatMe, PorchPass,
-              and more.
+              {t("about.born.p3")}
             </p>
           </div>
           {/*
@@ -183,7 +175,7 @@ export default function AboutPage() {
       </Section>
 
       <Section tone="bone-light">
-        <Eyebrow>Where we are now</Eyebrow>
+        <Eyebrow>{t("about.now.eyebrow")}</Eyebrow>
         <h2 className="sr-only">Where we are now</h2>
         {/*
           GEEKDOM'S COPY, VERBATIM, replacing the source copy's three
@@ -205,40 +197,22 @@ export default function AboutPage() {
         <div className="mt-6 grid items-start gap-x-16 gap-y-10 lg:grid-cols-[minmax(0,42rem)_minmax(0,1fr)]">
           <div>
             <p className="text-2xl leading-snug text-graphite sm:text-[1.75rem]">
-              Geekdom is on a mission to build San Antonio one startup at a time.
+              {t("about.now.lede")}
             </p>
             <p className={cn("mt-8", BODY)}>
-              {spelled} years in, we&rsquo;ve gone from providing a place to work
-              to deliberately building a place where companies get built.
+              {t("about.now.p1").replaceAll("{years}", spelled)}
             </p>
             <p className={cn("mt-5", BODY)}>
-              Today, Geekdom has two parts. The Club is the community for the
-              people building San Antonio&rsquo;s future — founders, engineers,
-              creators, operators, and the corporate and civic leaders who want a
-              hand in what the city becomes. The Studio is where we go all in
-              with a small number of founders each year, investing through our
-              Community Fund and working alongside them for the next six to
-              twelve months.
+              {t("about.now.p2")}
             </p>
             <p className={cn("mt-5", BODY)}>
-              Around the Club and Studio, we run a few things that make the whole
-              ecosystem stronger. We operate LaunchSA with the City of San
-              Antonio, the open front door for anyone starting something. We
-              helped create Accelerate South Texas, a fund at the San Antonio
-              Area Foundation that supports the organizations serving
-              entrepreneurs across the region. And we run San Antonio Startup +
-              Tech Week every fall to give our community a bigger stage.
+              {t("about.now.p3")}
             </p>
             <p className={cn("mt-5", BODY)}>
-              Founders rarely succeed alone. So we bring entrepreneurs,
-              investors, universities, corporations, and local government
-              together to clear the path for startups in San Antonio. We&rsquo;re
-              one part of a broader startup community, and we work to make every
-              part of it stronger.
+              {t("about.now.p4")}
             </p>
             <p className="mt-8 text-lg leading-relaxed text-graphite">
-              The email named what San Antonio was missing. We made it our
-              mission.
+              {t("about.now.close")}
             </p>
           </div>
           <div className="flex flex-col gap-6 lg:mt-24">
@@ -266,12 +240,12 @@ export default function AboutPage() {
         rather than by Geekdom; both are fixed.
       */}
       <Section tone="bone">
-        <Eyebrow>Get in touch</Eyebrow>
+        <Eyebrow>{t("about.contact.eyebrow")}</Eyebrow>
         <h2 className="sr-only">Contact</h2>
         <ul className="mt-6 max-w-3xl">
-          {CONTACT_BLOCKS.filter((b) => b.onAbout).map((block) => (
+          {CONTACT_BLOCKS.map((block, i) => ({ block, keys: CONTACT_COPY_KEYS[i] })).filter(({ block }) => block.onAbout).map(({ block, keys }) => (
             <li key={block.heading} className="border-t border-border py-6">
-              <Subhead className="text-xl">{block.heading}</Subhead>
+              <Subhead className="text-xl">{keys ? t(keys.title) : block.heading}</Subhead>
               <p className="mt-2 leading-relaxed text-muted-foreground">
                 <ContactLinks block={block} />
               </p>
