@@ -9,6 +9,32 @@ import { normalizeApplicationStatus,
   type MemberDoc,
 } from "@/lib/firebase/collections";
 import type { Application, DashboardStats, Member } from "@/lib/admin/types";
+import { cleanDoc } from "@/lib/field-notes/schemas";
+import { notesToDoc } from "@/lib/application-research";
+
+/**
+ * The stored write-up, rebuilt from the allowlist on the way out too. With
+ * no write-up, the OLD STAFF NOTES stand in for it (they were the write-ups
+ * before it existed — notesToDoc), marked `fromNotes`.
+ */
+function toResearch(r: ApplicationDoc["research"], notes: string | undefined): Application["research"] {
+  if (!r || typeof r.doc !== "string") {
+    return notes?.trim() ? { doc: cleanDoc(notesToDoc(notes)), recommendation: null, by: "", updatedAt: "", fromNotes: true } : null;
+  }
+  let doc;
+  try {
+    doc = cleanDoc(JSON.parse(r.doc));
+  } catch {
+    return null;
+  }
+  const rec = r.recommendation;
+  return {
+    doc,
+    recommendation: rec === "approve" || rec === "decline" || rec === "unsure" ? rec : null,
+    by: String(r.by ?? ""),
+    updatedAt: iso(r.updatedAt) ?? "",
+  };
+}
 
 /** Timestamp → ISO string, tolerating a missing or malformed value. */
 function iso(value: Timestamp | null | undefined): string | null {
@@ -50,6 +76,7 @@ function toApplication(
     plan: doc.plan ?? "solo",
     status: normalizeApplicationStatus(doc.status),
     notes: doc.notes,
+    research: toResearch(doc.research, doc.notes),
     reviewedBy: doc.reviewedBy ?? null,
     reviewedAt: iso(doc.reviewedAt),
     decisions: (doc.decisions ?? []).map((d) => ({ ...d, at: iso(d.at) ?? "" })),

@@ -12,6 +12,8 @@ import {
   type ApplicationStatus,
   type MemberDoc,
 } from "@/lib/firebase/collections";
+import { hasWriting, MIN_DECLINE_REASON, RECOMMENDATIONS, RECOMMENDATION_LABELS, type ResearchRecommendation } from "@/lib/application-research";
+import { cleanDoc } from "@/lib/field-notes/schemas";
 import { canCheckout, createCheckoutSession } from "@/lib/stripe/server";
 import { sendSafely, TEAM_NOTIFY_TO } from "@/lib/email/resend";
 import {
@@ -30,12 +32,18 @@ export interface ActionResult {
 }
 
 /*
-  THE APPLICATION WORKFLOW — Geekdom's two-step review, every step a staff
-  decision with its email:
+  THE APPLICATION WORKFLOW — research, then the team's decision:
 
     initial_review ──advance──▶ team_review ──approve──▶ approved
-          └──decline──▶ declined ◀──decline──┘
+     (Research)  └──decline──▶ declined ◀──decline──┘
     ban: from anywhere, no email · reopen: declined/banned → initial_review
+
+  RESEARCH IS NOT THE DECISION (Geekdom, November 2026). Monica looks the
+  applicant up and writes it up (`saveResearch`); "advance" sends that to
+  the team, who decide in a meeting of three or four. So advance REQUIRES a
+  saved write-up and a recommendation. She can still stop an obvious no —
+  but a decline from research REQUIRES a written reason, kept in the
+  history as the record the team can check later.
 
   ONE TRANSITION TABLE, CHECKED IN A TRANSACTION. Each action names the
   statuses it may start from; the transaction re-reads the application and
@@ -56,6 +64,14 @@ const MOVES: Record<Move, { from: ApplicationStatus[]; to: ApplicationStatus; la
   decline: { from: ["initial_review", "team_review"], to: "declined", label: "declined" },
   ban: { from: ["initial_review", "team_review", "approved", "declined"], to: "banned", label: "banned" },
   reopen: { from: ["declined", "banned"], to: "initial_review", label: "reopened" },
+};
+
+const STAGE_NAMES: Record<ApplicationStatus, string> = {
+  initial_review: "in research",
+  team_review: "with the team",
+  approved: "approved",
+  declined: "declined",
+  banned: "banned",
 };
 
 const stageOf = (s: ApplicationStatus): ApplicationDecision["stage"] =>
@@ -83,11 +99,21 @@ export async function moveApplication(id: string, move: Move, note?: string): Pr
       const a = snap.data() as ApplicationDoc;
       const current = normalizeApplicationStatus(a.status);
       if (!rule.from.includes(current)) {
-        throw new Error(`This application is ${current.replace("_", " ")} now — someone may have moved it. Refresh the page.`);
+        throw new Error(`This application is ${STAGE_NAMES[current]} now — someone may have moved it. Refresh the page.`);
+      }
+      let outcome = rule.label;
+      if (move === "advance") {
+        const r = a.research;
+        if (!r || !hasWriting(safeDoc(r.doc))) throw new Error("Write up the research before sending it to the team.");
+        if (!r?.recommendation) throw new Error("Pick a recommendation before sending it to the team.");
+        outcome = `sent the research to the team — recommends ${RECOMMENDATION_LABELS[r.recommendation].split(" ")[0].toLowerCase()}`;
+      }
+      if (move === "decline" && current === "initial_review" && (cleanNote?.length ?? 0) < MIN_DECLINE_REASON) {
+        throw new Error("Write the reason for declining in the note — it's kept for the team.");
       }
       const decision: ApplicationDecision = {
         stage: stageOf(current),
-        outcome: rule.label,
+        outcome: move === "decline" && current === "initial_review" ? "declined at research" : outcome,
         by,
         at: Timestamp.now(),
         ...(cleanNote ? { note: cleanNote } : {}),
@@ -104,7 +130,7 @@ export async function moveApplication(id: string, move: Move, note?: string): Pr
     return { ok: false, message: e instanceof Error ? e.message : "Couldn't update the application." };
   }
 
-  await logActivity(admin, { area: "applications", action: rule.label, label: application.name, href: `/portal/admin/applications/${id}` });
+  await logActivity(admin, { area: "applications", action: move === "advance" ? "sent to the team" : rule.label, label: application.name, href: `/portal/admin/applications/${id}` });
   const message = await afterMove(id, move, application, by);
   refresh(id);
   return { ok: true, message };
@@ -126,9 +152,10 @@ async function afterMove(id: string, move: Move, a: ApplicationDoc, by: string):
       brag: a.brag,
       building: a.building,
       by,
+      recommendation: a.research?.recommendation ?? null,
     });
     const sent = TEAM_NOTIFY_TO.length ? await sendSafely({ to: TEAM_NOTIFY_TO, subject: mail.subject, html: mail.html, text: mail.text }) : false;
-    return sent ? "Sent to team review. The team has been emailed." : "Sent to team review. (The team email didn't send — tell them directly.)";
+    return sent ? "Sent to the team, with your research. They've been emailed a link." : "Sent to the team, with your research. (The team email didn't send — tell them directly.)";
   }
 
   if (move === "decline") {
@@ -138,7 +165,7 @@ async function afterMove(id: string, move: Move, a: ApplicationDoc, by: string):
   }
 
   if (move === "ban") return "Banned. No email was sent; if they apply again, it's marked banned automatically.";
-  if (move === "reopen") return "Reopened for initial review. No email was sent.";
+  if (move === "reopen") return "Reopened for research. No email was sent.";
 
   // approve
   if (plan.id === "enterprise") {
@@ -217,21 +244,59 @@ async function addEnterpriseMember(applicationId: string, a: ApplicationDoc): Pr
   }
 }
 
-/** Save staff notes without changing the application's status. */
-export async function saveNotes(id: string, notes: string): Promise<ActionResult> {
+/** A stored write-up, parsed and rebuilt from the allowlist — never trusted as stored. */
+function safeDoc(json: string | undefined) {
+  try {
+    return cleanDoc(JSON.parse(json ?? ""));
+  } catch {
+    return cleanDoc(null);
+  }
+}
+
+const MAX_RESEARCH = 60_000; // characters of JSON — pages of notes, not a book
+
+/**
+ * Save the research write-up and recommendation. Open while the
+ * application is in research or with the team (Monica fixes a typo, or
+ * adds what came up in the meeting); closed once it's decided, so the
+ * write-up stays what the decision was made on. Logged as THAT it changed,
+ * never what it says — the same rule as staff notes.
+ */
+export async function saveResearch(id: string, doc: unknown, recommendation: unknown): Promise<ActionResult> {
   const admin = await requireAdmin();
   if (typeof id !== "string" || !id) return { ok: false, message: "Missing application." };
+  const clean = cleanDoc(doc);
+  const json = JSON.stringify(clean);
+  if (json.length > MAX_RESEARCH) return { ok: false, message: "That write-up is too long to save. Trim it, or move detail into links." };
+  const rec = RECOMMENDATIONS.includes(recommendation as ResearchRecommendation) ? (recommendation as ResearchRecommendation) : null;
+
   const ref = getAdminDb().collection(COLLECTIONS.applications).doc(id);
-  const before = (await ref.get()).data() as ApplicationDoc | undefined;
-  if (!before) return { ok: false, message: "Application not found." };
-  const next = String(notes ?? "").slice(0, 4000);
-  if ((before.notes ?? "") === next) return { ok: true, message: "No changes to save." };
-  await ref.update({ notes: next });
-  // THAT the notes changed, never what they say: notes about an applicant
-  // stay on the application, not copied into a second place.
-  await logActivity(admin, { area: "applications", action: "updated the staff notes on", label: before.name, href: `/portal/admin/applications/${id}` });
+  let name = "";
+  try {
+    const changed = await getAdminDb().runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists) throw new Error("Application not found.");
+      const a = snap.data() as ApplicationDoc;
+      name = a.name;
+      const status = normalizeApplicationStatus(a.status);
+      if (status !== "initial_review" && status !== "team_review") {
+        throw new Error("This application has been decided, so the research is closed.");
+      }
+      const same = a.research && JSON.stringify(safeDoc(a.research.doc)) === json && (a.research.recommendation ?? null) === rec;
+      if (same) return false;
+      tx.update(ref, {
+        research: { doc: json, recommendation: rec, by: admin.name || admin.email, byEmail: admin.email, updatedAt: Timestamp.now() },
+      });
+      return true;
+    });
+    if (!changed) return { ok: true, message: "No changes to save." };
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : "Couldn't save the research." };
+  }
+  await logActivity(admin, { area: "applications", action: "updated the research on", label: name, href: `/portal/admin/applications/${id}` });
   revalidatePath(`/portal/admin/applications/${id}`);
-  return { ok: true, message: "Notes saved." };
+  revalidatePath("/portal/admin/applications");
+  return { ok: true, message: "Research saved." };
 }
 
 /**

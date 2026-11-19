@@ -4,7 +4,7 @@
  * corners, the red wordmark, Graphite buttons).
  *
  *   applicant  received → (declined | approved [+ payment link])
- *   staff      new application → ready for team review
+ *   staff      new application (for research) → ready for the team
  *
  * Voice: short declaratives, no "we're thrilled", and a decline that is
  * kind without being vague. Never the generosity line in a decline — said
@@ -16,6 +16,7 @@
 import { LUMA_CALENDAR_URL } from "@/lib/site";
 import { escapeHtml } from "@/lib/email/templates";
 import { planOf, planPrice, type PlanId } from "@/lib/membership";
+import { RECOMMENDATION_LABELS, type ResearchRecommendation } from "@/lib/application-research";
 import { button, details, email, eyebrow, first, h1, muted, p, rule, url, type Email } from "@/lib/email/member-templates";
 
 const plainPlan = (id: PlanId | undefined) => {
@@ -132,12 +133,12 @@ interface StaffVars {
 const review = (id: string) => url(`/portal/admin/applications/${id}`);
 const excerpt = (s: string) => escapeHtml(s.length > 400 ? `${s.slice(0, 397)}…` : s);
 
-/** A new application, for the initial reviewer. */
+/** A new application, for the researcher (Monica). */
 export function newApplicationEmail(v: StaffVars): Email {
   return email(
     `New application: ${v.name}`,
-    `${planOf(v.plan).name} membership — ready for initial review.`,
-    eyebrow("Applications · Initial review") +
+    `${planOf(v.plan).name} membership — ready for research.`,
+    eyebrow("Applications · Research") +
       h1(`${escapeHtml(v.name)} applied.`) +
       details([
         ["Membership", plainPlan(v.plan)],
@@ -149,26 +150,32 @@ export function newApplicationEmail(v: StaffVars): Email {
       (v.describes.length ? muted(`Describes themselves as: ${escapeHtml(v.describes.join(" · "))}`) : "") +
       muted("What they're building") +
       p(excerpt(v.building)) +
-      button(review(v.id), "Review the application"),
+      button(review(v.id), "Start the research"),
     `${v.name} applied (${plainPlan(v.plan)}).\n\n${v.building}\n\nReview: ${review(v.id)}`,
   );
 }
 
-/** Passed initial review — for the team. */
-export function teamReviewEmail(v: StaffVars & { by: string }): Email {
+/**
+ * Research done — for the team. A POINTER, NOT THE WRITE-UP: the research
+ * is read on the application page (with the answers and every link), and
+ * notes about a person don't belong in inboxes. Who, the recommendation,
+ * the link.
+ */
+export function teamReviewEmail(v: StaffVars & { by: string; recommendation: ResearchRecommendation | null }): Email {
+  const rec = v.recommendation ? RECOMMENDATION_LABELS[v.recommendation] : "No recommendation";
   return email(
-    `Ready for team review: ${v.name}`,
-    `${escapeHtml(v.by)} moved ${v.name} to team review.`,
+    `Ready for the team: ${v.name}`,
+    `${escapeHtml(v.by)} finished the research on ${v.name}.`,
     eyebrow("Applications · Team review") +
-      h1(`${escapeHtml(v.name)} is ready for team review.`) +
-      p(`${escapeHtml(v.by)} said yes at initial review. The team decides next.`) +
+      h1(`${escapeHtml(v.name)} is ready for the team.`) +
+      p(`${escapeHtml(v.by)} finished the research. The write-up and every link are on the application, for the next team meeting.`) +
       details([
+        ["Recommendation", rec],
         ["Membership", plainPlan(v.plan)],
         ["City", v.city || "—"],
         ["Company", v.company || "—"],
       ]) +
-      (v.brag ? p(excerpt(v.brag)) : "") +
-      button(review(v.id), "Open the application"),
-    `${v.name} is ready for team review (${v.by} said yes at initial review).\n\nOpen: ${review(v.id)}`,
+      button(review(v.id), "Open the research"),
+    `${v.name} is ready for the team. ${v.by} finished the research — recommendation: ${rec}.\n\nOpen: ${review(v.id)}`,
   );
 }

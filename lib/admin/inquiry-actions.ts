@@ -82,7 +82,7 @@ export async function saveInquiryNotes(id: string, notes: string): Promise<Inqui
   const next = String(notes ?? "").slice(0, 4000);
   if ((before.notes ?? "") === next) return { ok: true, message: "No changes to save." };
   await ref.update({ notes: next });
-  // That they changed, never what they say (see saveNotes in ./actions.ts).
+  // That they changed, never what they say (see saveResearch in ./actions.ts).
   await logActivity(admin, {
     area: "inquiries",
     action: "updated the staff notes on",

@@ -821,3 +821,67 @@ p {
 .fn-rich .ProseMirror {
   outline: none;
 }
+
+/* RESEARCH NOTES — the admin's rich text (components/admin/research-note.tsx):
+   the Field Notes allowlist, set as a working document rather than a frame.
+   Rubik at reading size, sections as small medium-weight labels, Clay link
+   underlines. No italic in the toolbar (the guide sends italics to
+   Fraunces, which the admin doesn't load). */
+.note-rich {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--graphite);
+}
+.note-rich > :first-child,
+.note-rich .ProseMirror > :first-child {
+  margin-top: 0;
+}
+.note-rich p {
+  margin: 0.4rem 0;
+}
+.note-rich h2,
+.note-rich h3 {
+  margin: 1.25rem 0 0.25rem;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted-foreground);
+}
+.note-rich ul,
+.note-rich ol {
+  margin: 0.4rem 0;
+  padding-left: 1.25rem;
+}
+.note-rich ul {
+  list-style: disc;
+}
+.note-rich ol {
+  list-style: decimal;
+}
+.note-rich li p {
+  margin: 0.1rem 0;
+}
+.note-rich strong {
+  font-weight: 500;
+}
+.note-rich blockquote {
+  border-left: 2px solid var(--border);
+  padding-left: 0.75rem;
+}
+.note-rich a {
+  text-decoration: underline;
+  text-decoration-color: var(--clay);
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+.note-rich .ProseMirror {
+  outline: none;
+  min-height: 12rem;
+}
+.note-rich p.is-empty::before {
+  content: attr(data-placeholder);
+  color: var(--muted-foreground);
+  opacity: 0.6;
+  pointer-events: none;
+  float: left;
+  height: 0;
+}

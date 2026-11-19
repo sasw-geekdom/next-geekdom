@@ -62,7 +62,7 @@ export function Status({ kind, children, className }: { kind: StatusKind; childr
 }
 
 const APPLICATION: Record<ApplicationStatus, [StatusKind, string]> = {
-  initial_review: ["todo", "Initial review"],
+  initial_review: ["todo", "Research"],
   team_review: ["progress", "Team review"],
   approved: ["done", "Approved"],
   declined: ["closed", "Declined"],

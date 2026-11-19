@@ -12,6 +12,7 @@ import {
 import { APPLICATION_LABELS } from "@/components/ui/badge";
 import { ApplicationStatusLabel, RowLink, Table, Tabs, Td, Th, Tr, tableDate } from "@/components/admin/admin-ui";
 import { planOf } from "@/lib/membership";
+import { RECOMMENDATION_LABELS } from "@/lib/application-research";
 import { PageHeader, AdminSection } from "@/components/admin/page-header";
 import { buttonClass } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -19,7 +20,7 @@ import { cn } from "@/lib/utils";
 export const metadata = { title: "Applications" };
 
 /*
-  THE APPLICATIONS WORKFLOW — tabs per stage, opening on Initial review
+  THE APPLICATIONS WORKFLOW — tabs per stage, opening on Research
   (the work waiting), each with its count. One read of the whole list,
   filtered here: a status filter plus a date sort would need a composite
   index, and the list is hundreds, not thousands.
@@ -43,6 +44,8 @@ export default async function ApplicationsPage(
 
   const showCompany = applications.some((a) => a.company);
   const showStatus = status === "all";
+  // The Team review tab is the meeting's agenda: Monica's call on each.
+  const showRec = status === "team_review";
   const href = (q: Partial<ApplicationQueue>) => `/portal/admin/applications?${applicationQuery({ ...queue, ...q })}`;
   // Clicking the sorted column flips it; another column starts at its natural order.
   const sortBy = (s: ApplicationSort) => ({
@@ -56,7 +59,7 @@ export default async function ApplicationsPage(
     <>
       <PageHeader
         title="Applications"
-        description={`${count("initial_review")} waiting for initial review · ${count("team_review")} in team review`}
+        description={`${count("initial_review")} in research · ${count("team_review")} ready for the team`}
         actions={
           <a
             href={`/api/admin/export/applications${status !== "all" ? `?status=${status}` : ""}`}
@@ -80,7 +83,7 @@ export default async function ApplicationsPage(
         {applications.length === 0 ? (
           <p className="mt-6 border border-dashed border-border bg-bone-light px-6 py-16 text-center text-sm text-muted-foreground">
             {status === "initial_review"
-              ? "Nothing waiting for initial review. New applications from /apply land here."
+              ? "Nothing in research. New applications from /apply land here."
               : status === "all"
                 ? "No applications yet. They arrive from /apply."
                 : `Nothing in ${APPLICATION_LABELS[status].toLowerCase()}.`}
@@ -94,6 +97,7 @@ export default async function ApplicationsPage(
                 {showCompany && <Th className="hidden w-[14%] lg:table-cell">Company</Th>}
                 <Th className="hidden w-24 md:table-cell" sort={sortBy("plan")}>Plan</Th>
                 <Th className="hidden w-36 lg:table-cell" sort={sortBy("city")}>City</Th>
+                {showRec && <Th className="w-36">Recommendation</Th>}
                 <Th className={cn("hidden w-[18%]", showStatus ? "2xl:table-cell" : "xl:table-cell")}>Describes themselves</Th>
                 <Th className="w-28" sort={sortBy("submitted")}>Submitted</Th>
                 {showStatus && <Th className="w-36">Status</Th>}
@@ -109,6 +113,11 @@ export default async function ApplicationsPage(
                   {showCompany && <Td className="hidden lg:table-cell">{app.company || <span className="text-muted-foreground">—</span>}</Td>}
                   <Td className="hidden md:table-cell">{planOf(app.plan).name}</Td>
                   <Td className="hidden lg:table-cell">{app.city || <span className="text-muted-foreground">—</span>}</Td>
+                  {showRec && (
+                    <Td>
+                      {app.research?.recommendation ? RECOMMENDATION_LABELS[app.research.recommendation] : <span className="text-muted-foreground">—</span>}
+                    </Td>
+                  )}
                   <Td className={cn("hidden text-muted-foreground", showStatus ? "2xl:table-cell" : "xl:table-cell")}>{app.describes[0] ?? "—"}</Td>
                   <Td className="tabular-nums text-muted-foreground">{tableDate(app.createdAt)}</Td>
                   {showStatus && (

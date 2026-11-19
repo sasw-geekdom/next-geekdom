@@ -78,7 +78,7 @@ const APPLICATION_TONES: Record<ApplicationStatus, Tone> = {
 };
 
 export const APPLICATION_LABELS: Record<ApplicationStatus, string> = {
-  initial_review: "Initial review",
+  initial_review: "Research",
   team_review: "Team review",
   approved: "Approved",
   declined: "Declined",

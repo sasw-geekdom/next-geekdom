@@ -3,7 +3,9 @@ import type {
   MemberProfile,
   MemberStatus,
 } from "@/lib/firebase/collections";
+import type { ResearchRecommendation } from "@/lib/application-research";
 import type { PlanId } from "@/lib/membership";
+import type { RichDoc } from "@/lib/field-notes/types";
 
 /**
  * Plain, client-safe shapes.
@@ -42,6 +44,15 @@ export interface Application {
   plan: PlanId;
   status: ApplicationStatus;
   notes?: string;
+  /** The research write-up, already cleaned — null until someone saves one. */
+  research: {
+    doc: RichDoc;
+    recommendation: ResearchRecommendation | null;
+    by: string;
+    updatedAt: string;
+    /** Not saved as a write-up yet: shown from the old staff notes. */
+    fromNotes?: boolean;
+  } | null;
   reviewedBy: string | null;
   reviewedAt: string | null;
   /** Every step taken, oldest first. */

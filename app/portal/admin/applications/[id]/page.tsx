@@ -2,22 +2,24 @@ import { notFound } from "next/navigation";
 import { getApplication, listApplications } from "@/lib/admin/queries";
 import { ApplicationStatusLabel, tableDate } from "@/components/admin/admin-ui";
 import { APPLICATION_LABELS } from "@/components/ui/badge";
-import { ReviewPanel } from "@/components/admin/review-panel";
+import { BanLink, ReviewPanel } from "@/components/admin/review-panel";
+import { ResearchCard, ResearchProvider } from "@/components/admin/research-note";
 import {
   Answer,
   AnswerGroup,
+  hasLinks,
+  LinkList,
   MailLink,
-  OutLink,
   Properties,
   ReviewBody,
   ReviewHeader,
   SideCard,
-  siteHref,
   Timeline,
 } from "@/components/admin/review-layout";
 import { applicationPosition, applicationQuery, parseApplicationQueue } from "@/lib/admin/review-queue";
 import { planOf, planPrice } from "@/lib/membership";
 import { Q } from "@/lib/application-questions";
+import { isNothing } from "@/lib/linkify";
 
 export async function generateMetadata(props: PageProps<"/portal/admin/applications/[id]">) {
   const { id } = await props.params;
@@ -26,10 +28,15 @@ export async function generateMetadata(props: PageProps<"/portal/admin/applicati
 }
 
 /*
-  ONE APPLICATION, laid out for deciding (components/admin/review-layout.tsx):
-  what they wrote on the left, grouped by what decides it, in Geekdom's own
-  wording (lib/application-questions.ts); the decision, staff notes, the
-  contact details and the history on the right. Blank answers and empty
+  ONE APPLICATION — READ LEFT, WRITE RIGHT (components/admin/review-layout.tsx):
+  what they wrote fills the centre, grouped by what decides it, in
+  Geekdom's own wording (lib/application-questions.ts), "Who they are"
+  first. The side column, which stays in view: the next step, then the
+  WRITE-UP beside the answers it's about (the editor in research; the
+  write-up, its recommendation and every link once it's with the team),
+  then details and history.
+  ResearchProvider wraps both columns so "Send to the team" can save the
+  write-up first. Blank answers and empty
   details are left out rather than shown as dashes.
 */
 export default async function ApplicationDetailPage(props: PageProps<"/portal/admin/applications/[id]">) {
@@ -50,48 +57,56 @@ export default async function ApplicationDetailPage(props: PageProps<"/portal/ad
 
   const a = application;
   const plan = planOf(a.plan);
-  const site = siteHref(a.website);
-  const groups: [string, [string, React.ReactNode][]][] = [
+  // [Geekdom's question, the answer, the SHORT LABEL the row shows] — the
+  // full question stays on hover (components/admin/review-layout.tsx, Answer).
+  type Row = [string, React.ReactNode, string];
+  const heard = [a.heardAbout, a.heardAboutOther].filter(Boolean).join(" — ");
+  const groups: [string, Row[]][] = [
     [
       "Who they are",
       [
-        [Q.brag, a.brag],
+        [Q.brag, a.brag, "In one sentence"],
         [
           Q.describes,
           a.describes.length || a.describesOther ? (
-            <span className="flex flex-wrap gap-1.5 whitespace-normal">
+            // One choice per line, plain text — no tags (Geekdom's options are
+            // phrases, and boxed they stacked into a wall of white chips) and
+            // no markers (a square read as a status nobody could explain).
+            <ul className="flex flex-col gap-1.5 whitespace-normal">
               {[...a.describes.filter((d) => d !== "Other"), ...(a.describesOther ? [a.describesOther] : a.describes.includes("Other") ? ["Other"] : [])].map((d) => (
-                <span key={d} className="border border-border bg-bone-light px-2 py-0.5 text-sm">
-                  {d}
-                </span>
+                <li key={d}>{d}</li>
               ))}
-            </span>
+            </ul>
           ) : null,
+          "Describes themselves",
         ],
-        [Q.building, a.building],
-        [Q.shipped, a.shipped],
-        [Q.links, a.links],
+        [Q.building, a.building, "Building"],
+        [Q.shipped, a.shipped, "Shipped, last 90 days"],
+        // The site answer and the links answer, as one clickable list.
+        [`${Q.site} · ${Q.links}`, hasLinks(a.website, a.links) ? <LinkList values={[a.website, a.links]} /> : null, "Links"],
+        [Q.heardAbout, heard, "Heard about us"],
       ],
     ],
     [
       "Why Geekdom",
       [
-        [Q.whyGeekdom, a.whyGeekdom],
-        [Q.giveBack, a.giveBack],
-        [Q.excited, a.excited],
+        [Q.whyGeekdom, a.whyGeekdom, "Why Geekdom"],
+        [Q.giveBack, a.giveBack, "Will give back"],
+        [Q.excited, a.excited, "Next 6 months"],
       ],
     ],
     [
       "Anything else",
       [
-        [Q.otherCommunities, a.otherCommunities],
-        [Q.anythingElse, a.anythingElse],
+        [Q.otherCommunities, a.otherCommunities, "Other communities"],
+        [Q.anythingElse, a.anythingElse, "Anything else"],
       ],
     ],
   ];
   const answered = groups
-    .map(([title, qs]) => [title, qs.filter(([, v]) => (typeof v === "string" ? v.trim() : v))] as const)
-    .filter(([, qs]) => qs.length > 0);
+    // A blank answer and an "N/A" say the same thing, so both rows are left out.
+    .map(([title, rows]) => [title, rows.filter(([, v]) => (typeof v === "string" ? v.trim() && !isNothing(v) : v))] as const)
+    .filter(([, rows]) => rows.length > 0);
 
   const details: [string, React.ReactNode][] = [
     ["Membership", `${plan.name} · ${planPrice(plan)}`],
@@ -99,8 +114,6 @@ export default async function ApplicationDetailPage(props: PageProps<"/portal/ad
     ...(a.phone ? ([["Phone", <a key="p" href={`tel:${a.phone}`} className="text-graphite">{a.phone}</a>]] as [string, React.ReactNode][]) : []),
     ...(a.city ? ([["City", a.city]] as [string, React.ReactNode][]) : []),
     ...(a.company ? ([["Company", a.company]] as [string, React.ReactNode][]) : []),
-    ...(site ? ([["Site", <OutLink key="s" href={site} />]] as [string, React.ReactNode][]) : []),
-    ...(a.heardAbout ? ([["Heard about us", [a.heardAbout, a.heardAboutOther].filter(Boolean).join(" — ")]] as [string, React.ReactNode][]) : []),
     ["Current member", a.formerMember ? "Yes" : "No"],
   ];
 
@@ -117,25 +130,30 @@ export default async function ApplicationDetailPage(props: PageProps<"/portal/ad
         pager={pos && { index: pos.index, total: pos.total, prevHref: at(pos.prev), nextHref: at(pos.next), noun: "application" }}
         flash={done}
       />
+      <ResearchProvider key={a.id} application={a}>
       <ReviewBody
+        wide
         main={
-          answered.length === 0 ? (
-            <p className="border border-dashed border-border px-6 py-10 text-sm text-muted-foreground">They didn&rsquo;t answer any of the questions.</p>
-          ) : (
-            answered.map(([title, qs]) => (
-              <AnswerGroup key={title} title={title}>
-                {qs.map(([q, v]) => (
-                  <Answer key={q} question={q}>
-                    {v}
-                  </Answer>
-                ))}
-              </AnswerGroup>
-            ))
-          )
+          <>
+            {answered.length === 0 ? (
+              <p className="border border-dashed border-border px-6 py-10 text-sm text-muted-foreground">They didn&rsquo;t answer any of the questions.</p>
+            ) : (
+              answered.map(([title, qs]) => (
+                <AnswerGroup key={title} title={title}>
+                  {qs.map(([q, v, label]) => (
+                    <Answer key={q} question={q} label={label}>
+                      {v}
+                    </Answer>
+                  ))}
+                </AnswerGroup>
+              ))
+            )}
+          </>
         }
         side={
           <>
             <ReviewPanel key={a.id} application={a} afterHref={afterHref} />
+            <ResearchCard application={a} />
             <SideCard title="Details">
               <Properties rows={details} />
             </SideCard>
@@ -148,9 +166,11 @@ export default async function ApplicationDetailPage(props: PageProps<"/portal/ad
                 ]}
               />
             </SideCard>
+            <BanLink application={a} afterHref={afterHref} />
           </>
         }
       />
+      </ResearchProvider>
     </>
   );
 }

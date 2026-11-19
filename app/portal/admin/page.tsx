@@ -26,7 +26,7 @@ export const metadata = { title: "Overview" };
     ┌ Overview                    [Add a member] [Add an event] [New Field Note] ┐
     ├─ Needs attention ─────────────────────────────────────────────────────────┤
     │ ■ 3 applicants waiting longer than two weeks              Review →         │
-    │ ■ 13 in initial review · oldest 34 days                                    │
+    │ ■ 13 in research · oldest 34 days                                          │
     │ ■ 2 approved, waiting on payment …   (only rows with something in them)    │
     ├──────────────┬──────────────────┬──────────────────────────────────────────┤
     │ Members      │ Applications 30d │ Signed in to the portal                  │
@@ -111,14 +111,14 @@ export default async function AdminOverview() {
     },
     initial.length > 0 && {
       kind: "todo" as const,
-      text: `${initial.length} in initial review`,
+      text: `${initial.length} in research`,
       detail: `oldest ${plural(oldest(initial), "day")}`,
       href: "/portal/admin/applications?status=initial_review",
       cta: "Review",
     },
     team.length > 0 && {
       kind: "progress" as const,
-      text: `${team.length} in team review`,
+      text: `${team.length} ready for the team`,
       detail: `oldest ${plural(oldest(team), "day")}`,
       href: "/portal/admin/applications?status=team_review",
       cta: "Review",

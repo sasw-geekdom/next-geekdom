@@ -3,6 +3,7 @@ import "server-only";
 import type { Timestamp } from "firebase-admin/firestore";
 import type { Role } from "@/lib/auth/roles";
 import type { PlanId } from "@/lib/membership";
+import type { ResearchRecommendation } from "@/lib/application-research";
 import type { InquiryKind, InquiryStatus } from "@/lib/inquiries";
 
 // Central registry of Firestore collection names — one place to rename.
@@ -150,11 +151,17 @@ export const GALLERY_SETTINGS_DOC = "gallery";
 // ─── Applications ───────────────────────────────────────────────────────────
 
 /**
- * WHERE AN APPLICATION SITS — Geekdom's two-step review (November 2026,
- * replacing Typeform → Airtable):
+ * WHERE AN APPLICATION SITS — Geekdom's review (November 2026, replacing
+ * Typeform → Airtable):
  *
  *   initial_review → team_review → approved
  *          ↘ declined      ↘ declined          banned: anywhere, no email
+ *
+ * `initial_review` is shown as RESEARCH: Monica's step, where she looks the
+ * applicant up and writes it up for the team (`research`). It isn't the
+ * decision — the team decides, in a meeting of three or four staff. She can
+ * stop an obvious no, but only with a written reason, kept in the history.
+ * The stored value keeps its old name so no application needs migrating.
  *
  * `approved` means the team said yes and the congratulations went out; it
  * does NOT mean the person is a member. Solo and Team become members when
@@ -180,6 +187,22 @@ export function normalizeApplicationStatus(raw: unknown): ApplicationStatus {
   if (raw === "new" || raw === "reviewing") return "initial_review";
   if (raw === "waitlisted") return "declined";
   return APPLICATION_STATUSES.includes(raw as ApplicationStatus) ? (raw as ApplicationStatus) : "initial_review";
+}
+
+/**
+ * THE RESEARCH WRITE-UP, for the team. `doc` is rich text as a JSON STRING
+ * (Tiptap's JSON, rebuilt from the Field Notes allowlist by `cleanDoc` on the
+ * way in and out) — the same reason Field Notes stores frames as a string:
+ * Tiptap nests deeper than Firestore likes. Staff only; never emailed, and
+ * never shown to the applicant.
+ */
+export interface ApplicationResearch {
+  doc: string;
+  recommendation: ResearchRecommendation | null;
+  /** Who last saved it. */
+  by: string;
+  byEmail: string;
+  updatedAt: Timestamp;
 }
 
 /** One step taken on an application — the history the detail page shows. */
@@ -233,6 +256,8 @@ export interface ApplicationDoc {
   status: ApplicationStatus | "new" | "reviewing" | "waitlisted";
   /** Free-text staff notes, appended in the admin portal. */
   notes?: string;
+  /** Monica's research write-up and recommendation (see ApplicationResearch). */
+  research?: ApplicationResearch;
   /** The last decision's who and when (the full trail is `decisions`). */
   reviewedBy?: string | null;
   reviewedAt?: Timestamp | null;

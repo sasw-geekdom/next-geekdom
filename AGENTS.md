@@ -319,7 +319,7 @@ same bug.
   letters pick a choice; closing keeps the answers for the visit; the
   cursor starts on the PICKED choice, or on the group when none is, so
   Enter never ticks an answer by accident). It posts to
-  [/api/apply](app/api/apply/route.ts): saved for initial review, a
+  [/api/apply](app/api/apply/route.ts): saved for research, a
   "we have your application" email to the applicant, a "new application"
   email to `APPLICATION_REVIEW_EMAILS` (Monica; falls back to
   `TEAM_NOTIFY_EMAILS`).
@@ -329,22 +329,61 @@ same bug.
   way); Team and Enterprise require a company. Figures come from `PLANS`,
   never typed. `MEMBERSHIP_PRICE_CENTS` is still the Solo price, for the
   single-price surfaces (terms, structured data, the billing mock).
-- **The review is two steps, each a staff decision with its email**
-  ([lib/admin/actions.ts](lib/admin/actions.ts), `moveApplication`):
+- **The review is RESEARCH, then the TEAM'S decision** (Geekdom, November
+  2026; [lib/admin/actions.ts](lib/admin/actions.ts), `moveApplication`):
 
-      initial_review ─yes─▶ team_review ─yes─▶ approved
-            └──no──▶ declined ◀──no──┘     ban: anywhere, no email
+      initial_review ─send to the team─▶ team_review ─approve─▶ approved
+       (Research)  └─obvious no──▶ declined ◀──decline──┘   ban: anywhere, no email
 
-  Initial review is Monica's step but ANY staff can act (so nothing stalls
-  when she's away); the history and the activity log record who decided.
-  Yes at initial emails the team; no at either step sends the applicant a
-  kind decline. Approve sends the congratulations: Solo/Team get their
-  Stripe payment link in it ("pay, then portal" — they become members when
-  the webhook confirms payment, then sign in and fill in their profile);
-  ENTERPRISE IS A MEMBER AT APPROVAL (record + login created, terms agreed
-  off the site) and the email links straight to sign-in. While Stripe isn't
-  connected, the email says the payment link follows and staff use "Send
-  payment link" once it is.
+  **Research is not a decision.** It's Monica's step (any staff can act, so
+  nothing stalls when she's away): she looks the applicant up and writes
+  it up for the team — rich text, the Field Notes allowlist, stored as a
+  JSON string on `research` with a RECOMMENDATION (Approve / Decline /
+  Unsure — discuss; [lib/application-research.ts](lib/application-research.ts)).
+  The stored status keeps the name `initial_review`; only labels say
+  Research. "Send to the team" REQUIRES a write-up (the template's
+  headings alone don't count) and a recommendation, checked on the server.
+  She can stop an obvious no, but a decline from research REQUIRES a
+  written reason (≥10 characters), kept in the history as "declined at
+  research" — the record the team can check later.
+  - **The team decides in a meeting of 3–4 staff**, from the application
+    page: the write-up sits ABOVE the answers with its recommendation and
+    a "Links shared" list of every link in it (empty template sections
+    are hidden when reading). The Team review tab is the meeting's agenda,
+    with a Recommendation column. The decision note is a "Meeting note".
+    The write-up stays editable while it's with the team and closes once
+    decided. Saving it is logged as THAT it changed, never its text.
+  - **Read left, write right; one job per card, so no label repeats**
+    (Jesse: "Research" in both columns was confusing, and the answers
+    sat buried under the write-up). The CENTRE is the application —
+    "Who they are" first. The SIDE column (wider on this page, and it
+    stays in view) is **Next step** in research — a Research → Team
+    decision → Decided line, a readiness checklist (write-up,
+    recommendation) that enables "Send to the team", and a quiet "Decline
+    as an obvious no…" that opens the required reason — or **Team
+    decision** with the team; then the **Write-up** beside the answers it
+    describes; then details, history, and Ban as a quiet link at the very
+    foot. The stage itself is only the header's status marker. Messages
+    show beside the control that caused them.
+  - **There's no separate staff-notes box.** The old notes (Airtable's,
+    mostly) WERE the write-ups, so an application with notes and no
+    write-up opens its Write-up with them ("From the earlier staff
+    notes", links kept — `notesToDoc`); saving stores it as a write-up.
+  - **The write-up starts blank** with a one-line prompt. A Who they are ·
+    What I found · Concerns template was tried and dropped (Jesse); if
+    Monica settles on a format, that becomes the template.
+  - **The team email is a pointer, not the write-up** — who, the
+    recommendation, a link. Notes about a person stay on the application,
+    not in inboxes. ([research-note.tsx](components/admin/research-note.tsx)
+    is the editor and the read view; `ResearchProvider` wraps the page so
+    "Send to the team" saves unsaved work first.)
+  - Approve sends the congratulations: Solo/Team get their
+    Stripe payment link in it ("pay, then portal" — they become members when
+    the webhook confirms payment, then sign in and fill in their profile);
+    ENTERPRISE IS A MEMBER AT APPROVAL (record + login created, terms agreed
+    off the site) and the email links straight to sign-in. While Stripe isn't
+    connected, the email says the payment link follows and staff use "Send
+    payment link" once it is. Either decline sends the applicant a kind no.
   - **Every move is checked in a transaction** against the table of
     allowed starting statuses, so a double click or two staff at once can't
     send two emails; emails, Stripe and member creation run after the
@@ -353,7 +392,7 @@ same bug.
     straight to Banned, staff aren't notified, and the applicant gets the
     ordinary "we have it" email — nothing tips them off. Reopen undoes it.
   - **Old statuses are read, never written**: "new"/"reviewing" read as
-    initial review, "waitlisted" as declined (`normalizeApplicationStatus`).
+    research, "waitlisted" as declined (`normalizeApplicationStatus`).
   - The list is stage tabs with counts, filtered after one read (a status
     filter + date sort would need a composite index). The detail page shows
     the plan and the full history — each step, who, when, and its note.
@@ -548,9 +587,15 @@ members use personal Gmail, and the hint hid their accounts.
     [review-layout.tsx](components/admin/review-layout.tsx)): drawers are
     for editing a record; reviewing is reading long answers beside a
     decision that emails someone. Answers left, grouped by what decides
-    it (Who they are / Why Geekdom / Anything else, Geekdom's wording);
-    the decision, staff notes, details and history in a right column that
-    scrolls on its own. Ban is a quiet link at its foot.
+    it (Who they are / Why Geekdom / Anything else) as ROWS — a SHORT
+    LABEL left ("In one sentence", "Building", "Shipped, last 90 days"),
+    the answer right, Geekdom's full question on hover (Jesse: the
+    full-question labels read unstructured). Freehand links are
+    CLICKABLE wherever they're typed ([lib/linkify.ts](lib/linkify.ts):
+    two in three imported answers have no "https://"), and the site and
+    "Links to work" answers are one "Links" row;
+    the next step (an application's write-up beside it; a request's staff
+    notes), details and history in a right column that scrolls on its own. Ban is a quiet link at its foot.
   - **Previous / Next walk the list the reviewer came from** — the row
     link carries the tab and sort, and both sides order through
     [review-queue.ts](lib/admin/review-queue.ts), so they can't disagree.
@@ -838,7 +883,7 @@ so a lost history line never refuses the edit. A new admin write should log
 too. Not every save: a Field Note's draft autosaves every 30s, so drafts log
 when created, published, unpublished, featured or deleted — not per save.
 One `orderBy("at")`, filtered after the read, so no composite index. Also logged:
-**staff notes** on an application or request — THAT they changed, never
+**an application's write-up and a request's staff notes** — THAT they changed, never
 the text (notes about a person stay on their record), and only when they
 actually changed; **every CSV export**, with its row count (the one action
 that takes personal details off the site); and **a Stripe payment that
