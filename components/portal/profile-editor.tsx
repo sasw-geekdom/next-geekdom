@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { FieldGroup } from "@/components/admin/field-group";
 import { MONO } from "@/components/site/section";
 import { cn } from "@/lib/utils";
+import { PhotoField } from "@/components/portal/photo-field";
 import { AUDIENCES, type Audience } from "@/lib/membership";
 
 /*
@@ -78,11 +79,11 @@ export function ProfileEditor({
     >
       <div className="flex flex-col gap-10">
         <FieldGroup title="About you">
-          <PhotoField
-            name={d.name}
-            value={d.photo}
-            onChange={(url) => set("photo")(url)}
-          />
+          {/* Saved on its own the moment it's chosen (lib/portal/photo-actions.ts) — not by the form's Save. */}
+          <div>
+            <p className="mb-2 text-sm font-medium text-graphite">Photo</p>
+            <PhotoField photo={d.photo ?? null} name={d.name} />
+          </div>
           <Field label="Name" htmlFor="p-name">
             <Input id="p-name" value={d.name} onChange={(e) => set("name")(e.target.value)} data-autofocus />
           </Field>
@@ -210,85 +211,3 @@ export function ProfileEditor({
   );
 }
 
-/*
-  THE PROFILE PHOTO. Square, like every frame on the site — no circle crop.
-  Shown at 96px in the directory pane and 44px in the list, so a phone photo
-  is plenty; it's cropped to fill with `object-cover`.
-
-  DESIGN PREVIEW: the chosen file is shown from an object URL and goes
-  nowhere. When profiles are stored (Phase 3) it uploads to the Blob store
-  through a server action that checks the session, the type (JPEG, PNG,
-  WebP) and the size — the same shape as the portfolio logo upload.
-*/
-const PHOTO_MAX_BYTES = 5 * 1024 * 1024;
-
-function PhotoField({
-  name,
-  value,
-  onChange,
-}: {
-  name: string;
-  value?: string;
-  onChange: (url: string | undefined) => void;
-}) {
-  const input = React.useRef<HTMLInputElement>(null);
-  const [problem, setProblem] = React.useState<string | null>(null);
-
-  function choose(file: File | undefined) {
-    setProblem(null);
-    if (!file) return;
-    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-      setProblem("Use a JPEG, PNG or WebP photo.");
-      return;
-    }
-    if (file.size > PHOTO_MAX_BYTES) {
-      setProblem("That photo is over 5 MB. Try a smaller one.");
-      return;
-    }
-    onChange(URL.createObjectURL(file));
-    if (input.current) input.current.value = "";
-  }
-
-  return (
-    <div>
-      <p className="mb-2 text-sm font-medium text-graphite">Photo</p>
-      <div className="flex items-center gap-4">
-        {value ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={value} alt="" className="h-20 w-20 shrink-0 border border-border bg-bone object-cover" />
-        ) : (
-          <span aria-hidden="true" className={cn(MONO.label, "flex h-20 w-20 shrink-0 items-center justify-center bg-graphite text-bone")}>
-            {initials(name)}
-          </span>
-        )}
-        <div className="flex flex-col items-start gap-1.5">
-          <input
-            ref={input}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            className="sr-only"
-            tabIndex={-1}
-            aria-hidden="true"
-            onChange={(e) => choose(e.target.files?.[0])}
-          />
-          <div className="flex items-center gap-1">
-            <Button type="button" variant="outline" size="sm" onClick={() => input.current?.click()}>
-              {value ? "Replace photo" : "Upload photo"}
-            </Button>
-            {value && (
-              <Button type="button" variant="ghost" size="sm" onClick={() => onChange(undefined)}>
-                Remove
-              </Button>
-            )}
-          </div>
-          <p className="text-xs text-muted-foreground">A clear photo of your face. JPEG, PNG or WebP, up to 5 MB.</p>
-        </div>
-      </div>
-      {problem && (
-        <p role="alert" className="mt-2 text-sm text-geekdom-red">
-          {problem}
-        </p>
-      )}
-    </div>
-  );
-}

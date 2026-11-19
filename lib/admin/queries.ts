@@ -111,9 +111,11 @@ function toMember(id: string, doc: MemberDoc): Member {
       done: doc.onboarding?.done ?? [],
       dismissed: Boolean(doc.onboarding?.dismissed),
       firstSeenAt: iso(doc.onboarding?.firstSeenAt),
+      welcomedAt: iso(doc.onboarding?.welcomedAt),
     },
     portalInvitedAt: iso(doc.portalInvitedAt),
     comp: doc.comp ?? null,
+    photo: doc.photo ?? null,
   };
 }
 

@@ -15,6 +15,7 @@ import { hasTeam, PLANS, planOf, type PlanId } from "@/lib/membership";
 import { TeamCard } from "@/components/portal/team-card";
 import type { Member } from "@/lib/admin/types";
 import { compActive, compDate, compLine, compRunning, compUntil, isPerk, type PerkTag } from "@/lib/perks";
+import { linkStripe, startClubBilling, stripeSnapshot, type StripeSnapshot } from "@/lib/admin/stripe-actions";
 import type { MemberStatus } from "@/lib/firebase/collections";
 
 /*
@@ -75,6 +76,7 @@ const VIEWS = [
   { value: "past_due", label: "Past due" },
   { value: "never", label: "Never signed in" },
   { value: "nologin", label: "No login yet" },
+  { value: "comp", label: "Complimentary" },
 ] as const;
 type View = (typeof VIEWS)[number]["value"];
 
@@ -82,6 +84,7 @@ function inView(m: MemberRow, view: View): boolean {
   if (view === "past_due") return m.status === "past_due";
   if (view === "never") return m.login.state === "invited";
   if (view === "nologin") return m.login.state === "none";
+  if (view === "comp") return compRunning(m.comp);
   return true;
 }
 
@@ -168,17 +171,20 @@ export function MembersManager({
   members,
   perks = [],
   startAdding = false,
+  startView,
 }: {
   members: MemberRow[];
   /** Tag definitions (Settings → Tags & perks) — for the slide-out's "what saving will do". */
   perks?: PerkTag[];
   /** Open "Add a member" straight away — the Overview's quick action (?add=1). */
   startAdding?: boolean;
+  /** Open on a view — the Overview's links (?view=comp). */
+  startView?: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = React.useTransition();
   const [query, setQuery] = React.useState("");
-  const [view, setView] = React.useState<View>("all");
+  const [view, setView] = React.useState<View>(() => (VIEWS.some((v) => v.value === startView) ? (startView as View) : "all"));
   const [tag, setTag] = React.useState("all");
   const [formerOpen, setFormerOpen] = React.useState(false);
   const [sort, setSort] = React.useState<{ by: Sort; dir: SortDir }>({ by: "joined", dir: "desc" });
@@ -575,19 +581,7 @@ export function MembersManager({
                   )}
                   <dt className="text-muted-foreground">Billing</dt>
                   <dd className="text-graphite">
-                    {editing.stripeCustomerId ? (
-                      <a
-                        href={`https://dashboard.stripe.com/customers/${editing.stripeCustomerId}`}
-                        target="_blank"
-                        rel="noreferrer noopener"
-                        className="inline-flex items-center gap-1.5 underline decoration-clay decoration-1 underline-offset-2"
-                      >
-                        Open in Stripe
-                        <ExternalLink className="h-3.5 w-3.5" strokeWidth={1.7} aria-hidden="true" />
-                      </a>
-                    ) : (
-                      "Not on Stripe yet"
-                    )}
+                    <StripePanel key={editing.id} memberId={editing.id} onChanged={() => router.refresh()} />
                   </dd>
                   <dt className="text-muted-foreground">Added by</dt>
                   <dd className="text-graphite">
@@ -875,5 +869,152 @@ function PerkPreview({
       Saving makes their membership complimentary {until ? `until ${compDate(until.toISOString())}` : "with no end date"} ({p.label})
       {paying ? `, and pauses their Stripe billing ${until ? "until then" : ""}` : ""}.
     </p>
+  );
+}
+
+/*
+  STRIPE, FOR STAFF (lib/admin/stripe-actions.ts) — read when the slide-out
+  opens: the linked customer, the card on file, the Club subscription, and
+  any OTHER active plan (Coworks' Community Membership). Two actions:
+  LINK (by email or cus_… — for members whose Stripe email differs) and
+  START CLUB BILLING on the card on file, today or on a date (Stripe holds
+  the first charge until then). Staff time it to the day their Coworks plan
+  ends, then end that plan in Coworks — so nobody is billed twice.
+*/
+const SOON_YEARS = [0, 1, 2].map((n) => {
+  const y = String(new Date().getFullYear() + n);
+  return { value: y, label: y };
+});
+
+function StripePanel({ memberId, onChanged }: { memberId: string; onChanged: () => void }) {
+  const [snap, setSnap] = React.useState<StripeSnapshot | null>(null);
+  const [failed, setFailed] = React.useState(false);
+  const [query, setQuery] = React.useState("");
+  const [starting, setStarting] = React.useState(false);
+  const [when, setWhen] = React.useState<"now" | "date">("now");
+  const today = new Date();
+  const [date, setDate] = React.useState({ month: String(today.getMonth() + 1).padStart(2, "0"), day: String(today.getDate()).padStart(2, "0"), year: String(today.getFullYear()) });
+  const [msg, setMsg] = React.useState<{ ok: boolean; text: string } | null>(null);
+  const [pending, startTransition] = React.useTransition();
+
+  const load = React.useCallback(() => {
+    stripeSnapshot(memberId)
+      .then((s) => setSnap(s))
+      .catch(() => setFailed(true));
+  }, [memberId]);
+  React.useEffect(() => {
+    load();
+  }, [load]);
+
+  function link() {
+    startTransition(async () => {
+      const res = await linkStripe(memberId, query);
+      setMsg({ ok: res.ok, text: res.message });
+      if (res.ok) {
+        setQuery("");
+        load();
+        onChanged();
+      }
+    });
+  }
+
+  function start() {
+    const iso = when === "now" ? "now" : `${date.year}-${date.month}-${date.day}T18:00:00.000Z`;
+    startTransition(async () => {
+      const res = await startClubBilling(memberId, iso);
+      setMsg({ ok: res.ok, text: res.message });
+      if (res.ok) {
+        setStarting(false);
+        load();
+        onChanged();
+      }
+    });
+  }
+
+  if (failed) return <span className="text-muted-foreground">Couldn&rsquo;t reach Stripe just now.</span>;
+  if (!snap) return <span className="text-muted-foreground">Checking Stripe…</span>;
+  if (!snap.configured) return <span className="text-muted-foreground">Stripe isn&rsquo;t connected on this copy of the site.</span>;
+
+  return (
+    <div className="flex flex-col gap-2">
+      {snap.customerId ? (
+        <>
+          <span>
+            {snap.club ? (
+              <>
+                Club · {snap.club.price} · {snap.club.status === "trialing" ? "starts" : "next payment"} {snap.club.next ? compDate(snap.club.next) : "—"}
+              </>
+            ) : (
+              <span className="text-muted-foreground">No Club billing yet</span>
+            )}
+          </span>
+          <span className="text-muted-foreground">{snap.card ?? "No card on file"}</span>
+          {snap.other.length > 0 && <span className="text-muted-foreground">Also paying: {snap.other.join(", ")} (Coworks)</span>}
+          <a
+            href={`https://dashboard.stripe.com/customers/${snap.customerId}`}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="inline-flex items-center gap-1.5 self-start underline decoration-clay decoration-1 underline-offset-2"
+          >
+            Open in Stripe
+            <ExternalLink className="h-3.5 w-3.5" strokeWidth={1.7} aria-hidden="true" />
+          </a>
+          {!snap.club && snap.card && !starting && (
+            <Button type="button" variant="outline" size="sm" className="mt-1 self-start" onClick={() => setStarting(true)} disabled={pending}>
+              Start Club billing
+            </Button>
+          )}
+          {starting && (
+            <div className="mt-1 flex flex-col gap-2 border border-border bg-bone p-3">
+              <p className="text-[13px] text-muted-foreground">On {snap.card}. Nothing is charged before the start date.</p>
+              <div role="radiogroup" aria-label="When billing starts" className="inline-flex self-start border border-border bg-bone-light">
+                {(["now", "date"] as const).map((v, i) => (
+                  <button
+                    key={v}
+                    type="button"
+                    role="radio"
+                    aria-checked={when === v}
+                    onClick={() => setWhen(v)}
+                    className={cn("h-8 px-3 text-[13px] font-medium", i > 0 && "border-l border-border", when === v ? "bg-graphite text-bone" : "text-muted-foreground hover:text-graphite")}
+                  >
+                    {v === "now" ? "Today" : "On a date"}
+                  </button>
+                ))}
+              </div>
+              {when === "date" && (
+                <div className="grid grid-cols-[1fr_5rem_6rem] gap-2">
+                  <Combobox name="start-month" options={MONTHS} value={date.month} onChange={(v) => setDate((d) => ({ ...d, month: v }))} searchable={false} />
+                  <Combobox name="start-day" options={DAYS} value={date.day} onChange={(v) => setDate((d) => ({ ...d, day: v }))} searchable={false} />
+                  <Combobox name="start-year" options={SOON_YEARS} value={date.year} onChange={(v) => setDate((d) => ({ ...d, year: v }))} searchable={false} />
+                </div>
+              )}
+              <div className="flex items-center gap-3">
+                <Button type="button" variant="ink" size="sm" onClick={start} disabled={pending}>
+                  {pending ? "Starting…" : "Start billing"}
+                </Button>
+                <button type="button" onClick={() => setStarting(false)} className="text-sm text-muted-foreground underline underline-offset-2">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          <span className="text-muted-foreground">Not linked to Stripe</span>
+          <div className="flex gap-2">
+            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Their Stripe email, or cus_…" aria-label="Stripe email or customer id" className="h-9" />
+            <Button type="button" variant="outline" size="sm" onClick={link} disabled={pending || !query.trim()}>
+              {pending ? "Linking…" : "Link"}
+            </Button>
+          </div>
+        </>
+      )}
+      {msg && (
+        <p role={msg.ok ? "status" : "alert"} className={cn("text-[13px]", msg.ok ? "text-graphite" : "text-geekdom-red")}>
+          {msg.text}
+        </p>
+      )}
+    </div>
   );
 }

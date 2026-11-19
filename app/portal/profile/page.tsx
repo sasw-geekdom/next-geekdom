@@ -13,8 +13,8 @@ import { HEADING, LINK, MONO } from "@/components/site/section";
 import { PortalPage } from "@/components/portal/portal-page";
 import { ProfileCard } from "@/components/portal/profile-card";
 import { ManageBillingButton } from "@/components/portal/billing-drawer";
-import { LiveBillingButton } from "@/components/portal/billing-live";
-import { getBilling } from "@/lib/stripe/billing";
+import { AddCardPanel, LiveBillingButton } from "@/components/portal/billing-live";
+import { getBilling, stripeConfigured } from "@/lib/stripe/billing";
 import { compDate, compRunning } from "@/lib/perks";
 import { cn } from "@/lib/utils";
 
@@ -123,6 +123,7 @@ export default async function ProfilePage(props: PageProps<"/portal/profile">) {
                     website: member.profile?.website ?? "",
                     linkedin: member.profile?.linkedin ?? "",
                     listed: member.profile?.listed !== false,
+                    photo: member.photo ?? undefined,
                   }
                 : { ...MOCK_MY_PROFILE, name: user.name ?? "" }
             }
@@ -163,6 +164,17 @@ export default async function ProfilePage(props: PageProps<"/portal/profile">) {
                 </p>
                 <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                   Questions? <a href={`mailto:${CLUB_EMAIL}`} className={LINK}>{CLUB_EMAIL}</a>.
+                </p>
+              </>
+            ) : member && !live && !comp && stripeConfigured() ? (
+              /* A MEMBER WITH NOTHING ON STRIPE, billing live: the real card form — never the sample. */
+              <>
+                <h2 className={cn(MONO.label, "text-muted-foreground")}>Billing</h2>
+                <div className="mt-3">
+                  <AddCardPanel />
+                </div>
+                <p className="mt-5 border-t border-border pt-4 text-sm leading-relaxed text-muted-foreground">
+                  {plan.name} · {priceText}. Questions? <a href={`mailto:${CLUB_EMAIL}`} className={LINK}>{CLUB_EMAIL}</a>.
                 </p>
               </>
             ) : comp && !live ? (

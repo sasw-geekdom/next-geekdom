@@ -46,6 +46,8 @@ export interface CompPeriod {
   by: string;
   /** True when the site paused a Stripe subscription for it (so removing the tag resumes it). */
   paused: boolean;
+  /** When the 30-days-before reminder went out (app/api/cron/comp-reminders) — sent once. */
+  remindedAt?: string;
 }
 
 export const isPerk = (t: PerkTag | undefined): t is PerkTag => Boolean(t && t.effect !== "none");

@@ -316,6 +316,30 @@ export function cardExpiringEmail(v: { name: string; card: string; exp: string }
   );
 }
 
+/**
+ * A complimentary membership (a perk tag — lib/perks.ts) ends in about 30
+ * days. Two cases: they PAY through Stripe and billing simply resumes on
+ * the card on file; or there's nothing set up, and they add a card to
+ * keep their membership.
+ */
+export function compEndingEmail(v: { name: string; label: string; endDate: string; resumes: { amount: string; card: string } | null }): Email {
+  return email(
+    `Your complimentary membership ends ${v.endDate}`,
+    v.resumes ? `Your billing picks up again on ${v.endDate}.` : `Add a card to keep your membership after ${v.endDate}.`,
+    eyebrow("Membership") +
+      h1(v.resumes ? "Your complimentary year is almost up." : "Keep your membership going.") +
+      p(`Hi ${first(v.name)}. Your complimentary membership, courtesy of ${v.label}, ends on ${v.endDate}.`) +
+      (v.resumes
+        ? details([
+            ["Billing resumes", v.endDate],
+            ["Amount", `${v.resumes.amount}/month`],
+            ["Card", v.resumes.card],
+          ]) + p("Nothing to do if that card's still right. To change it, open billing in the member portal.") + button(BILLING, "Review billing")
+        : p("To keep your membership after that, add a card in the member portal. You won't be charged before then.") + button(BILLING, "Add a card")),
+    `Your complimentary Geekdom membership (${v.label}) ends ${v.endDate}. ${v.resumes ? `Billing resumes then: ${v.resumes.amount}/month on ${v.resumes.card}.` : "Add a card to keep your membership."} ${BILLING}`,
+  );
+}
+
 export function cancellationConfirmedEmail(v: { name: string; endDate: string }): Email {
   return email(
     "Your Geekdom membership is set to end",
@@ -366,6 +390,7 @@ export function samples(): { key: string; mail: Email }[] {
   // From the price constant, never typed — it would drift from Stripe.
   const amount = priceLabel()?.split("/")[0] ?? "";
   return [
+    { key: "comp-ending", mail: compEndingEmail({ name, label: "DEVSA community", endDate: "December 19, 2027", resumes: { amount, card: "Visa •••• 4242" } }) },
     { key: "sign-in-link", mail: signInLinkEmail({ link: url("/sign-in") }) },
     { key: "portal-invite", mail: portalInviteEmail({ name }) },
     { key: "email-changed", mail: emailChangedEmail({ name, oldEmail: "jesse@oldmail.com", newEmail: "jesseovr@gmail.com" }) },

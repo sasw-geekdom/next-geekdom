@@ -696,8 +696,14 @@ members use personal Gmail, and the hint hid their accounts.
     beside the plan in the Members list, perk tags shown by their label.
   - Tested end to end (sandbox): create → apply (paused until next year) →
     member view → remove (resumed).
-  - **Not built yet**: the 30-days-before reminder (needs a scheduled job)
-    and an Overview row for periods ending soon.
+  - **The reminder**: a daily Vercel cron (vercel.json, 9 AM Central) hits
+    [/api/cron/comp-reminders](app/api/cron/comp-reminders/route.ts) with
+    `Authorization: Bearer $CRON_SECRET` (unset → it refuses: fails
+    closed). Members whose period ends within 30 days get
+    `compEndingEmail` ONCE (`comp.remindedAt`): "billing resumes on <date>
+    on Visa •••• 4242" if Stripe billing was paused, else "add a card". The
+    Overview shows "N complimentary memberships end in the next 30 days"
+    → Members filtered to **Complimentary** (`?view=comp`).
 
   (Geekdom decision). LIVE since November 2026 against a Stripe SANDBOX
   ("Geekdom website" — a clean one, not the old account's test mode, which
@@ -840,6 +846,39 @@ members use personal Gmail, and the hint hid their accounts.
     is linked, not duplicated. Only a total miss creates a `cus_`-keyed doc.
   - Join dates are stored at noon Central (midnight UTC is the day before
     here).
+- **The WELCOME FLOW comes first** ([/portal/welcome](app/portal/welcome/page.tsx),
+  [welcome-flow.tsx](components/portal/welcome-flow.tsx)): the dashboard
+  redirects a member there until `onboarding.welcomedAt` is set (finished,
+  or "Set this up later" — remind, don't block; staff are never sent).
+  1. **Your profile** — PHOTO ([photo-actions.ts](lib/portal/photo-actions.ts):
+     shrunk in the browser under the 1MB action limit, re-encoded by sharp
+     to a 512px square WebP with EXIF/GPS stripped, on Blob at
+     `members/{id}/`; stored as `MemberDoc.photo`, NOT inside `profile`,
+     which saves replace whole; NOT brand-graded — it's a person's own
+     picture), headline, bio, website, LinkedIn.
+  2. **Your membership** — one of: on a team (owner pays) · complimentary
+     (perk tag) · paying ("you're all set") · CARD ON FILE from Geekdom's
+     Stripe (Coworks-era — "the Club team will move your billing over, so
+     you're only charged once") · nothing (add a card; saving charges
+     nothing). Before deciding it AUTO-LINKS them to their Stripe customer
+     by email ([lib/stripe/link.ts](lib/stripe/link.ts): best of several —
+     active subscription, then valid card, then newest; a Club
+     subscription — our prices or a product named "Club Membership" — is
+     recorded as theirs; Coworks' other plans are NOT). Read-only on Stripe.
+  3. **You're in** — directory, rooms, the basics, the dashboard.
+  The dashboard's billing reminder shows only for a member with NOTHING
+  on file (no customer, not comped, not a teammate). The profile's billing
+  panel shows the real "Add a card" for them — the sample billing is only
+  for staff previews now.
+- **Staff's Stripe panel** in the member slide-out
+  ([stripe-actions.ts](lib/admin/stripe-actions.ts)): Club billing, card
+  on file, any OTHER plan they pay (Coworks), "Open in Stripe"; **Link**
+  by email or `cus_…` (when the Stripe email differs from the Club one —
+  2 of the 9 Coworks Club subscribers); **Start Club billing** on the card
+  on file, today or ON A DATE (Stripe `trial_end` — nothing charged
+  before it; never inside a complimentary period). Staff handle the
+  switch from Coworks: start on the day the Coworks plan ends, then end
+  it in Coworks. Logged.
 - **First-login onboarding is a checklist, not a tooltip tour**
   ([lib/onboarding.ts](lib/onboarding.ts), `OnboardingPanel` on the
   dashboard): check your profile, see the directory, find an event, join

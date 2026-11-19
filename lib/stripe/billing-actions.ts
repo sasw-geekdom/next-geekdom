@@ -38,6 +38,16 @@ async function payer() {
   return member;
 }
 
+/** Create the member's Stripe customer if they have none. */
+async function ensureCustomer() {
+  const user = await requireMember();
+  if (!stripeConfigured()) throw new Error("Billing isn't connected yet.");
+  const member = await getMemberByEmail(user.email);
+  if (!member || member.stripeCustomerId || member.teamOwnerId) return;
+  const c = await getStripe().customers.create({ email: member.email, name: member.name, metadata: { memberId: member.id, app: "next-geekdom" } });
+  await getAdminDb().collection(COLLECTIONS.members).doc(member.id).set({ stripeCustomerId: c.id, updatedAt: Timestamp.now() }, { merge: true });
+}
+
 const fail = (e: unknown): BillingResult => ({ ok: false, message: e instanceof Error ? e.message : "Something went wrong. Try again." });
 
 function refresh() {
@@ -45,9 +55,14 @@ function refresh() {
   revalidatePath("/portal");
 }
 
-/** Step 1 of a new card: a SetupIntent the browser confirms with Stripe directly. */
+/**
+ * Step 1 of a new card: a SetupIntent the browser confirms with Stripe directly.
+ * A member with no Stripe customer yet (the welcome flow's "Add a card") gets
+ * one here — after the welcome page's auto-link found none for their email.
+ */
 export async function startCardUpdate(): Promise<BillingResult & { clientSecret?: string }> {
   try {
+    await ensureCustomer();
     const m = await payer();
     const si = await getStripe().setupIntents.create({
       customer: m.stripeCustomerId!,
@@ -77,6 +92,7 @@ export async function finishCardUpdate(setupIntentId: string): Promise<BillingRe
     const pm = typeof si.payment_method === "string" ? si.payment_method : si.payment_method?.id;
     if (!pm) throw new Error("That card couldn't be saved. Try again.");
 
+    const hadCard = Boolean((await stripe.customers.retrieve(m.stripeCustomerId!).then((c) => (c.deleted ? null : c.invoice_settings?.default_payment_method)).catch(() => null)));
     await stripe.customers.update(m.stripeCustomerId!, { invoice_settings: { default_payment_method: pm } });
     if (m.stripeSubscriptionId) await stripe.subscriptions.update(m.stripeSubscriptionId, { default_payment_method: pm });
 
@@ -96,7 +112,11 @@ export async function finishCardUpdate(setupIntentId: string): Promise<BillingRe
     refresh();
     return {
       ok: true,
-      message: paid ? `Card updated, and your ${usd(paid)} payment went through — you're all set.` : "Card updated. Future payments use the new card.",
+      message: paid
+        ? `Card updated, and your ${usd(paid)} payment went through — you're all set.`
+        : hadCard
+          ? "Card updated. Future payments use the new card."
+          : "Card saved.",
     };
   } catch (e) {
     return fail(e);

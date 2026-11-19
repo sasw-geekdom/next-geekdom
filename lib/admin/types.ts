@@ -83,10 +83,11 @@ export interface Member {
   /** Set on a teammate: the owner's member id. */
   teamOwnerId: string | null;
   profile: MemberProfile | null;
-  onboarding: { done: string[]; dismissed: boolean; firstSeenAt: string | null };
+  onboarding: { done: string[]; dismissed: boolean; firstSeenAt: string | null; welcomedAt: string | null };
   portalInvitedAt: string | null;
   /** A complimentary period from a perk tag (lib/perks.ts), running or ended. */
   comp: CompPeriod | null;
+  photo: string | null;
 }
 
 export interface DashboardStats {

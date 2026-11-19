@@ -15,7 +15,7 @@ export const metadata = { title: "Members" };
  * comps, plan changes — stay in Stripe, linked from each Stripe-billed record.
  */
 export default async function MembersPage(props: PageProps<"/portal/admin/members">) {
-  const { add } = await props.searchParams;
+  const { add, view } = await props.searchParams;
   const [members, logins, perks] = await Promise.all([
     listMembers(),
     // Firebase being slow or down shouldn't take the roster with it.
@@ -59,7 +59,7 @@ export default async function MembersPage(props: PageProps<"/portal/admin/member
         }
       />
       <AdminSection>
-        <MembersManager members={rows} perks={perks} startAdding={add === "1"} />
+        <MembersManager members={rows} perks={perks} startAdding={add === "1"} startView={typeof view === "string" ? view : undefined} />
       </AdminSection>
     </>
   );

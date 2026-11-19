@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { requireMember } from "@/lib/auth/session";
 import { isAdmin } from "@/lib/auth/roles";
@@ -89,6 +90,10 @@ export default async function PortalHome() {
     FIRST VISIT: "Welcome", not "Welcome back" — and the visit is recorded
     so the next one says back. Members only; staff have no member record.
   */
+  // THE WELCOME FLOW first (app/portal/welcome): profile, then membership.
+  // Until they finish it or put it off — members only, never staff.
+  if (member && !staff && !member.onboarding.welcomedAt) redirect("/portal/welcome");
+
   const firstVisit = Boolean(member && !member.onboarding.firstSeenAt);
   if (member && firstVisit) {
     await getAdminDb()
@@ -114,6 +119,22 @@ export default async function PortalHome() {
 
   return (
     <PortalPage eyebrow="Member portal" title={first ? `Welcome${firstVisit ? "" : " back"}, ${first}.` : "Welcome."}>
+      {/*
+        THE BILLING REMINDER — remind, don't block (Geekdom's call). Only for
+        a member with NOTHING on file: not complimentary, not on a team, no
+        Stripe customer. A member with a card from Coworks is in the Club
+        team's hands (they start the billing), so they aren't nagged.
+      */}
+      {member && !member.teamOwnerId && !member.stripeCustomerId && !(member.comp && compRunning(member.comp, now)) && (
+        <p className="mb-6 flex flex-wrap items-center justify-between gap-3 border-l-2 border-clay bg-bone-light px-4 py-3 text-sm text-graphite">
+          <span>Your Club billing isn&rsquo;t set up yet. Add a card — nothing is charged until the Club team starts it.</span>
+          <Link href="/portal/profile#billing" className={cn("text-sm", LINK_ARROW)}>
+            Add a card
+            <ArrowRight aria-hidden="true" className={ARROW.internal} />
+          </Link>
+        </p>
+      )}
+
       {/* The membership, in one line — the details are on Profile. */}
       <p className="-mt-4 mb-6 flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground">
         {member ? (

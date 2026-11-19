@@ -1,3 +1,4 @@
+import { compRunning } from "@/lib/perks";
 import Link from "next/link";
 import { ArrowRight, Check, Plus } from "lucide-react";
 import { listApplications, listMembers } from "@/lib/admin/queries";
@@ -73,6 +74,8 @@ export default async function AdminOverview() {
   const current = members.filter((m) => CURRENT.includes(m.status));
   const former = members.length - current.length;
   const pastDue = current.filter((m) => m.status === "past_due").length;
+  // Complimentary periods (perk tags, lib/perks.ts) ending in the next 30 days — the member's been reminded; staff may want to follow up.
+  const compEnding = current.filter((m) => m.comp?.until && compRunning(m.comp, now) && Date.parse(m.comp.until) - now < 30 * 86_400_000).length;
   const joined30 = current.filter((m) => within(m.joinedAt, 30)).length;
   const signedIn = current.filter((m) => logins.get(m.email.toLowerCase())?.state === "active").length;
   const invited = current.filter((m) => m.portalInvitedAt).length;
@@ -148,6 +151,13 @@ export default async function AdminOverview() {
       text: `${plural(pastDue, "member")} past due`,
       detail: "card declined — they keep access",
       href: "/portal/admin/members",
+      cta: "Members",
+    },
+    compEnding > 0 && {
+      kind: "todo" as const,
+      text: `${plural(compEnding, "complimentary membership")} ${compEnding === 1 ? "ends" : "end"} in the next 30 days`,
+      detail: "they've been emailed a reminder",
+      href: "/portal/admin/members?view=comp",
       cta: "Members",
     },
     upcoming.length === 0 && {

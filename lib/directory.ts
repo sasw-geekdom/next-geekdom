@@ -50,6 +50,7 @@ export async function listDirectory(): Promise<DirectoryMember[]> {
         website: p?.website || undefined,
         linkedin: p?.linkedin || undefined,
         memberSince: m.joinedAt.toDate().toISOString(),
+        avatar: m.photo || undefined,
       };
     })
     .sort((a, b) => a.name.localeCompare(b.name));

@@ -341,3 +341,79 @@ function CardForm({ onDone, onError }: { onDone: (setupIntentId: string) => void
     </form>
   );
 }
+
+/**
+ * ADD A CARD, inline — the welcome flow's billing step. The same SetupIntent
+ * path as the drawer (card numbers go browser → Stripe), with its own Save
+ * button. Creates the member's Stripe customer if they have none.
+ */
+export function CardSetup({ onSaved }: { onSaved: (message: string) => void }) {
+  const [clientSecret, setClientSecret] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+  const [saving, setSaving] = React.useState(false);
+
+  React.useEffect(() => {
+    let live = true;
+    startCardUpdate().then((res) => {
+      if (!live) return;
+      if (res.ok && res.clientSecret) setClientSecret(res.clientSecret);
+      else setError(res.message || "Couldn't open the card form. Try again.");
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  if (error && !clientSecret) return <p role="alert" className="text-sm text-geekdom-red">{error}</p>;
+  if (!clientSecret) return <p className="border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">Loading the secure card form…</p>;
+
+  return (
+    <div className="flex flex-col gap-4">
+      <Elements stripe={getStripeJs()} options={{ clientSecret, appearance: APPEARANCE, fonts: FONTS }}>
+        <CardForm
+          onDone={async (id) => {
+            setSaving(true);
+            const res = await finishCardUpdate(id);
+            setSaving(false);
+            if (res.ok) onSaved(res.message);
+            else setError(res.message);
+          }}
+          onError={setError}
+        />
+      </Elements>
+      <div className="flex flex-wrap items-center gap-3">
+        <Button type="submit" form="card-form" variant="ink" disabled={saving}>
+          {saving ? "Saving…" : "Save card"}
+        </Button>
+        <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <Lock aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={1.6} />
+          Goes straight to Stripe. Geekdom never sees your card number.
+        </span>
+      </div>
+      {error && <p role="alert" className="text-sm text-geekdom-red">{error}</p>}
+    </div>
+  );
+}
+
+/** The profile's billing panel for a member with nothing on Stripe yet: one button, then the card form. */
+export function AddCardPanel() {
+  const router = useRouter();
+  const [open, setOpen] = React.useState(false);
+  const [saved, setSaved] = React.useState<string | null>(null);
+  if (saved) return <p role="status" className="text-sm text-graphite">{saved} The Club team will start your Club billing and let you know first.</p>;
+  return open ? (
+    <CardSetup
+      onSaved={(m) => {
+        setSaved(m);
+        router.refresh();
+      }}
+    />
+  ) : (
+    <div className="flex flex-col gap-3">
+      <p className="text-sm leading-relaxed text-muted-foreground">No card on file yet. Saving one doesn&rsquo;t charge anything — the Club team starts your billing and lets you know first.</p>
+      <Button type="button" variant="ink" size="sm" className="self-start" onClick={() => setOpen(true)}>
+        Add a card
+      </Button>
+    </div>
+  );
+}

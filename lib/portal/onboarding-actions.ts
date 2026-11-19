@@ -35,3 +35,15 @@ export async function setOnboardingDismissed(dismissed: boolean): Promise<void> 
   await ref.set({ onboarding: { dismissed } }, { merge: true });
   revalidatePath("/portal");
 }
+
+/**
+ * The welcome flow (/portal/welcome) is done — or put off. Either way it
+ * isn't shown again; the dashboard's checklist and billing reminder carry
+ * on from here. Finishing it also ticks "Check your profile".
+ */
+export async function finishWelcome(): Promise<void> {
+  const ref = await myRef();
+  if (!ref) return;
+  await ref.set({ onboarding: { welcomedAt: new Date(), done: FieldValue.arrayUnion("profile") } }, { merge: true });
+  revalidatePath("/portal");
+}
