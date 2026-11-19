@@ -6,7 +6,8 @@ import { requireMember } from "@/lib/auth/session";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { COLLECTIONS } from "@/lib/firebase/collections";
 import { getMemberByEmail } from "@/lib/admin/queries";
-import { ONBOARDING_STEPS, type OnboardingStep } from "@/lib/onboarding";
+import { cookies } from "next/headers";
+import { ONBOARDING_STEPS, WELCOME_SEEN_COOKIE, type OnboardingStep } from "@/lib/onboarding";
 
 /*
   ONBOARDING PROGRESS — the member is the SESSION's, never an id from the
@@ -37,13 +38,21 @@ export async function setOnboardingDismissed(dismissed: boolean): Promise<void> 
 }
 
 /**
- * The welcome flow (/portal/welcome) is done — or put off. Either way it
- * isn't shown again; the dashboard's checklist and billing reminder carry
- * on from here. Finishing it also ticks "Check your profile".
+ * The welcome flow (/portal/welcome) is done — or put off. Marks this
+ * SIGN-IN as having seen it (the cookie; signing in clears it — see
+ * WELCOME_EVERY_SIGN_IN) and, for a member, records it for good and ticks
+ * "Check your profile". Staff (a preview) get the cookie only.
  */
 export async function finishWelcome(): Promise<void> {
-  const ref = await myRef();
-  if (!ref) return;
-  await ref.set({ onboarding: { welcomedAt: new Date(), done: FieldValue.arrayUnion("profile") } }, { merge: true });
+  const user = await requireMember();
+  const store = await cookies();
+  store.set(WELCOME_SEEN_COOKIE, "1", { httpOnly: true, sameSite: "lax", path: "/", secure: process.env.NODE_ENV === "production" });
+  const me = await getMemberByEmail(user.email);
+  if (me) {
+    await getAdminDb()
+      .collection(COLLECTIONS.members)
+      .doc(me.id)
+      .set({ onboarding: { welcomedAt: new Date(), done: FieldValue.arrayUnion("profile") } }, { merge: true });
+  }
   revalidatePath("/portal");
 }

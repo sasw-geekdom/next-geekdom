@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { requireMember } from "@/lib/auth/session";
 import { isAdmin } from "@/lib/auth/roles";
@@ -14,7 +15,7 @@ import { BOOKING_WINDOW, ROOM_RULES, centralDay, dayLabel, lengthLabel, timeLabe
 import { planOf } from "@/lib/membership";
 import { compDate, compRunning } from "@/lib/perks";
 import { listDirectory } from "@/lib/directory";
-import { stepsFor } from "@/lib/onboarding";
+import { stepsFor, WELCOME_EVERY_SIGN_IN, WELCOME_SEEN_COOKIE } from "@/lib/onboarding";
 import { OnboardingPanel, type OnboardingStepView } from "@/components/portal/onboarding-panel";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { COLLECTIONS } from "@/lib/firebase/collections";
@@ -91,8 +92,11 @@ export default async function PortalHome() {
     so the next one says back. Members only; staff have no member record.
   */
   // THE WELCOME FLOW first (app/portal/welcome): profile, then membership.
-  // Until they finish it or put it off — members only, never staff.
-  if (member && !staff && !member.onboarding.welcomedAt) redirect("/portal/welcome");
+  // Until launch, EVERYONE sees it once per sign-in, staff included (a
+  // preview) — WELCOME_EVERY_SIGN_IN in lib/onboarding.ts. After launch,
+  // only a member who hasn't finished it, once.
+  const seenThisSignIn = Boolean((await cookies()).get(WELCOME_SEEN_COOKIE));
+  if (WELCOME_EVERY_SIGN_IN ? !seenThisSignIn && (member || staff) : member && !staff && !member.onboarding.welcomedAt) redirect("/portal/welcome");
 
   const firstVisit = Boolean(member && !member.onboarding.firstSeenAt);
   if (member && firstVisit) {

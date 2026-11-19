@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { requireMember } from "@/lib/auth/session";
+import { isAdmin } from "@/lib/auth/roles";
 import { getMemberByEmail } from "@/lib/admin/queries";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { COLLECTIONS, type MemberDoc } from "@/lib/firebase/collections";
@@ -34,7 +35,25 @@ export const metadata = { title: "Welcome" };
 export default async function WelcomePage() {
   const user = await requireMember();
   let member = await getMemberByEmail(user.email);
-  if (!member) redirect("/portal"); // staff without a membership
+  // STAFF WITHOUT A MEMBERSHIP get a PREVIEW (until launch everyone walks
+  // through this for feedback — WELCOME_EVERY_SIGN_IN): sample profile,
+  // saving off, and a switch to view each membership case.
+  if (!member) {
+    if (!isAdmin(user)) redirect("/portal");
+    return (
+      <PortalPage
+        eyebrow="Welcome · staff preview"
+        title={`Welcome to Geekdom, ${(user.name ?? "").split(" ")[0] || "there"}.`}
+        notice="You're on the Geekdom team, so this is a preview of what members see at first sign-in. Nothing you enter here is saved."
+      >
+        <WelcomeFlow
+          preview
+          member={{ name: user.name ?? "Geekdom team", photo: null, plan: "Solo", profile: { headline: "", role: "", company: "", audience: "", askMeAbout: [], lookingFor: "", bio: "", website: "", linkedin: "", listed: true } }}
+          membership={{ kind: "complimentary", label: "DEVSA community", until: compDate(new Date(new Date().getTime() + 365 * 86_400_000).toISOString()) }}
+        />
+      </PortalPage>
+    );
+  }
 
   if (stripeConfigured() && !member.stripeCustomerId && !member.teamOwnerId) {
     const linked = await autoLink(member);

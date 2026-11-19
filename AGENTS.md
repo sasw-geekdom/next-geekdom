@@ -846,6 +846,15 @@ members use personal Gmail, and the hint hid their accounts.
     is linked, not duplicated. Only a total miss creates a `cus_`-keyed doc.
   - Join dates are stored at noon Central (midnight UTC is the day before
     here).
+- **UNTIL LAUNCH, WELCOME AT EVERY SIGN-IN, FOR EVERYONE** (Jesse,
+  November 2026 — only Geekdom staff have access, and all of them should
+  walk through it to give feedback): `WELCOME_EVERY_SIGN_IN = true` in
+  [lib/onboarding.ts](lib/onboarding.ts). Each sign-in clears the
+  `gk_welcome_seen` cookie (app/api/auth/session); finishing or "Set this
+  up later" sets it. STAFF without a membership get a PREVIEW (nothing
+  saves; step 2 has a "Preview as" switch across all five membership
+  cases). **Turn it OFF at launch — Jesse will say when**; then only a
+  member who hasn't finished it is sent there, once.
 - **The WELCOME FLOW comes first** ([/portal/welcome](app/portal/welcome/page.tsx),
   [welcome-flow.tsx](components/portal/welcome-flow.tsx)): the dashboard
   redirects a member there until `onboarding.welcomedAt` is set (finished,

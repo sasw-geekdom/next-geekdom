@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { createSession, SESSION_COOKIE } from "@/lib/auth/session";
+import { WELCOME_SEEN_COOKIE } from "@/lib/onboarding";
 
 /** Exchange a Firebase ID token for an httpOnly, server-verified session cookie. */
 export async function POST(request: Request) {
@@ -35,6 +36,8 @@ export async function POST(request: Request) {
   }
 
   const store = await cookies();
+  // A fresh sign-in sees the welcome flow again while WELCOME_EVERY_SIGN_IN is on (lib/onboarding.ts).
+  store.delete(WELCOME_SEEN_COOKIE);
   store.set(SESSION_COOKIE, result.cookie, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

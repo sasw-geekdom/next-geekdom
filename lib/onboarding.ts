@@ -52,3 +52,15 @@ export const STEP_COPY: Record<OnboardingStep, StepCopy> = {
 /** The steps that apply right now — Slack only once there's an invite link. */
 export const stepsFor = (hasSlack: boolean): OnboardingStep[] =>
   ONBOARDING_STEPS.filter((s) => s !== "slack" || hasSlack);
+
+/*
+  THE WELCOME FLOW AT EVERY SIGN-IN — ON UNTIL LAUNCH (Jesse, November
+  2026: only Geekdom staff have access, and everyone should walk through
+  it to give feedback). While true, EVERYONE — staff included, in a
+  preview — is sent to /portal/welcome once per sign-in; finishing it (or
+  "Set this up later") sets WELCOME_SEEN_COOKIE, which signing in clears.
+  Turn it OFF at launch: then only members who haven't finished it are
+  sent there, once (`onboarding.welcomedAt`). Jesse says when.
+*/
+export const WELCOME_EVERY_SIGN_IN = true;
+export const WELCOME_SEEN_COOKIE = "gk_welcome_seen";

@@ -28,6 +28,8 @@ export type MembershipCase =
   | { kind: "none"; price: string; stripe: boolean };
 
 interface Props {
+  /** Staff preview: nothing saves, and step 2 can show every membership case. */
+  preview?: boolean;
   member: {
     name: string;
     photo: string | null;
@@ -39,7 +41,16 @@ interface Props {
 
 const STEPS = ["Your profile", "Your membership", "You're in"];
 
-export function WelcomeFlow({ member, membership }: Props) {
+/** Sample cases for the staff preview's "Preview as" switch. */
+const PREVIEW_CASES: { label: string; m: MembershipCase }[] = [
+  { label: "Complimentary", m: { kind: "complimentary", label: "DEVSA community", until: "November 19, 2027" } },
+  { label: "Paying", m: { kind: "paying", price: "$100/month", card: "Visa •••• 4242", next: "December 19, 2026" } },
+  { label: "Card on file", m: { kind: "card", card: "Visa •••• 4242", other: ["Community Membership"] } },
+  { label: "Nothing on file", m: { kind: "none", price: "$100/month", stripe: true } },
+  { label: "Teammate", m: { kind: "team", owner: "Ana Planner", company: "QA Clinic Group" } },
+];
+
+export function WelcomeFlow({ member, membership, preview = false }: Props) {
   const router = useRouter();
   const [step, setStep] = React.useState(0);
   const [leaving, setLeaving] = React.useState(false);
@@ -79,8 +90,10 @@ export function WelcomeFlow({ member, membership }: Props) {
         )}
       </div>
 
-      {step === 0 && <ProfileStep member={member} onNext={() => setStep(1)} />}
-      {step === 1 && <MembershipStep membership={membership} plan={member.plan} onNext={() => setStep(2)} onBack={() => setStep(0)} />}
+      {step === 0 && <ProfileStep member={member} preview={preview} onNext={() => setStep(1)} />}
+      {step === 1 && (
+        <MembershipStep membership={membership} plan={member.plan} preview={preview} onNext={() => setStep(2)} onBack={() => setStep(0)} />
+      )}
       {step === 2 && (
         <section className="border border-border bg-bone-light p-6 sm:p-8">
           <h2 className={cn(HEADING.subhead, "text-graphite")}>You&rsquo;re in.</h2>
@@ -110,7 +123,7 @@ export function WelcomeFlow({ member, membership }: Props) {
   );
 }
 
-function ProfileStep({ member, onNext }: { member: Props["member"]; onNext: () => void }) {
+function ProfileStep({ member, preview, onNext }: { member: Props["member"]; preview: boolean; onNext: () => void }) {
   const [p, setP] = React.useState(member.profile);
   const [error, setError] = React.useState<string | null>(null);
   const [pending, startTransition] = React.useTransition();
@@ -119,6 +132,7 @@ function ProfileStep({ member, onNext }: { member: Props["member"]; onNext: () =
   function save(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (preview) return onNext(); // the staff preview saves nothing
     startTransition(async () => {
       const res = await saveMyProfile({ name: member.name, ...p });
       if (res.ok) onNext();
@@ -134,7 +148,16 @@ function ProfileStep({ member, onNext }: { member: Props["member"]; onNext: () =
           The directory is how members find the person who knows the thing. A photo, a line about what you&rsquo;re building, and where to find your work.
         </p>
       </div>
-      <PhotoField photo={member.photo} name={member.name} />
+      {preview ? (
+        <div className="flex items-center gap-5">
+          <span aria-hidden="true" className={cn(MONO.label, "flex h-24 w-24 shrink-0 items-center justify-center bg-graphite text-bone")}>
+            {member.name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase()}
+          </span>
+          <p className="max-w-sm text-sm text-muted-foreground">Members upload their photo here — it&rsquo;s cropped square and shown in the directory. (Off in the preview.)</p>
+        </div>
+      ) : (
+        <PhotoField photo={member.photo} name={member.name} />
+      )}
       <Field label="Headline" htmlFor="w-headline" hint="One line on what you're building or what you do.">
         <Input id="w-headline" value={p.headline} maxLength={160} onChange={(e) => set("headline")(e.target.value)} placeholder="Building scheduling tools for clinics" />
       </Field>
@@ -169,9 +192,23 @@ function ProfileStep({ member, onNext }: { member: Props["member"]; onNext: () =
   );
 }
 
-function MembershipStep({ membership: m, plan, onNext, onBack }: { membership: MembershipCase; plan: string; onNext: () => void; onBack: () => void }) {
+function MembershipStep({
+  membership,
+  plan,
+  preview,
+  onNext,
+  onBack,
+}: {
+  membership: MembershipCase;
+  plan: string;
+  preview: boolean;
+  onNext: () => void;
+  onBack: () => void;
+}) {
   const [saved, setSaved] = React.useState<string | null>(null);
   const [adding, setAdding] = React.useState(false);
+  const [previewAs, setPreviewAs] = React.useState(0);
+  const m = preview ? PREVIEW_CASES[previewAs].m : membership;
 
   const body = (() => {
     switch (m.kind) {
@@ -218,6 +255,10 @@ function MembershipStep({ membership: m, plan, onNext, onBack }: { membership: M
       case "none":
         return saved ? (
           <p className="leading-relaxed text-graphite">{saved} The Club team will start your Club billing and let you know first.</p>
+        ) : adding && preview ? (
+          <p className="border border-dashed border-border px-4 py-6 text-sm text-muted-foreground">
+            Members add their card here with Stripe&rsquo;s secure card form — the same one as Manage billing. (Off in the preview.)
+          </p>
         ) : adding ? (
           <CardSetup onSaved={(msg) => setSaved(msg)} />
         ) : (
@@ -241,6 +282,32 @@ function MembershipStep({ membership: m, plan, onNext, onBack }: { membership: M
 
   return (
     <section className="flex flex-col gap-6 border border-border bg-bone-light p-6 sm:p-8">
+      {preview && (
+        <div className="flex flex-wrap items-center gap-3 border border-dashed border-border px-3 py-2.5">
+          <span className={cn(MONO.label, "text-graphite")}>Preview as</span>
+          <div role="radiogroup" aria-label="Preview a membership case" className="flex flex-wrap">
+            {PREVIEW_CASES.map((c, i) => (
+              <button
+                key={c.label}
+                type="button"
+                role="radio"
+                aria-checked={previewAs === i}
+                onClick={() => {
+                  setPreviewAs(i);
+                  setAdding(false);
+                  setSaved(null);
+                }}
+                className={cn(
+                  "-ml-px border px-2.5 py-1 text-xs first:ml-0",
+                  previewAs === i ? "relative z-10 border-graphite bg-graphite text-bone" : "border-border text-graphite hover:border-graphite",
+                )}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       <div>
         <h2 className={cn(HEADING.subhead, "text-graphite")}>{title}</h2>
       </div>
