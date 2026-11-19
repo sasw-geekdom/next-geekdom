@@ -13,6 +13,7 @@ import {
   NotebookPen,
   Shapes,
   ShieldCheck,
+  Tag,
   Type,
   UserRound,
   Users,
@@ -111,6 +112,8 @@ export const ADMIN_NAV: NavGroup[] = [
     items: [
       // Who can sign in to this admin — owners manage it.
       { href: "/portal/admin/team", label: "Admin access", icon: ShieldCheck },
+      // Member tags, and the PERK tags that make a membership complimentary.
+      { href: "/portal/admin/tags", label: "Tags & perks", icon: Tag },
       { href: "/portal/admin/activity", label: "Activity log", icon: History },
     ],
   },

@@ -5,7 +5,15 @@ import { getAdminDb } from "@/lib/firebase/admin";
 import { COLLECTIONS, type MemberDoc } from "@/lib/firebase/collections";
 import { getStripe, periodEnd, toMemberStatus } from "@/lib/stripe/server";
 import { sendSafely } from "@/lib/email/resend";
-import { memberWelcomeEmail } from "@/lib/email/member-templates";
+import {
+  cancellationConfirmedEmail,
+  memberWelcomeEmail,
+  membershipEndedEmail,
+  paymentFailedEmail,
+  receiptEmail,
+  welcomeBackEmail,
+} from "@/lib/email/member-templates";
+import { cardOf } from "@/lib/stripe/billing";
 import { PLAN_IDS, type PlanId } from "@/lib/membership";
 import { syncTeamStatus } from "@/lib/team";
 import type { ApplicationDoc } from "@/lib/firebase/collections";
@@ -53,6 +61,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid signature." }, { status: 400 });
   }
 
+  // ONCE PER EVENT. Stripe redelivers (a slow response, a retry), and the
+  // handlers below send email — so an event already handled is acknowledged
+  // and skipped. Marked only AFTER it succeeds, so a failed one still retries.
+  const seen = getAdminDb().collection(COLLECTIONS.stripeEvents).doc(event.id);
+  if ((await seen.get()).exists) return NextResponse.json({ received: true, duplicate: true });
+
   try {
     switch (event.type) {
       case "checkout.session.completed": {
@@ -66,7 +80,26 @@ export async function POST(request: Request) {
       case "customer.subscription.deleted":
       case "customer.subscription.paused":
       case "customer.subscription.resumed": {
-        await syncSubscription(event.data.object);
+        // RE-READ, don't trust the event's copy: an endpoint can be on an older
+        // Stripe API version (the sandbox's default is 2017), where a
+        // subscription carries no item-level period end. Retrieving it with
+        // the SDK returns it in the version this code is written against.
+        // (A canceled subscription can still be retrieved.)
+        const sub = await getStripe().subscriptions.retrieve(event.data.object.id);
+        const member = await syncSubscription(sub);
+        if (member) await subscriptionEmails(event, member, sub);
+        break;
+      }
+
+      // A payment went through — the receipt, and the date on the record.
+      case "invoice.paid": {
+        await invoicePaid(await getStripe().invoices.retrieve(event.data.object.id!));
+        break;
+      }
+
+      // A payment failed — tell the member, with the way to fix it.
+      case "invoice.payment_failed": {
+        await invoiceFailed(await getStripe().invoices.retrieve(event.data.object.id!));
         break;
       }
 
@@ -83,6 +116,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Handler failed." }, { status: 500 });
   }
 
+  await seen.set({ type: event.type, at: Timestamp.now() }).catch(() => {});
   return NextResponse.json({ received: true });
 }
 
@@ -236,13 +270,20 @@ async function syncSubscription(subscription: Stripe.Subscription) {
   // No member doc means checkout.session.completed hasn't landed yet — Stripe
   // does not guarantee event ordering. Creating a stub here would produce a
   // roster row with no name or email, so let the checkout handler create it
-  // and rely on Stripe's retry to re-deliver this one.
+  // and have Stripe RETRY this one: throwing makes it a 500, and Stripe
+  // redelivers with backoff. (It used to return quietly — a 200, so Stripe
+  // never retried and the update was lost.)
+  //
+  // Only for OUR subscriptions (checkout stamps `plan` in their metadata) and
+  // never for one that has ended: a subscription from another app on the
+  // same Stripe account, or a deleted customer's, would otherwise be retried
+  // for days. Those are acknowledged and skipped.
   if (!existing) {
-    console.warn(
-      "[stripe] subscription event before checkout for customer",
-      customerId,
-    );
-    return;
+    const ours = Boolean(subscription.metadata?.plan);
+    if (ours && subscription.status !== "canceled") {
+      throw new Error(`subscription event before checkout for customer ${customerId}`);
+    }
+    return null;
   }
 
   const status = toMemberStatus(subscription.status);
@@ -259,6 +300,76 @@ async function syncSubscription(subscription: Stripe.Subscription) {
   // The owner's status is the team's: past due, canceled or paused, the
   // teammates follow (lib/team.ts).
   await syncTeamStatus(ref.id, status);
+  return { ...(existing.data() as MemberDoc), id: ref.id };
+}
+
+/*
+  THE BILLING EMAILS (lib/email/member-templates.ts — Geekdom's brand, not
+  Stripe's). Each fires on the change, not the state: "cancel at period
+  end" switching ON sends the confirmation, switching OFF the welcome
+  back, the subscription ending the goodbye. `previous_attributes` is how
+  an updated event says what changed.
+*/
+const longDate = (d: Date | null) =>
+  d ? new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", month: "long", day: "numeric", year: "numeric" }).format(d) : "";
+const usd = (cents: number, currency = "usd") =>
+  new Intl.NumberFormat("en-US", { style: "currency", currency: currency.toUpperCase(), minimumFractionDigits: cents % 100 ? 2 : 0 }).format(cents / 100);
+
+async function subscriptionEmails(event: Stripe.Event, member: MemberDoc & { id: string }, sub: Stripe.Subscription) {
+  if (!member.email) return;
+  const send = (m: { subject: string; html: string; text: string }) => sendSafely({ to: member.email, subject: m.subject, html: m.html, text: m.text });
+
+  if (event.type === "customer.subscription.deleted") {
+    await send(membershipEndedEmail({ name: member.name }));
+    return;
+  }
+  if (event.type !== "customer.subscription.updated") return;
+  const before = (event.data.previous_attributes ?? {}) as Partial<Stripe.Subscription>;
+  if (!("cancel_at_period_end" in before) || before.cancel_at_period_end === sub.cancel_at_period_end) return;
+  const end = longDate(periodEnd(sub));
+  await send(sub.cancel_at_period_end ? cancellationConfirmedEmail({ name: member.name, endDate: end }) : welcomeBackEmail({ name: member.name, nextPayment: end }));
+}
+
+const customerOf = (inv: Stripe.Invoice) => (typeof inv.customer === "string" ? inv.customer : inv.customer?.id) ?? "";
+
+/** The card an invoice was charged to (or tried), as "Visa •••• 4242". */
+async function invoiceCard(inv: Stripe.Invoice): Promise<string> {
+  try {
+    const payments = await getStripe().invoicePayments.list({ invoice: inv.id!, limit: 1, expand: ["data.payment.payment_intent.payment_method"] });
+    const pi = payments.data[0]?.payment?.payment_intent;
+    const pm = pi && typeof pi !== "string" ? (pi.payment_method as Stripe.PaymentMethod | string | null) : null;
+    const c = cardOf(pm);
+    return c ? `${c.brand} •••• ${c.last4}` : "your card";
+  } catch {
+    return "your card";
+  }
+}
+
+async function invoicePaid(inv: Stripe.Invoice) {
+  if (!inv.amount_paid) return; // a $0 invoice (a trial, a full coupon) isn't a payment
+  const { ref, existing } = await findMember(customerOf(inv));
+  if (!existing) return; // checkout's own handler welcomes them; the receipt follows on the next one
+  const m = existing.data() as MemberDoc;
+  await ref.set({ lastPaymentAt: Timestamp.now(), lastPaymentCents: inv.amount_paid, updatedAt: Timestamp.now() }, { merge: true });
+  if (!m.email) return;
+  const mail = receiptEmail({
+    name: m.name,
+    amount: usd(inv.amount_paid, inv.currency),
+    date: longDate(new Date(((inv.status_transitions?.paid_at ?? inv.created) || 0) * 1000)),
+    card: await invoiceCard(inv),
+    invoiceNumber: inv.number ?? "",
+  });
+  await sendSafely({ to: m.email, subject: mail.subject, html: mail.html, text: mail.text });
+}
+
+async function invoiceFailed(inv: Stripe.Invoice) {
+  const { existing } = await findMember(customerOf(inv));
+  if (!existing) return;
+  const m = existing.data() as MemberDoc;
+  if (!m.email) return;
+  // The subscription's own update event moves them to past due; this is the email.
+  const mail = paymentFailedEmail({ name: m.name, amount: usd(inv.amount_due, inv.currency), card: await invoiceCard(inv) });
+  await sendSafely({ to: m.email, subject: mail.subject, html: mail.html, text: mail.text });
 }
 
 function toTimestamp(date: Date | null): Timestamp | null {

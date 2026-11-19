@@ -13,6 +13,7 @@ import type { ActionResult } from "@/lib/content/types";
 import { logActivity } from "@/lib/admin/activity";
 import { addTeammate, getTeam, removeTeammate, syncTeamStatus } from "@/lib/team";
 import { hasTeam, PLAN_IDS } from "@/lib/membership";
+import { applyPerks } from "@/lib/perks-server";
 
 /*
   "ADD A MEMBER" AND EDITING ONE, from /portal/admin/members.
@@ -135,6 +136,18 @@ export async function saveMember(input: MemberInput): Promise<ActionResult> {
   // An OWNER's status is their team's (lib/team.ts).
   if (!before?.teamOwnerId && hasTeam(data.plan)) await syncTeamStatus(ref.id, status);
 
+  // A PERK TAG added or removed (lib/perks-server.ts): start or end a
+  // complimentary period, pausing or resuming their Stripe billing.
+  let perkNote: string | null = null;
+  try {
+    perkNote = await applyPerks(ref, before, data.tags, user.name || user.email);
+  } catch (e) {
+    perkNote = `Saved, but the complimentary period couldn't be set: ${e instanceof Error ? e.message : "try again"}.`;
+  }
+  if (perkNote) {
+    await logActivity(user, { area: "members", action: "updated the complimentary membership of", label: data.name, href: "/portal/admin/members" });
+  }
+
   const STATUS_WORD: Partial<Record<string, string>> = { inactive: "paused", canceled: "canceled", active: "reactivated" };
   await logActivity(user, {
     area: "members",
@@ -147,7 +160,7 @@ export async function saveMember(input: MemberInput): Promise<ActionResult> {
   if (!login.ok) {
     return { ok: false, error: `Saved, but their sign-in couldn't be set up: ${login.error}` };
   }
-  return { ok: true, id: ref.id };
+  return { ok: true, id: ref.id, ...(perkNote ? { note: perkNote } : {}) };
 }
 
 /** "Create login" for a member who has none (e.g. one Stripe created before logins existed). */

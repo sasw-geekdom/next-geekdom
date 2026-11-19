@@ -30,6 +30,8 @@ export const COLLECTIONS = {
   roomSlots: "roomSlots",
   /** One doc per member per week: the slots they hold — the 4-hour cap and no double-booking yourself. */
   roomWeeks: "roomWeeks",
+  // Stripe events already handled — so a redelivered event never emails twice (app/api/stripe/webhook).
+  stripeEvents: "stripeEvents",
 } as const;
 
 /**
@@ -86,7 +88,7 @@ export interface ActivityDoc {
   at: Timestamp;
   /** Who did it, as they were signed in at the time. */
   actor: { email: string; name: string | null };
-  area: "events" | "field-notes" | "portfolio" | "members" | "applications" | "photo-wall" | "member-resources" | "inquiries" | "rooms" | "site-copy" | "team";
+  area: "events" | "field-notes" | "portfolio" | "members" | "applications" | "photo-wall" | "member-resources" | "inquiries" | "rooms" | "site-copy" | "team" | "perks";
   /** Past tense, lower case: "published", "added", "deleted"… */
   action: string;
   /** What it was done to, in words: the note's title, the member's name. */
@@ -307,6 +309,15 @@ export interface MemberDoc {
   currentPeriodEnd: Timestamp | null;
   /** True when the member has asked Stripe to stop at period end. */
   cancelAtPeriodEnd: boolean;
+  /**
+   * A COMPLIMENTARY period from a perk tag (lib/perks.ts — "DEVSA community"
+   * = 12 months from the day it's applied). Stamped when the tag is applied,
+   * so later edits to the tag's terms don't change it.
+   */
+  comp?: import("@/lib/perks").CompPeriod;
+  /** The last successful payment (the webhook's invoice.paid) — when, and how much. */
+  lastPaymentAt?: Timestamp;
+  lastPaymentCents?: number;
 
   joinedAt: Timestamp;
   updatedAt: Timestamp;

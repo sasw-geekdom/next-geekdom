@@ -113,6 +113,7 @@ function toMember(id: string, doc: MemberDoc): Member {
       firstSeenAt: iso(doc.onboarding?.firstSeenAt),
     },
     portalInvitedAt: iso(doc.portalInvitedAt),
+    comp: doc.comp ?? null,
   };
 }
 

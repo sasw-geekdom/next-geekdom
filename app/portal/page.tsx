@@ -11,6 +11,7 @@ import { indexOrder, listForReaders } from "@/lib/field-notes/notes";
 import { bookerFor, upcomingFor } from "@/lib/rooms/rooms";
 import { BOOKING_WINDOW, ROOM_RULES, centralDay, dayLabel, lengthLabel, timeLabel } from "@/lib/rooms/rules";
 import { planOf } from "@/lib/membership";
+import { compDate, compRunning } from "@/lib/perks";
 import { listDirectory } from "@/lib/directory";
 import { stepsFor } from "@/lib/onboarding";
 import { OnboardingPanel, type OnboardingStepView } from "@/components/portal/onboarding-panel";
@@ -120,6 +121,7 @@ export default async function PortalHome() {
             <span>
               {plan.name} membership · since {longDate(member.joinedAt)}
               {member.status === "inactive" ? " · paused" : member.status === "canceled" ? " · canceled" : ""}
+              {member.comp && compRunning(member.comp, now) ? ` · complimentary${member.comp.until ? ` until ${compDate(member.comp.until)}` : ""}` : ""}
             </span>
             <Link href="/portal/profile" className={cn("text-sm", LINK_ARROW)}>
               Profile and billing

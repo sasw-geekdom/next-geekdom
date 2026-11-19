@@ -671,18 +671,75 @@ members use personal Gmail, and the hint hid their accounts.
   slide-out from the card's Edit — never inline. Sample billing is said
   INSIDE the billing panel, not as a page banner; staff keep the preview
   notice. On a phone the profile comes first.
-- **Billing is fully in-app — members never see Stripe's hosted portal**
-  (Geekdom decision). "Manage billing" opens the billing slide-out
-  ([billing-drawer.tsx](components/portal/billing-drawer.tsx)): plan, card +
-  Update card, invoices and receipts, cancel at period end / resume, and a
-  past-due banner that pays the open invoice in place. A MOCK until the
-  Stripe keys exist; the real build is Stripe's Payment Element in the
-  drawer (SetupIntent, card data never on our servers), `invoices.list`,
-  `invoices.pay`, `cancel_at_period_end`. No "More billing options" link —
-  no tax IDs or other payment methods needed. No autopay toggle: the
-  subscription always auto-charges. **The mock's card fields are read-only
-  on purpose** — never let a mock accept a real card number. `/account`
-  still emails a Stripe portal link; switch it to "sign in" when this ships.
+- **Tags & perks** (Settings → Tags & perks, `/portal/admin/tags`; Geekdom,
+  November 2026 — TAGS, not discount codes: a code is something a member
+  must know and type; a tag is staff deciding "this person gets this").
+  [lib/perks.ts](lib/perks.ts) (rules), [perks-server.ts](lib/perks-server.ts),
+  [perks-actions.ts](lib/perks-actions.ts).
+  - **Definitions** in `settings/memberTags`: name (the lowercased key members
+    carry), label ("DEVSA community"), effect — label only / complimentary
+    for N months / complimentary, no end date — and a staff note. **OWNERS
+    create and change them** (`requireRole("superadmin")`); every admin can
+    read the list and APPLY tags. Logged ("Tags & perks").
+  - **Applying a perk tag** in a member's slide-out (the Tags field; a
+    preview says what saving will do) stamps `MemberDoc.comp` — tag, label,
+    since, until (**12 months from the day applied** for DEVSA), by,
+    paused — and, if they have a Stripe subscription, **pauses its billing
+    until then** (`pause_collection`, behavior "void", `resumes_at` =
+    until; Stripe resumes it on its own). **Removing** the tag ends the
+    period today and resumes billing. Re-adding a tag can't restart a
+    period, and editing a tag's terms never changes anyone already tagged.
+  - Shown to the member (it's the one tag they see): dashboard line
+    "· complimentary until …", profile billing "Complimentary until …,
+    courtesy of DEVSA community" (no sample billing when there's no Stripe
+    billing). Staff: the slide-out's "Complimentary" row, "· complimentary"
+    beside the plan in the Members list, perk tags shown by their label.
+  - Tested end to end (sandbox): create → apply (paused until next year) →
+    member view → remove (resumed).
+  - **Not built yet**: the 30-days-before reminder (needs a scheduled job)
+    and an Overview row for periods ending soon.
+
+  (Geekdom decision). LIVE since November 2026 against a Stripe SANDBOX
+  ("Geekdom website" — a clean one, not the old account's test mode, which
+  still holds coworking-era plans):
+  - **The drawer** ([billing-live.tsx](components/portal/billing-live.tsx))
+    reads Stripe on every visit ([lib/stripe/billing.ts](lib/stripe/billing.ts)
+    `getBilling`, uncached — it's one member's money): plan, next payment,
+    card, invoices (Stripe's PDF + hosted receipt), and a past-due banner.
+    Actions ([billing-actions.ts](lib/stripe/billing-actions.ts)) resolve
+    the PAYER from the session — never an id from the browser, never a
+    teammate: **update card** (Stripe's Payment Element in the drawer
+    confirming a SetupIntent — card numbers go browser → Stripe; it pays
+    anything owed with the new card), **pay now**, **cancel at period end /
+    keep it**. The design mock (billing-drawer.tsx) stays for staff
+    previews and copies without Stripe; the profile panel shows "Sample
+    billing" only then.
+  - **Card only, no Stripe Link** in the Payment Element (`wallets.link:
+    "never"`): Link's banner, "save my information" box and "Bank · $5
+    back" tab were off-brand and sign members up for a Stripe account.
+  - **The webhook** ([route.ts](app/api/stripe/webhook/route.ts)) RE-READS
+    every subscription and invoice from Stripe rather than trusting the
+    event's copy — the sandbox's default API version is 2017, whose
+    subscriptions carry no item-level period end. It sends Geekdom's own
+    billing emails (member-templates.ts): receipt on `invoice.paid` (and
+    `lastPaymentAt`/`lastPaymentCents` on the member), "update your card"
+    on `invoice.payment_failed`, cancellation confirmed / welcome back when
+    `cancel_at_period_end` flips, membership ended on deletion. Each event
+    is handled ONCE (`stripeEvents/{id}`, marked after success). A
+    subscription event before its member exists is retried only if it's
+    OURS (`metadata.plan`) and not canceled — other apps' subscriptions on
+    the account are skipped, not retried for days.
+  - **Prices**: `STRIPE_PRICE_SOLO` / `STRIPE_PRICE_TEAM` (lookup keys
+    `club_solo_monthly`, `club_team_monthly`, metadata `app: next-geekdom`);
+    `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` for the card form. Local webhook:
+    `stripe listen --forward-to localhost:3000/api/stripe/webhook` (its
+    `--print-secret` is `STRIPE_WEBHOOK_SECRET`).
+  - **Testing**: Stripe's hosted Checkout blocks automated browsers — test
+    the checkout step by hand (card 4242 4242 4242 4242); everything after
+    it (webhook, drawer, card update, cancel/keep) was tested end to end
+    with an API-made subscription on the test card.
+  - `/account` still emails a Stripe portal link; switch it to "sign in"
+    now that billing is live.
 - **Every member-portal page starts with `PortalPage`**
   ([portal-page.tsx](components/portal/portal-page.tsx)): eyebrow, Section-H1,
   optional sample notice, then Tiles. No full-width rules, no standfirst —

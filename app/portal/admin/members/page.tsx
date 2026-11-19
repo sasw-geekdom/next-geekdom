@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Download, Send } from "lucide-react";
 import { listMembers } from "@/lib/admin/queries";
 import { loginStates } from "@/lib/admin/member-logins";
+import { readPerkTags } from "@/lib/perks-server";
 import { MembersManager, type MemberRow } from "@/components/admin/members-manager";
 import { PageHeader, AdminSection } from "@/components/admin/page-header";
 import { buttonClass } from "@/components/ui/button";
@@ -15,10 +16,11 @@ export const metadata = { title: "Members" };
  */
 export default async function MembersPage(props: PageProps<"/portal/admin/members">) {
   const { add } = await props.searchParams;
-  const [members, logins] = await Promise.all([
+  const [members, logins, perks] = await Promise.all([
     listMembers(),
     // Firebase being slow or down shouldn't take the roster with it.
     loginStates().catch(() => new Map()),
+    readPerkTags().catch(() => []),
   ]);
   const rows: MemberRow[] = members.map((m) => ({
     ...m,
@@ -57,7 +59,7 @@ export default async function MembersPage(props: PageProps<"/portal/admin/member
         }
       />
       <AdminSection>
-        <MembersManager members={rows} startAdding={add === "1"} />
+        <MembersManager members={rows} perks={perks} startAdding={add === "1"} />
       </AdminSection>
     </>
   );

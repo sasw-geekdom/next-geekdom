@@ -17,6 +17,8 @@
     "import:airtable": "node --env-file=.env.local scripts/import-airtable.mjs"
   },
   "dependencies": {
+    "@stripe/react-stripe-js": "^7.1.0",
+    "@stripe/stripe-js": "^10.3.0",
     "@tiptap/core": "^3.32.0",
     "@tiptap/extensions": "^3.32.0",
     "@tiptap/pm": "^3.32.0",

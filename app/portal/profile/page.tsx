@@ -13,6 +13,9 @@ import { HEADING, LINK, MONO } from "@/components/site/section";
 import { PortalPage } from "@/components/portal/portal-page";
 import { ProfileCard } from "@/components/portal/profile-card";
 import { ManageBillingButton } from "@/components/portal/billing-drawer";
+import { LiveBillingButton } from "@/components/portal/billing-live";
+import { getBilling } from "@/lib/stripe/billing";
+import { compDate, compRunning } from "@/lib/perks";
 import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Profile" };
@@ -79,8 +82,17 @@ export default async function ProfilePage(props: PageProps<"/portal/profile">) {
     : undefined;
   const onTeamOf = teamOwner ? teamOwner.company || `${teamOwner.name}'s team` : null;
 
-  const nextPayment = longDate(card.currentPeriodEnd ?? MOCK_BILLING.nextPayment);
-  const sampleBilling = !member?.stripeSubscriptionId;
+  // LIVE billing from Stripe for a member who pays (lib/stripe/billing.ts);
+  // the SAMPLE only for staff previews and members not on Stripe yet.
+  const live = member && !member.teamOwnerId ? await getBilling(member).catch(() => null) : null;
+  const nextPayment = live ? longDate(live.periodEnd) : longDate(card.currentPeriodEnd ?? MOCK_BILLING.nextPayment);
+  // A perk tag's complimentary membership (lib/perks.ts — "DEVSA community").
+  const comp = member?.comp && compRunning(member.comp, new Date().getTime()) ? member.comp : null;
+  const sampleBilling = !live && !comp;
+  const shownCard = live ? live.card : MOCK_BILLING.card;
+  const history = live
+    ? live.invoices.filter((i) => i.status === "paid" || i.status === "open").slice(0, 6).map((i) => ({ date: i.date, label: `${i.amount} · ${i.status === "paid" ? "paid" : "unpaid"}` }))
+    : MOCK_BILLING.history.map((h) => ({ date: h.date, label: `${amount} · ${h.status.toLowerCase()}` }));
 
   return (
     <PortalPage
@@ -153,20 +165,42 @@ export default async function ProfilePage(props: PageProps<"/portal/profile">) {
                   Questions? <a href={`mailto:${CLUB_EMAIL}`} className={LINK}>{CLUB_EMAIL}</a>.
                 </p>
               </>
+            ) : comp && !live ? (
+              /* COMPLIMENTARY, nothing in Stripe: no card, no sample billing — just the one line. */
+              <>
+                <h2 className={cn(MONO.label, "text-muted-foreground")}>Billing</h2>
+                <p className="mt-3 leading-relaxed text-graphite">
+                  Your membership is complimentary{comp.until ? ` until ${compDate(comp.until)}` : ""}, courtesy of {comp.label}. Nothing to pay
+                  {comp.until ? " until then" : ""}.
+                </p>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                  {comp.until ? "We'll remind you before it ends. " : ""}Questions? <a href={`mailto:${CLUB_EMAIL}`} className={LINK}>{CLUB_EMAIL}</a>.
+                </p>
+              </>
             ) : (
               <>
+                {comp && (
+                  <p className="mb-5 border-l-2 border-clay bg-bone px-4 py-3 text-sm leading-relaxed text-graphite">
+                    Complimentary{comp.until ? ` until ${compDate(comp.until)}` : ""}, courtesy of {comp.label}
+                    {comp.paused ? " — your billing is paused until then." : "."}
+                  </p>
+                )}
                 <div className="flex items-center justify-between gap-4">
                   <h2 className={cn(MONO.label, "text-muted-foreground")}>Billing</h2>
-                  {/* The in-app billing drawer (a mock until the Stripe keys are in). */}
-                  <ManageBillingButton
-                    mock={{
-                      price: priceText,
-                      amount,
-                      nextPayment: nextPayment ?? "",
-                      card: MOCK_BILLING.card,
-                      invoices: MOCK_BILLING.invoices,
-                    }}
-                  />
+                  {/* The in-app billing drawer: live from Stripe, else the design mock. */}
+                  {live ? (
+                    <LiveBillingButton billing={live} planName={plan.name} />
+                  ) : (
+                    <ManageBillingButton
+                      mock={{
+                        price: priceText,
+                        amount,
+                        nextPayment: nextPayment ?? "",
+                        card: MOCK_BILLING.card,
+                        invoices: MOCK_BILLING.invoices,
+                      }}
+                    />
+                  )}
                 </div>
                 {billing === "error" && (
                   <p role="alert" className="mt-4 text-sm text-geekdom-red">
@@ -179,23 +213,28 @@ export default async function ProfilePage(props: PageProps<"/portal/profile">) {
                   <dd className="tabular-nums text-graphite">
                     {plan.name} · {priceText}
                   </dd>
-                  <dt className="text-muted-foreground">{card.cancelAtPeriodEnd ? "Ends" : "Next payment"}</dt>
+                  <dt className="text-muted-foreground">{(live ? live.state === "canceling" : card.cancelAtPeriodEnd) ? "Ends" : "Next payment"}</dt>
                   <dd className="tabular-nums text-graphite">{nextPayment ?? "—"}</dd>
                   <dt className="text-muted-foreground">Card</dt>
                   <dd className="tabular-nums text-graphite">
-                    {MOCK_BILLING.card.brand} •••• {MOCK_BILLING.card.last4}
-                    <span className="text-muted-foreground"> · expires {MOCK_BILLING.card.exp}</span>
+                    {shownCard ? (
+                      <>
+                        {shownCard.brand} •••• {shownCard.last4}
+                        <span className="text-muted-foreground"> · expires {shownCard.exp}</span>
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground">None on file</span>
+                    )}
                   </dd>
                 </dl>
 
                 <h3 className={cn(MONO.label, "mt-7 text-muted-foreground")}>Payment history</h3>
                 <ul className="mt-2">
-                  {MOCK_BILLING.history.map((h) => (
+                  {history.length === 0 && <li className="text-sm text-muted-foreground">No payments yet.</li>}
+                  {history.map((h) => (
                     <li key={h.date} className="flex items-center justify-between gap-4 border-t border-border py-2.5 text-sm first:border-t-0">
                       <span className="tabular-nums text-graphite">{longDate(h.date)}</span>
-                      <span className="tabular-nums text-muted-foreground">
-                        {amount} · {h.status.toLowerCase()}
-                      </span>
+                      <span className="tabular-nums text-muted-foreground">{h.label}</span>
                     </li>
                   ))}
                 </ul>

@@ -14,6 +14,7 @@ import { addTeammateForOwner, createMemberLogin, removeTeammateForOwner, saveMem
 import { hasTeam, PLANS, planOf, type PlanId } from "@/lib/membership";
 import { TeamCard } from "@/components/portal/team-card";
 import type { Member } from "@/lib/admin/types";
+import { compActive, compDate, compLine, compRunning, compUntil, isPerk, type PerkTag } from "@/lib/perks";
 import type { MemberStatus } from "@/lib/firebase/collections";
 
 /*
@@ -165,9 +166,12 @@ function fromRow(m: MemberRow): Draft {
 
 export function MembersManager({
   members,
+  perks = [],
   startAdding = false,
 }: {
   members: MemberRow[];
+  /** Tag definitions (Settings → Tags & perks) — for the slide-out's "what saving will do". */
+  perks?: PerkTag[];
   /** Open "Add a member" straight away — the Overview's quick action (?add=1). */
   startAdding?: boolean;
 }) {
@@ -255,8 +259,8 @@ export function MembersManager({
         setNotice({
           tone: "ok",
           text: draft.id
-            ? "Saved."
-            : `${draft.name} is a member. They can sign in at /sign-in with ${draft.email}.`,
+            ? `Saved.${res.note ? ` ${res.note}` : ""}`
+            : `${draft.name} is a member. They can sign in at /sign-in with ${draft.email}.${res.note ? ` ${res.note}` : ""}`,
         });
         setDrawerOpen(false);
         router.refresh();
@@ -384,7 +388,7 @@ export function MembersManager({
             : "No current members match. Clear the search or change the view."}
         </p>
       ) : (
-        <MemberList members={ordered(shownCurrent)} sortBy={sortBy} onOpen={(m) => open(fromRow(m))} />
+        <MemberList members={ordered(shownCurrent)} sortBy={sortBy} onOpen={(m) => open(fromRow(m))} perks={perks} />
       )}
 
       {/*
@@ -415,7 +419,7 @@ export function MembersManager({
           {shownFormer.length === 0 ? (
             <p className="pb-6 text-sm text-muted-foreground">No former members match.</p>
           ) : (
-            <MemberList members={ordered(shownFormer)} sortBy={sortBy} onOpen={(m) => open(fromRow(m))} muted />
+            <MemberList members={ordered(shownFormer)} sortBy={sortBy} onOpen={(m) => open(fromRow(m))} perks={perks} muted />
           )}
         </details>
       )}
@@ -560,6 +564,15 @@ export function MembersManager({
                       <dd className="text-graphite">{longDate(editing.currentPeriodEnd)}</dd>
                     </>
                   )}
+                  {editing.comp && (
+                    <>
+                      <dt className="text-muted-foreground">Complimentary</dt>
+                      <dd className="text-graphite">
+                        {compRunning(editing.comp) ? compLine(editing.comp).replace(/^Complimentary /, "") : `Ended ${compDate(editing.comp.until ?? editing.comp.since)} · ${editing.comp.label}`}
+                        {compRunning(editing.comp) && editing.comp.paused && <span className="block text-muted-foreground">Stripe billing paused until then</span>}
+                      </dd>
+                    </>
+                  )}
                   <dt className="text-muted-foreground">Billing</dt>
                   <dd className="text-graphite">
                     {editing.stripeCustomerId ? (
@@ -584,8 +597,14 @@ export function MembersManager({
               </RecordSection>
             )}
 
-            <RecordSection title="Staff only" note="Never shown to the member.">
-              <TagInput value={draft.tags} onChange={set("tags")} known={tags} />
+            <RecordSection title="Staff only" note="Never shown to the member — except a perk tag's complimentary membership.">
+              <TagInput
+                value={draft.tags}
+                onChange={set("tags")}
+                known={[...new Set([...tags, ...perks.map((p) => p.name)])].sort()}
+                labels={Object.fromEntries(perks.map((p) => [p.name, p.label]))}
+              />
+              <PerkPreview tags={draft.tags} before={editing?.tags ?? []} comp={editing?.comp ?? null} perks={perks} paying={Boolean(editing?.stripeSubscriptionId)} />
               <Field label="Notes" htmlFor="m-notes" error={errors.notes}>
                 <Textarea id="m-notes" value={draft.notes} onChange={(e) => set("notes")(e.target.value)} className="min-h-24" />
               </Field>
@@ -632,8 +651,10 @@ function MemberList({
   onOpen,
   sortBy,
   muted = false,
+  perks = [],
 }: {
   members: MemberRow[];
+  perks?: PerkTag[];
   onOpen: (m: MemberRow) => void;
   sortBy: (by: Sort) => { dir: SortDir | null; onClick: () => void };
   muted?: boolean;
@@ -661,7 +682,7 @@ function MemberList({
                 {/* Tags inline, so a tagged row is no taller than any other. */}
                 {m.tags.map((t) => (
                   <span key={t} className={cn(ADMIN_CHIP, "hidden sm:inline-flex")}>
-                    {t}
+                    {perks.find((p) => p.name === t)?.label ?? t}
                   </span>
                 ))}
               </span>
@@ -670,6 +691,7 @@ function MemberList({
             <Td className="hidden lg:table-cell">
               {planOf(m.plan).name}
               {m.teamOwnerId && <span className="text-muted-foreground"> · teammate</span>}
+              {compRunning(m.comp) && <span className="text-muted-foreground"> · complimentary</span>}
             </Td>
             <Td className="hidden tabular-nums text-muted-foreground md:table-cell">{tableDate(m.joinedAt)}</Td>
             <Td className="hidden text-muted-foreground lg:table-cell">{loginLabel(m.login)}</Td>
@@ -746,10 +768,13 @@ function TagInput({
   value,
   onChange,
   known,
+  labels = {},
 }: {
   value: string[];
   onChange: (tags: string[]) => void;
   known: string[];
+  /** A perk tag's display name ("DEVSA community") for its lowercased key. */
+  labels?: Record<string, string>;
 }) {
   const [text, setText] = React.useState("");
   const add = (raw: string) => {
@@ -767,7 +792,7 @@ function TagInput({
       <div className="flex min-h-11 flex-wrap items-center gap-1.5 border border-border bg-bone-light px-2 py-1.5 focus-within:ring-2 focus-within:ring-clay focus-within:ring-offset-1">
         {value.map((t) => (
           <span key={t} className="inline-flex items-center gap-1 border border-border bg-bone px-2 py-0.5 text-sm text-graphite">
-            {t}
+            {labels[t] ?? t}
             <button
               type="button"
               onClick={() => onChange(value.filter((x) => x !== t))}
@@ -812,5 +837,43 @@ function TagInput({
       )}
       <p className="mt-2 text-xs text-muted-foreground">For grouping members on this list. Never shown to them.</p>
     </div>
+  );
+}
+
+/*
+  WHAT SAVING WILL DO, for perk tags (lib/perks.ts) — said before the save,
+  in plain words, so a tag that gives a year away is never a surprise.
+*/
+function PerkPreview({
+  tags,
+  before,
+  comp,
+  perks,
+  paying,
+}: {
+  tags: string[];
+  before: string[];
+  comp: Member["comp"];
+  perks: PerkTag[];
+  paying: boolean;
+}) {
+  const running = compActive(comp);
+  if (running && comp && !tags.includes(comp.tag)) {
+    return (
+      <p className="-mt-2 border-l-2 border-clay bg-bone-light px-3 py-2 text-[13px] text-graphite">
+        Saving ends their complimentary membership today{comp.paused ? " and resumes their Stripe billing" : ""}.
+      </p>
+    );
+  }
+  if (running) return null;
+  const added = tags.filter((t) => !before.includes(t)).map((t) => perks.find((p) => p.name === t)).filter(isPerk);
+  if (!added.length) return null;
+  const p = added[0];
+  const until = compUntil(p, new Date());
+  return (
+    <p className="-mt-2 border-l-2 border-clay bg-bone-light px-3 py-2 text-[13px] text-graphite">
+      Saving makes their membership complimentary {until ? `until ${compDate(until.toISOString())}` : "with no end date"} ({p.label})
+      {paying ? `, and pauses their Stripe billing ${until ? "until then" : ""}` : ""}.
+    </p>
   );
 }

@@ -5,6 +5,7 @@ import type {
 } from "@/lib/firebase/collections";
 import type { ResearchRecommendation } from "@/lib/application-research";
 import type { PlanId } from "@/lib/membership";
+import type { CompPeriod } from "@/lib/perks";
 import type { RichDoc } from "@/lib/field-notes/types";
 
 /**
@@ -84,6 +85,8 @@ export interface Member {
   profile: MemberProfile | null;
   onboarding: { done: string[]; dismissed: boolean; firstSeenAt: string | null };
   portalInvitedAt: string | null;
+  /** A complimentary period from a perk tag (lib/perks.ts), running or ended. */
+  comp: CompPeriod | null;
 }
 
 export interface DashboardStats {
