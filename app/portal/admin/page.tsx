@@ -82,7 +82,8 @@ export default async function AdminOverview() {
   const initial = applications.filter((a) => a.status === "initial_review");
   const team = applications.filter((a) => a.status === "team_review");
   const open = [...initial, ...team];
-  const overdue = open.filter((a) => daysSince(a.createdAt) > PROMISE_DAYS).length;
+  // /apply's two-week promise — only to people who applied through /apply (Airtable imports never got it).
+  const overdue = open.filter((a) => a.source === "apply" && daysSince(a.createdAt) > PROMISE_DAYS).length;
   const oldest = (list: typeof applications) => Math.max(0, ...list.map((a) => daysSince(a.createdAt)));
   const unpaid = applications.filter((a) => a.status === "approved" && a.plan !== "enterprise" && !a.paidAt && a.source === "apply").length;
   const apps30 = applications.filter((a) => a.source === "apply" && within(a.createdAt, 30)).length;

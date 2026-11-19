@@ -40,9 +40,10 @@ import { CONTACT_EMAIL } from "@/lib/site";
   query for "overlapping bookings" can't promise that — a transaction
   can't lock a document that doesn't exist yet, but it can see that one does.
 
-  THE WEEKLY CAP the same way: `roomWeeks/{memberId}_{sunday}` holds the
-  slots a member has that week, read and written in the transaction — the
-  4 hours, and no booking two rooms at once.
+  ONE ROOM AT A TIME the same way: `roomWeeks/{memberId}_{sunday}` holds
+  the slots a member has that week, read and written in the transaction,
+  so two bookings of theirs can never overlap. (It was also a 4-hours-a-
+  week cap; that came off in November 2026 — there's no weekly limit.)
 
   The member is always the SESSION's (requireMember + their members doc),
   never an id from the form.
@@ -123,13 +124,7 @@ export async function bookRoom(input: z.input<typeof bookSchema>): Promise<RoomR
       const weekSnaps = await tx.getAll(...weeks.map((w) => weekRef(me.id, w)));
       weekSnaps.forEach((snap, i) => {
         const held: string[] = (snap.data()?.slots as string[] | undefined) ?? [];
-        const adding = byWeek.get(weeks[i])!;
-        if (adding.some((s) => held.includes(s))) throw new Error("You already have a room booked at that time.");
-        const minutesThen = (held.length + adding.length) * ROOM_RULES.stepMinutes;
-        if (minutesThen > ROOM_RULES.weeklyMinutes) {
-          const left = ROOM_RULES.weeklyMinutes - held.length * ROOM_RULES.stepMinutes;
-          throw new Error(left > 0 ? `You have ${lengthLabel(left)} left that week. Pick a shorter time.` : "You've used your 4 hours that week. Cancel a booking to free some up.");
-        }
+        if (byWeek.get(weeks[i])!.some((s) => held.includes(s))) throw new Error("You already have a room booked at that time.");
       });
 
       const doc: BookingDoc = {
@@ -203,7 +198,67 @@ export async function cancelMyBooking(id: string): Promise<RoomResult> {
     return { ok: false, message: e instanceof Error ? e.message : "Couldn't cancel it." };
   }
   refresh();
-  return { ok: true, message: "Canceled. The time is back in your week." };
+  return { ok: true, message: "Canceled. The room is free for someone else." };
+}
+
+// ─── A member adds time ─────────────────────────────────────────────────────
+
+/**
+ * ADD TIME to your own booking: the end moves later in 30-minute steps,
+ * while the room is free right after it — up to 4 hours in all and the
+ * close of the booking window. Same slot locks as booking, in one
+ * transaction, so it can't land on the next person's booking. No email:
+ * the page says what changed.
+ */
+export async function extendMyBooking(id: string, addMinutes: number): Promise<RoomResult> {
+  const user = await requireMember();
+  const me = await bookerFor(user);
+  if (!me || typeof id !== "string" || !id) return { ok: false, message: "That booking isn't yours." };
+  if (!Number.isInteger(addMinutes) || addMinutes <= 0 || addMinutes % ROOM_RULES.stepMinutes !== 0) {
+    return { ok: false, message: "Pick how much time to add." };
+  }
+  const db = getAdminDb();
+  const ref = db.collection(COLLECTIONS.bookings).doc(id);
+  let result: { roomName: string; end: number };
+  try {
+    result = await db.runTransaction(async (tx) => {
+      const b = (await tx.get(ref)).data() as BookingDoc | undefined;
+      if (!b || b.memberId !== me.id || b.kind !== "member") throw new Error("That booking isn't yours.");
+      if (b.status !== "booked") throw new Error("That booking was canceled.");
+      const end = b.end.toMillis();
+      if (end <= Date.now()) throw new Error("It has already ended.");
+      const total = b.minutes + addMinutes;
+      if (total > ROOM_RULES.maxMinutes) {
+        const room = ROOM_RULES.maxMinutes - b.minutes;
+        throw new Error(room > 0 ? `A booking can be ${lengthLabel(ROOM_RULES.maxMinutes)} at most — you can add ${lengthLabel(room)}.` : `It's already ${lengthLabel(ROOM_RULES.maxMinutes)}, the most a booking can be.`);
+      }
+      const newEnd = end + addMinutes * 60_000;
+      if (newEnd > windowOf(centralDay(new Date(b.start.toMillis()))).to) {
+        throw new Error(`Rooms can be booked until ${BOOKING_WINDOW.label.split("–")[1].trim()}. For later, email ${CONTACT_EMAIL}.`);
+      }
+      const adding = slotKeys(new Date(end).toISOString(), addMinutes);
+      const taken = await tx.getAll(...adding.map((s) => slotRef(b.roomId, s)));
+      if (taken.some((t) => t.exists)) throw new Error("Someone has the room right after you. Pick less time, or book another room.");
+      const byWeek = new Map<string, string[]>();
+      for (const s of adding) byWeek.set(weekKey(s), [...(byWeek.get(weekKey(s)) ?? []), s]);
+      const weeks = [...byWeek.keys()];
+      const weekSnaps = await tx.getAll(...weeks.map((w) => weekRef(me.id, w)));
+      weekSnaps.forEach((snap, i) => {
+        const held: string[] = (snap.data()?.slots as string[] | undefined) ?? [];
+        if (byWeek.get(weeks[i])!.some((s) => held.includes(s))) throw new Error("You have another room booked right after this one.");
+      });
+      tx.update(ref, { end: Timestamp.fromMillis(newEnd), minutes: total, extendedBy: FieldValue.increment(addMinutes) });
+      for (const s of adding) tx.create(slotRef(b.roomId, s), { bookingId: id, roomId: b.roomId, memberId: me.id });
+      for (const [w, add] of byWeek) {
+        tx.set(weekRef(me.id, w), { memberId: me.id, week: w, slots: FieldValue.arrayUnion(...add), minutes: FieldValue.increment(add.length * ROOM_RULES.stepMinutes) }, { merge: true });
+      }
+      return { roomName: b.roomName, end: newEnd };
+    });
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : "Couldn't add the time." };
+  }
+  refresh();
+  return { ok: true, message: `Added ${lengthLabel(addMinutes)}. ${result.roomName} is yours until ${timeLabel(new Date(result.end).toISOString())}.` };
 }
 
 /** Staff cancel any booking or block that hasn't ended. A member's booking gets an email. */
@@ -223,7 +278,7 @@ export async function cancelBooking(id: string, reason = ""): Promise<RoomResult
   }
   const startIso = b.start.toDate().toISOString();
   const day = centralDay(startIso);
-  const label = `${b.roomName}, ${dayLabel(day)} ${timeLabel(startIso)}${b.kind === "member" ? ` (${b.memberName})` : ` (${b.note || "blocked"})`}`;
+  const label = `${b.roomName}, ${dayLabel(day)} ${timeLabel(startIso)}${b.kind === "member" ? ` (${b.memberName})` : ` (${b.heldFor?.name || b.note || "blocked"})`}`;
   await logActivity(admin, { area: "rooms", action: b.kind === "block" ? "removed the block on" : "canceled the booking of", label, href: `/portal/admin/rooms?day=${day}` });
   let message = b.kind === "block" ? "Block removed." : "Canceled.";
   if (b.kind === "member" && b.memberEmail) {
@@ -241,13 +296,18 @@ const blockSchema = z.object({
   roomId: z.string().min(1).max(80),
   start: z.iso.datetime(),
   minutes: z.number().int().refine((m) => m % ROOM_RULES.stepMinutes === 0 && m >= ROOM_RULES.stepMinutes && m <= BLOCK_MAX_MINUTES, "Pick a length."),
-  note: z.string({ error: "Say what it's for." }).trim().min(2, "Say what it's for.").max(120),
+  /** Who it's for: the staff member themselves, an event request, or other (the note says). */
+  heldFor: z.enum(["staff", "event", "other"]).default("other"),
+  inquiryId: z.string().max(80).optional(),
+  note: z.string().trim().max(120).default(""),
 });
 
 /**
- * Staff hold a room (a Geekdom event, maintenance). Same slot locks, so it
- * can't land on a member's booking — cancel that first. No 14-day limit
- * and no weekly cap: those are the members' rules.
+ * Staff hold a room — for THEMSELVES (named on the schedule), for an EVENT
+ * REQUEST from "Host an event" (linked both ways), or for anything else (a
+ * Geekdom event, maintenance — the note says). Same slot locks, so it
+ * can't land on a member's booking — cancel that first. Any day, any hour,
+ * up to 12 hours, no horizon: those are the members' rules.
  */
 export async function blockRoom(input: z.input<typeof blockSchema>): Promise<RoomResult & { fieldErrors?: Record<string, string> }> {
   const admin = await requireAdmin();
@@ -255,7 +315,19 @@ export async function blockRoom(input: z.input<typeof blockSchema>): Promise<Roo
   if (!parsed.success) {
     return { ok: false, message: "Check the highlighted fields.", fieldErrors: Object.fromEntries(parsed.error.issues.map((i) => [String(i.path[0]), i.message])) };
   }
-  const { roomId, minutes, note } = parsed.data;
+  const { roomId, minutes, heldFor: forKind, inquiryId } = parsed.data;
+  const { note } = parsed.data;
+  let heldFor: NonNullable<BookingDoc["heldFor"]>;
+  if (forKind === "staff") {
+    heldFor = { kind: "staff", name: admin.name || admin.email };
+  } else if (forKind === "event") {
+    const inq = inquiryId ? (await getAdminDb().collection(COLLECTIONS.inquiries).doc(inquiryId).get()).data() : undefined;
+    if (!inquiryId || !inq || inq.kind !== "event") return { ok: false, message: "Pick the event request.", fieldErrors: { inquiryId: "Pick the event request." } };
+    heldFor = { kind: "event", name: [inq.company, inq.name].filter(Boolean).join(" · "), inquiryId };
+  } else {
+    if (note.length < 2) return { ok: false, message: "Check the highlighted fields.", fieldErrors: { note: "Say what it's for." } };
+    heldFor = { kind: "other", name: note };
+  }
   const start = Date.parse(parsed.data.start);
   if (start % SLOT_MS !== 0) return { ok: false, message: "Blocks start on the hour or the half hour." };
   if (start + minutes * 60_000 <= Date.now()) return { ok: false, message: "That time has passed." };
@@ -283,6 +355,7 @@ export async function blockRoom(input: z.input<typeof blockSchema>): Promise<Roo
         memberName: null,
         memberEmail: null,
         note,
+        heldFor,
         createdAt: Timestamp.now(),
         createdBy: admin.email,
       };
@@ -293,9 +366,11 @@ export async function blockRoom(input: z.input<typeof blockSchema>): Promise<Roo
     return { ok: false, message: e instanceof Error ? e.message : "Couldn't block it." };
   }
   const day = centralDay(new Date(start));
-  await logActivity(admin, { area: "rooms", action: "blocked", label: `${room.name}, ${dayLabel(day)} ${timeLabel(new Date(start).toISOString())} for ${lengthLabel(minutes)} (${note})`, href: `/portal/admin/rooms?day=${day}` });
+  const forWhom = heldFor.kind === "staff" ? "for themselves" : heldFor.kind === "event" ? `for the event request from ${heldFor.name}` : `(${note})`;
+  await logActivity(admin, { area: "rooms", action: "blocked", label: `${room.name}, ${dayLabel(day)} ${timeLabel(new Date(start).toISOString())} for ${lengthLabel(minutes)} ${forWhom}`, href: `/portal/admin/rooms?day=${day}` });
   refresh();
-  return { ok: true, message: `${room.name} is blocked.` };
+  if (heldFor.inquiryId) revalidatePath(`/portal/admin/requests/${heldFor.inquiryId}`);
+  return { ok: true, message: heldFor.kind === "staff" ? `${room.name} is held for you.` : heldFor.kind === "event" ? `${room.name} is held for ${heldFor.name}.` : `${room.name} is blocked.` };
 }
 
 // ─── Staff edit a room ───────────────────────────────────────────────────────

@@ -6,17 +6,21 @@ import { centralParts, fromCentral, TIME_ZONE } from "@/lib/content/dates";
   all read these, and the server is the one that enforces them.
 
     · bookings in 30-minute steps
-    · 2 hours at most per booking
-    · up to 14 days ahead (today and the 13 days after it)
-    · 4 hours per member per week (Sunday–Saturday, Central) — per PERSON:
-      each teammate on a Team membership has their own 4 hours
+    · 4 hours at most per booking — and a member can ADD TIME to their own
+      booking (extendMyBooking), in 30-minute steps, up to the same 4 hours
+    · NO WEEKLY LIMIT (Jesse, November 2026 — it was 4 hours a week). The
+      guard against one person holding every room is the horizon below and
+      "one room at a time".
+    · ONE WEEK AHEAD, rolling: today and the 6 days after it (it was 14).
+      Rolling, not "this calendar week", so a Friday can still book Monday.
     · WEEKDAYS ONLY, Monday to Friday (BOOKING_WINDOW.weekdays) — staff
       aren't in on weekends; a weekend room goes through the Club team,
-      like the hours below. Jesse's call, November 2026.
-    · 7 AM – 9 PM (BOOKING_WINDOW). The Club is open 24/7, but staff are
-      in the building 9–5 and this covers nearly every meeting; anything
-      outside it goes through the Club team (club@), who can block a room
-      at any hour from the admin. Jesse's call, November 2026.
+      like the hours below.
+    · 8 AM – 6 PM (BOOKING_WINDOW; it was 7 AM – 9 PM): around the hours
+      staff are in, with an hour either side. The Club is open 24/7 —
+      anything outside goes through the Club team (club@), who block a
+      room at any hour from the admin.
+    · one room at a time per member (no two bookings that overlap)
     · instant: a free slot is yours when you book it, no staff approval
 
   Everything is in Central time, and a day is midnight to midnight there —
@@ -25,18 +29,17 @@ import { centralParts, fromCentral, TIME_ZONE } from "@/lib/content/dates";
 
 export const ROOM_RULES = {
   stepMinutes: 30,
-  maxMinutes: 120,
-  daysAhead: 14,
-  weeklyMinutes: 240,
+  maxMinutes: 240,
+  daysAhead: 7,
 } as const;
 
 /** The hours members can book, Central. A booking must start and end inside them. */
 export const BOOKING_WINDOW = {
-  opens: "07:00",
-  closes: "21:00",
+  opens: "08:00",
+  closes: "18:00",
   /** Day of the week, 0 = Sunday. Monday to Friday. */
   weekdays: [1, 2, 3, 4, 5] as readonly number[],
-  label: "7 AM – 9 PM",
+  label: "8 AM – 6 PM",
   daysLabel: "Monday to Friday",
 } as const;
 
@@ -86,7 +89,7 @@ export function slotsOfDay(day: string): string[] {
   return out;
 }
 
-/** The bookable slot starts in a day: 7:00 AM to 8:30 PM (the last one ends at 9). */
+/** The bookable slot starts in a day: 8:00 AM to 5:30 PM (the last one ends at 6). */
 export function windowSlots(day: string): string[] {
   const { from, to } = windowOf(day);
   const out: string[] = [];
@@ -110,9 +113,10 @@ export function slotKeys(startIso: string, minutes: number): string[] {
 }
 
 /**
- * The Sunday (Central) that starts the week an instant falls in — the
- * weekly cap's key. Weeks run Sunday to Saturday (Jesse's call; it was
- * Monday to Sunday until November 2026, before any booking was made).
+ * The Sunday (Central) that starts the week an instant falls in. Weeks run
+ * Sunday to Saturday. There's no weekly cap any more; this keys the
+ * per-member ledger (roomWeeks) that stops one member holding two rooms at
+ * once, and the admin's week strip.
  */
 export function weekKey(iso: string): string {
   const day = centralDay(iso);
@@ -121,10 +125,10 @@ export function weekKey(iso: string): string {
   return addDays(day, -dow);
 }
 
-/** The weekdays a member can book, today through 13 days out. */
+/** The weekdays a member can book, today through the end of the horizon. */
 export function bookableDays(now: Date): string[] {
   const today = centralDay(now);
-  // The 14-day horizon is calendar days; within it, only the bookable weekdays.
+  // The horizon is calendar days; within it, only the bookable weekdays.
   return Array.from({ length: ROOM_RULES.daysAhead }, (_, i) => addDays(today, i)).filter(isBookableWeekday);
 }
 

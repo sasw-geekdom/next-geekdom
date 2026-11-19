@@ -184,7 +184,8 @@ export const hasLinks = (...values: (string | undefined)[]) => {
 export function SideCard({ title, children }: { title?: string; children: React.ReactNode }) {
   return (
     <section className="border border-border bg-bone-light p-5">
-      {title && <h2 className={cn(ADMIN_LABEL, "mb-3 text-muted-foreground")}>{title}</h2>}
+      {/* Graphite like "Next step" and "Notes" — every side card's heading reads the same. */}
+      {title && <h2 className={cn(ADMIN_LABEL, "mb-3 text-graphite")}>{title}</h2>}
       {children}
     </section>
   );
@@ -241,6 +242,33 @@ export function Timeline({ steps }: { steps: { what: string; when?: string; note
           <p className="text-sm text-graphite">{s.what}</p>
           {s.when && <p className="text-[13px] tabular-nums text-muted-foreground">{formatDateTime(s.when)}</p>}
           {s.note && <p className="mt-1 text-sm leading-relaxed whitespace-pre-line text-muted-foreground">{s.note}</p>}
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/**
+ * WHERE A REVIEW IS — "Research → Team decision → Decided", "New →
+ * Decided": done steps solid, the current one Clay, the rest outlined.
+ * The right column's "Next step" card leads with it (applications and
+ * requests alike), so the stage reads as a place in a process.
+ */
+export function Steps({ steps, current }: { steps: string[]; current: number }) {
+  return (
+    <ol aria-label="Review progress" className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+      {steps.map((label, i) => (
+        <li key={label} className="flex items-center gap-2" aria-current={i === current ? "step" : undefined}>
+          {i > 0 && <span aria-hidden="true" className="h-px w-3 bg-border" />}
+          <span
+            className={cn(
+              "inline-flex items-center gap-1.5 whitespace-nowrap",
+              i === current ? "font-medium text-graphite" : i < current ? "text-graphite" : "text-muted-foreground",
+            )}
+          >
+            <span aria-hidden="true" className={cn("h-1.5 w-1.5", i < current ? "bg-graphite" : i === current ? "bg-clay" : "border border-border")} />
+            {label}
+          </span>
         </li>
       ))}
     </ol>

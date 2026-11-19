@@ -23,10 +23,34 @@ import type { Booking, Room } from "@/lib/rooms/rooms";
   a table at the TOP, then the schedule across every room. The rooms and
   the rules sit beside it. The day is in the address, so it can be shared. Three slide-outs: block time, cancel (with a
   reason the member is emailed), and edit a room.
+
+  LIVE: the page re-reads every 15 seconds while it's on screen (and the
+  moment the tab comes back), so a member's booking shows up without a
+  reload — "Updated 2:14:05 PM" says how fresh it is. Paused while a
+  slide-out is open, so nothing shifts under a form.
+
+  A BLOCK SAYS WHO IT'S FOR: staff themselves (their name), an event
+  request from "Host an event" (linked to the request), or other (a
+  Geekdom event, maintenance — the note says).
 */
 
+const LIVE_EVERY_MS = 15_000;
+type HeldFor = "staff" | "event" | "other";
+const HELD_FOR: { value: HeldFor; label: string }[] = [
+  { value: "staff", label: "Myself" },
+  { value: "event", label: "An event request" },
+  { value: "other", label: "Something else" },
+];
+
+/** Who a block is for, in a word or two — the table and the schedule. */
+function heldLabel(b: Booking): string {
+  if (b.heldFor?.kind === "staff") return `${b.heldFor.name} (staff)`;
+  if (b.heldFor?.kind === "event") return `Event request · ${b.heldFor.name}`;
+  return b.note || "Blocked";
+}
+
 type Pane =
-  | { kind: "block"; roomId: string; day: string; start: string; minutes: number; note: string }
+  | { kind: "block"; roomId: string; day: string; start: string; minutes: number; note: string; heldFor: HeldFor; inquiryId: string }
   | { kind: "cancel"; booking: Booking; reason: string }
   | { kind: "room"; id?: string; name: string; capacity: string; features: string; description: string; active: boolean }
   /** The rooms and the rules — settings, out of the day's view. */
@@ -42,7 +66,9 @@ export function RoomsManager({
   slots,
   rooms,
   bookings,
+  eventRequests,
   startBlocking = false,
+  startInquiry,
 }: {
   now: number;
   today: string;
@@ -54,7 +80,11 @@ export function RoomsManager({
   slots: string[];
   rooms: Room[];
   bookings: Booking[];
+  /** Event requests a room can be held for (not declined), newest first. */
+  eventRequests: { id: string; label: string; when: string }[];
   startBlocking?: boolean;
+  /** Opened from an event request's "Hold a room": the block form, linked to it. */
+  startInquiry?: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = React.useTransition();
@@ -67,11 +97,31 @@ export function RoomsManager({
       start: day === today ? (slots.find((s) => Date.parse(s) >= now) ?? slots[0]) : (slots.find((s) => timeLabel(s) === "9:00 AM") ?? slots[0]),
       minutes: 60,
       note: "",
+      heldFor: "staff",
+      inquiryId: "",
     }),
     [rooms, day, today, slots, now],
   );
-  const [pane, setPane] = React.useState<Pane | null>(() => (startBlocking ? blank() : null));
-  const [open, setOpen] = React.useState(startBlocking);
+  const opening = startBlocking || Boolean(startInquiry);
+  const [pane, setPane] = React.useState<Pane | null>(() =>
+    opening ? { ...(blank() as Extract<Pane, { kind: "block" }>), ...(startInquiry ? { heldFor: "event" as const, inquiryId: startInquiry } : {}) } : null,
+  );
+  const [open, setOpen] = React.useState(opening);
+
+  // LIVE: re-read on a timer while visible, and when the tab comes back. Paused under a slide-out.
+  // `now` is the server's time for each read, so it doubles as "updated at".
+  React.useEffect(() => {
+    if (open) return;
+    const tick = () => {
+      if (document.visibilityState === "visible") router.refresh();
+    };
+    const timer = window.setInterval(tick, LIVE_EVERY_MS);
+    document.addEventListener("visibilitychange", tick);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", tick);
+    };
+  }, [open, router]);
   const [errors, setErrors] = React.useState<Record<string, string>>({});
   const [error, setError] = React.useState<string | null>(null);
   const [notice, setNotice] = React.useState<{ ok: boolean; text: string } | null>(null);
@@ -101,7 +151,8 @@ export function RoomsManager({
     e.preventDefault();
     if (!pane) return;
     startTransition(async () => {
-      if (pane.kind === "block") done(await blockRoom({ roomId: pane.roomId, start: pane.start, minutes: pane.minutes, note: pane.note }));
+      if (pane.kind === "block")
+        done(await blockRoom({ roomId: pane.roomId, start: pane.start, minutes: pane.minutes, note: pane.note, heldFor: pane.heldFor, inquiryId: pane.inquiryId || undefined }));
       if (pane.kind === "cancel") done(await cancelBooking(pane.booking.id, pane.reason));
       if (pane.kind === "room")
         done(
@@ -211,6 +262,10 @@ export function RoomsManager({
                   : `${memberBookings.length} ${memberBookings.length === 1 ? "booking" : "bookings"} · ${lengthLabel(memberMinutes)}${busiest && byRoom.size > 1 ? ` · ${busiest} busiest` : ""}`}
                 {blocks.length ? ` · ${blocks.length} blocked` : ""}
               </p>
+              <p className="ml-auto inline-flex items-center gap-1.5 text-[13px] text-muted-foreground" aria-live="off">
+                <span aria-hidden="true" className="h-1.5 w-1.5 bg-graphite/50" />
+                Live · updated {new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", hour: "numeric", minute: "2-digit", second: "2-digit" }).format(new Date(now))}
+              </p>
             </div>
 
             {bookings.length === 0 ? (
@@ -242,14 +297,23 @@ export function RoomsManager({
                         <Td className={cn(ended && "text-muted-foreground")}>{b.roomName}</Td>
                         <Td className={cn(ended && "text-muted-foreground")}>
                           {b.kind === "block" ? (
-                            <Status kind="blocked">Blocked by staff</Status>
+                            b.heldFor?.inquiryId ? (
+                              <Link href={`/portal/admin/requests/${b.heldFor.inquiryId}`} className="text-graphite underline decoration-clay decoration-1 underline-offset-2">
+                                {heldLabel(b)}
+                              </Link>
+                            ) : (
+                              <span>{heldLabel(b)}</span>
+                            )
                           ) : (
                             <>
                               {b.memberName} <span className="text-muted-foreground">· {lengthLabel(b.minutes)}</span>
                             </>
                           )}
                         </Td>
-                        <Td className="hidden text-muted-foreground md:table-cell">{b.note || "—"}</Td>
+                        {/* For an "other" (or older) block the note IS the "Booked by" label — don't print it twice. */}
+                        <Td className="hidden text-muted-foreground md:table-cell">
+                          {b.kind === "block" && (!b.heldFor || b.heldFor.kind === "other") ? "—" : b.note || "—"}
+                        </Td>
                         <Td align="right">
                           {ended ? (
                             <span className="text-[13px] text-muted-foreground">Ended</span>
@@ -288,7 +352,7 @@ export function RoomsManager({
                     now={now}
                     blocks={bookings
                       .filter((b) => b.roomId === r.id)
-                      .map((b) => ({ id: b.id, start: b.start, end: b.end, tone: b.kind === "block" ? "block" : "member", label: b.kind === "block" ? b.note : (b.memberName ?? "Member") }))}
+                      .map((b) => ({ id: b.id, start: b.start, end: b.end, tone: b.kind === "block" ? "block" : "member", label: b.kind === "block" ? heldLabel(b) : (b.memberName ?? "Member") }))}
                   />
                 </li>
               ))}
@@ -306,7 +370,7 @@ export function RoomsManager({
           pane?.kind === "cancel"
             ? `${pane.booking.roomName} · ${dayLabel(day)} · ${timeLabel(pane.booking.start)} – ${timeLabel(pane.booking.end)}`
             : pane?.kind === "block"
-              ? "Hold a room for a Geekdom event or maintenance. Members can't book over it."
+              ? "Hold a room for yourself, an event request, or anything else. Members can't book over it."
               : undefined
         }
         footer={
@@ -364,13 +428,13 @@ export function RoomsManager({
           <section className="border border-border bg-bone-light p-4">
             <h2 className={cn(ADMIN_LABEL, "mb-3 text-muted-foreground")}>The rules members book under</h2>
             <ul className="flex flex-col gap-1.5 text-sm text-graphite">
-              <li>30-minute steps, {lengthLabel(ROOM_RULES.maxMinutes)} at most</li>
-              <li>Up to {ROOM_RULES.daysAhead} days ahead</li>
-              <li>{ROOM_RULES.weeklyMinutes / 60} hours per member per week (Sun–Sat)</li>
+              <li>30-minute steps, {lengthLabel(ROOM_RULES.maxMinutes)} at most — members can add time while the room is free after</li>
+              <li>Up to a week ahead</li>
+              <li>No weekly limit; one room at a time per member</li>
               <li>{BOOKING_WINDOW.daysLabel}, {BOOKING_WINDOW.label}, booked instantly — no approval</li>
             </ul>
             <p className="mt-3 text-[13px] text-muted-foreground">
-              For a weekend, or outside {BOOKING_WINDOW.label}, members email the Club team: block the room for them here — blocks can go on any day at any hour and skip the 14-day and weekly limits. The schedule shows {BOOKING_WINDOW.label}; anything outside it is in the table. Members see free and booked time, never who booked.
+              For a weekend, or outside {BOOKING_WINDOW.label}, members email the Club team: block the room for them here — blocks can go on any day at any hour, up to 12 hours, with no week-ahead limit. The schedule shows {BOOKING_WINDOW.label}; anything outside it is in the table. Members see free and booked time, never who booked.
             </p>
           </section>
         </div>
@@ -409,8 +473,56 @@ export function RoomsManager({
                     />
                   </Field>
                 </div>
-                <Field label="What it's for" htmlFor="bl-note" error={errors.note} required hint="Staff see this on the schedule. Members only see the room as booked.">
-                  <Input id="bl-note" value={pane.note} onChange={(e) => patch({ note: e.target.value })} placeholder="Geekdom event, maintenance…" data-autofocus />
+                <fieldset>
+                  <legend className="text-sm font-medium text-graphite">Who it&rsquo;s for</legend>
+                  <div role="radiogroup" aria-label="Who it's for" className="mt-2 inline-flex border border-border bg-bone-light">
+                    {HELD_FOR.map((o, i) => (
+                      <button
+                        key={o.value}
+                        type="button"
+                        role="radio"
+                        aria-checked={pane.heldFor === o.value}
+                        onClick={() => patch({ heldFor: o.value })}
+                        className={cn(
+                          "inline-flex h-8 items-center px-3 text-[13px] font-medium whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay",
+                          i > 0 && "border-l border-border",
+                          pane.heldFor === o.value ? "bg-graphite text-bone" : "text-muted-foreground hover:text-graphite",
+                        )}
+                      >
+                        {o.label}
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
+                {pane.heldFor === "event" && (
+                  <Field label="Event request" htmlFor="bl-inq" error={errors.inquiryId} required hint="From /club's Host an event. The request shows this hold.">
+                    {eventRequests.length ? (
+                      <Combobox
+                        id="bl-inq"
+                        name="inquiry"
+                        options={eventRequests.map((e) => ({ value: e.id, label: e.when ? `${e.label} — ${e.when}` : e.label }))}
+                        value={pane.inquiryId}
+                        onChange={(v) => patch({ inquiryId: v })}
+                        placeholder="Pick a request"
+                      />
+                    ) : (
+                      <p className="border border-dashed border-border px-3 py-2 text-sm text-muted-foreground">No open event requests.</p>
+                    )}
+                  </Field>
+                )}
+                <Field
+                  label={pane.heldFor === "other" ? "What it's for" : "Note (optional)"}
+                  htmlFor="bl-note"
+                  error={errors.note}
+                  required={pane.heldFor === "other"}
+                  hint="Staff see this on the schedule. Members only see the room as booked."
+                >
+                  <Input
+                    id="bl-note"
+                    value={pane.note}
+                    onChange={(e) => patch({ note: e.target.value })}
+                    placeholder={pane.heldFor === "other" ? "Geekdom event, maintenance…" : pane.heldFor === "staff" ? "Interview, planning day…" : "Walkthrough, setup…"}
+                  />
                 </Field>
               </>
             )}

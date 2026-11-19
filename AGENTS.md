@@ -394,7 +394,23 @@ same bug.
   - **Old statuses are read, never written**: "new"/"reviewing" read as
     research, "waitlisted" as declined (`normalizeApplicationStatus`).
   - The list is stage tabs with counts, filtered after one read (a status
-    filter + date sort would need a composite index). The detail page shows
+    filter + date sort would need a composite index), with Vercel's list
+    conventions: ONE "Applicant" cell — name, flags ("Current member";
+    "From Airtable" only when the view mixes sources), and their
+    one-sentence PITCH beneath (email is in search and on the page) —
+    Plan, City, a PROGRESS cell whose question changes with the tab
+    (Research: Not started / Earlier notes / Draft · who, when / Ready;
+    Team review: the recommendation; Approved: Member / Paid / Payment
+    link sent / Waiting on payment; Declined: at research or by the team
+    — a Recommendation column alone sat empty through the migration), and
+    WAITING (days since applying) on the open
+    tabs — red past /apply's two-week promise, ONLY for /apply applicants
+    (Airtable imports never got that promise; during the migration every
+    one would be red — the Overview's overdue count follows the same
+    rule). SEARCH (`?q=`, name/email/company/city, components/admin/
+    table-search.tsx) sits beside the tabs; the header's totals ignore it.
+    "Describes themselves" came off the table (cut to a few words it
+    helped no one choose); it's on the application. The detail page shows
     the plan and the full history — each step, who, when, and its note.
 - **The emails are in [application-templates.ts](lib/email/application-templates.ts)**,
   on the member emails' brand (Bone, square, the red wordmark, Graphite
@@ -425,9 +441,18 @@ same bug.
     memberships. new → accepted ("let's plan it" / "let's talk") or
     declined, each emailing the sender (lib/email/inquiry-templates.ts);
     reopen moves it back to New quietly. Same transaction-checked moves and
-    activity logging as applications. Reviewed at /portal/admin/inquiries
+    activity logging as applications. Reviewed at /portal/admin/requests
     (kind tabs — Event requests, Studio partners — and status chips), under
     Reviews → Requests; the Overview has a row of what's new.
+  - **Requests follow the applications' patterns** (keep them in step):
+    the list is a "Requester" cell (company, then contact · what they
+    asked for), a Progress cell (Not answered yet / Accepted · no room
+    held yet / Room held · Pumpkin · Nov 23 / Accepted — talking /
+    Declined), Waiting while New, and search; a request page's right
+    column is **Next step** (a New → Decided line, the shared `Steps` in
+    review-layout.tsx), then **Rooms** for an event (a room is what
+    follows a yes), Notes, Contact, History; answers are short-label rows.
+    Every side card's heading is Graphite.
   - **Typeform is gone from the site** — the popup component, the review
     mockups, their questions and its CSS were deleted. The inquiry forms
     ask the questions that were proposed to Geekdom in those mockups.
@@ -799,23 +824,27 @@ members use personal Gmail, and the hint hid their accounts.
 ("Book a room" in the member nav), run from `/portal/admin/rooms` (Members
 → Rooms). [lib/rooms/](lib/rooms/).
 - **The rules are in [rules.ts](lib/rooms/rules.ts)** (Jesse's call,
-  November 2026; Geekdom can change them): 30-minute steps, 2 hours at most,
-  up to 14 days ahead (today + 13), 4 hours per member per week (Sun–Sat
-  Central, PER PERSON — each teammate has their own), instant (no
-  approval), **Monday to Friday, 7 AM – 9 PM** (`BOOKING_WINDOW`,
-  enforced server-side; weekends came off because staff aren't in).
-  The Club is open 24/7, but staff are in 9–5 and the window covers nearly
-  every meeting; for a weekend or outside the hours, members email club@
-  (the page says so) and
-  staff block the room for them — blocks can go at any hour. Central time
-  throughout; the schedule shows the window, anything outside it is in the
-  admin's table.
+  November 2026; Geekdom can change them): 30-minute steps, **4 hours at
+  most per booking**, **NO WEEKLY LIMIT** (it was 4 hours a week), **one
+  week ahead, rolling** (today + 6 — not "this calendar week", so a Friday
+  can book Monday; it was 14 days), one room at a time per member,
+  instant (no approval), **Monday to Friday, 8 AM – 6 PM**
+  (`BOOKING_WINDOW`, enforced server-side; it was 7 AM – 9 PM — now around
+  the hours staff are in, an hour either side). For a weekend or outside
+  the hours, members email club@ (the page says so) and staff block the
+  room for them — blocks can go at any hour. Central time throughout; the
+  schedule shows the window, anything outside it is in the admin's table.
+- **Members ADD TIME to their own booking** (`extendMyBooking`): "Add time"
+  on each booking under Your bookings, in 30-minute steps while the room is
+  free right after it — up to 4 hours in all and the window's close. Same
+  slot locks and transaction as booking; no email (the page says what
+  changed); `extendedBy` records it.
 - **No double booking, by construction**: every 30-minute slot a booking
   takes is a doc, `roomSlots/{roomId}_{slotIso}`, created in the booking's
-  transaction — two members racing for a slot, one wins (tested). The cap
-  the same way: `roomWeeks/{memberId}_{sunday}` holds a member's slots that
-  week (4 hours, and no holding two rooms at once). Cancelling deletes the
-  slots and gives the minutes back. The page's free/busy is a convenience;
+  transaction — two members racing for a slot, one wins (tested). One room
+  at a time the same way: `roomWeeks/{memberId}_{sunday}` holds a member's
+  slots that week, so their bookings can't overlap (it no longer caps
+  hours). Cancelling deletes the slots. The page's free/busy is a convenience;
   `bookRoom` re-checks everything.
 - **Every admin (staff and superadmin) can book too**, as themselves, under
   the same rules — `bookerFor()` in [rooms.ts](lib/rooms/rooms.ts), id
@@ -823,8 +852,13 @@ members use personal Gmail, and the hint hid their accounts.
   directory and counts). Staff who are also members book as the member.
 - **Members see free and booked, never WHO**; staff see names. The optional
   "what's it for" note is staff-only.
-- **Staff can block time** (a Geekdom event, maintenance — up to 12 hours,
-  any day, no cap) and cancel any booking; cancelling a member's emails
+- **Staff can block time — and a block says WHO IT'S FOR** (`heldFor`):
+  **Myself** (the staff member's name on the schedule), **An event
+  request** (from /club's Host an event — linked both ways: the event
+  request page has a "Rooms" card listing its holds and "Hold a room",
+  which opens this form already linked, `?inquiry=`), or **Something else**
+  (a Geekdom event, maintenance — the note says what). Up to 12 hours, any
+  day, any hour. Staff also cancel any booking; cancelling a member's emails
   them (with an optional reason). A member cancelling their own gets no
   email; booking sends a receipt ([room-templates.ts](lib/email/room-templates.ts)).
   Staff actions are in the activity log ("Rooms"); member bookings aren't.
@@ -833,12 +867,18 @@ members use personal Gmail, and the hint hid their accounts.
   TV) — until Geekdom names them;
   `DEFAULT_ROOMS` in [rooms.ts](lib/rooms/rooms.ts) is the list until the
   first admin save writes all four down (ids never change under a booking).
+- **The admin Rooms page is LIVE**: it re-reads every 15 seconds while on
+  screen and when the tab comes back ("Live · updated 2:14:05 PM"),
+  paused while a slide-out is open — a member's booking appears without a
+  reload (tested). Polling `router.refresh()`, not a database listener:
+  the page's reads are server-side and uncached, so this needs no client
+  database access or security rules.
 - **The day picker is a Monday-to-Friday calendar**, one row per week:
   one weekday header, short tiles with just the date, days before today or
-  past the 14-day horizon faint, today marked by a Clay rule under its
+  past the week-ahead horizon faint, today marked by a Clay rule under its
   date (the REAL today — on a weekend it isn't a tile), a Clay square on
-  days you have a room, and one line under it with the picked day's
-  week's time left. A weekend `?day=` opens the first bookable day.
+  days you have a room (the "time left this week" line went with the
+  weekly cap). A weekend `?day=` opens the first bookable day.
   Earlier tries: a row of 14 tiles (ran off the column), a labeled
   week-by-week calendar (~315px), two rows starting today (columns moved
   every day), Sun–Sat (before weekends came off). The phone tab bar sizes

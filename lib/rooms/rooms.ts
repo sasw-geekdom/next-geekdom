@@ -3,7 +3,7 @@ import "server-only";
 import { Timestamp } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { COLLECTIONS, type BookingDoc, type RoomDoc } from "@/lib/firebase/collections";
-import { addDays, dayStartIso, weekKey } from "@/lib/rooms/rules";
+import { addDays, dayStartIso } from "@/lib/rooms/rules";
 import { getMemberByEmail } from "@/lib/admin/queries";
 import { isAdmin, type SessionUser } from "@/lib/auth/roles";
 
@@ -35,6 +35,8 @@ export interface Booking {
   memberName: string | null;
   memberEmail: string | null;
   note: string;
+  /** For a block: who it's for (BookingDoc.heldFor). */
+  heldFor: { kind: "staff" | "event" | "other"; name: string; inquiryId?: string } | null;
   createdAt: string;
 }
 
@@ -67,6 +69,7 @@ export function toBooking(id: string, d: BookingDoc): Booking {
     memberName: d.memberName,
     memberEmail: d.memberEmail,
     note: d.note ?? "",
+    heldFor: d.heldFor ?? null,
     createdAt: d.createdAt.toDate().toISOString(),
   };
 }
@@ -117,21 +120,31 @@ export async function upcomingFor(memberId: string, now: number): Promise<Bookin
     .sort((a, b) => a.start.localeCompare(b.start));
 }
 
-/** Minutes a member holds in each week — the cap's ledger (roomWeeks). */
-export async function weekUsage(memberId: string, weeks: string[]): Promise<Record<string, number>> {
-  const db = getAdminDb();
-  const refs = [...new Set(weeks)].map((w) => db.collection(COLLECTIONS.roomWeeks).doc(`${memberId}_${w}`));
-  if (!refs.length) return {};
-  const snaps = await db.getAll(...refs);
-  return Object.fromEntries(snaps.map((s, i) => [[...new Set(weeks)][i], (s.data()?.minutes as number | undefined) ?? 0]));
+/** Every upcoming room hold for an event request, keyed by the request — the Requests list's Progress column. One equality query. */
+export async function upcomingEventHolds(now: number): Promise<Map<string, Booking[]>> {
+  const snap = await getAdminDb().collection(COLLECTIONS.bookings).where("heldFor.kind", "==", "event").get();
+  const out = new Map<string, Booking[]>();
+  for (const d of snap.docs) {
+    const b = toBooking(d.id, d.data() as BookingDoc);
+    if (b.status !== "booked" || Date.parse(b.end) <= now || !b.heldFor?.inquiryId) continue;
+    out.set(b.heldFor.inquiryId, [...(out.get(b.heldFor.inquiryId) ?? []), b].sort((x, y) => x.start.localeCompare(y.start)));
+  }
+  return out;
 }
 
-export const weeksOf = (days: string[]) => [...new Set(days.map((d) => weekKey(dayStartIso(d))))];
+/** Rooms held for one event request that haven't ended — the request page shows them. One equality query. */
+export async function holdsForInquiry(inquiryId: string, now: number): Promise<Booking[]> {
+  const snap = await getAdminDb().collection(COLLECTIONS.bookings).where("heldFor.inquiryId", "==", inquiryId).get();
+  return snap.docs
+    .map((d) => toBooking(d.id, d.data() as BookingDoc))
+    .filter((b) => b.status === "booked" && Date.parse(b.end) > now)
+    .sort((a, b) => a.start.localeCompare(b.start));
+}
 
 /*
   WHO IS BOOKING. A current member — or STAFF, as themselves: Geekdom's team
   uses the rooms too, and it's how they try the member side. Staff book
-  under the same rules (window, length, 14 days, 4 hours a week) with an id
+  under the same rules (window, length, one week ahead) with an id
   of their own (`staff_{uid}`), so they never need a members record — which
   would put them in the roster, the directory and the Overview's counts.
   A staff member who IS also a member books as the member.

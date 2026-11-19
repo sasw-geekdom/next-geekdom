@@ -13,8 +13,8 @@ import { Combobox } from "@/components/ui/combobox";
 import { RoomTimeline } from "@/components/rooms/room-timeline";
 import { MONO } from "@/components/site/section";
 import { cn } from "@/lib/utils";
-import { bookRoom, cancelMyBooking } from "@/lib/rooms/actions";
-import { BOOKING_WINDOW, ROOM_RULES, SLOT_MS, addDays, centralDay, currentSlotStart, dayLabel, lengthLabel, timeLabel, weekKey } from "@/lib/rooms/rules";
+import { bookRoom, cancelMyBooking, extendMyBooking } from "@/lib/rooms/actions";
+import { BOOKING_WINDOW, ROOM_RULES, SLOT_MS, addDays, centralDay, currentSlotStart, dayLabel, lengthLabel, timeLabel, weekKey, windowOf } from "@/lib/rooms/rules";
 import { CONTACT_EMAIL } from "@/lib/site";
 
 /*
@@ -40,6 +40,7 @@ interface Taken {
 }
 interface Mine {
   id: string;
+  roomId: string;
   roomName: string;
   start: string;
   end: string;
@@ -55,8 +56,6 @@ export function RoomBooker({
   rooms,
   taken,
   upcoming,
-  usage,
-  thisWeek,
 }: {
   canBook: boolean;
   now: number;
@@ -66,9 +65,6 @@ export function RoomBooker({
   rooms: RoomLite[];
   taken: Taken[];
   upcoming: Mine[];
-  /** Minutes held per week (keyed by the week's Sunday). */
-  usage: Record<string, number>;
-  thisWeek: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = React.useTransition();
@@ -88,7 +84,6 @@ export function RoomBooker({
   );
 
   const starts = slots.filter((s) => isFree(draft.roomId, Date.parse(s)));
-  const leftThatWeek = (iso: string) => ROOM_RULES.weeklyMinutes - (usage[weekKey(iso)] ?? 0);
   const lengths = React.useMemo(() => {
     if (!draft.start) return [];
     const t0 = Date.parse(draft.start);
@@ -96,12 +91,10 @@ export function RoomBooker({
     for (let k = 1; k <= ROOM_RULES.maxMinutes / ROOM_RULES.stepMinutes; k++) {
       const t = t0 + (k - 1) * SLOT_MS;
       if (!slots.includes(new Date(t).toISOString()) || !isFree(draft.roomId, t)) break;
-      if (k * ROOM_RULES.stepMinutes > leftThatWeek(draft.start)) break;
       out.push(k * ROOM_RULES.stepMinutes);
     }
     return out;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draft.start, draft.roomId, slots, isFree, usage]);
+  }, [draft.start, draft.roomId, slots, isFree]);
 
   function begin(roomId: string, start?: string) {
     const free = slots.filter((s) => isFree(roomId, Date.parse(s)));
@@ -152,6 +145,37 @@ export function RoomBooker({
     });
   }
 
+  // ADD TIME to one of your bookings (extendMyBooking). The choices stop at
+  // 4 hours in all, the close of the day's window, and — when it's the day
+  // on screen — the next booking in that room. The server re-checks.
+  const [extending, setExtending] = React.useState<string | null>(null);
+  const [extendBy, setExtendBy] = React.useState(30);
+  const [extendError, setExtendError] = React.useState<string | null>(null);
+  function addOptions(b: Mine): number[] {
+    const end = Date.parse(b.end);
+    const close = windowOf(centralDay(b.start)).to;
+    const out: number[] = [];
+    for (let m = ROOM_RULES.stepMinutes; b.minutes + m <= ROOM_RULES.maxMinutes; m += ROOM_RULES.stepMinutes) {
+      const until = end + m * 60_000;
+      if (until > close) break;
+      const slot = until - SLOT_MS;
+      if (centralDay(b.start) === day && taken.some((t) => t.roomId === b.roomId && t.id !== b.id && Date.parse(t.start) <= slot && Date.parse(t.end) > slot)) break;
+      out.push(m);
+    }
+    return out;
+  }
+  function addTime(b: Mine) {
+    setExtendError(null);
+    startTransition(async () => {
+      const res = await extendMyBooking(b.id, extendBy);
+      if (res.ok) {
+        setExtending(null);
+        setNotice({ ok: true, text: res.message });
+      } else setExtendError(res.message);
+      router.refresh();
+    });
+  }
+
   const room = rooms.find((r) => r.id === draft.roomId);
 
   return (
@@ -163,8 +187,8 @@ export function RoomBooker({
           </p>
         )}
 
-        {/* The 14 days you can book, as the weeks they fall in (the weekly cap's weeks). */}
-        <DayCalendar days={days} day={day} today={centralDay(new Date(now))} upcoming={upcoming} usage={usage} thisWeek={thisWeek} />
+        {/* The weekdays you can book, through the coming week. */}
+        <DayCalendar days={days} day={day} today={centralDay(new Date(now))} upcoming={upcoming} />
 
         <Tile label={dayLabel(day, "long")}>
           <ul className="flex flex-col gap-6">
@@ -217,37 +241,84 @@ export function RoomBooker({
             <p className="text-sm text-muted-foreground">Nothing booked. Pick a free time on any room.</p>
           ) : (
             <ul>
-              {upcoming.map((b) => (
-                <li key={b.id} className="flex items-center justify-between gap-3 border-t border-border py-3 first:border-t-0 first:pt-0">
-                  <span className="min-w-0">
-                    <span className="block font-medium text-graphite">{b.roomName}</span>
-                    <span className="block text-sm text-muted-foreground">
-                      {dayLabel(centralDay(b.start))} · {timeLabel(b.start)} – {timeLabel(b.end)}
-                    </span>
-                  </span>
-                  {Date.parse(b.start) > now ? (
-                    <button type="button" onClick={() => cancel(b)} disabled={pending} className="shrink-0 text-sm text-graphite underline decoration-clay decoration-1 underline-offset-2">
-                      Cancel
-                    </button>
-                  ) : (
-                    <span className="shrink-0 text-sm text-muted-foreground">Now</span>
-                  )}
-                </li>
-              ))}
+              {upcoming.map((b) => {
+                const options = addOptions(b);
+                const open = extending === b.id;
+                return (
+                  <li key={b.id} className="border-t border-border py-3 first:border-t-0 first:pt-0">
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="min-w-0">
+                        <span className="block font-medium text-graphite">{b.roomName}</span>
+                        <span className="block text-sm text-muted-foreground">
+                          {dayLabel(centralDay(b.start))} · {timeLabel(b.start)} – {timeLabel(b.end)}
+                          {Date.parse(b.start) <= now && <span className="text-graphite"> · Now</span>}
+                        </span>
+                      </span>
+                      <span className="flex shrink-0 items-center gap-3 text-sm">
+                        {!open && options.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setExtending(b.id);
+                              setExtendBy(options[0]);
+                              setExtendError(null);
+                            }}
+                            disabled={pending}
+                            className="text-graphite underline decoration-clay decoration-1 underline-offset-2"
+                          >
+                            Add time
+                          </button>
+                        )}
+                        {Date.parse(b.start) > now && (
+                          <button type="button" onClick={() => cancel(b)} disabled={pending} className="text-graphite underline decoration-clay decoration-1 underline-offset-2">
+                            Cancel
+                          </button>
+                        )}
+                      </span>
+                    </div>
+                    {open && (
+                      <div className="mt-3 flex flex-col gap-2">
+                        <div className="flex items-end gap-2">
+                          <Field label="Add" htmlFor={`add-${b.id}`} className="w-36">
+                            <Combobox
+                              id={`add-${b.id}`}
+                              name="add"
+                              options={options.map((m) => ({ value: String(m), label: `${lengthLabel(m)} · until ${timeLabel(new Date(Date.parse(b.end) + m * 60_000).toISOString())}` }))}
+                              value={String(extendBy)}
+                              onChange={(v) => setExtendBy(Number(v))}
+                              searchable={false}
+                            />
+                          </Field>
+                          <Button type="button" variant="ink" size="sm" onClick={() => addTime(b)} disabled={pending}>
+                            {pending ? "Adding…" : "Add"}
+                          </Button>
+                          <Button type="button" variant="ghost" size="sm" onClick={() => setExtending(null)} disabled={pending}>
+                            Cancel
+                          </Button>
+                        </div>
+                        {extendError && (
+                          <p role="alert" className="text-sm text-geekdom-red">
+                            {extendError}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </Tile>
 
-        {/* Hours left per week live in the calendar's rows now; this is the how. */}
         <Tile label="How it works">
           <ul className="flex flex-col gap-1.5 text-sm text-muted-foreground">
-            <li>Book in 30-minute steps, up to 2 hours at a time.</li>
-            <li>{BOOKING_WINDOW.daysLabel}, {BOOKING_WINDOW.label}, up to {ROOM_RULES.daysAhead} days ahead.</li>
-            <li>{ROOM_RULES.weeklyMinutes / 60} hours a week each. Cancelling gives them back.</li>
+            <li>Book in 30-minute steps, up to {lengthLabel(ROOM_RULES.maxMinutes)} at a time.</li>
+            <li>Running long? Add time to your booking while the room is free after it.</li>
+            <li>{BOOKING_WINDOW.daysLabel}, {BOOKING_WINDOW.label}, up to a week ahead.</li>
           </ul>
           {/* The Club is open 24/7; the booking window isn't. The way around it is a person. */}
           <p className="mt-5 border-t border-border pt-4 text-sm text-muted-foreground">
-            Need a room on a weekend, or before 7 AM or after 9 PM?{" "}
+            Need a room on a weekend, or outside {BOOKING_WINDOW.label}?{" "}
             <a
               href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Booking a room outside weekday hours")}`}
               className="text-graphite underline decoration-clay decoration-1 underline-offset-2"
@@ -279,7 +350,7 @@ export function RoomBooker({
         onConfirm={confirmCancel}
         onClose={() => setCanceling(null)}
       >
-        The {canceling ? lengthLabel(canceling.minutes) : "time"} goes back to your week, and the room opens up for another member.
+        The room opens up for another member.
       </ConfirmDialog>
 
       <Drawer
@@ -333,12 +404,9 @@ export function RoomBooker({
               </Field>
             </div>
           )}
-          {draft.start && lengths.length === 0 && starts.length > 0 && (
-            <p className="text-sm text-muted-foreground">You&rsquo;ve used your {ROOM_RULES.weeklyMinutes / 60} hours that week. Cancel a booking to free some up.</p>
-          )}
           {draft.start && (
             <p className="text-[13px] text-muted-foreground">
-              {lengthLabel(Math.max(0, leftThatWeek(draft.start))) || "No time"} left that week. Longest here: {lengths.length ? lengthLabel(lengths.at(-1)!) : "—"} (2 hours at most, and it has to be free).
+              Longest here: {lengths.length ? lengthLabel(lengths.at(-1)!) : "—"} ({lengthLabel(ROOM_RULES.maxMinutes)} at most, and it has to be free). You can add time later.
             </p>
           )}
           <Field label="What's it for? (optional)" htmlFor="bk-note" hint="Only the Geekdom team sees this.">
@@ -356,12 +424,12 @@ export function RoomBooker({
 }
 
 /*
-  THE DAY PICKER — the bookable weekdays of the next 14 days on a
-  Monday-to-Friday calendar, one row per week (weekends aren't bookable:
-  staff aren't in — a weekend room goes through the Club team). One weekday
-  header, short tiles with just the date, days before today or past the
-  14 shown faint; the picked day's week's time left is one line
-  underneath, and a Clay marker shows days you already have a room.
+  THE DAY PICKER — the bookable weekdays of the coming week on a
+  Monday-to-Friday calendar, one row per calendar week (weekends aren't
+  bookable: staff aren't in — a weekend room goes through the Club team).
+  One weekday header, short tiles with just the date, days before today or
+  past the horizon shown faint, and a Clay marker on days you already have
+  a room. (The "time left this week" line went with the weekly cap.)
 */
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 const noonOf = (d: string) => `${d}T18:00:00.000Z`; // midday Central, either offset
@@ -371,25 +439,18 @@ function DayCalendar({
   day,
   today,
   upcoming,
-  usage,
-  thisWeek,
 }: {
   days: string[];
   day: string;
   /** The real today — on a weekend it isn't in `days`. */
   today: string;
   upcoming: Mine[];
-  usage: Record<string, number>;
-  thisWeek: string;
 }) {
   const booked = new Set(upcoming.map((b) => centralDay(b.start)));
-  const left = (w: string) => Math.max(0, ROOM_RULES.weeklyMinutes - (usage[w] ?? 0));
-  const dayWeek = weekKey(noonOf(day));
-  const weekName = (w: string) => (w === thisWeek ? "this week" : w === addDays(thisWeek, 7) ? "next week" : `the week of ${dayLabel(w).split(", ")[1]}`);
 
   const weeks: string[] = [];
   for (let w = weekKey(noonOf(days[0])); w <= days[days.length - 1]; w = addDays(w, 7)) weeks.push(w);
-  // (days holds only weekdays, so a faint tile is before today or past the 14.)
+  // (days holds only weekdays, so a faint tile is before today or past the horizon.)
 
   return (
     <div className="border border-border bg-bone-light p-3 sm:p-4">
@@ -432,10 +493,6 @@ function DayCalendar({
           );
         })}
       </div>
-      {/* Only the picked day's week: that's the allowance this booking draws on. */}
-      <p className="mt-2.5 text-[13px] text-muted-foreground">
-        <span className="tabular-nums text-graphite">{left(dayWeek) ? lengthLabel(left(dayWeek)) : "No time"}</span> left {weekName(dayWeek)}
-      </p>
     </div>
   );
 }

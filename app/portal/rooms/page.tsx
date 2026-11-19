@@ -1,15 +1,16 @@
 import { requireMember } from "@/lib/auth/session";
-import { bookerFor, bookingsForDay, listRooms, upcomingFor, weekUsage, weeksOf } from "@/lib/rooms/rooms";
-import { bookableDays, isDay, weekKey, windowSlots } from "@/lib/rooms/rules";
+import { bookerFor, bookingsForDay, listRooms, upcomingFor } from "@/lib/rooms/rooms";
+import { bookableDays, isDay, windowSlots } from "@/lib/rooms/rules";
 import { PortalPage } from "@/components/portal/portal-page";
 import { RoomBooker } from "@/components/portal/room-booker";
 
 export const metadata = { title: "Book a room" };
 
 /*
-  BOOK A ROOM — the member side of Phase 4. Pick a day (today and the 13
-  after it), see every room's day at a glance, book a free time in one
-  slide-out. Your bookings and your hours left this week sit beside it.
+  BOOK A ROOM — the member side of Phase 4. Pick a weekday in the coming
+  week, see every room's day at a glance, book a free time in one
+  slide-out. Your bookings sit beside it, each with "Add time" while the
+  room is free after it. No weekly limit.
 
   Other members' bookings read "Booked", never who — the strip is shared,
   the names aren't. Rules: lib/rooms/rules.ts; enforced in lib/rooms/actions.ts.
@@ -24,9 +25,7 @@ export default async function RoomsPage(props: PageProps<"/portal/rooms">) {
 
   // A current member, or staff booking as themselves.
   const [member, { rooms }, bookings] = await Promise.all([bookerFor(user), listRooms(), bookingsForDay(day)]);
-  const [upcoming, usage] = member
-    ? await Promise.all([upcomingFor(member.id, now), weekUsage(member.id, weeksOf(days))])
-    : [[], {} as Record<string, number>];
+  const upcoming = member ? await upcomingFor(member.id, now) : [];
 
   return (
     <PortalPage eyebrow="Rooms" title="Book a room.">
@@ -39,9 +38,7 @@ export default async function RoomsPage(props: PageProps<"/portal/rooms">) {
         rooms={rooms.filter((r) => r.active).map(({ id, name, capacity, features, description }) => ({ id, name, capacity, features, description }))}
         // Who booked stays private: only "mine" or not.
         taken={bookings.map((b) => ({ id: b.id, roomId: b.roomId, start: b.start, end: b.end, mine: Boolean(member && b.memberId === member.id) }))}
-        upcoming={upcoming.map((b) => ({ id: b.id, roomName: b.roomName, start: b.start, end: b.end, minutes: b.minutes }))}
-        usage={usage}
-        thisWeek={weekKey(new Date(now).toISOString())}
+        upcoming={upcoming.map((b) => ({ id: b.id, roomId: b.roomId, roomName: b.roomName, start: b.start, end: b.end, minutes: b.minutes }))}
       />
     </PortalPage>
   );

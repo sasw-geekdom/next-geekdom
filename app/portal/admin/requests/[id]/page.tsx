@@ -5,6 +5,10 @@ import { InquiryStatusLabel, tableDate } from "@/components/admin/admin-ui";
 import { InquiryPanel } from "@/components/admin/inquiry-panel";
 import { Answer, AnswerGroup, MailLink, Properties, ReviewBody, ReviewHeader, SideCard, Timeline } from "@/components/admin/review-layout";
 import { inquiryPosition, inquiryQuery, parseInquiryQueue } from "@/lib/admin/review-queue";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+import { holdsForInquiry } from "@/lib/rooms/rooms";
+import { centralDay, dayLabel, timeLabel } from "@/lib/rooms/rules";
 
 export async function generateMetadata(props: PageProps<"/portal/admin/requests/[id]">) {
   const { id } = await props.params;
@@ -14,7 +18,10 @@ export async function generateMetadata(props: PageProps<"/portal/admin/requests/
 /*
   ONE REQUEST, in the application's layout (components/admin/review-layout.tsx):
   the request on the left, the decision, notes, contact and history on the
-  right, Previous / Next through the list it came from.
+  right, Previous / Next through the list it came from. An EVENT request
+  also shows the rooms held for it (lib/rooms — a block linked by
+  `heldFor.inquiryId`) and "Hold a room", which opens the Rooms page's
+  block form already linked to this request.
 */
 export default async function RequestPage(props: PageProps<"/portal/admin/requests/[id]">) {
   const { id } = await props.params;
@@ -22,6 +29,7 @@ export default async function RequestPage(props: PageProps<"/portal/admin/reques
   const [i, all] = await Promise.all([getInquiry(id), listInquiries().catch(() => [])]);
   if (!i) notFound();
   const copy = INQUIRY_COPY[i.kind];
+  const holds = i.kind === "event" ? await holdsForInquiry(i.id, new Date().getTime()).catch(() => []) : [];
 
   const queue = parseInquiryQueue(params, { kind: i.kind, status: i.status });
   const qs = inquiryQuery(queue);
@@ -31,17 +39,18 @@ export default async function RequestPage(props: PageProps<"/portal/admin/reques
   const afterHref = at(pos?.next) ?? at(pos?.prev) ?? listHref;
   const done = typeof params.done === "string" ? params.done : null;
 
-  const request: [string, string | null | undefined][] =
+  // [the form's question, the answer, the SHORT LABEL the row shows] — as on an application.
+  const request: [string, string | null | undefined, string][] =
     i.kind === "event"
       ? [
-          ["What kind of event", i.eventType],
-          ["How many people", i.headcount],
-          ["When", i.when],
-          ["Anything else", i.details],
+          ["What kind of event", i.eventType, "Type"],
+          ["How many people", i.headcount, "People"],
+          ["When", i.when, "When"],
+          ["Anything else", i.details, "Anything else"],
         ]
       : [
-          ["What they're interested in", i.interest],
-          ["What they said", i.details],
+          ["What they're interested in", i.interest, "Interested in"],
+          ["What they said", i.details, "What they said"],
         ];
 
   return (
@@ -62,8 +71,8 @@ export default async function RequestPage(props: PageProps<"/portal/admin/reques
           <AnswerGroup title={i.kind === "event" ? "The event" : "The partnership"}>
             {request
               .filter(([, v]) => v?.trim())
-              .map(([q, v]) => (
-                <Answer key={q} question={q}>
+              .map(([q, v, label]) => (
+                <Answer key={q} question={q} label={label}>
                   {v}
                 </Answer>
               ))}
@@ -71,7 +80,36 @@ export default async function RequestPage(props: PageProps<"/portal/admin/reques
         }
         side={
           <>
-            <InquiryPanel key={i.id} inquiry={i} accept={copy.accept} decline={copy.decline} afterHref={afterHref} />
+            <InquiryPanel
+              key={i.id}
+              inquiry={i}
+              accept={copy.accept}
+              decline={copy.decline}
+              afterHref={afterHref}
+              rooms={
+                i.kind === "event" ? (
+                  <SideCard title="Rooms">
+                    {holds.length > 0 ? (
+                      <ul className="mb-3 flex flex-col gap-2 text-sm">
+                        {holds.map((h) => (
+                          <li key={h.id}>
+                            <Link href={`/portal/admin/rooms?day=${centralDay(h.start)}`} className="text-graphite underline decoration-clay decoration-1 underline-offset-2">
+                              {h.roomName}, {dayLabel(centralDay(h.start))} · {timeLabel(h.start)} – {timeLabel(h.end)}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="mb-3 text-sm text-muted-foreground">No room held yet.</p>
+                    )}
+                    <Link href={`/portal/admin/rooms?inquiry=${i.id}`} className="inline-flex items-center gap-1.5 text-sm text-graphite underline decoration-clay decoration-1 underline-offset-2">
+                      {holds.length ? "Hold another room" : "Hold a room"}
+                      <ArrowRight aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={1.8} />
+                    </Link>
+                  </SideCard>
+                ) : undefined
+              }
+            />
             <SideCard title="Contact">
               <Properties
                 rows={[

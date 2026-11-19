@@ -1,4 +1,5 @@
 import { bookingsBetween, listRooms } from "@/lib/rooms/rooms";
+import { listInquiries } from "@/lib/admin/inquiries";
 import { addDays, centralDay, dayStartIso, isDay, weekKey, windowSlots } from "@/lib/rooms/rules";
 import { PageHeader, AdminSection } from "@/components/admin/page-header";
 import { RoomsManager } from "@/components/admin/rooms-manager";
@@ -13,13 +14,21 @@ export const metadata = { title: "Rooms" };
   past or future; one query for the whole week.
 */
 export default async function AdminRoomsPage(props: PageProps<"/portal/admin/rooms">) {
-  const { day: raw, block } = await props.searchParams;
+  const { day: raw, block, inquiry } = await props.searchParams;
   const now = new Date().getTime();
   const today = centralDay(new Date(now));
   const day = isDay(raw) ? raw : today;
   // The week the day sits in (Sunday to Saturday, the cap's week), read once.
   const weekStart = weekKey(`${day}T18:00:00.000Z`);
-  const [{ rooms, saved }, week] = await Promise.all([listRooms(), bookingsBetween(weekStart, addDays(weekStart, 7))]);
+  const [{ rooms, saved }, week, inquiries] = await Promise.all([
+    listRooms(),
+    bookingsBetween(weekStart, addDays(weekStart, 7)),
+    listInquiries(200).catch(() => []),
+  ]);
+  // Event requests a room can be held for: from /club's "Host an event", not declined.
+  const eventRequests = inquiries
+    .filter((i) => i.kind === "event" && i.status !== "declined")
+    .map((i) => ({ id: i.id, label: [i.company, i.name].filter(Boolean).join(" · "), when: i.when ?? "" }));
   const touches = (b: { start: string; end: string }, d: string) =>
     Date.parse(b.start) < Date.parse(dayStartIso(addDays(d, 1))) && Date.parse(b.end) > Date.parse(dayStartIso(d));
   const bookings = week.filter((b) => touches(b, day));
@@ -46,7 +55,10 @@ export default async function AdminRoomsPage(props: PageProps<"/portal/admin/roo
           slots={windowSlots(day)}
           rooms={rooms}
           bookings={bookings}
+          eventRequests={eventRequests}
           startBlocking={block === "1"}
+          // "Hold a room" on an event request opens the block form already linked to it.
+          startInquiry={typeof inquiry === "string" && eventRequests.some((e) => e.id === inquiry) ? inquiry : undefined}
         />
       </AdminSection>
     </>

@@ -10,6 +10,9 @@ import { Field, Textarea } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
 import { hasWriting, MIN_DECLINE_REASON } from "@/lib/application-research";
 import { useResearch } from "@/components/admin/research-note";
+import { Steps } from "@/components/admin/review-layout";
+
+const APPLICATION_STEPS = ["Research", "Team decision", "Decided"];
 
 /*
   THE DECISION PANEL — only the moves that make sense for where the
@@ -161,7 +164,7 @@ export function ReviewPanel({
       {inResearch && (
         <section className={card} aria-labelledby="next-step">
           <h2 id="next-step" className={cn(ADMIN_LABEL, "text-graphite")}>Next step</h2>
-          <Steps current={0} />
+          <Steps steps={APPLICATION_STEPS} current={0} />
           <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
             Finish the write-up, then send it on. The team makes the decision.
           </p>
@@ -233,7 +236,7 @@ export function ReviewPanel({
           <h2 id="next-step" className={cn(ADMIN_LABEL, "text-graphite")}>{inTeam ? "Team decision" : "Next step"}</h2>
           {inTeam && (
             <>
-              <Steps current={1} />
+              <Steps steps={APPLICATION_STEPS} current={1} />
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">Decided in the team meeting. Either answer emails the applicant.</p>
             </>
           )}
@@ -341,32 +344,6 @@ export function BanLink({ application, afterHref }: { application: Application; 
         </p>
       )}
     </div>
-  );
-}
-
-/** Where the application is in the review: Research → Team decision → Decided. */
-function Steps({ current }: { current: 0 | 1 }) {
-  const steps = ["Research", "Team decision", "Decided"];
-  return (
-    <ol aria-label="Review progress" className="mt-3 flex items-center gap-2 text-xs">
-      {steps.map((label, i) => (
-        <li key={label} className="flex items-center gap-2" aria-current={i === current ? "step" : undefined}>
-          {i > 0 && <span aria-hidden="true" className="h-px w-3 bg-border" />}
-          <span
-            className={cn(
-              "inline-flex items-center gap-1.5 whitespace-nowrap",
-              i === current ? "font-medium text-graphite" : i < current ? "text-graphite" : "text-muted-foreground",
-            )}
-          >
-            <span
-              aria-hidden="true"
-              className={cn("h-1.5 w-1.5", i < current ? "bg-graphite" : i === current ? "bg-clay" : "border border-border")}
-            />
-            {label}
-          </span>
-        </li>
-      ))}
-    </ol>
   );
 }
 

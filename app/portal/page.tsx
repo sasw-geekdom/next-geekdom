@@ -8,8 +8,8 @@ import { getGalleryImages } from "@/lib/gallery";
 import { eventTimeLabel } from "@/lib/content/dates";
 import { FOUNDED_YEAR, LUMA_CALENDAR_URL, SOCIALS } from "@/lib/site";
 import { indexOrder, listForReaders } from "@/lib/field-notes/notes";
-import { bookerFor, upcomingFor, weekUsage } from "@/lib/rooms/rooms";
-import { BOOKING_WINDOW, ROOM_RULES, centralDay, dayLabel, lengthLabel, timeLabel, weekKey } from "@/lib/rooms/rules";
+import { bookerFor, upcomingFor } from "@/lib/rooms/rooms";
+import { BOOKING_WINDOW, ROOM_RULES, centralDay, dayLabel, lengthLabel, timeLabel } from "@/lib/rooms/rules";
 import { planOf } from "@/lib/membership";
 import { listDirectory } from "@/lib/directory";
 import { stepsFor } from "@/lib/onboarding";
@@ -76,11 +76,7 @@ export default async function PortalHome() {
     listForReaders().catch(() => []),
     bookerFor(user).catch(() => null),
   ]);
-  const thisWeek = weekKey(new Date(now).toISOString());
-  const [myRooms, usage] = booker
-    ? await Promise.all([upcomingFor(booker.id, now).catch(() => []), weekUsage(booker.id, [thisWeek]).catch(() => ({}) as Record<string, number>)])
-    : [[], {} as Record<string, number>];
-  const hoursLeft = Math.max(0, ROOM_RULES.weeklyMinutes - (usage[thisWeek] ?? 0));
+  const myRooms = booker ? await upcomingFor(booker.id, now).catch(() => []) : [];
   // The note /field-notes leads with: the featured one, else the newest.
   const note = indexOrder(notes)[0];
   const cover = note?.frames[0]?.type === "cover" ? note.frames[0].image : undefined;
@@ -226,7 +222,7 @@ export default async function PortalHome() {
                 {myRooms.length ? "Book another" : "Book a room"}
                 <ArrowRight aria-hidden="true" className={ARROW.internal} />
               </Link>
-              <span className="text-sm tabular-nums text-muted-foreground">{hoursLeft ? lengthLabel(hoursLeft) : "No time"} left this week</span>
+              <span className="text-sm text-muted-foreground">Up to {lengthLabel(ROOM_RULES.maxMinutes)} at a time</span>
             </div>
           )}
         </Tile>

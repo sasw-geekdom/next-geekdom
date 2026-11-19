@@ -418,6 +418,14 @@ export interface BookingDoc {
   memberEmail: string | null;
   /** Optional "what's it for" — staff see it, other members never do. For a block, its reason. */
   note: string;
+  /**
+   * WHO A BLOCK IS FOR: staff holding a room for themselves (their name),
+   * an event request from /club's "Host an event" (linked — the request
+   * page shows the hold), or anything else (the note says what).
+   */
+  heldFor?: { kind: "staff" | "event" | "other"; name: string; inquiryId?: string };
+  /** Minutes added after booking (extendMyBooking) — for the record. */
+  extendedBy?: number;
   createdAt: Timestamp;
   createdBy: string;
   canceledAt?: Timestamp;
