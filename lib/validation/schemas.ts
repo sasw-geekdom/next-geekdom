@@ -126,10 +126,6 @@ export const reviewSchema = z.object({
   notes: optionalText(4000),
 });
 
-// ─── Billing portal request ─────────────────────────────────────────────────
-
-export const portalRequestSchema = z.object({ email });
-
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 /**

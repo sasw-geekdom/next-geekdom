@@ -28,7 +28,19 @@ async function shrink(file: File): Promise<Blob> {
 const initials = (name: string) =>
   name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
 
-export function PhotoField({ photo, name }: { photo: string | null; name: string }) {
+export function PhotoField({
+  photo,
+  name,
+  onChange,
+  local = false,
+}: {
+  photo: string | null;
+  name: string;
+  /** Told when the photo is added or removed — the welcome flow requires one. */
+  onChange?: (url: string | null) => void;
+  /** Staff preview: show the chosen picture in the browser, upload nothing. */
+  local?: boolean;
+}) {
   const router = useRouter();
   const input = React.useRef<HTMLInputElement>(null);
   const [current, setCurrent] = React.useState(photo);
@@ -39,12 +51,23 @@ export function PhotoField({ photo, name }: { photo: string | null; name: string
     if (!file) return;
     setPending(true);
     setMessage(null);
+    if (local) {
+      const url = URL.createObjectURL(file);
+      setCurrent(url);
+      onChange?.(url);
+      setMessage({ ok: true, text: "Preview only — not saved (staff preview)." });
+      setPending(false);
+      return;
+    }
     try {
       const small = await shrink(file);
       const form = new FormData();
       form.set("photo", new File([small], "photo.jpg", { type: "image/jpeg" }));
       const res = await uploadMyPhoto(form);
-      if (res.ok && res.url) setCurrent(res.url);
+      if (res.ok && res.url) {
+        setCurrent(res.url);
+        onChange?.(res.url);
+      }
       setMessage({ ok: res.ok, text: res.message });
       router.refresh();
     } catch {
@@ -56,9 +79,18 @@ export function PhotoField({ photo, name }: { photo: string | null; name: string
   }
 
   async function remove() {
+    if (local) {
+      setCurrent(null);
+      onChange?.(null);
+      setMessage(null);
+      return;
+    }
     setPending(true);
     const res = await removeMyPhoto();
-    if (res.ok) setCurrent(null);
+    if (res.ok) {
+      setCurrent(null);
+      onChange?.(null);
+    }
     setMessage({ ok: res.ok, text: res.message });
     setPending(false);
     router.refresh();

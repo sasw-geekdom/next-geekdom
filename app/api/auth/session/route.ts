@@ -1,7 +1,8 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { createSession, SESSION_COOKIE } from "@/lib/auth/session";
-import { WELCOME_SEEN_COOKIE } from "@/lib/onboarding";
+import { WELCOME_EVERY_SIGN_IN, WELCOME_SEEN_COOKIE } from "@/lib/onboarding";
+import { getMemberByEmail } from "@/lib/admin/queries";
 
 /** Exchange a Firebase ID token for an httpOnly, server-verified session cookie. */
 export async function POST(request: Request) {
@@ -36,8 +37,12 @@ export async function POST(request: Request) {
   }
 
   const store = await cookies();
-  // A fresh sign-in sees the welcome flow again while WELCOME_EVERY_SIGN_IN is on (lib/onboarding.ts).
-  store.delete(WELCOME_SEEN_COOKIE);
+  // THE WELCOME GATE (proxy.ts): until launch everyone walks through it at
+  // every sign-in (WELCOME_EVERY_SIGN_IN); after, only a member who hasn't
+  // finished it — everyone else is marked done here, for the session.
+  const member = WELCOME_EVERY_SIGN_IN ? null : await getMemberByEmail(result.user.email).catch(() => null);
+  if (WELCOME_EVERY_SIGN_IN || (member && !member.onboarding.welcomedAt)) store.delete(WELCOME_SEEN_COOKIE);
+  else store.set(WELCOME_SEEN_COOKIE, "1", { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: result.maxAge });
   store.set(SESSION_COOKIE, result.cookie, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

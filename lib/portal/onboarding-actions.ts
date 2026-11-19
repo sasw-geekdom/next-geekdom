@@ -46,7 +46,8 @@ export async function setOnboardingDismissed(dismissed: boolean): Promise<void> 
 export async function finishWelcome(): Promise<void> {
   const user = await requireMember();
   const store = await cookies();
-  store.set(WELCOME_SEEN_COOKIE, "1", { httpOnly: true, sameSite: "lax", path: "/", secure: process.env.NODE_ENV === "production" });
+  // 30 days — outlives a browser restart; signing in again resets it (app/api/auth/session).
+  store.set(WELCOME_SEEN_COOKIE, "1", { httpOnly: true, sameSite: "lax", path: "/", secure: process.env.NODE_ENV === "production", maxAge: 30 * 86_400 });
   const me = await getMemberByEmail(user.email);
   if (me) {
     await getAdminDb()

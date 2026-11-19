@@ -1,3 +1,4 @@
+import { WELCOME_SEEN_COOKIE } from "@/lib/onboarding";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { SESSION_COOKIE } from "@/lib/auth/constants";
@@ -26,6 +27,18 @@ export function proxy(request: NextRequest) {
       url.searchParams.set("from", pathname + request.nextUrl.search);
     }
     return NextResponse.redirect(url);
+  }
+
+  /*
+    ONBOARDING IS REQUIRED (Geekdom, November 2026). Every member-portal
+    page sends you to /portal/welcome until this sign-in has finished it —
+    the WELCOME_SEEN cookie, set by finishWelcome and (after launch) at
+    sign-in for anyone who already has. Not the admin, and not the welcome
+    page itself. Typing /portal/directory can't skip it.
+  */
+  const inMemberPortal = pathname.startsWith("/portal") && !pathname.startsWith("/portal/admin") && !pathname.startsWith("/portal/welcome");
+  if (inMemberPortal && !request.cookies.has(WELCOME_SEEN_COOKIE)) {
+    return NextResponse.redirect(new URL("/portal/welcome", request.url));
   }
 
   /*

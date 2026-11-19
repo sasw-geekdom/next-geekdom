@@ -744,8 +744,11 @@ members use personal Gmail, and the hint hid their accounts.
     the checkout step by hand (card 4242 4242 4242 4242); everything after
     it (webhook, drawer, card update, cancel/keep) was tested end to end
     with an API-made subscription on the test card.
-  - `/account` still emails a Stripe portal link; switch it to "sign in"
-    now that billing is live.
+  - **`/account` sends members to sign in** and opens Profile → Billing
+    (old emails and bookmarks still point there). The emailed Stripe
+    billing-portal link, its route (/api/billing/portal), form and email,
+    and the unused "open Stripe's portal" action were REMOVED — members
+    never see Stripe's hosted pages.
 - **Every member-portal page starts with `PortalPage`**
   ([portal-page.tsx](components/portal/portal-page.tsx)): eyebrow, Section-H1,
   optional sample notice, then Tiles. No full-width rules, no standfirst —
@@ -846,6 +849,18 @@ members use personal Gmail, and the hint hid their accounts.
     is linked, not duplicated. Only a total miss creates a `cus_`-keyed doc.
   - Join dates are stored at noon Central (midnight UTC is the day before
     here).
+- **THE WELCOME FLOW IS REQUIRED** (Geekdom, November 2026) — no "Skip",
+  no "Set this up later". Profile needs a PHOTO, a HEADLINE and "ABOUT YOU"
+  (≥20 characters; links optional); a member with nothing on file must
+  SAVE A CARD before Continue (saving charges nothing). **proxy.ts is the
+  gate**: every member-portal page (not /portal/admin, not the welcome
+  page) redirects to /portal/welcome until the `gk_welcome_seen` cookie is
+  set — by finishing (30 days), or at sign-in after launch for anyone who
+  already finished. Typing /portal/directory can't skip it. Sized for a
+  MacBook Air: compact header (`PortalPage compact`), the profile step in
+  two columns from lg up — Save and continue in view at 1440×780. The
+  staff preview requires the same fields; its photo is shown locally
+  (`PhotoField local`) and never uploaded.
 - **UNTIL LAUNCH, WELCOME AT EVERY SIGN-IN, FOR EVERYONE** (Jesse,
   November 2026 — only Geekdom staff have access, and all of them should
   walk through it to give feedback): `WELCOME_EVERY_SIGN_IN = true` in
@@ -1328,6 +1343,17 @@ touching live data. The live site leaves it unset (the default database).
 - **Cache keys carry the database** (`dataKey()`): unchanged for the
   default, suffixed for a named one, so a preview's reads can never be
   served from — or into — the live site's cached data.
+- **SET UP, November 2026.** The `preview` database exists (nam5), is
+  seeded, and Vercel **Preview** has `FIREBASE_DATABASE_ID=preview` — so
+  the staging link no longer touches live members or applications (staff
+  add test members there). Preview also has `EMAIL_REDIRECT_TO=delivered@resend.dev`
+  (staging email goes nowhere real) and the **Stripe SANDBOX**: secret and
+  publishable keys, `STRIPE_PRICE_SOLO`/`_TEAM`, and `STRIPE_WEBHOOK_SECRET`
+  for a sandbox webhook endpoint at the field-notes-page branch URL.
+  Preview deployments are behind **Vercel's login**, so that endpoint's URL
+  carries `?x-vercel-protection-bypass=…` — a "Protection Bypass for
+  Automation" secret, known only to Stripe (Project → Deployment
+  Protection). Live keys go on **Production** only, at launch.
 - **The admin shows no "Live data" / "Preview data" banner** — it came off
   at Jesse's request. Remember it yourself: local dev (`.env.local`) and any
   preview without `FIREBASE_DATABASE_ID` edit the LIVE database.

@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,9 +14,17 @@ import { finishWelcome } from "@/lib/portal/onboarding-actions";
 
 /*
   THE WELCOME FLOW (app/portal/welcome) — two steps and a send-off, in the
-  member portal's brand: Bone, square, Rubik, a mono step line. Every step
-  can be put off ("Set this up later"), because the reminder is the
-  dashboard's job, not a locked door (Geekdom: remind, don't block).
+  member portal's brand: Bone, square, Rubik, a mono step line.
+
+  REQUIRED (Geekdom, November 2026): no skipping. The profile step needs a
+  photo, a headline and "About you" (links are optional); the membership
+  step needs billing in place — a member with nothing on file saves a card
+  before Continue (saving charges nothing). proxy.ts keeps every other
+  portal page behind it until it's finished.
+
+  SIZED FOR A LAPTOP: a compact header, and the profile step in two
+  columns from lg up, so a MacBook Air shows the whole step without
+  scrolling to find the button.
 */
 
 export type MembershipCase =
@@ -62,7 +69,7 @@ export function WelcomeFlow({ member, membership, preview = false }: Props) {
   }
 
   return (
-    <div className="flex max-w-3xl flex-col gap-8">
+    <div className="flex max-w-6xl flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <ol aria-label="Getting started" className="flex flex-wrap items-center gap-3">
           {STEPS.map((label, i) => (
@@ -83,11 +90,6 @@ export function WelcomeFlow({ member, membership, preview = false }: Props) {
             </li>
           ))}
         </ol>
-        {step < 2 && (
-          <button type="button" onClick={() => done()} disabled={leaving} className="text-sm text-muted-foreground underline underline-offset-2 hover:text-graphite">
-            Set this up later
-          </button>
-        )}
       </div>
 
       {step === 0 && <ProfileStep member={member} preview={preview} onNext={() => setStep(1)} />}
@@ -125,6 +127,8 @@ export function WelcomeFlow({ member, membership, preview = false }: Props) {
 
 function ProfileStep({ member, preview, onNext }: { member: Props["member"]; preview: boolean; onNext: () => void }) {
   const [p, setP] = React.useState(member.profile);
+  const [photo, setPhoto] = React.useState<string | null>(member.photo);
+  const [errors, setErrors] = React.useState<Record<string, string>>({});
   const [error, setError] = React.useState<string | null>(null);
   const [pending, startTransition] = React.useTransition();
   const set = (k: keyof typeof p) => (v: string) => setP((x) => ({ ...x, [k]: v }));
@@ -132,6 +136,13 @@ function ProfileStep({ member, preview, onNext }: { member: Props["member"]; pre
   function save(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    // Required: a photo, a headline, a few words about you.
+    const missing: Record<string, string> = {};
+    if (!photo) missing.photo = "Add a photo — it's how members recognize you on the floor.";
+    if (!p.headline.trim()) missing.headline = "Add a headline.";
+    if (p.bio.trim().length < 20) missing.bio = "Add a few sentences about you.";
+    setErrors(missing);
+    if (Object.keys(missing).length) return;
     if (preview) return onNext(); // the staff preview saves nothing
     startTransition(async () => {
       const res = await saveMyProfile({ name: member.name, ...p });
@@ -141,52 +152,64 @@ function ProfileStep({ member, preview, onNext }: { member: Props["member"]; pre
   }
 
   return (
-    <form onSubmit={save} noValidate className="flex flex-col gap-6 border border-border bg-bone-light p-6 sm:p-8">
-      <div>
-        <h2 className={cn(HEADING.subhead, "text-graphite")}>How members will see you.</h2>
-        <p className="mt-2 max-w-xl leading-relaxed text-muted-foreground">
-          The directory is how members find the person who knows the thing. A photo, a line about what you&rsquo;re building, and where to find your work.
+    <form onSubmit={save} noValidate className="border border-border bg-bone-light p-6 sm:p-8">
+      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
+        <div>
+          <h2 className={cn(HEADING.subhead, "text-graphite")}>How members will see you.</h2>
+          <p className="mt-1.5 max-w-2xl leading-relaxed text-muted-foreground">
+            The directory is how members find the person who knows the thing. A photo, a line about what you&rsquo;re building, and where to find your work.
+          </p>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          <span className="text-geekdom-red">*</span> Required
         </p>
       </div>
-      {preview ? (
-        <div className="flex items-center gap-5">
-          <span aria-hidden="true" className={cn(MONO.label, "flex h-24 w-24 shrink-0 items-center justify-center bg-graphite text-bone")}>
-            {member.name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase()}
-          </span>
-          <p className="max-w-sm text-sm text-muted-foreground">Members upload their photo here — it&rsquo;s cropped square and shown in the directory. (Off in the preview.)</p>
+
+      {/* Two columns from lg up — the whole step fits a laptop screen. */}
+      <div className="mt-6 grid gap-6 lg:grid-cols-2 lg:gap-10">
+        <div className="flex flex-col gap-5">
+          <div>
+            <p className="mb-2 text-sm font-medium text-graphite">
+              Photo <span className="text-geekdom-red">*</span>
+            </p>
+            <PhotoField photo={photo} name={member.name} onChange={setPhoto} local={preview} />
+            {errors.photo && (
+              <p role="alert" className="mt-2 text-sm text-geekdom-red">
+                {errors.photo}
+              </p>
+            )}
+          </div>
+          <Field label="Headline" htmlFor="w-headline" hint="One line on what you're building or what you do." error={errors.headline} required>
+            <Input id="w-headline" value={p.headline} maxLength={160} onChange={(e) => set("headline")(e.target.value)} placeholder="Building scheduling tools for clinics" />
+          </Field>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Website" htmlFor="w-site">
+              <Input id="w-site" value={p.website} onChange={(e) => set("website")(e.target.value)} placeholder="yourcompany.com" />
+            </Field>
+            <Field label="LinkedIn" htmlFor="w-li">
+              <Input id="w-li" value={p.linkedin} onChange={(e) => set("linkedin")(e.target.value)} placeholder="linkedin.com/in/you" />
+            </Field>
+          </div>
         </div>
-      ) : (
-        <PhotoField photo={member.photo} name={member.name} />
-      )}
-      <Field label="Headline" htmlFor="w-headline" hint="One line on what you're building or what you do.">
-        <Input id="w-headline" value={p.headline} maxLength={160} onChange={(e) => set("headline")(e.target.value)} placeholder="Building scheduling tools for clinics" />
-      </Field>
-      <Field label="About you" htmlFor="w-bio" hint="A few sentences — what you're working on, what you'd like help with.">
-        <Textarea id="w-bio" rows={5} value={p.bio} maxLength={2000} onChange={(e) => set("bio")(e.target.value)} />
-      </Field>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Website" htmlFor="w-site">
-          <Input id="w-site" value={p.website} onChange={(e) => set("website")(e.target.value)} placeholder="yourcompany.com" />
-        </Field>
-        <Field label="LinkedIn" htmlFor="w-li">
-          <Input id="w-li" value={p.linkedin} onChange={(e) => set("linkedin")(e.target.value)} placeholder="linkedin.com/in/you" />
-        </Field>
+        <div className="flex flex-col gap-5">
+          <Field label="About you" htmlFor="w-bio" hint="A few sentences — what you're working on, what you'd like help with." error={errors.bio} required>
+            <Textarea id="w-bio" rows={7} value={p.bio} maxLength={2000} onChange={(e) => set("bio")(e.target.value)} />
+          </Field>
+          <p className="text-sm text-muted-foreground">
+            {p.listed ? "You'll be listed in the member directory. You can hide yourself any time from your profile." : "You're hidden from the member directory."}
+          </p>
+        </div>
       </div>
-      <p className="text-sm text-muted-foreground">
-        {p.listed ? "You'll be listed in the member directory. You can hide yourself any time from your profile." : "You're hidden from the member directory."}
-      </p>
+
       {error && (
-        <p role="alert" className="text-sm text-geekdom-red">
+        <p role="alert" className="mt-4 text-sm text-geekdom-red">
           {error}
         </p>
       )}
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="mt-6 border-t border-border pt-5">
         <Button type="submit" variant="ink" disabled={pending}>
           {pending ? "Saving…" : "Save and continue"}
         </Button>
-        <button type="button" onClick={onNext} className="text-sm text-muted-foreground underline underline-offset-2 hover:text-graphite">
-          Skip for now
-        </button>
       </div>
     </form>
   );
@@ -209,6 +232,7 @@ function MembershipStep({
   const [adding, setAdding] = React.useState(false);
   const [previewAs, setPreviewAs] = React.useState(0);
   const m = preview ? PREVIEW_CASES[previewAs].m : membership;
+  const needsCard = !preview && m.kind === "none" && !saved;
 
   const body = (() => {
     switch (m.kind) {
@@ -264,14 +288,14 @@ function MembershipStep({
         ) : (
           <div className="flex flex-col gap-3">
             <p className="leading-relaxed text-graphite">
-              Add the card for your Club membership{m.price ? ` (${m.price})` : ""}. Saving it doesn&rsquo;t charge anything — the Club team starts your billing and lets you know first.
+              Add the card for your Club membership{m.price ? ` (${m.price})` : ""} to finish setting up. Saving it doesn&rsquo;t charge anything — the Club team starts your billing and lets you know first.
             </p>
             {m.stripe ? (
               <Button type="button" variant="outline" className="self-start" onClick={() => setAdding(true)}>
                 Add a card
               </Button>
             ) : (
-              <p className="text-sm text-muted-foreground">Billing isn&rsquo;t connected yet — you can add a card later from your profile.</p>
+              <p className="text-sm text-muted-foreground">Billing isn&rsquo;t connected on this copy of the site yet, so this step can&rsquo;t be completed here.</p>
             )}
           </div>
         );
@@ -313,17 +337,15 @@ function MembershipStep({
       </div>
       {body}
       <div className="flex flex-wrap items-center gap-4 border-t border-border pt-6">
-        <Button type="button" variant="ink" onClick={onNext}>
+        {/* REQUIRED: with nothing on file, a saved card first (the staff preview can't save one, so it may go on). */}
+        <Button type="button" variant="ink" onClick={onNext} disabled={needsCard}>
           Continue
         </Button>
         <button type="button" onClick={onBack} className="text-sm text-muted-foreground underline underline-offset-2 hover:text-graphite">
           Back
         </button>
-        {m.kind === "none" && !saved && (
-          <span className="text-sm text-muted-foreground">
-            Or later, from <Link href="/portal/profile#billing" className="underline underline-offset-2">your profile</Link>.
-          </span>
-        )}
+        {needsCard && <span className="text-sm text-muted-foreground">Save a card to continue.</span>}
+        {preview && m.kind === "none" && <span className="text-sm text-muted-foreground">Members can&rsquo;t continue until they save a card.</span>}
       </div>
     </section>
   );

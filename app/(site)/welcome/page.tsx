@@ -59,9 +59,9 @@ export default function WelcomePage() {
         </div>
 
         <p className="mt-10 text-sm text-muted-foreground">
-          Manage billing any time at{" "}
-          <a href="/account" className="font-medium text-graphite underline decoration-clay decoration-2 underline-offset-2 transition-colors hover:decoration-graphite">
-            your account
+          Manage billing any time in{" "}
+          <a href="/portal/profile#billing" className="font-medium text-graphite underline decoration-clay decoration-2 underline-offset-2 transition-colors hover:decoration-graphite">
+            the member portal
           </a>
           .
         </p>

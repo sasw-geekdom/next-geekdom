@@ -97,24 +97,3 @@ export function escapeHtml(value: string): string {
 
 
 
-/** 6. Billing portal link, requested from /account. */
-export function portalLinkEmail(vars: { portalUrl: string }): {
-  subject: string;
-  html: string;
-} {
-  return {
-    subject: "Your Geekdom billing link",
-    html: shell(
-      heading("Manage your membership") +
-        paragraphs(
-          [
-            "Here's your secure link to update your card, download invoices, or cancel your membership.",
-          ].join("\n\n"),
-        ) +
-        button(vars.portalUrl, "Open billing") +
-        note(
-          "This link expires shortly and works once. Didn't ask for it? You can ignore this email — nothing has changed on your account.",
-        ),
-    ),
-  };
-}

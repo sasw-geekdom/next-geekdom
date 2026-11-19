@@ -15,7 +15,9 @@ import { initBotId } from "botid/client/core";
  * member and staff sign-in link silently never left — "Check your inbox",
  * and nothing in it. Locally `checkBotId()` can't reach its backend and
  * fails open, so it only ever broke in production. Callers today:
- * app/api/apply, app/api/billing/portal, app/api/auth/email-link.
+ * app/api/apply, app/api/auth/email-link, app/api/inquiries. (The emailed
+ * Stripe billing link, /api/billing/portal, was removed: members manage
+ * billing in the portal.)
  *
  * These are the endpoints an anonymous visitor can POST to. `/api/auth/session`
  * is deliberately absent: it's the staff login, already gated by a Firebase
@@ -25,7 +27,6 @@ import { initBotId } from "botid/client/core";
 initBotId({
   protect: [
     { path: "/api/apply", method: "POST" },
-    { path: "/api/billing/portal", method: "POST" },
     { path: "/api/auth/email-link", method: "POST" },
     // Event requests and Studio partner inquiries (lib/inquiries.ts).
     { path: "/api/inquiries", method: "POST" },

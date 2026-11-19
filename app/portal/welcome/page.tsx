@@ -42,6 +42,7 @@ export default async function WelcomePage() {
     if (!isAdmin(user)) redirect("/portal");
     return (
       <PortalPage
+        compact
         eyebrow="Welcome · staff preview"
         title={`Welcome to Geekdom, ${(user.name ?? "").split(" ")[0] || "there"}.`}
         notice="You're on the Geekdom team, so this is a preview of what members see at first sign-in. Nothing you enter here is saved."
@@ -89,7 +90,7 @@ export default async function WelcomePage() {
 
   const p = member.profile;
   return (
-    <PortalPage eyebrow="Welcome" title={`Welcome to Geekdom, ${member.name.split(" ")[0]}.`}>
+    <PortalPage compact eyebrow="Welcome" title={`Welcome to Geekdom, ${member.name.split(" ")[0]}.`}>
       <WelcomeFlow
         member={{
           name: member.name,

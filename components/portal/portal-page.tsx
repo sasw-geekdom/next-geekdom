@@ -17,7 +17,10 @@ export function PortalPage({
   notice,
   children,
   className,
+  compact = false,
 }: {
+  /** A shorter header (welcome flow): the content has to fit a laptop screen. */
+  compact?: boolean;
   eyebrow: string;
   title: React.ReactNode;
   /** Shown in the dashed "Sample content" notice while a page is a mock. */
@@ -26,11 +29,11 @@ export function PortalPage({
   className?: string;
 }) {
   return (
-    <div className={cn("px-6 py-10 lg:px-10 lg:py-12", className)}>
+    <div className={cn(compact ? "px-6 py-6 lg:px-10 lg:py-8" : "px-6 py-10 lg:px-10 lg:py-12", className)}>
       <p className={cn(MONO.eyebrow, "text-muted-foreground")}>{eyebrow}</p>
-      <h1 className={cn("mt-3 text-graphite", HEADING.heading)}>{title}</h1>
-      {notice && <SampleNotice className="mt-6">{notice}</SampleNotice>}
-      <div className="mt-8">{children}</div>
+      <h1 className={cn(compact ? "mt-2" : "mt-3", "text-graphite", compact ? HEADING.subhead : HEADING.heading)}>{title}</h1>
+      {notice && <SampleNotice className={compact ? "mt-4" : "mt-6"}>{notice}</SampleNotice>}
+      <div className={compact ? "mt-5" : "mt-8"}>{children}</div>
     </div>
   );
 }
