@@ -1572,6 +1572,19 @@ touching live data. The live site leaves it unset (the default database).
   carries `?x-vercel-protection-bypass=…` — a "Protection Bypass for
   Automation" secret, known only to Stripe (Project → Deployment
   Protection). Live keys go on **Production** only, at launch.
+- **CHANGED, November 2026 (Jesse): staging now reads the LIVE
+  database**, like localhost — `FIREBASE_DATABASE_ID` was REMOVED from
+  Vercel's Preview environment, so Geekdom staff reviewing staging see
+  the real members, applications and requests instead of an empty copy.
+  What staff DO on staging is real (an approval, a member edit, a room),
+  but EMAIL STAYS HELD: Preview's `EMAIL_REDIRECT_TO` sends every email to
+  the test inbox, so a decision made on staging never reaches the person
+  — follow it up by hand, or make it on the live site. Stripe on staging
+  is still the SANDBOX (a card saved there is a sandbox customer on a
+  live record — the same as localhost). Staff sign in to staging with
+  Google (an email link would go to the test inbox). The `preview`
+  database still exists, unused; to separate staging again, set
+  `FIREBASE_DATABASE_ID=preview` on Preview and redeploy.
 - **The admin shows no "Live data" / "Preview data" banner** — it came off
   at Jesse's request. Remember it yourself: local dev (`.env.local`) and any
   preview without `FIREBASE_DATABASE_ID` edit the LIVE database.
