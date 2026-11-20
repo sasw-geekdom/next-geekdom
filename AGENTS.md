@@ -653,6 +653,22 @@ members use personal Gmail, and the hint hid their accounts.
   - Checked, not a bug: imported applications' dates come from Airtable's
     "Record Created" (noon Central) — a "today" date is a real, recent
     Airtable application.
+- **Settings → Emails** (Jesse, November 2026 — "let the admin team see
+  the automated emails"): every automated email the site sends through
+  Resend, exactly as received — grouped by when it goes out, with who
+  gets it, when, the subject and inbox preview line, desktop/phone width,
+  and "Send a test to me" (the signed-in admin's own address, "[Test]"
+  subject). VIEW ONLY; editing wording or announcements to members come
+  only if the team asks. [catalog.ts](lib/email/catalog.ts) builds each
+  from the REAL template with sample data — a new automated email needs an
+  entry there (two unused templates, email-changed and card-expiring, are
+  left out). Every admin can see it. Its own section, not Site copy (that's
+  the public pages' words).
+- **The email logo is on Vercel Blob** (`EMAIL_LOGO` in
+  member-templates.ts), not the site: the review and staging URLs are
+  behind Vercel's login, and geekdom.com answers an automated image fetch
+  with Vercel's bot challenge — both 403, so logos arrived broken. Blob
+  serves it to anyone (checked as Gmail's image proxy).
 - **The admin follows the brand, but works like a tool** (Linear / Vercel
   dashboard conventions; Jesse's call, November 2026). ADMIN ONLY — the
   public site and the member portal keep the brand's reading conventions.

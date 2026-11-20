@@ -18,6 +18,7 @@ import {
   UserRound,
   Users,
   Search,
+  Mail,
   type LucideIcon,
 } from "lucide-react";
 import { can, type Permission, type Role } from "@/lib/auth/roles";
@@ -123,6 +124,8 @@ export const ADMIN_NAV: NavGroup[] = [
       { href: "/portal/admin/team", label: "Admin access", icon: ShieldCheck },
       // Member tags, and the PERK tags that make a membership complimentary.
       { href: "/portal/admin/tags", label: "Tags & perks", icon: Tag },
+      // Every automated email, as people receive it — view only, with a test send.
+      { href: "/portal/admin/emails", label: "Emails", icon: Mail },
       { href: "/portal/admin/activity", label: "Activity log", icon: History },
     ],
   },

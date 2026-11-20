@@ -43,6 +43,19 @@ export const EMAIL_ORIGIN = /localhost|127\.0\.0\.1/.test(SITE_URL)
 
 export const url = (path: string) => `${EMAIL_ORIGIN}${path}`;
 
+/*
+  THE EMAIL LOGO LIVES ON VERCEL BLOB, a public file host (Jesse, November
+  2026). It came from the sending copy's own address, and every one of them
+  refused it: the review and staging URLs sit behind Vercel's login (403),
+  and even geekdom.com answers an automated fetch — the kind an email
+  service makes for images — with Vercel's bot challenge (403), so the logo
+  arrived broken. Blob serves it to anyone (tested as Gmail's image proxy:
+  200). It's a copy of public/brand/kit/geekdom-wordmark-red.png at a fixed
+  path; to change it, upload the new file to the same path
+  ("email/geekdom-wordmark-red.png", no random suffix).
+*/
+const EMAIL_LOGO = "https://mpyhf2bgba9n6thk.public.blob.vercel-storage.com/email/geekdom-wordmark-red.png";
+
 export interface Email {
   subject: string;
   /** The inbox preview line. */
@@ -70,7 +83,7 @@ function layout(preheader: string, body: string): string {
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
         <tr><td style="padding:0 0 24px;">
           <a href="${url("/portal")}" style="text-decoration:none;">
-            <img src="${url("/brand/kit/geekdom-wordmark-red.png")}" width="120" height="45" alt="Geekdom" style="display:block;border:0;width:120px;height:auto;">
+            <img src="${EMAIL_LOGO}" width="120" height="45" alt="Geekdom" style="display:block;border:0;width:120px;height:auto;">
           </a>
         </td></tr>
         <tr><td style="background:${BONE_LIGHT};border:1px solid ${RULE};padding:36px 32px;font-family:${SANS};color:${GRAPHITE};font-size:16px;line-height:1.6;">

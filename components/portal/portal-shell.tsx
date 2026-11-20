@@ -269,7 +269,7 @@ export function PortalShell({
         )}
       >
         {/* Sized so the whole admin rail fits a 900px-tall window (Jesse, November 2026) — Tags & perks and the activity log sat below the fold with no sign the rail scrolled. */}
-        <div className="hidden px-6 pb-4 pt-5 lg:block">
+        <div className="hidden px-6 pb-4 pt-4 lg:block">
           <Link href="/portal" aria-label="Portal home">
             <Logo title="" className="h-8 w-auto" />
           </Link>
@@ -300,7 +300,7 @@ export function PortalShell({
                           // Square, with a Clay rule on the active row rather
                           // than a tinted pill: the accent is a marker, the
                           // words stay Graphite (Clay can't carry small text).
-                          "flex items-center gap-3 border-l-2 px-3 py-2 text-sm transition-colors",
+                          "flex items-center gap-3 border-l-2 px-3 py-[7px] text-sm transition-colors",
                           isActive
                             ? "border-clay bg-bone font-medium text-graphite"
                             : "border-transparent text-graphite/70 hover:bg-bone hover:text-graphite",
