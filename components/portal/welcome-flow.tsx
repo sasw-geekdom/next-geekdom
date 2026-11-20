@@ -259,7 +259,8 @@ function ProfileStep({
         */}
         <div
           aria-label={p.listed ? "How you'll appear in the directory" : "Hidden from the directory"}
-          className={cn("flex min-w-0 items-center gap-2.5 border border-border bg-bone px-2.5 py-1.5 lg:ml-auto lg:max-w-sm", !p.listed && "opacity-50")}
+          // Hidden reads as a dashed border and the words, not faded type (that failed contrast).
+          className={cn("flex min-w-0 items-center gap-2.5 border bg-bone px-2.5 py-1.5 lg:ml-auto lg:max-w-sm", p.listed ? "border-border" : "border-dashed border-muted-foreground")}
         >
           {photo ? (
             // eslint-disable-next-line @next/next/no-img-element

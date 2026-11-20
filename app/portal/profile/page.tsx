@@ -1,3 +1,5 @@
+import { IntrosCard } from "@/components/portal/intros-card";
+import { introsFor } from "@/lib/portal/intros";
 import { withStarters } from "@/lib/topics";
 import { listDirectory, topicsInUse } from "@/lib/directory";
 import { requireMember } from "@/lib/auth/session";
@@ -92,9 +94,11 @@ export default async function ProfilePage(props: PageProps<"/portal/profile">) {
   const comp = member?.comp && compRunning(member.comp, new Date().getTime()) ? member.comp : null;
   const sampleBilling = !live && !comp;
   const shownCard = live ? live.card : MOCK_BILLING.card;
-  const history = live
-    ? live.invoices.filter((i) => i.status === "paid" || i.status === "open").slice(0, 6).map((i) => ({ date: i.date, label: `${i.amount} · ${i.status === "paid" ? "paid" : "due"}` }))
-    : MOCK_BILLING.history.map((h) => ({ date: h.date, label: `${amount} · ${h.status.toLowerCase()}` }));
+  // The LAST payment only — the full list (Upcoming, Paid, Due) is Manage billing's.
+  // A second, older-style list here disagreed with it (Jesse, November 2026).
+  const lastPaid = live
+    ? live.invoices.find((i) => i.status === "paid") ?? null
+    : { date: MOCK_BILLING.history[0].date, amount };
 
   return (
     <PortalPage
@@ -140,6 +144,9 @@ export default async function ProfilePage(props: PageProps<"/portal/profile">) {
               remove={removeMyTeammate}
             />
           )}
+
+          {/* Who you've asked, and who asked you — the record behind the emails. */}
+          {member && <IntrosCard intros={await introsFor(member.id).catch(() => [])} />}
         </div>
 
         {/* ── Membership and billing, one panel ─────────────────────────── */}
@@ -241,21 +248,21 @@ export default async function ProfilePage(props: PageProps<"/portal/profile">) {
                       <span className="text-muted-foreground">None on file</span>
                     )}
                   </dd>
+                  <dt className="text-muted-foreground">Last payment</dt>
+                  <dd className="tabular-nums text-graphite">
+                    {lastPaid ? (
+                      <>
+                        {lastPaid.amount}
+                        <span className="text-muted-foreground"> · {longDate(lastPaid.date)}</span>
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground">None yet</span>
+                    )}
+                  </dd>
                 </dl>
 
-                <h3 className={cn(MONO.label, "mt-7 text-muted-foreground")}>Payment history</h3>
-                <ul className="mt-2">
-                  {history.length === 0 && <li className="text-sm text-muted-foreground">No payments yet.</li>}
-                  {history.map((h) => (
-                    <li key={h.date} className="flex items-center justify-between gap-4 border-t border-border py-2.5 text-sm first:border-t-0">
-                      <span className="tabular-nums text-graphite">{longDate(h.date)}</span>
-                      <span className="tabular-nums text-muted-foreground">{h.label}</span>
-                    </li>
-                  ))}
-                </ul>
-
                 <p className="mt-5 border-t border-border pt-4 text-sm leading-relaxed text-muted-foreground">
-                  Update your card, get receipts, or cancel from Manage billing. Questions?{" "}
+                  Every invoice and receipt, your card, and cancelling are in Manage billing. Questions?{" "}
                   <a href={`mailto:${CLUB_EMAIL}`} className={LINK}>
                     {CLUB_EMAIL}
                   </a>

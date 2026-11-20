@@ -448,6 +448,8 @@ export interface BookingDoc {
   heldFor?: { kind: "staff" | "event" | "other"; name: string; inquiryId?: string };
   /** Minutes added after booking (extendMyBooking) — for the record. */
   extendedBy?: number;
+  /** When the morning-of reminder went (app/api/cron/room-reminders) — once. */
+  remindedAt?: Timestamp;
   createdAt: Timestamp;
   createdBy: string;
   canceledAt?: Timestamp;

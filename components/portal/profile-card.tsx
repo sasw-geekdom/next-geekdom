@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Globe, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { Drawer } from "@/components/ui/drawer";
 import { MONO } from "@/components/site/section";
 import { cn } from "@/lib/utils";
@@ -40,6 +41,7 @@ export function ProfileCard({
   const [result, setResult] = React.useState<{ ok: boolean; message: string } | null>(null);
   const [open, setOpen] = React.useState(false);
   const [saved, setSaved] = React.useState(false);
+  const [listing, setListing] = React.useState(false);
   // A fresh editor each time the drawer opens, starting from the card.
   const [editorKey, setEditorKey] = React.useState(0);
   const edit = () => {
@@ -70,7 +72,7 @@ export function ProfileCard({
         </Button>
       </div>
 
-      <div className={cn("mt-5 flex items-center gap-4", !profile.listed && "opacity-50")}>
+      <div className="mt-5 flex items-center gap-4">
         {profile.photo ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={profile.photo} alt="" className="h-14 w-14 shrink-0 border border-border bg-bone object-cover" />
@@ -81,17 +83,17 @@ export function ProfileCard({
         )}
         <div className="min-w-0">
           <p className="truncate font-medium text-graphite">{profile.name || "Your name"}</p>
-          <p className="truncate text-sm text-muted-foreground">
-            {profile.role || "Role"}
-            {profile.company ? ` · ${profile.company}` : ""}
-          </p>
+          {/* Only what they filled in — a bare "Role" read as their actual role. */}
+          {(profile.role || profile.company) && (
+            <p className="truncate text-sm text-muted-foreground">{[profile.role, profile.company].filter(Boolean).join(" · ")}</p>
+          )}
         </div>
       </div>
-      <p className={cn("mt-4 leading-relaxed text-graphite", !profile.listed && "opacity-50")}>
+      <p className="mt-4 leading-relaxed text-graphite">
         {profile.headline || "Add a headline — one line on what you're building."}
       </p>
       {profile.askMeAbout.length > 0 && (
-        <div className={cn("mt-4 flex flex-wrap gap-1.5", !profile.listed && "opacity-50")}>
+        <div className="mt-4 flex flex-wrap gap-1.5">
           {profile.askMeAbout.map((t) => (
             <span key={t} className="border border-border bg-bone px-2 py-0.5 text-xs text-graphite">{t}</span>
           ))}
@@ -117,11 +119,31 @@ export function ProfileCard({
       )}
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
-        <p className="text-sm text-muted-foreground">
-          {profile.listed
-            ? "Listed — other members can find you in the directory."
-            : "Not listed — you're hidden from the directory."}
-        </p>
+        {/*
+          THE DIRECTORY SWITCH, on the card — hiding took Edit and a hunt for
+          the setting. Saves the moment it's flipped (a member's own profile).
+        */}
+        <div className="flex flex-col gap-1">
+          <Switch
+            checked={profile.listed}
+            disabled={listing}
+            onChange={async (v) => {
+              const next = { ...profile, listed: v };
+              setProfile(next);
+              setResult(null);
+              if (!save) return;
+              setListing(true);
+              const res = await save(next);
+              setListing(false);
+              if (!res.ok) setProfile(profile);
+              setResult(res);
+            }}
+            label="List me in the member directory"
+          />
+          <p className="text-[13px] text-muted-foreground">
+            {profile.listed ? "Other members can find you and ask for an intro." : "You're hidden — other members can't find you."}
+          </p>
+        </div>
         {(profile.linkedin || profile.website) && (
           <div className="flex gap-2">
             {profile.linkedin && (

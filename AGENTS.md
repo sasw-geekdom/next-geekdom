@@ -880,6 +880,32 @@ members use personal Gmail, and the hint hid their accounts.
     fundraising"), else the newest members. "Ask for an intro" finishes
     the welcome and opens `/portal/directory?m=…&intro=1` — their profile
     with the intro form open.
+- **After the portal review** (Jesse, November 2026):
+  - **The dashboard checklist doesn't repeat the welcome flow**: once
+    `welcomedAt` is set, `stepsFor` drops profile, directory and basics
+    (the welcome covered them) — events, and Slack once its link is set,
+    under "One more thing." / "Two more things." Its directory line no
+    longer says "You're listed" (a member may have hidden).
+  - **Profile**: the directory switch is ON the card (saves when
+    flipped); billing shows the LAST payment, and the full invoice list is
+    Manage billing's (a second "Payment history" list disagreed with it);
+    an **Intros** card lists who you asked and who asked you
+    ([intros.ts](lib/portal/intros.ts) — never the note); "Role" no longer
+    prints as a placeholder.
+  - **Rooms**: each booking has "Add to calendar" — an .ics (Apple /
+    Outlook) and a Google link ([calendar.ts](lib/rooms/calendar.ts)); the
+    confirmation email carries the Google link (and lost a stale "hours
+    back to your week" line); a **morning-of reminder**
+    ([room-reminders](app/api/cron/room-reminders/route.ts), vercel.json,
+    13:00 UTC = 7 AM CST / 8 AM CDT) emails each member today's bookings
+    once (`remindedAt`), CRON_SECRET-gated like comp-reminders.
+    `toBooking` tolerates a booking with no `createdAt`.
+  - **Phone dashboard**: "Need something?" follows the people tile
+    (`max-lg:order-*`); Field Notes, Slack/Follow and Since 2011 after it.
+  - **Accessibility**: axe-core (WCAG 2.1 A/AA) is clean on every member
+    page and panel. Fixed: a hidden profile was shown at 50% opacity
+    (failed contrast — it now says so in words, dashed border in the
+    welcome preview); the photo field's file input had no label.
 - **"Ask {name} for an intro"** on every profile but your own
   ([intro-actions.ts](lib/portal/intro-actions.ts)): Geekdom emails the
   member your note (`introRequestEmail`) with REPLY-TO set to you — their

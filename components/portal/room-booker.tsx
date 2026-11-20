@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { bookRoom, cancelMyBooking, extendMyBooking } from "@/lib/rooms/actions";
 import { BOOKING_WINDOW, ROOM_RULES, SLOT_MS, addDays, centralDay, currentSlotStart, dayLabel, lengthLabel, timeLabel, windowOf } from "@/lib/rooms/rules";
 import { CONTACT_EMAIL } from "@/lib/site";
+import { googleCalendarUrl, icsFor } from "@/lib/rooms/calendar";
 
 /*
   THE MEMBER'S BOOKING SCREEN. The server page hands over one day's rooms
@@ -275,6 +276,20 @@ export function RoomBooker({
                           </button>
                         )}
                       </span>
+                    </div>
+                    {/* Add to your calendar: an .ics for any calendar, or Google's own link. */}
+                    <div className="mt-1.5 flex flex-wrap items-center gap-x-3 text-[13px] text-muted-foreground">
+                      <span>Add to calendar:</span>
+                      <a
+                        href={`data:text/calendar;charset=utf-8,${encodeURIComponent(icsFor(b))}`}
+                        download={`geekdom-${b.roomName.toLowerCase()}-${centralDay(b.start)}.ics`}
+                        className="text-graphite underline decoration-clay decoration-1 underline-offset-2"
+                      >
+                        Apple / Outlook
+                      </a>
+                      <a href={googleCalendarUrl(b)} target="_blank" rel="noreferrer noopener" className="text-graphite underline decoration-clay decoration-1 underline-offset-2">
+                        Google
+                      </a>
                     </div>
                     {open && (
                       <div className="mt-3 flex flex-col gap-2">

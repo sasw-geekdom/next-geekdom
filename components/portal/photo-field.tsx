@@ -124,7 +124,7 @@ export function PhotoField({
           </p>
         )}
       </div>
-      <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/heic" className="sr-only" tabIndex={-1} onChange={(e) => choose(e.target.files?.[0])} />
+      <input ref={input} type="file" aria-label="Choose a profile photo" accept="image/jpeg,image/png,image/webp,image/heic" className="sr-only" tabIndex={-1} onChange={(e) => choose(e.target.files?.[0])} />
     </div>
   );
 }

@@ -102,7 +102,7 @@ export default async function PortalHome() {
   }
   // The "Get started" checklist (lib/onboarding.ts) — Slack only once there's an invite.
   const onboardingSteps: OnboardingStepView[] = member
-    ? stepsFor(Boolean(resources.slackInviteUrl)).map((id) => {
+    ? stepsFor(Boolean(resources.slackInviteUrl), Boolean(member.onboarding.welcomedAt)).map((id) => {
         if (id === "profile") return { id, href: "/portal/profile" };
         if (id === "directory") return { id, href: `/portal/directory?m=${member.id}` };
         if (id === "events") return { id, href: LUMA_CALENDAR_URL, external: true };
@@ -301,7 +301,8 @@ export default async function PortalHome() {
         {/* ── Field Notes — the real latest note ──────────────────────── */}
         <Tile
           label="Field Notes"
-          className="lg:col-span-2"
+          // Phones: after "Need something?" (max-lg:order-*), so the slim help row isn't 3,000px down.
+          className="lg:col-span-2 max-lg:order-2"
           action={
             <Link href="/field-notes" className={cn("text-sm", LINK_ARROW)}>
               All notes
@@ -337,7 +338,7 @@ export default async function PortalHome() {
         </Tile>
 
         {/* ── Slack over Follow ───────────────────────────────────────── */}
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 max-lg:order-2">
           {/* One-color mark on Graphite, per Slack's guidelines (components/portal/slack-mark.tsx). */}
           <Tile label="Member Slack" ink className="flex-1">
             <div className="flex items-start gap-4">
@@ -382,7 +383,7 @@ export default async function PortalHome() {
         {archive.length > 0 && (
           <Tile
             label={`Since ${FOUNDED_YEAR}`}
-            className="lg:col-span-3"
+            className="lg:col-span-3 max-lg:order-2"
             action={
               <Link href="/since-2011" className={cn("text-sm", LINK_ARROW)}>
                 See the wall
@@ -420,7 +421,7 @@ export default async function PortalHome() {
         )}
 
         {/* ── Need something? — a slim row ──────────────────────────── */}
-        <section className="flex flex-col gap-3 border border-border bg-bone-light px-6 py-5 sm:flex-row sm:items-center sm:gap-8 sm:px-7 lg:col-span-3">
+        <section className="flex flex-col gap-3 border border-border bg-bone-light px-6 py-5 sm:flex-row sm:items-center sm:gap-8 sm:px-7 lg:col-span-3 max-lg:order-1">
           <h2 className={cn(MONO.label, "text-muted-foreground")}>Need something?</h2>
           <div className="flex flex-wrap gap-x-8 gap-y-2">
             <Link href="/portal/resources" className={LINK_ARROW}>

@@ -70,7 +70,8 @@ export function toBooking(id: string, d: BookingDoc): Booking {
     memberEmail: d.memberEmail,
     note: d.note ?? "",
     heldFor: d.heldFor ?? null,
-    createdAt: d.createdAt.toDate().toISOString(),
+    // Tolerant: one booking written without it (a script, an old doc) mustn't take the whole Rooms page down.
+    createdAt: (d.createdAt ?? d.start).toDate().toISOString(),
   };
 }
 

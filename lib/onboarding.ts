@@ -29,7 +29,8 @@ export const STEP_COPY: Record<OnboardingStep, StepCopy> = {
   },
   directory: {
     title: "See who's in the room",
-    body: "You're listed in the member directory. See how you appear, and who else is here. You can hide yourself at Profile.",
+    // Not "You're listed" — a member may have hidden themselves.
+    body: "See how you appear in the member directory, and who else is here. You can hide yourself at Profile.",
     cta: "Open the directory",
   },
   events: {
@@ -49,9 +50,16 @@ export const STEP_COPY: Record<OnboardingStep, StepCopy> = {
   },
 };
 
-/** The steps that apply right now — Slack only once there's an invite link. */
-export const stepsFor = (hasSlack: boolean): OnboardingStep[] =>
-  ONBOARDING_STEPS.filter((s) => s !== "slack" || hasSlack);
+/** What the welcome flow (/portal/welcome) already covers — profile, the directory (People to meet), the basics. */
+const COVERED_BY_WELCOME: OnboardingStep[] = ["profile", "directory", "resources"];
+
+/**
+ * The steps that apply right now — Slack only once there's an invite link.
+ * After the welcome flow, only what it doesn't cover (Jesse, November 2026:
+ * the dashboard repeated it straight after it, over half the screen).
+ */
+export const stepsFor = (hasSlack: boolean, welcomed = false): OnboardingStep[] =>
+  ONBOARDING_STEPS.filter((s) => (s !== "slack" || hasSlack) && !(welcomed && COVERED_BY_WELCOME.includes(s)));
 
 /*
   THE WELCOME FLOW AT EVERY SIGN-IN — ON UNTIL LAUNCH (Jesse, November

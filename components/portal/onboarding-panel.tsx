@@ -71,7 +71,7 @@ export function OnboardingPanel({
         <div>
           <p className={cn(MONO.label, "text-muted-foreground")}>Get started</p>
           <h2 id="onboarding-title" className={cn("mt-2 text-graphite", HEADING.subhead)}>
-            Five minutes, and the portal is yours.
+            {steps.length > 2 ? "Five minutes, and the portal is yours." : steps.length === 2 ? "Two more things." : "One more thing."}
           </h2>
         </div>
         <p className={cn(MONO.label, "text-muted-foreground tabular-nums")}>
