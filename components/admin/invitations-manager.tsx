@@ -84,7 +84,7 @@ export function InvitationsManager({ rows }: { rows: InviteRow[] }) {
       <section className="min-w-0">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="w-64">
-            <Combobox id="wave" name="wave" options={options} value={filter} onChange={(v) => changeFilter(v as Filter)} searchable={false} />
+            <Combobox id="wave" name="wave" label="Who this wave goes to" options={options} value={filter} onChange={(v) => changeFilter(v as Filter)} searchable={false} />
           </div>
           <p className={cn(ADMIN_LABEL, "text-muted-foreground tabular-nums")}>
             {chosen.length} of {shown.length} picked

@@ -17,6 +17,7 @@ import {
   Type,
   UserRound,
   Users,
+  Search,
   type LucideIcon,
 } from "lucide-react";
 import { can, type Permission, type Role } from "@/lib/auth/roles";
@@ -73,7 +74,11 @@ export const MEMBER_NAV: NavGroup[] = [
 */
 export const ADMIN_NAV: NavGroup[] = [
   {
-    items: [{ href: "/portal/admin", label: "Overview", icon: LayoutGrid }],
+    items: [
+      { href: "/portal/admin", label: "Overview", icon: LayoutGrid },
+      // One box for a person across members, applications and requests. "/" opens it too.
+      { href: "/portal/admin/search", label: "Search", icon: Search },
+    ],
   },
   {
     label: "Reviews",

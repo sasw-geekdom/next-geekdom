@@ -17,14 +17,15 @@ export default async function AdminActivityPage(props: PageProps<"/portal/admin/
   const pick = typeof area === "string" && area in AREA_LABELS ? (area as ActivityArea) : null;
   const all = await listActivity(300).catch(() => []);
   const entries = pick ? all.filter((e) => e.area === pick) : all;
-  const areas = (Object.keys(AREA_LABELS) as ActivityArea[]).filter((a) => all.some((e) => e.area === a));
+  // EVERY AREA, always, in the sidebar's order — not only those with entries
+  // (Applications, Requests and Rooms were missing until someone acted there).
+  const areas: ActivityArea[] = ["applications", "inquiries", "members", "rooms", "member-resources", "site-copy", "events", "field-notes", "portfolio", "photo-wall", "team", "perks"];
 
   return (
     <>
       <PageHeader title="Activity" description="Every change made in the admin, and who made it." />
       <AdminSection>
-        {areas.length > 1 && (
-          <nav aria-label="Filter by area" className="mb-6 flex flex-wrap gap-2">
+        <nav aria-label="Filter by area" className="mb-6 flex flex-wrap gap-2">
             <Link href="/portal/admin/activity" aria-current={!pick ? "page" : undefined} className={buttonClass(!pick ? "ink" : "outline", "sm")}>
               All
             </Link>
@@ -38,11 +39,16 @@ export default async function AdminActivityPage(props: PageProps<"/portal/admin/
                 {AREA_LABELS[a]}
               </Link>
             ))}
-          </nav>
+        </nav>
+        {pick && entries.length === 0 ? (
+          <p className="border border-dashed border-border px-6 py-10 text-center text-sm text-muted-foreground">
+            Nothing in {AREA_LABELS[pick]} yet. Changes made there will show here, with who made them.
+          </p>
+        ) : (
+          <div className={cn(entries.length && "border-t border-border")}>
+            <ActivityList entries={entries} />
+          </div>
         )}
-        <div className={cn(entries.length && "border-t border-border")}>
-          <ActivityList entries={entries} />
-        </div>
       </AdminSection>
     </>
   );

@@ -183,6 +183,7 @@ export function MembersManager({
   perks = [],
   startAdding = false,
   startView,
+  startMemberId,
   canManageMoney = false,
 }: {
   members: MemberRow[];
@@ -198,6 +199,8 @@ export function MembersManager({
   startAdding?: boolean;
   /** Open on a view — the Overview's links (?view=comp). */
   startView?: string;
+  /** `?m=<id>` — open that member's slide-out (admin search results land here). */
+  startMemberId?: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = React.useTransition();
@@ -216,8 +219,9 @@ export function MembersManager({
       return sort.dir === "asc" ? c : -c;
     });
 
-  const [draft, setDraft] = React.useState<Draft | null>(() => (startAdding ? blank() : null));
-  const [drawerOpen, setDrawerOpen] = React.useState(startAdding);
+  const startMember = startMemberId ? members.find((m) => m.id === startMemberId) : undefined;
+  const [draft, setDraft] = React.useState<Draft | null>(() => (startAdding ? blank() : startMember ? fromRow(startMember) : null));
+  const [drawerOpen, setDrawerOpen] = React.useState(startAdding || Boolean(startMember));
   const close = React.useCallback(() => setDrawerOpen(false), []);
   const [errors, setErrors] = React.useState<Record<string, string>>({});
   const [notice, setNotice] = React.useState<{ tone: "ok" | "error"; text: string } | null>(null);
@@ -376,6 +380,7 @@ export function MembersManager({
         <div className="grid grid-cols-2 gap-2 sm:flex">
           <Combobox
             name="view"
+            label="Which members to show"
             className="sm:w-56"
             options={VIEWS}
             value={view}
@@ -384,6 +389,7 @@ export function MembersManager({
           {tags.length > 0 && (
             <Combobox
               name="tag-filter"
+              label="Filter by tag"
               className="sm:w-44"
               options={[{ value: "all", label: "All tags" }, ...tags.map((t) => ({ value: t, label: t }))]}
               value={tag}
@@ -581,9 +587,9 @@ export function MembersManager({
               )}
               <Row label="Member since" htmlFor="m-month" error={errors.day ?? errors.month ?? errors.year} required>
                 <div className="grid grid-cols-[1.4fr_1fr_1fr] gap-2">
-                  <Combobox id="m-month" name="month" options={MONTHS} value={draft.month} onChange={set("month")} searchable={false} />
-                  <Combobox name="day" options={DAYS} value={draft.day} onChange={set("day")} searchable={false} invalid={Boolean(errors.day)} />
-                  <Combobox name="year" options={YEARS} value={draft.year} onChange={set("year")} />
+                  <Combobox id="m-month" name="month" label="Member since — month" options={MONTHS} value={draft.month} onChange={set("month")} searchable={false} />
+                  <Combobox name="day" label="Member since — day" options={DAYS} value={draft.day} onChange={set("day")} searchable={false} invalid={Boolean(errors.day)} />
+                  <Combobox name="year" label="Member since — year" options={YEARS} value={draft.year} onChange={set("year")} />
                 </div>
               </Row>
             </RecordSection>
@@ -1145,9 +1151,9 @@ function StripePanel({ memberId, canAct, onChanged }: { memberId: string; canAct
               </div>
               {when === "date" && (
                 <div className="grid grid-cols-[1fr_5rem_6rem] gap-2">
-                  <Combobox name="start-month" options={MONTHS} value={date.month} onChange={(v) => setDate((d) => ({ ...d, month: v }))} searchable={false} />
-                  <Combobox name="start-day" options={DAYS} value={date.day} onChange={(v) => setDate((d) => ({ ...d, day: v }))} searchable={false} />
-                  <Combobox name="start-year" options={SOON_YEARS} value={date.year} onChange={(v) => setDate((d) => ({ ...d, year: v }))} searchable={false} />
+                  <Combobox name="start-month" label="Billing starts — month" options={MONTHS} value={date.month} onChange={(v) => setDate((d) => ({ ...d, month: v }))} searchable={false} />
+                  <Combobox name="start-day" label="Billing starts — day" options={DAYS} value={date.day} onChange={(v) => setDate((d) => ({ ...d, day: v }))} searchable={false} />
+                  <Combobox name="start-year" label="Billing starts — year" options={SOON_YEARS} value={date.year} onChange={(v) => setDate((d) => ({ ...d, year: v }))} searchable={false} />
                 </div>
               )}
               <div className="flex items-center gap-3">

@@ -1,3 +1,4 @@
+import { exitReasonLabel } from "@/lib/membership-exit";
 import { compRunning } from "@/lib/perks";
 import Link from "next/link";
 import { ArrowRight, Check, Plus } from "lucide-react";
@@ -80,6 +81,22 @@ export default async function AdminOverview() {
   const signedIn = current.filter((m) => logins.get(m.email.toLowerCase())?.state === "active").length;
   const invited = current.filter((m) => m.portalInvitedAt).length;
   const recent = current.slice(0, 5); // listMembers is newest-joined first
+
+  // WHY MEMBERS LEAVE (lib/membership-exit.ts) — the exit survey and staff's
+  // reasons, last 90 days: the answers were saved on each member, and
+  // nowhere added them up (Jesse, November 2026).
+  const since90 = new Date().getTime() - 90 * 86_400_000;
+  const exits = members.filter((m) => m.cancellation && Date.parse(m.cancellation.at) >= since90);
+  const leaving = exits.filter((m) => CURRENT.includes(m.status)).length;
+  const left = exits.length - leaving;
+  const reasonCounts = [...exits.reduce((acc, m) => {
+    const k = exitReasonLabel(m.cancellation!.reason) ?? "No reason given";
+    return acc.set(k, (acc.get(k) ?? 0) + 1);
+  }, new Map<string, number>())].sort((a, b) => b[1] - a[1]);
+  const exitNotes = exits
+    .filter((m) => m.cancellation!.note)
+    .sort((a, b) => b.cancellation!.at.localeCompare(a.cancellation!.at))
+    .slice(0, 3);
 
   // ── Reviews ──
   const initial = applications.filter((a) => a.status === "initial_review");
@@ -224,7 +241,9 @@ export default async function AdminOverview() {
                     </Link>
                     {r.detail && <span className="block truncate pl-4 text-[13px] text-muted-foreground sm:pl-0">{r.detail}</span>}
                   </span>
-                  <span className={cn("hidden shrink-0 text-sm sm:inline-flex", LINK_ARROW)}>
+                  {/* LINK_ARROW FIRST: after it, its inline-flex beat "hidden" in cn() and the
+                      link showed on phones, on top of the row's text. The whole row is the link there. */}
+                  <span className={cn(LINK_ARROW, "hidden shrink-0 text-sm sm:inline-flex")}>
                     {r.cta}
                     <ArrowRight aria-hidden="true" className={ARROW.internal} />
                   </span>
@@ -363,6 +382,63 @@ export default async function AdminOverview() {
                   {lastPublished ? `Last published ${tableDate(lastPublished.publishedAt)}: ${lastPublished.title}` : "Nothing published yet."}
                 </p>
               </>
+            )}
+          </Tile>
+
+          {/* ── Why members leave — the exit survey, added up ── */}
+          <Tile
+            plainLabel
+            label="Why members leave · last 90 days"
+            className="lg:col-span-2"
+            action={
+              <Link href="/portal/admin/members" className={cn("text-sm", LINK_ARROW)}>
+                Members
+                <ArrowRight aria-hidden="true" className={ARROW.internal} />
+              </Link>
+            }
+          >
+            {exits.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No one has left or cancelled. When they do, their reasons show here — from the exit survey, or from whoever ended it.</p>
+            ) : (
+              <div className="grid gap-6 md:grid-cols-2">
+                <div>
+                  <p className="text-sm text-graphite">
+                    {left > 0 && `${left} left`}
+                    {left > 0 && leaving > 0 && " · "}
+                    {leaving > 0 && `${leaving} leaving at the end of their paid month`}
+                  </p>
+                  <ul className="mt-3">
+                    {reasonCounts.map(([reason, n]) => (
+                      <li key={reason} className="flex items-center gap-3 border-t border-border py-2 text-sm first:border-t-0">
+                        <span className="min-w-0 flex-1 truncate text-graphite">{reason}</span>
+                        {/* A plain bar in Graphite — the share, at a glance; the number says it exactly. */}
+                        <span aria-hidden="true" className="h-1.5 w-24 shrink-0 bg-border">
+                          <span className="block h-full bg-graphite" style={{ width: `${Math.round((n / exits.length) * 100)}%` }} />
+                        </span>
+                        <span className="w-6 shrink-0 text-right tabular-nums text-graphite">{n}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <p className={cn(ADMIN_LABEL, "text-muted-foreground")}>In their words</p>
+                  {exitNotes.length === 0 ? (
+                    <p className="mt-2 text-sm text-muted-foreground">No notes left yet.</p>
+                  ) : (
+                    <ul className="mt-2">
+                      {exitNotes.map((m) => (
+                        <li key={m.id} className="border-t border-border py-2.5 text-sm first:border-t-0">
+                          <p className="line-clamp-3 text-graphite">&ldquo;{m.cancellation!.note}&rdquo;</p>
+                          <p className="mt-1 text-[13px] text-muted-foreground">
+                            {m.name} · {tableDate(m.cancellation!.at)}
+                            {m.cancellation!.by !== "member" ? ` · noted by ${m.cancellation!.by}` : ""}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
             )}
           </Tile>
         </div>

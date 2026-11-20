@@ -67,6 +67,21 @@ export function PortalShell({
     setOpen(false);
   }
 
+  // "/" OPENS ADMIN SEARCH from anywhere in the admin — unless you're typing.
+  React.useEffect(() => {
+    if (!admin) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName))) return;
+      if (document.querySelector("dialog[open]")) return;
+      e.preventDefault();
+      router.push("/portal/admin/search");
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [admin, router]);
+
   async function onSignOut() {
     // Both halves matter: DELETE clears the httpOnly cookie the server checks,
     // and signOut clears the Firebase client session. Skipping the second one
@@ -253,7 +268,8 @@ export function PortalShell({
           open ? "flex border-b" : "hidden",
         )}
       >
-        <div className="hidden px-6 pb-5 pt-6 lg:block">
+        {/* Sized so the whole admin rail fits a 900px-tall window (Jesse, November 2026) — Tags & perks and the activity log sat below the fold with no sign the rail scrolled. */}
+        <div className="hidden px-6 pb-4 pt-5 lg:block">
           <Link href="/portal" aria-label="Portal home">
             <Logo title="" className="h-8 w-auto" />
           </Link>
@@ -261,13 +277,13 @@ export function PortalShell({
             {admin ? "Admin portal" : "Member portal"}
           </p>
         </div>
-        {switchLabeled && <div className="px-3 pt-3 lg:pb-5 lg:pt-0">{switchLabeled}</div>}
+        {switchLabeled && <div className="px-3 pt-3 lg:pb-4 lg:pt-0">{switchLabeled}</div>}
 
         <nav aria-label={admin ? "Admin" : "Portal"} className="px-3 py-3 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:overscroll-contain lg:py-0 lg:pb-4">
           {groups.map((group, i) => (
-            <div key={group.label ?? i} className={cn(i > 0 && "mt-6")}>
+            <div key={group.label ?? i} className={cn(i > 0 && "mt-3")}>
               {group.label && (
-                <p className="px-3 pb-1.5 text-[13px] font-medium text-muted-foreground">
+                <p className="px-3 pb-1 text-[13px] font-medium text-muted-foreground">
                   {group.label}
                 </p>
               )}
@@ -284,7 +300,7 @@ export function PortalShell({
                           // Square, with a Clay rule on the active row rather
                           // than a tinted pill: the accent is a marker, the
                           // words stay Graphite (Clay can't carry small text).
-                          "flex items-center gap-3 border-l-2 px-3 py-2.5 text-sm transition-colors",
+                          "flex items-center gap-3 border-l-2 px-3 py-2 text-sm transition-colors",
                           isActive
                             ? "border-clay bg-bone font-medium text-graphite"
                             : "border-transparent text-graphite/70 hover:bg-bone hover:text-graphite",
@@ -308,7 +324,7 @@ export function PortalShell({
           a different pattern for the same job. Opens upward here.
         */}
         {/* Pinned: the nav above scrolls on a short window, never this. */}
-        <div className="mt-6 shrink-0 border-t border-border px-3 py-4 lg:mt-0">
+        <div className="mt-6 shrink-0 border-t border-border px-3 py-3 lg:mt-0">
           <AccountMenu
             name={user.name}
             email={user.email}

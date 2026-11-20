@@ -624,6 +624,35 @@ members use personal Gmail, and the hint hid their accounts.
   Invitations has no sidebar entry: it's the launch tool for members who
   joined before the workflow, opened from a button on Members and living
   at /portal/admin/members/invitations so Members stays highlighted.
+- **After the admin review** (Jesse, November 2026):
+  - **Search across the admin** — "Search" under Overview in the
+    sidebar, and "/" from anywhere in the admin (not while typing or with
+    a slide-out open): [search/page.tsx](app/portal/admin/search/page.tsx)
+    matches name, email, company (and city for applications) across
+    members, applications and requests, 15 a group — AS YOU TYPE
+    ([admin-search.tsx](components/admin/admin-search.tsx): the page
+    reads the three lists once, slimmed; the browser filters, and `?q=`
+    follows the box with replaceState so it can be linked and reloaded). A member
+    result opens their slide-out (`/portal/admin/members?m=<id>`).
+  - **"Why members leave · last 90 days"** on the Overview: left vs
+    leaving, the reasons counted (exit survey and staff's), and the
+    latest notes "in their words".
+  - **The sidebar fits a 900px-tall window** (Search included): tighter
+    rows and group gaps — Tags & perks and the activity log sat below
+    the fold with no sign it scrolled.
+  - **The activity log offers every area**, in the sidebar's order, with
+    "Nothing in Rooms yet" for an empty one.
+  - **Phone Overview**: header buttons wrap instead of squeezing; the
+    attention rows' links hide on phones as intended — `cn(LINK_ARROW,
+    "hidden …")`, LINK_ARROW FIRST: after it, its `inline-flex` beat
+    `hidden` in tailwind-merge.
+  - **Every Combobox has a name**: `label` prop, else the field's `name`
+    made readable — a `combobox` role takes no name from its text, so
+    unlabelled ones read as just "combobox" (axe button-name). axe is
+    clean on every admin screen checked.
+  - Checked, not a bug: imported applications' dates come from Airtable's
+    "Record Created" (noon Central) — a "today" date is a real, recent
+    Airtable application.
 - **The admin follows the brand, but works like a tool** (Linear / Vercel
   dashboard conventions; Jesse's call, November 2026). ADMIN ONLY — the
   public site and the member portal keep the brand's reading conventions.

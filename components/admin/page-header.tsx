@@ -27,7 +27,8 @@ export function PageHeader({
           <h1 className={cn(HEADING.subhead, "text-graphite")}>{title}</h1>
           {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
         </div>
-        {actions && <div className="flex items-center gap-2">{actions}</div>}
+        {/* Wrap rather than squeeze: on a phone three buttons broke into two-line labels. */}
+        {actions && <div className="flex flex-wrap items-center gap-2 [&>*]:shrink-0 [&>*]:whitespace-nowrap">{actions}</div>}
       </div>
     </header>
   );

@@ -17,7 +17,7 @@ export const metadata = { title: "Members" };
  * comps, plan changes — stay in Stripe, linked from each Stripe-billed record.
  */
 export default async function MembersPage(props: PageProps<"/portal/admin/members">) {
-  const { add, view } = await props.searchParams;
+  const { add, view, m } = await props.searchParams;
   const me = await requireAdmin();
   const money = can(me.role, "members.money");
   const exports = can(me.role, "data.export");
@@ -68,7 +68,7 @@ export default async function MembersPage(props: PageProps<"/portal/admin/member
         }
       />
       <AdminSection>
-        <MembersManager members={rows} perks={perks} canManageMoney={money} startAdding={add === "1"} startView={typeof view === "string" ? view : undefined} />
+        <MembersManager members={rows} perks={perks} canManageMoney={money} startAdding={add === "1"} startView={typeof view === "string" ? view : undefined} startMemberId={typeof m === "string" ? m : undefined} />
       </AdminSection>
     </>
   );

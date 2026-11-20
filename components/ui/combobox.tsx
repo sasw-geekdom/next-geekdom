@@ -55,6 +55,12 @@ export interface ComboboxOption {
   label: string;
 }
 
+/** "start-day" / "startDay" → "Start day" — the fallback accessible name. */
+const readable = (name: string) => {
+  const t = name.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/[-_]+/g, " ").trim().toLowerCase();
+  return t ? t[0].toUpperCase() + t.slice(1) : "Choose";
+};
+
 export function Combobox({
   name,
   options,
@@ -70,7 +76,15 @@ export function Combobox({
   describedBy,
   disabled,
   className,
+  label,
 }: {
+  /**
+   * The accessible name, when no <label htmlFor={id}> names it (a filter,
+   * a date part). A `combobox` role takes NO name from its text, so without
+   * one a screen reader announces just "combobox" (axe: button-name).
+   * Falls back to the field's `name`, made readable ("start-day" → "Start day").
+   */
+  label?: string;
   /** Field name submitted with the form. */
   name: string;
   options: readonly ComboboxOption[];
@@ -290,6 +304,7 @@ export function Combobox({
         aria-activedescendant={open && filtered[active] ? optionId(active) : undefined}
         aria-invalid={invalid || undefined}
         aria-describedby={describedBy}
+        aria-label={label ?? (id ? undefined : readable(name))}
         disabled={disabled}
         // A real press on the button is never a forwarded label click — clear
         // a flag left over from a label press that never became a click.
