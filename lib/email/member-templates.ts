@@ -209,6 +209,82 @@ export function teamRemovedEmail(v: { name: string; company: string }): Email {
   );
 }
 
+/*
+  TEAMMATES, WHEN THE TEAM'S MEMBERSHIP CHANGES (lib/team-notify.ts). They
+  name the TEAM, never the owner's billing: a teammate shouldn't learn
+  from Geekdom that a colleague's card failed or that they chose to leave.
+  No email while the owner is merely past due — teammates keep access.
+  `team` is the company, else "<owner>'s team".
+*/
+
+/** The owner cancelled at the end of the paid period. */
+export function teammateEndingEmail(v: { name: string; team: string; endDate: string }): Email {
+  return email(
+    `Your Geekdom access ends ${v.endDate}`,
+    `${v.team}'s team membership won't renew. Nothing changes until ${v.endDate}.`,
+    eyebrow("Membership") +
+      h1(`Your access through ${escapeHtml(v.team)} ends ${escapeHtml(v.endDate)}.`) +
+      p(`Hi ${first(v.name)}. ${escapeHtml(v.team)}'s team membership won't renew, so your Geekdom access ends with it on ${escapeHtml(v.endDate)}. Until then, nothing changes — the portal, rooms and the directory are all yours.`) +
+      p("Want to stay on your own? A Solo membership keeps you in the Club.") +
+      button(url("/apply"), "Apply for your own membership") +
+      muted("Questions? Reply to this email."),
+    `${v.team}'s team membership won't renew, so your Geekdom access ends ${v.endDate}. Want to stay on your own? ${url("/apply")}`,
+  );
+}
+
+/** The owner changed their mind before the end date. */
+export function teammateContinuesEmail(v: { name: string; team: string }): Email {
+  return email(
+    "Your Geekdom access continues",
+    `${v.team}'s team membership is staying. Nothing changes.`,
+    eyebrow("Membership") +
+      h1(`Good news, ${first(v.name)} — you're staying.`) +
+      p(`${escapeHtml(v.team)}'s team membership will renew after all, so your access continues as before. Ignore our earlier email.`) +
+      button(url("/portal"), "Open the member portal"),
+    `${v.team}'s team membership is staying, and so is your Geekdom access.`,
+  );
+}
+
+/** The team's membership has ended. */
+export function teammateEndedEmail(v: { name: string; team: string }): Email {
+  return email(
+    "Your Geekdom access has ended",
+    "Thanks for being part of the room. The door's open whenever you want back in.",
+    eyebrow("Membership") +
+      h1(`Thanks for being part of the room, ${first(v.name)}.`) +
+      p(`${escapeHtml(v.team)}'s team membership has ended, and your portal access with it. You don't owe anything — the team's membership covered you.`) +
+      p("The door's open if you'd like to come back on your own.") +
+      button(url("/apply"), "Rejoin Geekdom") +
+      muted(`Public events are still on <a href="${LUMA_CALENDAR_URL}" style="color:${GRAPHITE};">the calendar</a> — come say hello.`),
+    `${v.team}'s team membership has ended, and your Geekdom access with it. Come back on your own any time: ${url("/apply")}`,
+  );
+}
+
+/** Staff paused the team's membership. */
+export function teammatePausedEmail(v: { name: string; team: string }): Email {
+  return email(
+    "Your Geekdom access is paused",
+    `${v.team}'s team membership is paused for now.`,
+    eyebrow("Membership") +
+      h1(`Your access through ${escapeHtml(v.team)} is paused.`) +
+      p(`Hi ${first(v.name)}. ${escapeHtml(v.team)}'s team membership is paused for now, so your portal access is off too. It comes back when theirs does, and we'll email you then.`),
+    `${v.team}'s team membership is paused, so your Geekdom access is too. We'll email you when it's back.`,
+  );
+}
+
+/** The team's membership is active again. */
+export function teammateBackEmail(v: { name: string; team: string }): Email {
+  return email(
+    "Your Geekdom access is back",
+    `${v.team}'s team membership is active again.`,
+    eyebrow("Membership") +
+      h1(`Welcome back, ${first(v.name)}.`) +
+      p(`${escapeHtml(v.team)}'s team membership is active again, and so is your access. Sign in with this email address — we'll send you a link.`) +
+      button(url("/sign-in"), "Sign in"),
+    `${v.team}'s team membership is active again, and so is your Geekdom access. Sign in: ${url("/sign-in")}`,
+  );
+}
+
 /** Sent to BOTH the old and new address when the sign-in email changes. */
 export function emailChangedEmail(v: { name: string; oldEmail: string; newEmail: string }): Email {
   return email(
@@ -372,6 +448,33 @@ export function membershipEndedEmail(v: { name: string }): Email {
   );
 }
 
+/** Staff paused a membership that isn't billed through Stripe (Members → status Paused). */
+export function membershipPausedEmail(v: { name: string }): Email {
+  return email(
+    "Your Geekdom membership is paused",
+    "Your portal access is paused for now. Nothing is owed.",
+    eyebrow("Membership") +
+      h1(`Your membership is paused, ${first(v.name)}.`) +
+      p("The Club team has paused your membership, so your member portal access is off for now. Nothing is owed while it's paused.") +
+      p("When you're ready to come back, reply to this email and we'll switch it on again.") +
+      muted(`Public events are still on <a href="${LUMA_CALENDAR_URL}" style="color:${GRAPHITE};">the calendar</a>.`),
+    `Your Geekdom membership is paused. Reply to this email when you're ready to come back.`,
+  );
+}
+
+/** Staff reactivated a paused or ended membership (Members → status Active). */
+export function membershipActiveAgainEmail(v: { name: string }): Email {
+  return email(
+    "Your Geekdom membership is active again",
+    "Welcome back. Your member portal is open.",
+    eyebrow("Membership") +
+      h1(`Welcome back, ${first(v.name)}.`) +
+      p("Your membership is active again, and your member portal is open. Sign in with this email address — we'll send you a link.") +
+      button(url("/sign-in"), "Sign in"),
+    `Your Geekdom membership is active again. Sign in: ${url("/sign-in")}`,
+  );
+}
+
 export function welcomeBackEmail(v: { name: string; nextPayment: string }): Email {
   return email(
     "Your Geekdom membership continues",
@@ -401,6 +504,13 @@ export function samples(): { key: string; mail: Email }[] {
     { key: "card-expiring", mail: cardExpiringEmail({ name, card: "Visa •••• 4242", exp: "November 2026" }) },
     { key: "cancellation-confirmed", mail: cancellationConfirmedEmail({ name, endDate: "November 22, 2026" }) },
     { key: "membership-ended", mail: membershipEndedEmail({ name }) },
+    { key: "membership-paused", mail: membershipPausedEmail({ name }) },
+    { key: "teammate-ending", mail: teammateEndingEmail({ name, team: "Acme Co.", endDate: "December 19, 2026" }) },
+    { key: "teammate-continues", mail: teammateContinuesEmail({ name, team: "Acme Co." }) },
+    { key: "teammate-ended", mail: teammateEndedEmail({ name, team: "Acme Co." }) },
+    { key: "teammate-paused", mail: teammatePausedEmail({ name, team: "Acme Co." }) },
+    { key: "teammate-back", mail: teammateBackEmail({ name, team: "Acme Co." }) },
+    { key: "membership-active-again", mail: membershipActiveAgainEmail({ name }) },
     { key: "welcome-back", mail: welcomeBackEmail({ name, nextPayment: "November 22, 2026" }) },
   ];
 }

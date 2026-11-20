@@ -98,23 +98,30 @@ export const MOCK_RESOURCES: ResourceLink[] = [
   { title: "Contact the Club team", description: "club@geekdom.com — questions, ideas, anything.", href: "mailto:club@geekdom.com" },
 ];
 
-/** A member's billing, as Stripe would show it — invented. */
+/*
+  THE SAMPLE'S DATES ROLL FROM TODAY (Jesse, November 2026): fixed dates
+  went stale — the sample said "stays active until November 4" after the
+  4th had passed. The billing day is today's day of the month; the next
+  payment is a month out, past invoices the months before. Midday Central.
+  Worked out when the server starts, which is fresh enough for a preview.
+*/
+function monthsFromToday(n: number): string {
+  // TODAY IN SAN ANTONIO, not UTC — after 6 PM Central, UTC is already tomorrow.
+  const [y, m, day] = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" })
+    .format(new Date())
+    .split("-")
+    .map(Number);
+  // Day 28 at most, so every month has it.
+  return new Date(Date.UTC(y, m - 1 + n, Math.min(day, 28), 18)).toISOString();
+}
+
+/** A member's billing, as Stripe would show it — invented, dates relative to today. */
 export const MOCK_BILLING = {
   card: { brand: "Visa", last4: "4242", exp: "08/28" },
-  nextPayment: "2026-11-23T18:00:00.000Z",
-  history: [
-    { date: "2026-10-23T18:00:00.000Z", status: "Paid" },
-    { date: "2026-09-23T18:00:00.000Z", status: "Paid" },
-    { date: "2026-08-23T18:00:00.000Z", status: "Paid" },
-  ],
+  nextPayment: monthsFromToday(1),
+  history: [0, -1, -2].map((n) => ({ date: monthsFromToday(n), status: "Paid" })),
   /** Invoices as the billing drawer lists them — Stripe-style numbers, invented. */
-  invoices: [
-    { id: "in_6", number: "GKDM-0006", date: "2026-10-23T18:00:00.000Z", status: "paid" as const },
-    { id: "in_5", number: "GKDM-0005", date: "2026-09-23T18:00:00.000Z", status: "paid" as const },
-    { id: "in_4", number: "GKDM-0004", date: "2026-08-23T18:00:00.000Z", status: "paid" as const },
-    { id: "in_3", number: "GKDM-0003", date: "2026-07-23T18:00:00.000Z", status: "paid" as const },
-    { id: "in_2", number: "GKDM-0002", date: "2026-06-23T18:00:00.000Z", status: "paid" as const },
-  ],
+  invoices: [6, 5, 4, 3, 2].map((k, i) => ({ id: `in_${k}`, number: `GKDM-000${k}`, date: monthsFromToday(-i), status: "paid" as const })),
 };
 
 /** The signed-in member's directory profile — invented starting values. */
@@ -136,7 +143,8 @@ export const MOCK_MEMBER_CARD = {
   name: "Avery Castellano",
   email: "avery@example.com",
   joinedAt: "2025-03-04T18:00:00.000Z",
-  currentPeriodEnd: "2026-11-04T18:00:00.000Z",
+  // The same rolling date as the sample billing, so the card and the drawer agree.
+  currentPeriodEnd: monthsFromToday(1),
   cancelAtPeriodEnd: false,
   status: "active" as const,
 };

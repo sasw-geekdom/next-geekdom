@@ -315,6 +315,11 @@ export interface MemberDoc {
    * so later edits to the tag's terms don't change it.
    */
   comp?: import("@/lib/perks").CompPeriod;
+  /**
+   * Why and how the membership ended (or is ending) — the exit survey, or
+   * staff's reason (lib/membership-exit.ts). Cleared if they stay after all.
+   */
+  cancellation?: import("@/lib/membership-exit").Cancellation;
   /** Their profile photo on Vercel Blob (lib/portal/photo-actions.ts) — kept OUT of `profile`, which saves replace whole. */
   photo?: string | null;
   /** The last successful payment (the webhook's invoice.paid) — when, and how much. */

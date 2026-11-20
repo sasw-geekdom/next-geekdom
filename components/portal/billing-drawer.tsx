@@ -7,6 +7,7 @@ import { Drawer } from "@/components/ui/drawer";
 import { FieldGroup } from "@/components/admin/field-group";
 import { HEADING, MONO } from "@/components/site/section";
 import { cn } from "@/lib/utils";
+import { ExitSurvey, type ExitAnswer } from "@/components/portal/exit-survey";
 
 /*
   BILLING, IN THE APP — the slide-out "Manage billing" opens. A DESIGN MOCK:
@@ -64,6 +65,7 @@ export function ManageBillingButton({ mock, size = "sm" }: { mock: BillingMock; 
 function BillingDrawer({ open, onClose, mock }: { open: boolean; onClose: () => void; mock: BillingMock }) {
   const [state, setState] = React.useState<State>("active");
   const [panel, setPanel] = React.useState<Panel>("overview");
+  const [exit, setExit] = React.useState<ExitAnswer>({ reason: null, note: "" });
   const [card, setCard] = React.useState(mock.card);
   const [notice, setNotice] = React.useState<string | null>(null);
   const [paidOpen, setPaidOpen] = React.useState(false);
@@ -346,6 +348,8 @@ function BillingDrawer({ open, onClose, mock }: { open: boolean; onClose: () => 
               <li>· You won&rsquo;t be charged again.</li>
               <li>· You can change your mind any time before then, right here.</li>
             </ul>
+            {/* The real Cancel screen's exit survey — in the sample, answers go nowhere. */}
+            <ExitSurvey value={exit} onChange={setExit} />
             <p className="text-sm leading-relaxed text-muted-foreground">
               Questions before you go? Email club@geekdom.com.
             </p>

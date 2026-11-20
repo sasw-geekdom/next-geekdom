@@ -908,6 +908,40 @@ members use personal Gmail, and the hint hid their accounts.
     (like past events); a search that matches one opens it. Past due stays
     current — a failed card isn't leaving. A Stripe-billed member's status is
     Stripe's and isn't editable here.
+  - **Ending a membership, and why** (Jesse, November 2026 —
+    [membership-exit.ts](lib/membership-exit.ts)). Three ways, one record
+    (`MemberDoc.cancellation`: by, how, reason, note, at), shown in the
+    slide-out as "Leaving"/"Left":
+    - **The member** cancels in Manage billing → Cancel membership (at the
+      end of the paid period). The EXIT SURVEY sits on that screen: one
+      optional question — "Before you go — what's the main reason?" — as
+      one-tap answers (`EXIT_REASONS`, stable ids), and an optional
+      "Anything we should know?". Never blocks the cancel, never pleads,
+      never offers a discount (nothing salesy). Logged with the member as
+      the actor. Undoing clears it.
+    - **Management, Stripe-billed**: the Billing panel's "Cancel
+      membership…" (`cancelClubBilling`) — END OF PAID PERIOD (undo with
+      "Keep their membership") or TODAY (no refund) — with the same
+      reasons. It was a trip to Stripe's dashboard. The webhook sends the
+      member the same emails as their own cancel.
+    - **Management, not on Stripe** (Enterprise, complimentary, imported):
+      changing Status asks why (Paused/Canceled) and EMAILS THEM by
+      default — "has ended", "is paused" (`membershipPausedEmail`) or
+      "active again" (`membershipActiveAgainEmail`) — with a switch to
+      skip it. It used to lock them out without a word.
+    The webhook clears an old reason when a subscription is live and not
+    ending (they stayed, or rejoined). Tested end to end on the sandbox.
+    **A team's people are told too** ([team-notify.ts](lib/team-notify.ts),
+    `teammate*Email`): access ends on <date> (owner cancels at period
+    end), continues (they undo it), has ended, is paused, is back — from
+    the webhook and from staff saving the owner (under the same "email
+    them" switch, which then reads "…and their team"). The emails name the
+    TEAM (company, else "<owner>'s team"), never the owner's billing, and
+    nothing goes out for past due — teammates keep access, and it would
+    expose the owner's card. Tested on the sandbox: two teammates got
+    ends → continues → ended; a staff pause reached the teammate.
+    The staff preview's sample billing drawer has the exit survey too
+    (answers go nowhere).
   - **One "View" filter** (all current / past due / never signed in / no
     login) — not separate Status and Sign-in dropdowns, which read as
     contradicting each other.

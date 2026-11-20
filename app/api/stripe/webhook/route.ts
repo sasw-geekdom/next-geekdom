@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
-import { Timestamp } from "firebase-admin/firestore";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
+import { notifyTeammates } from "@/lib/team-notify";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { COLLECTIONS, type MemberDoc } from "@/lib/firebase/collections";
 import { getStripe, periodEnd, toMemberStatus } from "@/lib/stripe/server";
@@ -221,6 +222,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   }
 
   await ref.set(record, { merge: true });
+  // A former member who rejoins: their old exit reason no longer describes them.
+  if (existing && subscription && staying(subscription)) await ref.update({ cancellation: FieldValue.delete() }).catch(() => undefined);
   // A returning owner's teammates come back with them.
   if (record.status) await syncTeamStatus(ref.id, record.status);
 
@@ -293,6 +296,8 @@ async function syncSubscription(subscription: Stripe.Subscription) {
       status,
       currentPeriodEnd: toTimestamp(periodEnd(subscription)),
       cancelAtPeriodEnd: subscription.cancel_at_period_end,
+      // Staying (or back) — an old exit reason no longer describes them.
+      ...(staying(subscription) ? { cancellation: FieldValue.delete() } : {}),
       updatedAt: Timestamp.now(),
     },
     { merge: true },
@@ -310,6 +315,9 @@ async function syncSubscription(subscription: Stripe.Subscription) {
   back, the subscription ending the goodbye. `previous_attributes` is how
   an updated event says what changed.
 */
+/** A live subscription that isn't set to end — the member is staying. */
+const staying = (sub: Stripe.Subscription) => (sub.status === "active" || sub.status === "trialing") && !sub.cancel_at_period_end;
+
 const longDate = (d: Date | null) =>
   d ? new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", month: "long", day: "numeric", year: "numeric" }).format(d) : "";
 const usd = (cents: number, currency = "usd") =>
@@ -321,6 +329,8 @@ async function subscriptionEmails(event: Stripe.Event, member: MemberDoc & { id:
 
   if (event.type === "customer.subscription.deleted") {
     await send(membershipEndedEmail({ name: member.name }));
+    // A team's people hear it too (lib/team-notify.ts) — a no-op without a team.
+    await notifyTeammates(member.id, "ended");
     return;
   }
   if (event.type !== "customer.subscription.updated") return;
@@ -328,6 +338,7 @@ async function subscriptionEmails(event: Stripe.Event, member: MemberDoc & { id:
   if (!("cancel_at_period_end" in before) || before.cancel_at_period_end === sub.cancel_at_period_end) return;
   const end = longDate(periodEnd(sub));
   await send(sub.cancel_at_period_end ? cancellationConfirmedEmail({ name: member.name, endDate: end }) : welcomeBackEmail({ name: member.name, nextPayment: end }));
+  await notifyTeammates(member.id, sub.cancel_at_period_end ? "ending" : "continues", end);
 }
 
 const customerOf = (inv: Stripe.Invoice) => (typeof inv.customer === "string" ? inv.customer : inv.customer?.id) ?? "";

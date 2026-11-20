@@ -13,9 +13,13 @@ import { ensureLogin } from "@/lib/admin/member-logins";
 import type { ActionResult } from "@/lib/content/types";
 import { logActivity } from "@/lib/admin/activity";
 import { addTeammate, getTeam, removeTeammate, syncTeamStatus } from "@/lib/team";
+import { notifyTeammates } from "@/lib/team-notify";
 import { hasTeam, PLAN_IDS } from "@/lib/membership";
 import { applyPerks, readPerkTags } from "@/lib/perks-server";
 import { isPerk } from "@/lib/perks";
+import { EXIT_NOTE_MAX, EXIT_REASON_IDS, type Cancellation } from "@/lib/membership-exit";
+import { sendSafely } from "@/lib/email/resend";
+import { membershipActiveAgainEmail, membershipEndedEmail, membershipPausedEmail } from "@/lib/email/member-templates";
 
 /*
   "ADD A MEMBER" AND EDITING ONE, from /portal/admin/members.
@@ -60,6 +64,11 @@ const memberSchema = z.object({
   notes: z.string().trim().max(4000, "Keep notes under 4,000 characters."),
   plan: z.enum(PLAN_IDS, { error: "Pick a plan." }).default("solo"),
   company: z.string().trim().max(160).default(""),
+  // When the status changes (a member not billed through Stripe): why, and
+  // whether to email them — the exit survey's reasons (lib/membership-exit.ts).
+  exitReason: z.enum(EXIT_REASON_IDS).nullable().default(null),
+  exitNote: z.string().trim().max(EXIT_NOTE_MAX).default(""),
+  notify: z.boolean().default(true),
 });
 
 export type MemberInput = z.input<typeof memberSchema>;
@@ -73,7 +82,7 @@ export async function saveMember(input: MemberInput): Promise<ActionResult> {
   const user = await requireAdmin();
   const parsed = memberSchema.safeParse(input);
   if (!parsed.success) return { ok: false, fieldErrors: fieldErrors(parsed.error) };
-  const { id, year, month, day, ...data } = parsed.data;
+  const { id, year, month, day, exitReason, exitNote, notify, ...data } = parsed.data;
 
   // Noon Central, not midnight UTC — midnight UTC is the previous evening
   // here, and the profile would show the day before they joined.
@@ -151,14 +160,47 @@ export async function saveMember(input: MemberInput): Promise<ActionResult> {
       cancelAtPeriodEnd: false,
     } satisfies Partial<MemberDoc>);
   }
+  // WHY IT ENDED, when staff pause or cancel (a Stripe member's is set by
+  // cancelClubBilling instead); reactivating clears it.
+  const statusChanged = Boolean(before) && before!.status !== status;
+  if (statusChanged && (status === "inactive" || status === "canceled")) {
+    record.cancellation = { by: user.name || user.email, how: "status", reason: exitReason, note: exitNote, at: new Date().toISOString() } satisfies Cancellation;
+  } else if (statusChanged && status === "active") {
+    record.cancellation = FieldValue.delete();
+  }
   await ref.set(record, { merge: true });
+
+  // TELL THEM (on by default; staff can untick it): a status change with no
+  // email left an Enterprise or complimentary member locked out without a word.
+  let mailNote: string | null = null;
+  if (statusChanged && notify) {
+    const mail =
+      status === "canceled"
+        ? membershipEndedEmail({ name: data.name })
+        : status === "inactive"
+          ? membershipPausedEmail({ name: data.name })
+          : status === "active"
+            ? membershipActiveAgainEmail({ name: data.name })
+            : null;
+    if (mail) {
+      const sent = await sendSafely({ to: data.email, subject: mail.subject, html: mail.html, text: mail.text });
+      mailNote = sent ? "We've emailed them." : "The email to them didn't send.";
+    }
+  }
 
   // The login follows the email. Created for a new member; moved when an
   // email is corrected, so the person keeps one account.
   const login = await ensureLogin(data.email, data.name, before?.email);
 
-  // An OWNER's status is their team's (lib/team.ts).
-  if (!before?.teamOwnerId && hasTeam(data.plan)) await syncTeamStatus(ref.id, status);
+  // An OWNER's status is their team's (lib/team.ts) — and the team hears
+  // about it, under the same "email them" switch (lib/team-notify.ts).
+  if (!before?.teamOwnerId && hasTeam(data.plan)) {
+    await syncTeamStatus(ref.id, status);
+    if (statusChanged && notify) {
+      const change = status === "canceled" ? "ended" : status === "inactive" ? "paused" : status === "active" ? "back" : null;
+      if (change) await notifyTeammates(ref.id, change);
+    }
+  }
 
   // A PERK TAG added or removed (lib/perks-server.ts): start or end a
   // complimentary period, pausing or resuming their Stripe billing.
@@ -184,7 +226,8 @@ export async function saveMember(input: MemberInput): Promise<ActionResult> {
   if (!login.ok) {
     return { ok: false, error: `Saved, but their sign-in couldn't be set up: ${login.error}` };
   }
-  return { ok: true, id: ref.id, ...(perkNote ? { note: perkNote } : {}) };
+  const note = [perkNote, mailNote].filter(Boolean).join(" ");
+  return { ok: true, id: ref.id, ...(note ? { note } : {}) };
 }
 
 /** "Create login" for a member who has none (e.g. one Stripe created before logins existed). */

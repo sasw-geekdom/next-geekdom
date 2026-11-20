@@ -12,6 +12,7 @@ import { HEADING } from "@/components/site/section";
 import { cn } from "@/lib/utils";
 import { finishCardUpdate, payNow, setCancelAtPeriodEnd, startCardUpdate } from "@/lib/stripe/billing-actions";
 import type { BillingView } from "@/lib/stripe/billing";
+import { ExitSurvey, type ExitAnswer } from "@/components/portal/exit-survey";
 
 /*
   BILLING, IN THE APP — LIVE (the design mock it replaces is billing-drawer.tsx,
@@ -127,6 +128,7 @@ export function LiveBillingButton({ billing, planName }: { billing: BillingView;
 function LiveBillingDrawer({ open, onClose, billing, planName }: { open: boolean; onClose: () => void; billing: BillingView; planName: string }) {
   const router = useRouter();
   const [panel, setPanel] = React.useState<Panel>("overview");
+  const [exit, setExit] = React.useState<ExitAnswer>({ reason: null, note: "" });
   const [notice, setNotice] = React.useState<{ ok: boolean; text: string } | null>(null);
   const [pending, startTransition] = React.useTransition();
   const [clientSecret, setClientSecret] = React.useState<string | null>(null);
@@ -166,7 +168,7 @@ function LiveBillingDrawer({ open, onClose, billing, planName }: { open: boolean
   const footer =
     panel === "cancel" ? (
       <>
-        <Button type="button" variant="outline" disabled={pending} onClick={() => act(() => setCancelAtPeriodEnd(true))}>
+        <Button type="button" variant="outline" disabled={pending} onClick={() => act(() => setCancelAtPeriodEnd(true, exit))}>
           {pending ? "Working…" : "Cancel at end of period"}
         </Button>
         <Button type="button" variant="ink" disabled={pending} onClick={() => go("overview")}>
@@ -384,6 +386,7 @@ function LiveBillingDrawer({ open, onClose, billing, planName }: { open: boolean
               <li>· You won&rsquo;t be charged again.</li>
               <li>· You can change your mind any time before then, right here.</li>
             </ul>
+            <ExitSurvey value={exit} onChange={setExit} />
             <p className="text-sm leading-relaxed text-muted-foreground">Questions before you go? Email club@geekdom.com.</p>
           </>
         )}

@@ -1,7 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { Timestamp } from "firebase-admin/firestore";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
+import { EXIT_NOTE_MAX, EXIT_REASON_IDS, exitReasonLabel, type Cancellation, type ExitReason } from "@/lib/membership-exit";
+import { logActivity } from "@/lib/admin/activity";
 import { requireMember } from "@/lib/auth/session";
 import { getMemberByEmail } from "@/lib/admin/queries";
 import { getAdminDb } from "@/lib/firebase/admin";
@@ -148,16 +150,37 @@ export async function payNow(): Promise<BillingResult> {
   }
 }
 
-/** Cancel at the end of the paid period — or, with `cancel` false, keep the membership after all. */
-export async function setCancelAtPeriodEnd(cancel: boolean): Promise<BillingResult> {
+/**
+ * Cancel at the end of the paid period — or, with `cancel` false, keep the
+ * membership after all. `survey` is the exit survey (lib/membership-exit.ts):
+ * optional, both parts; stored on the member for staff, cleared on undo.
+ */
+export async function setCancelAtPeriodEnd(cancel: boolean, survey?: { reason?: string | null; note?: string }): Promise<BillingResult> {
   try {
     const m = await payer();
     if (!m.stripeSubscriptionId) throw new Error("There's no subscription on this account.");
     const sub = await getStripe().subscriptions.update(m.stripeSubscriptionId, { cancel_at_period_end: Boolean(cancel) });
+    const reason = EXIT_REASON_IDS.includes(survey?.reason as ExitReason) ? (survey!.reason as ExitReason) : null;
+    const note = typeof survey?.note === "string" ? survey.note.trim().slice(0, EXIT_NOTE_MAX) : "";
+    const cancellation: Cancellation = { by: "member", how: "end_of_period", reason, note, at: new Date().toISOString() };
     await getAdminDb()
       .collection(COLLECTIONS.members)
       .doc(m.id)
-      .set({ cancelAtPeriodEnd: sub.cancel_at_period_end, updatedAt: Timestamp.now() }, { merge: true });
+      .set(
+        { cancelAtPeriodEnd: sub.cancel_at_period_end, cancellation: sub.cancel_at_period_end ? cancellation : FieldValue.delete(), updatedAt: Timestamp.now() },
+        { merge: true },
+      );
+    // In the activity log so staff see it — the member is the actor.
+    await logActivity(
+      { email: m.email, name: m.name },
+      {
+        area: "members",
+        // Reads "Dana Ruiz cancelled their membership — I'm moving away".
+        action: sub.cancel_at_period_end ? "cancelled their membership —" : "undid their cancellation —",
+        label: sub.cancel_at_period_end ? (exitReasonLabel(reason) ?? "no reason given") : "they're staying",
+        href: "/portal/admin/members",
+      },
+    );
     refresh();
     const end = sub.items.data[0]?.current_period_end;
     const date = end

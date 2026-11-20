@@ -87,6 +87,8 @@ export interface Member {
   portalInvitedAt: string | null;
   /** A complimentary period from a perk tag (lib/perks.ts), running or ended. */
   comp: CompPeriod | null;
+  /** Why and how it ended or is ending (lib/membership-exit.ts). */
+  cancellation: import("@/lib/membership-exit").Cancellation | null;
   photo: string | null;
 }
 

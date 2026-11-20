@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { Timestamp } from "firebase-admin/firestore";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
+import { EXIT_NOTE_MAX, EXIT_REASON_IDS, exitReasonLabel, type Cancellation, type ExitReason } from "@/lib/membership-exit";
 import { adminAllowed, requireAdmin } from "@/lib/auth/session";
 import { MANAGEMENT_ONLY_MESSAGE } from "@/lib/auth/roles";
 import { getAdminDb } from "@/lib/firebase/admin";
@@ -29,6 +30,13 @@ import { planOf } from "@/lib/membership";
                        Coworks: pick the day their Coworks plan ends, then
                        end that plan in Coworks. A complimentary member's
                        billing can't start before their period ends.
+    · cancelClubBilling CANCEL a Stripe-billed membership from here (it was
+                       a trip to Stripe's dashboard): at the END OF THE PAID
+                       PERIOD (they keep access until then; undo with
+                       keepClubBilling) or TODAY (access ends now, no
+                       refund). The webhook then sends the member the same
+                       emails as their own cancel, and records the status.
+                       The reason is the exit survey's list, from staff.
 
   Every write is logged. Members are never charged without a card they
   saved themselves (Checkout, the billing drawer, or Coworks before).
@@ -38,7 +46,7 @@ export interface StripeSnapshot {
   configured: boolean;
   customerId: string | null;
   card: string | null;
-  club: { status: string; price: string; next: string | null } | null;
+  club: { status: string; price: string; next: string | null; canceling: boolean } | null;
   other: string[];
 }
 
@@ -70,6 +78,7 @@ export async function stripeSnapshot(memberId: string): Promise<StripeSnapshot> 
           status: s.club.status,
           price: item?.price.unit_amount != null ? `$${item.price.unit_amount / 100}/${item.price.recurring?.interval ?? "month"}` : "",
           next: periodEnd(s.club)?.toISOString() ?? null,
+          canceling: s.club.cancel_at_period_end,
         }
       : null,
     other: s.activeOther,
@@ -166,5 +175,75 @@ export async function startClubBilling(memberId: string, startOn: string): Promi
     };
   } catch (e) {
     return { ok: false, message: e instanceof Error ? e.message : "Couldn't start billing." };
+  }
+}
+
+/** The member's Club subscription, for cancel/keep — refused for a teammate (the owner pays). */
+async function clubOf(memberId: string) {
+  const { ref, m } = await member(memberId);
+  if (m.teamOwnerId) throw new Error("Teammates are on their team owner's billing — cancel the owner's, or remove them from the team.");
+  if (!m.stripeSubscriptionId) throw new Error("They have no Club subscription. Set their status instead.");
+  const sub = await getStripe().subscriptions.retrieve(m.stripeSubscriptionId);
+  if (sub.status === "canceled" || sub.status === "incomplete_expired") throw new Error("Their subscription has already ended.");
+  return { ref, m, sub };
+}
+
+const dateOf = (d: Date | null) =>
+  d ? new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", month: "long", day: "numeric", year: "numeric" }).format(d) : "the end of this period";
+
+export async function cancelClubBilling(
+  memberId: string,
+  when: "end_of_period" | "now",
+  survey?: { reason?: string | null; note?: string },
+): Promise<{ ok: boolean; message: string }> {
+  const admin = await adminAllowed("members.money");
+  if (!admin) return { ok: false, message: MANAGEMENT_ONLY_MESSAGE };
+  if (!env(process.env.STRIPE_SECRET_KEY)) return { ok: false, message: "Stripe isn't connected on this copy of the site." };
+  if (when !== "end_of_period" && when !== "now") return { ok: false, message: "Pick when it ends." };
+  try {
+    const { ref, m, sub } = await clubOf(memberId);
+    const reason = EXIT_REASON_IDS.includes(survey?.reason as ExitReason) ? (survey!.reason as ExitReason) : null;
+    const note = typeof survey?.note === "string" ? survey.note.trim().slice(0, EXIT_NOTE_MAX) : "";
+    const cancellation: Cancellation = { by: admin.name || admin.email, how: when, reason, note, at: new Date().toISOString() };
+    const stripe = getStripe();
+    let message: string;
+    if (when === "now") {
+      // The webhook (customer.subscription.deleted) marks them canceled, ends the team, and sends "has ended".
+      await stripe.subscriptions.cancel(sub.id, { invoice_now: false, prorate: false });
+      await ref.set({ cancellation, status: "canceled", cancelAtPeriodEnd: false, updatedAt: Timestamp.now() }, { merge: true });
+      message = `${m.name}'s membership has ended. We've emailed them.`;
+    } else {
+      const updated = await stripe.subscriptions.update(sub.id, { cancel_at_period_end: true });
+      await ref.set({ cancellation, cancelAtPeriodEnd: true, updatedAt: Timestamp.now() }, { merge: true });
+      message = `${m.name}'s membership ends ${dateOf(periodEnd(updated))} — they keep access until then. We've emailed them.`;
+    }
+    await logActivity(admin, {
+      area: "members",
+      action: `cancelled the membership (${when === "now" ? "today" : "at period end"}${reason ? `, ${exitReasonLabel(reason)}` : ""}) of`,
+      label: m.name,
+      href: "/portal/admin/members",
+    });
+    revalidatePath("/portal/admin/members");
+    return { ok: true, message };
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : "Couldn't cancel the membership." };
+  }
+}
+
+/** Undo a cancel at period end — they stay, and get the "continues" email. */
+export async function keepClubBilling(memberId: string): Promise<{ ok: boolean; message: string }> {
+  const admin = await adminAllowed("members.money");
+  if (!admin) return { ok: false, message: MANAGEMENT_ONLY_MESSAGE };
+  if (!env(process.env.STRIPE_SECRET_KEY)) return { ok: false, message: "Stripe isn't connected on this copy of the site." };
+  try {
+    const { ref, m, sub } = await clubOf(memberId);
+    if (!sub.cancel_at_period_end) return { ok: false, message: "Their membership isn't set to end." };
+    await getStripe().subscriptions.update(sub.id, { cancel_at_period_end: false });
+    await ref.set({ cancellation: FieldValue.delete(), cancelAtPeriodEnd: false, updatedAt: Timestamp.now() }, { merge: true });
+    await logActivity(admin, { area: "members", action: "undid the cancellation of", label: m.name, href: "/portal/admin/members" });
+    revalidatePath("/portal/admin/members");
+    return { ok: true, message: `${m.name}'s membership continues. We've emailed them.` };
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : "Couldn't keep the membership." };
   }
 }

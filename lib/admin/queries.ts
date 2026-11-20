@@ -115,6 +115,7 @@ function toMember(id: string, doc: MemberDoc): Member {
     },
     portalInvitedAt: iso(doc.portalInvitedAt),
     comp: doc.comp ?? null,
+    cancellation: doc.cancellation ?? null,
     photo: doc.photo ?? null,
   };
 }

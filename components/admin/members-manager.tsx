@@ -7,6 +7,7 @@ import { ArrowUpRight, ChevronDown, ExternalLink, Plus, Search, X } from "lucide
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/field";
 import { Combobox } from "@/components/ui/combobox";
+import { Switch } from "@/components/ui/switch";
 import { Drawer } from "@/components/ui/drawer";
 import { ADMIN_CHIP, ADMIN_LABEL, MemberStatusLabel, RowButton, Table, Td, Th, Tr, tableDate, type SortDir } from "@/components/admin/admin-ui";
 import { cn } from "@/lib/utils";
@@ -16,7 +17,9 @@ import { hasTeam, PLANS, planOf, type PlanId } from "@/lib/membership";
 import { TeamCard } from "@/components/portal/team-card";
 import type { Member } from "@/lib/admin/types";
 import { compActive, compDate, compLine, compRunning, compUntil, isPerk, perkSummary, type PerkTag } from "@/lib/perks";
-import { linkStripe, startClubBilling, stripeSnapshot, type StripeSnapshot } from "@/lib/admin/stripe-actions";
+import { cancelClubBilling, keepClubBilling, linkStripe, startClubBilling, stripeSnapshot, type StripeSnapshot } from "@/lib/admin/stripe-actions";
+import { ExitSurvey, type ExitAnswer } from "@/components/portal/exit-survey";
+import { exitReasonLabel } from "@/lib/membership-exit";
 import type { MemberStatus } from "@/lib/firebase/collections";
 
 /*
@@ -141,13 +144,18 @@ interface Draft {
   notes: string;
   plan: PlanId;
   company: string;
+  /** Asked only when staff change the status: why, and whether to email them. */
+  exit: ExitAnswer;
+  notify: boolean;
 }
+
+const NO_EXIT: ExitAnswer = { reason: null, note: "" };
 
 const PLAN_OPTIONS = PLANS.map((p) => ({ value: p.id, label: p.name }));
 
 function blank(): Draft {
   const t = centralParts(new Date().toISOString());
-  return { name: "", email: "", status: "active", year: t.year, month: t.month, day: t.day, tags: [], notes: "", plan: "solo", company: "" };
+  return { name: "", email: "", status: "active", year: t.year, month: t.month, day: t.day, tags: [], notes: "", plan: "solo", company: "", exit: NO_EXIT, notify: true };
 }
 
 function fromRow(m: MemberRow): Draft {
@@ -165,6 +173,8 @@ function fromRow(m: MemberRow): Draft {
     notes: m.notes,
     plan: m.plan,
     company: m.company,
+    exit: NO_EXIT,
+    notify: true,
   };
 }
 
@@ -268,6 +278,9 @@ export function MembersManager({
         notes: draft.notes,
         plan: draft.plan,
         company: draft.company,
+        exitReason: draft.exit.reason,
+        exitNote: draft.exit.note,
+        notify: draft.notify,
       });
       if (res.ok) {
         setNotice({
@@ -547,6 +560,25 @@ export function MembersManager({
               >
                 <Combobox id="m-status" name="status" options={statusOptions} value={draft.status} onChange={set("status")} disabled={stripeManaged || (Boolean(editing) && !canManageMoney)} />
               </Row>
+              {/*
+                A STATUS CHANGE says what it will do: ending asks why (the
+                exit survey's reasons) and both directions offer the email —
+                on by default, so nobody is locked out without a word.
+              */}
+              {editing && !stripeManaged && draft.status !== editing.status && (
+                <div className="flex flex-col gap-4 border-l-2 border-clay bg-bone-light px-4 py-3 sm:ml-[calc(8.5rem+1rem)]">
+                  {(draft.status === "inactive" || draft.status === "canceled") && (
+                    <ExitSurvey value={draft.exit} onChange={set("exit")} audience="staff" />
+                  )}
+                  <Switch
+                    checked={draft.notify}
+                    onChange={set("notify")}
+                    label={`Email ${draft.name.split(" ")[0] || "them"}${!editing.teamOwnerId && hasTeam(draft.plan) && members.some((x) => x.teamOwnerId === editing.id) ? " and their team" : ""} ${
+                      draft.status === "canceled" ? "that the membership has ended" : draft.status === "inactive" ? "that the membership is paused" : "that it's active again"
+                    }`}
+                  />
+                </div>
+              )}
               <Row label="Member since" htmlFor="m-month" error={errors.day ?? errors.month ?? errors.year} required>
                 <div className="grid grid-cols-[1.4fr_1fr_1fr] gap-2">
                   <Combobox id="m-month" name="month" options={MONTHS} value={draft.month} onChange={set("month")} searchable={false} />
@@ -586,6 +618,22 @@ export function MembersManager({
                       <dd className="text-graphite">
                         {compRunning(editing.comp) ? compLine(editing.comp).replace(/^Complimentary /, "") : `Ended ${compDate(editing.comp.until ?? editing.comp.since)} · ${editing.comp.label}`}
                         {compRunning(editing.comp) && editing.comp.paused && <span className="block text-muted-foreground">Stripe billing paused until then</span>}
+                      </dd>
+                    </>
+                  )}
+                  {editing.cancellation && (
+                    <>
+                      {/* Why they left (or are leaving) — the exit survey, or staff's reason. */}
+                      <dt className="text-muted-foreground">{isCurrent(editing) ? "Leaving" : "Left"}</dt>
+                      <dd className="text-graphite">
+                        {exitReasonLabel(editing.cancellation.reason) ?? "No reason given"}
+                        <span className="block text-muted-foreground">
+                          {editing.cancellation.by === "member" ? "Cancelled it themselves" : `By ${editing.cancellation.by}`}
+                          {" · "}
+                          {compDate(editing.cancellation.at)}
+                          {editing.cancellation.how === "end_of_period" ? " · at the end of the paid period" : editing.cancellation.how === "now" ? " · effective that day" : ""}
+                        </span>
+                        {editing.cancellation.note && <span className="mt-1 block whitespace-pre-line">&ldquo;{editing.cancellation.note}&rdquo;</span>}
                       </dd>
                     </>
                   )}
@@ -937,6 +985,22 @@ function StripePanel({ memberId, canAct, onChanged }: { memberId: string; canAct
   const [date, setDate] = React.useState({ month: String(today.getMonth() + 1).padStart(2, "0"), day: String(today.getDate()).padStart(2, "0"), year: String(today.getFullYear()) });
   const [msg, setMsg] = React.useState<{ ok: boolean; text: string } | null>(null);
   const [pending, startTransition] = React.useTransition();
+  // Cancelling from here (Management): when, and why — the exit survey's list.
+  const [cancelling, setCancelling] = React.useState(false);
+  const [endWhen, setEndWhen] = React.useState<"end_of_period" | "now">("end_of_period");
+  const [exit, setExit] = React.useState<ExitAnswer>({ reason: null, note: "" });
+
+  function runCancel(fn: () => Promise<{ ok: boolean; message: string }>) {
+    startTransition(async () => {
+      const res = await fn();
+      setMsg({ ok: res.ok, text: res.message });
+      if (res.ok) {
+        setCancelling(false);
+        load();
+        onChanged();
+      }
+    });
+  }
 
   const load = React.useCallback(() => {
     stripeSnapshot(memberId)
@@ -983,7 +1047,7 @@ function StripePanel({ memberId, canAct, onChanged }: { memberId: string; canAct
           <span>
             {snap.club ? (
               <>
-                Club · {snap.club.price} · {snap.club.status === "trialing" ? "starts" : "next payment"} {snap.club.next ? compDate(snap.club.next) : "—"}
+                Club · {snap.club.price} · {snap.club.canceling ? "ends" : snap.club.status === "trialing" ? "starts" : "next payment"} {snap.club.next ? compDate(snap.club.next) : "—"}
               </>
             ) : (
               <span className="text-muted-foreground">No Club billing yet</span>
@@ -1000,6 +1064,57 @@ function StripePanel({ memberId, canAct, onChanged }: { memberId: string; canAct
             Open in Stripe
             <ExternalLink className="h-3.5 w-3.5" strokeWidth={1.7} aria-hidden="true" />
           </a>
+          {canAct && snap.club && snap.club.canceling && (
+            <Button type="button" variant="outline" size="sm" className="mt-1 self-start" disabled={pending} onClick={() => runCancel(() => keepClubBilling(memberId))}>
+              {pending ? "Saving…" : "Keep their membership"}
+            </Button>
+          )}
+          {canAct && snap.club && !snap.club.canceling && !cancelling && (
+            <button
+              type="button"
+              onClick={() => {
+                setMsg(null);
+                setEndWhen("end_of_period");
+                setExit({ reason: null, note: "" });
+                setCancelling(true);
+              }}
+              className="mt-1 self-start text-sm text-muted-foreground underline decoration-border underline-offset-2 hover:text-graphite hover:decoration-graphite"
+            >
+              Cancel membership…
+            </button>
+          )}
+          {cancelling && snap.club && (
+            <div className="mt-1 flex flex-col gap-3 border border-border bg-bone p-3">
+              <div role="radiogroup" aria-label="When it ends" className="inline-flex self-start border border-border bg-bone-light">
+                {(["end_of_period", "now"] as const).map((v, i) => (
+                  <button
+                    key={v}
+                    type="button"
+                    role="radio"
+                    aria-checked={endWhen === v}
+                    onClick={() => setEndWhen(v)}
+                    className={cn("h-8 px-3 text-[13px] font-medium", i > 0 && "border-l border-border", endWhen === v ? "bg-graphite text-bone" : "text-muted-foreground hover:text-graphite")}
+                  >
+                    {v === "now" ? "Today" : "End of paid period"}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[13px] text-muted-foreground">
+                {endWhen === "now"
+                  ? "Access ends now. No refund for the rest of the month. They're emailed that it has ended."
+                  : `They keep access until ${snap.club.next ? compDate(snap.club.next) : "the period ends"} and aren't charged again. They're emailed, and can undo it until then.`}
+              </p>
+              <ExitSurvey value={exit} onChange={setExit} audience="staff" />
+              <div className="flex items-center gap-3">
+                <Button type="button" variant="ink" size="sm" disabled={pending} onClick={() => runCancel(() => cancelClubBilling(memberId, endWhen, exit))}>
+                  {pending ? "Cancelling…" : endWhen === "now" ? "End membership today" : "Cancel at period end"}
+                </Button>
+                <button type="button" onClick={() => setCancelling(false)} className="text-sm text-muted-foreground underline underline-offset-2">
+                  Keep it
+                </button>
+              </div>
+            </div>
+          )}
           {canAct && !snap.club && snap.card && !starting && (
             <Button type="button" variant="outline" size="sm" className="mt-1 self-start" onClick={() => setStarting(true)} disabled={pending}>
               Start Club billing
