@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { requireAdminApi } from "@/lib/auth/session";
+import { can, MANAGEMENT_ONLY_MESSAGE } from "@/lib/auth/roles";
 import { listApplications, listMembers } from "@/lib/admin/queries";
 import { csvFilename, toCsv } from "@/lib/admin/csv";
 import { logActivity } from "@/lib/admin/activity";
@@ -36,6 +37,9 @@ export async function GET(
   const user = await requireAdminApi();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+  if (!can(user.role, "data.export")) {
+    return NextResponse.json({ error: MANAGEMENT_ONLY_MESSAGE }, { status: 403 });
   }
 
   const { entity } = await ctx.params;

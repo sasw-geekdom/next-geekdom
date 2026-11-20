@@ -69,7 +69,10 @@ export function RoomsManager({
   eventRequests,
   startBlocking = false,
   startInquiry,
+  canConfigure = false,
 }: {
+  /** Management (lib/auth/roles.ts `rooms.configure`) adds and edits rooms; Staff read them. */
+  canConfigure?: boolean;
   now: number;
   today: string;
   day: string;
@@ -190,8 +193,8 @@ export function RoomsManager({
       {/*
         THE WEEK STRIP — the date picker, Linear-style: seven days with each
         one's count, ‹ › for the week, Today. You see where the busy days
-        are before you click. Weekends are listed (staff can block them)
-        but read quieter: members can't book them.
+        are before you click. Weekends are bookable like any day; a day the
+        rules ever take off reads quieter.
       */}
       <div className="flex flex-wrap items-center gap-3">
         {/* Its own full row on a phone; beside the buttons from sm up. */}
@@ -270,7 +273,7 @@ export function RoomsManager({
 
             {bookings.length === 0 ? (
               <p className="mt-4 border border-dashed border-border px-6 py-8 text-center text-sm text-muted-foreground">
-                No reservations{isBookableWeekday(day) ? "" : " — members can't book weekends"}.
+                No reservations{isBookableWeekday(day) ? "" : " — members can't book this day"}.
               </p>
             ) : (
               <Table className="mt-4">
@@ -397,22 +400,28 @@ export function RoomsManager({
               <h2 className="text-sm font-medium text-graphite">
                 Rooms <span className="ml-1 tabular-nums text-muted-foreground">{rooms.length}</span>
               </h2>
-              <Button variant="outline" size="sm" disabled={pending} onClick={() => show({ kind: "room", name: "", capacity: "10", features: "", description: "", active: true })}>
-                <Plus className="h-3.5 w-3.5" strokeWidth={1.8} />
-                Add
-              </Button>
+              {canConfigure && (
+                <Button variant="outline" size="sm" disabled={pending} onClick={() => show({ kind: "room", name: "", capacity: "10", features: "", description: "", active: true })}>
+                  <Plus className="h-3.5 w-3.5" strokeWidth={1.8} />
+                  Add
+                </Button>
+              )}
             </div>
             <ul>
               {rooms.map((r) => (
                 <li key={r.id} className="group relative flex items-start gap-3 border-t border-border px-4 py-3 first:border-t-0 hover:bg-bone">
                   <div className="min-w-0 flex-1">
-                    <button
-                      type="button"
-                      onClick={() => show({ kind: "room", id: r.id, name: r.name, capacity: String(r.capacity), features: r.features.join("\n"), description: r.description, active: r.active })}
-                      className="text-left text-sm font-medium text-graphite after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-clay"
-                    >
-                      {r.name}
-                    </button>
+                    {canConfigure ? (
+                      <button
+                        type="button"
+                        onClick={() => show({ kind: "room", id: r.id, name: r.name, capacity: String(r.capacity), features: r.features.join("\n"), description: r.description, active: r.active })}
+                        className="text-left text-sm font-medium text-graphite after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-clay"
+                      >
+                        {r.name}
+                      </button>
+                    ) : (
+                      <span className="text-sm font-medium text-graphite">{r.name}</span>
+                    )}
                     {!r.active && <Status kind="closed" className="ml-2 text-[13px] text-muted-foreground">Not bookable</Status>}
                     <p className="mt-0.5 flex items-center gap-1 text-[13px] text-muted-foreground">
                       <Users aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={1.7} /> Up to {r.capacity}
@@ -431,10 +440,10 @@ export function RoomsManager({
               <li>30-minute steps, {lengthLabel(ROOM_RULES.maxMinutes)} at most — members can add time while the room is free after</li>
               <li>Up to a week ahead</li>
               <li>No weekly limit; one room at a time per member</li>
-              <li>{BOOKING_WINDOW.daysLabel}, {BOOKING_WINDOW.label}, booked instantly — no approval</li>
+              <li>Every day, {BOOKING_WINDOW.label}, booked instantly — no approval</li>
             </ul>
             <p className="mt-3 text-[13px] text-muted-foreground">
-              For a weekend, or outside {BOOKING_WINDOW.label}, members email the Club team: block the room for them here — blocks can go on any day at any hour, up to 12 hours, with no week-ahead limit. The schedule shows {BOOKING_WINDOW.label}; anything outside it is in the table. Members see free and booked time, never who booked.
+              Outside {BOOKING_WINDOW.label}, members email the Club team: block the room for them here — blocks can go on any day at any hour, up to 12 hours, with no week-ahead limit. The schedule shows {BOOKING_WINDOW.label}; anything outside it is in the table. Members see free and booked time, never who booked.
             </p>
           </section>
         </div>

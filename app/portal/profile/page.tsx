@@ -91,7 +91,7 @@ export default async function ProfilePage(props: PageProps<"/portal/profile">) {
   const sampleBilling = !live && !comp;
   const shownCard = live ? live.card : MOCK_BILLING.card;
   const history = live
-    ? live.invoices.filter((i) => i.status === "paid" || i.status === "open").slice(0, 6).map((i) => ({ date: i.date, label: `${i.amount} · ${i.status === "paid" ? "paid" : "unpaid"}` }))
+    ? live.invoices.filter((i) => i.status === "paid" || i.status === "open").slice(0, 6).map((i) => ({ date: i.date, label: `${i.amount} · ${i.status === "paid" ? "paid" : "due"}` }))
     : MOCK_BILLING.history.map((h) => ({ date: h.date, label: `${amount} · ${h.status.toLowerCase()}` }));
 
   return (

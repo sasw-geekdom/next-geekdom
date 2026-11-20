@@ -1,3 +1,5 @@
+import { requireAdmin } from "@/lib/auth/session";
+import { can } from "@/lib/auth/roles";
 import { notFound } from "next/navigation";
 import { getApplication, listApplications } from "@/lib/admin/queries";
 import { ApplicationStatusLabel, tableDate } from "@/components/admin/admin-ui";
@@ -42,6 +44,7 @@ export async function generateMetadata(props: PageProps<"/portal/admin/applicati
 export default async function ApplicationDetailPage(props: PageProps<"/portal/admin/applications/[id]">) {
   const { id } = await props.params;
   const params = await props.searchParams;
+  const canDecide = can((await requireAdmin()).role, "applications.decide");
   const [application, all] = await Promise.all([getApplication(id), listApplications({ limit: 2000 }).catch(() => [])]);
   if (!application) notFound();
 
@@ -152,7 +155,7 @@ export default async function ApplicationDetailPage(props: PageProps<"/portal/ad
         }
         side={
           <>
-            <ReviewPanel key={a.id} application={a} afterHref={afterHref} />
+            <ReviewPanel key={a.id} application={a} afterHref={afterHref} canDecide={canDecide} />
             <ResearchCard application={a} />
             <SideCard title="Details">
               <Properties rows={details} />
@@ -166,7 +169,7 @@ export default async function ApplicationDetailPage(props: PageProps<"/portal/ad
                 ]}
               />
             </SideCard>
-            <BanLink application={a} afterHref={afterHref} />
+            {canDecide && <BanLink application={a} afterHref={afterHref} />}
           </>
         }
       />

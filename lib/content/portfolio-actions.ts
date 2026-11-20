@@ -3,7 +3,8 @@
 import { revalidatePath, updateTag } from "next/cache";
 import { FieldValue } from "firebase-admin/firestore";
 import * as z from "zod";
-import { requireAdmin } from "@/lib/auth/session";
+import { adminAllowed } from "@/lib/auth/session";
+import { MANAGEMENT_ONLY_MESSAGE } from "@/lib/auth/roles";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { COLLECTIONS } from "@/lib/firebase/collections";
 import { fieldErrors } from "@/lib/validation/schemas";
@@ -86,7 +87,8 @@ function refresh() {
 const CLEARABLE = ["href", "link", "description", "logo", "logoHeight", "logoMark"] as const;
 
 export async function saveCompany(input: CompanyInput): Promise<ActionResult> {
-  const user = await requireAdmin();
+  const user = await adminAllowed("site.claims");
+  if (!user) return { ok: false, error: MANAGEMENT_ONLY_MESSAGE };
   const parsed = companySchema.safeParse(input);
   if (!parsed.success) return { ok: false, fieldErrors: fieldErrors(parsed.error) };
 
@@ -125,7 +127,8 @@ const orderSchema = z
  * another tab) are skipped rather than recreated as empty records.
  */
 export async function reorderPortfolio(ids: string[]): Promise<ActionResult> {
-  const user = await requireAdmin();
+  const user = await adminAllowed("site.claims");
+  if (!user) return { ok: false, error: MANAGEMENT_ONLY_MESSAGE };
   const parsed = orderSchema.safeParse(ids);
   if (!parsed.success || new Set(parsed.data).size !== parsed.data.length) {
     return { ok: false, error: "That order didn't come through. Refresh and try again." };
@@ -147,7 +150,7 @@ export async function reorderPortfolio(ids: string[]): Promise<ActionResult> {
  * company record only points at it once the form is saved.
  */
 export async function uploadLogo(form: FormData): Promise<LogoUploadResult> {
-  await requireAdmin();
+  if (!(await adminAllowed("site.claims"))) return { ok: false, error: MANAGEMENT_ONLY_MESSAGE };
   const file = form.get("file");
   const name = String(form.get("name") ?? "");
   if (!(file instanceof File) || file.size === 0) {
@@ -157,7 +160,8 @@ export async function uploadLogo(form: FormData): Promise<LogoUploadResult> {
 }
 
 export async function deleteCompany(id: string): Promise<ActionResult> {
-  const user = await requireAdmin();
+  const user = await adminAllowed("site.claims");
+  if (!user) return { ok: false, error: MANAGEMENT_ONLY_MESSAGE };
   if (typeof id !== "string" || !id) return { ok: false, error: "Missing company." };
   const ref = getAdminDb().collection(COLLECTIONS.portfolio).doc(id);
   const name = ((await ref.get()).data()?.name as string | undefined) ?? "A company";
@@ -173,7 +177,8 @@ export async function deleteCompany(id: string): Promise<ActionResult> {
  * overwrite a company with itself.
  */
 export async function seedPortfolioFromSite(): Promise<ActionResult> {
-  const user = await requireAdmin();
+  const user = await adminAllowed("site.claims");
+  if (!user) return { ok: false, error: MANAGEMENT_ONLY_MESSAGE };
   const col = getAdminDb().collection(COLLECTIONS.portfolio);
   if (!(await col.limit(1).get()).empty) {
     return { ok: false, error: "There are companies here already, so nothing was copied." };

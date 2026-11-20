@@ -2,14 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import * as z from "zod";
-import { requireRole } from "@/lib/auth/session";
+import { adminAllowed } from "@/lib/auth/session";
+import { MANAGEMENT_ONLY_MESSAGE } from "@/lib/auth/roles";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { logActivity } from "@/lib/admin/activity";
 import { perkTagsRef, readPerkTags } from "@/lib/perks-server";
 import { perkSummary, type PerkTag } from "@/lib/perks";
 
 /*
-  EDITING TAGS & PERKS — OWNERS ONLY (requireRole("superadmin")): a perk
+  EDITING TAGS & PERKS — MANAGEMENT ONLY (`tags.define`): a perk
   tag gives memberships away, so creating one is an owner's call; any staff
   can then apply it from a member's slide-out. One doc, saved in a
   transaction so two owners editing at once can't lose each other's change.
@@ -35,7 +36,8 @@ const schema = z.object({
 });
 
 export async function savePerkTag(input: z.input<typeof schema>): Promise<PerkResult> {
-  const me = await requireRole("superadmin");
+  const me = await adminAllowed("tags.define");
+  if (!me) return { ok: false, message: MANAGEMENT_ONLY_MESSAGE };
   const parsed = schema.safeParse(input);
   if (!parsed.success) {
     return { ok: false, message: "Check the highlighted fields.", fieldErrors: Object.fromEntries(parsed.error.issues.map((i) => [String(i.path[0]), i.message])) };
@@ -60,7 +62,8 @@ export async function savePerkTag(input: z.input<typeof schema>): Promise<PerkRe
 
 /** Removes the DEFINITION. Members keep the tag as a label, and any complimentary period already given. */
 export async function deletePerkTag(name: string): Promise<PerkResult> {
-  const me = await requireRole("superadmin");
+  const me = await adminAllowed("tags.define");
+  if (!me) return { ok: false, message: MANAGEMENT_ONLY_MESSAGE };
   const key = String(name ?? "").trim().toLowerCase();
   const existing = (await readPerkTags()).find((t) => t.name === key);
   if (!existing) return { ok: false, message: "That tag no longer exists." };

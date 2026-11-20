@@ -29,6 +29,8 @@ export interface BillingInvoice {
   date: string; // ISO
   amount: string; // "$100"
   status: "paid" | "open" | "void" | "uncollectible" | "draft";
+  /** The start of the month it bills for (its first line's period) — what the row is named by. ISO. */
+  periodStart: string;
   /** Stripe's PDF of the invoice. */
   pdf: string | null;
   /** Stripe's hosted invoice page — the receipt once paid. */
@@ -44,9 +46,20 @@ export interface BillingView {
   /** When the next charge is (or when it ends, if canceling). ISO. */
   periodEnd: string | null;
   card: BillingCard | null;
+  /** The newest 24 (two years of monthly bills); the drawer shows the latest few and folds the rest. */
   invoices: BillingInvoice[];
+  /** Stripe has invoices older than these 24. */
+  olderInvoices: boolean;
   /** What's owed right now, if anything. */
   open: { id: string; amount: string } | null;
+  /**
+   * The NEXT bill, before it exists — Stripe's invoice preview: when the card
+   * is charged, how much, and the period it covers. "resumes" is a
+   * complimentary member whose paused billing starts again on `date`. Null
+   * when nothing is coming (canceling, canceled, no subscription, or paused
+   * with no end).
+   */
+  upcoming: { kind: "renewal" | "resumes"; date: string; amount: string; periodStart: string; periodEnd: string | null } | null;
 }
 
 /** Is Stripe connected on this copy of the site? */
@@ -88,9 +101,15 @@ export async function getBilling(member: Pick<MemberDoc, "stripeCustomerId" | "s
   const currency = item?.price.currency ?? "usd";
   const interval = item?.price.recurring?.interval ?? "month";
 
-  const [card, list] = await Promise.all([
+  const iso = (t: number) => new Date(t * 1000).toISOString();
+  const coming = Boolean(sub && !sub.cancel_at_period_end && sub.status !== "canceled" && sub.status !== "incomplete_expired");
+  const [card, list, preview] = await Promise.all([
     defaultCard(member.stripeCustomerId, sub),
     stripe.invoices.list({ customer: member.stripeCustomerId, limit: 24 }),
+    // Paused billing has no next invoice to preview; it's described from resumes_at below.
+    coming && !sub!.pause_collection
+      ? stripe.invoices.createPreview({ customer: member.stripeCustomerId, subscription: sub!.id }).catch(() => null)
+      : Promise.resolve(null),
   ]);
 
   const invoices: BillingInvoice[] = list.data
@@ -101,6 +120,7 @@ export async function getBilling(member: Pick<MemberDoc, "stripeCustomerId" | "s
       date: new Date((i.status_transitions?.paid_at ?? i.created) * 1000).toISOString(),
       amount: money(i.status === "paid" ? i.amount_paid : i.amount_due, i.currency),
       status: (i.status ?? "open") as BillingInvoice["status"],
+      periodStart: iso(i.lines?.data[0]?.period?.start ?? i.created),
       pdf: i.invoice_pdf ?? null,
       hosted: i.hosted_invoice_url ?? null,
     }));
@@ -119,6 +139,24 @@ export async function getBilling(member: Pick<MemberDoc, "stripeCustomerId" | "s
           : "active";
 
   const end = item?.current_period_end;
+
+  let upcoming: BillingView["upcoming"] = null;
+  if (coming && sub) {
+    const resumes = sub.pause_collection?.resumes_at;
+    if (sub.pause_collection) {
+      if (resumes && unit !== null) upcoming = { kind: "resumes", date: iso(resumes), amount: money(unit, currency), periodStart: iso(resumes), periodEnd: null };
+    } else if (preview) {
+      // A renewal is charged when its period starts — the line's start, which
+      // is also the trial's end for billing that staff started "on a date".
+      const line = preview.lines?.data[0];
+      const start = line?.period?.start ?? end ?? preview.created;
+      upcoming = { kind: "renewal", date: iso(start), amount: money(preview.amount_due, preview.currency), periodStart: iso(start), periodEnd: line?.period?.end ? iso(line.period.end) : null };
+    } else if (end && unit !== null) {
+      // The preview failed: the next charge is the period's end, at the plan's price.
+      upcoming = { kind: "renewal", date: iso(end), amount: money(unit, currency), periodStart: iso(end), periodEnd: null };
+    }
+  }
+
   return {
     state,
     price: unit === null ? "" : `${money(unit, currency)}/${interval}`,
@@ -126,6 +164,8 @@ export async function getBilling(member: Pick<MemberDoc, "stripeCustomerId" | "s
     periodEnd: end ? new Date(end * 1000).toISOString() : null,
     card,
     invoices,
+    olderInvoices: list.has_more,
     open: openInv ? { id: openInv.id ?? "", amount: money(openInv.amount_due, openInv.currency) } : null,
+    upcoming,
   };
 }

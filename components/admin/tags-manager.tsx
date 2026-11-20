@@ -14,7 +14,14 @@ import { PERK_EFFECT_LABELS, perkSummary, type PerkEffect, type PerkTag } from "
 
 /*
   THE TAGS & PERKS LIST — a table (the admin's list convention), a
-  slide-out to create or edit (owners only; staff see it read-only).
+  slide-out to create or edit (Management only; Staff see it read-only).
+
+  EVERY TAG IS CREATED HERE (Jesse, November 2026): a tag exists to turn
+  on a discount or a complimentary membership, so a member's slide-out
+  only PICKS from this list. Below the defined tags, any tag members still
+  carry from before that rule ("Not set up"), with a count; Management can
+  click one to define it under the same key, so everyone carrying it is
+  covered.
 */
 
 interface Draft {
@@ -32,15 +39,18 @@ export function TagsManager({
   counts,
   otherTags,
   canManage,
+  startNew = false,
 }: {
+  /** ?new=1 — the member slide-out's "New tag" link opens the form straight away. */
+  startNew?: boolean;
   tags: PerkTag[];
   counts: Record<string, { tagged: number; complimentary: number }>;
-  otherTags: string[];
+  otherTags: { name: string; count: number }[];
   canManage: boolean;
 }) {
   const router = useRouter();
-  const [draft, setDraft] = React.useState<Draft | null>(null);
-  const [open, setOpen] = React.useState(false);
+  const [draft, setDraft] = React.useState<Draft | null>(startNew && canManage ? blank : null);
+  const [open, setOpen] = React.useState(startNew && canManage);
   const [errors, setErrors] = React.useState<Record<string, string>>({});
   const [error, setError] = React.useState<string | null>(null);
   const [notice, setNotice] = React.useState<string | null>(null);
@@ -90,7 +100,8 @@ export function TagsManager({
         <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
           Apply tags in a member&rsquo;s slide-out on Members. A <span className="text-graphite">perk</span> tag starts their complimentary period
           the day it&rsquo;s applied and pauses any Stripe billing until it ends; taking the tag off ends it and resumes billing.
-          {!canManage && " Only owners can create or change tags."}
+          {" "}Every tag is created here; a member&rsquo;s slide-out picks from this list.
+          {!canManage && " Only Geekdom management can create or change tags."}
         </p>
         {canManage && (
           <Button variant="ink" size="sm" onClick={() => edit(blank)} disabled={pending}>
@@ -106,7 +117,7 @@ export function TagsManager({
         </p>
       )}
 
-      {tags.length === 0 ? (
+      {tags.length === 0 && otherTags.length === 0 ? (
         <p className="border border-dashed border-border bg-bone-light px-6 py-14 text-center text-sm text-muted-foreground">
           No tags defined yet.{canManage ? " Create one — for example “DEVSA community”, complimentary for 12 months." : ""}
         </p>
@@ -138,14 +149,24 @@ export function TagsManager({
                 </Tr>
               );
             })}
+            {otherTags.map((t) => (
+              <Tr key={`label:${t.name}`}>
+                <Td>
+                  {canManage ? (
+                    <RowButton onClick={() => edit({ ...blank, label: t.name, effect: "none" })}>{t.name}</RowButton>
+                  ) : (
+                    <span className="font-medium text-graphite">{t.name}</span>
+                  )}
+                </Td>
+                <Td className="text-muted-foreground">Not set up · from before tags lived here</Td>
+                <Td align="right" className="hidden tabular-nums md:table-cell">
+                  {t.count}
+                </Td>
+                <Td className="hidden text-muted-foreground lg:table-cell">{canManage ? "Click to set it up" : "—"}</Td>
+              </Tr>
+            ))}
           </tbody>
         </Table>
-      )}
-
-      {otherTags.length > 0 && (
-        <p className="text-[13px] text-muted-foreground">
-          Also in use, as plain labels: {otherTags.join(" · ")}
-        </p>
       )}
 
       <Drawer

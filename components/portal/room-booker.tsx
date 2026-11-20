@@ -14,7 +14,7 @@ import { RoomTimeline } from "@/components/rooms/room-timeline";
 import { MONO } from "@/components/site/section";
 import { cn } from "@/lib/utils";
 import { bookRoom, cancelMyBooking, extendMyBooking } from "@/lib/rooms/actions";
-import { BOOKING_WINDOW, ROOM_RULES, SLOT_MS, addDays, centralDay, currentSlotStart, dayLabel, lengthLabel, timeLabel, weekKey, windowOf } from "@/lib/rooms/rules";
+import { BOOKING_WINDOW, ROOM_RULES, SLOT_MS, addDays, centralDay, currentSlotStart, dayLabel, lengthLabel, timeLabel, windowOf } from "@/lib/rooms/rules";
 import { CONTACT_EMAIL } from "@/lib/site";
 
 /*
@@ -187,7 +187,7 @@ export function RoomBooker({
           </p>
         )}
 
-        {/* The weekdays you can book, through the coming week. */}
+        {/* The days you can book: today and the six after it. */}
         <DayCalendar days={days} day={day} today={centralDay(new Date(now))} upcoming={upcoming} />
 
         <Tile label={dayLabel(day, "long")}>
@@ -314,13 +314,13 @@ export function RoomBooker({
           <ul className="flex flex-col gap-1.5 text-sm text-muted-foreground">
             <li>Book in 30-minute steps, up to {lengthLabel(ROOM_RULES.maxMinutes)} at a time.</li>
             <li>Running long? Add time to your booking while the room is free after it.</li>
-            <li>{BOOKING_WINDOW.daysLabel}, {BOOKING_WINDOW.label}, up to a week ahead.</li>
+            <li>Every day, {BOOKING_WINDOW.label}, up to a week ahead.</li>
           </ul>
           {/* The Club is open 24/7; the booking window isn't. The way around it is a person. */}
           <p className="mt-5 border-t border-border pt-4 text-sm text-muted-foreground">
-            Need a room on a weekend, or outside {BOOKING_WINDOW.label}?{" "}
+            Need a room outside {BOOKING_WINDOW.label}?{" "}
             <a
-              href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Booking a room outside weekday hours")}`}
+              href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Booking a room outside the booking hours")}`}
               className="text-graphite underline decoration-clay decoration-1 underline-offset-2"
             >
               Email the Club team
@@ -424,75 +424,82 @@ export function RoomBooker({
 }
 
 /*
-  THE DAY PICKER — the bookable weekdays of the coming week on a
-  Monday-to-Friday calendar, one row per calendar week (weekends aren't
-  bookable: staff aren't in — a weekend room goes through the Club team).
-  One weekday header, short tiles with just the date, days before today or
-  past the horizon shown faint, and a Clay marker on days you already have
-  a room. (The "time left this week" line went with the weekly cap.)
+  THE DAY PICKER — the admin's 7-day strip (components/admin/rooms-manager),
+  so both sides read the same: seven days in one row, each with its weekday,
+  date and one line under it. Members book one week ahead, ROLLING (today +
+  6, lib/rooms/rules.ts), so their strip is exactly that week starting today —
+  no ‹ › arrows, because nothing past it can be booked. Weekends are
+  bookable like any day (the space is open 24/7). A day the rules ever
+  take off reads "Not bookable" and isn't a link — never "Closed": the
+  building doesn't close. The line under a day is the member's own: a
+  Clay square and "Your room" where they have a booking — never anyone
+  else's count. Today: a Clay rule under the tile, as in the admin.
+  It replaced a Monday-to-Friday calendar, one row per week (November 2026).
 */
-const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
-const noonOf = (d: string) => `${d}T18:00:00.000Z`; // midday Central, either offset
-
 function DayCalendar({
   days,
   day,
   today,
   upcoming,
 }: {
+  /** The bookable days within the horizon. */
   days: string[];
   day: string;
-  /** The real today — on a weekend it isn't in `days`. */
+  /** The real today. */
   today: string;
   upcoming: Mine[];
 }) {
   const booked = new Set(upcoming.map((b) => centralDay(b.start)));
-
-  const weeks: string[] = [];
-  for (let w = weekKey(noonOf(days[0])); w <= days[days.length - 1]; w = addDays(w, 7)) weeks.push(w);
-  // (days holds only weekdays, so a faint tile is before today or past the horizon.)
+  const strip = Array.from({ length: ROOM_RULES.daysAhead }, (_, i) => addDays(today, i));
 
   return (
-    <div className="border border-border bg-bone-light p-3 sm:p-4">
-      <div className="grid grid-cols-5 gap-1.5" aria-hidden="true">
-        {WEEKDAYS.map((w) => (
-          <span key={w} className="text-center text-[11px] text-muted-foreground">
-            {w}
-          </span>
-        ))}
-      </div>
-      <div className="mt-1 grid grid-cols-5 gap-1.5">
-        {/* Monday to Friday of each week (its key is the Sunday before). */}
-        {weeks.flatMap((w) => Array.from({ length: 5 }, (_, i) => addDays(w, i + 1))).map((d) => {
-          const num = Number(d.slice(8));
-          if (!days.includes(d)) {
-            return (
-              <span key={d} aria-hidden="true" className="flex h-9 items-center justify-center text-sm tabular-nums text-muted-foreground/40">
-                {num}
-              </span>
-            );
-          }
-          const selected = d === day;
+    <nav aria-label="Day" className="grid grid-cols-7 border border-border bg-bone-light">
+      {strip.map((d) => {
+        const open = days.includes(d);
+        const selected = d === day;
+        const mine = booked.has(d);
+        const weekday = d === today ? "Today" : dayLabel(d).split(",")[0];
+        const tile = cn(
+          "relative flex min-w-0 flex-col items-center justify-center border-r border-border px-1 py-1.5 last:border-r-0",
+          d === today && !selected && "shadow-[inset_0_-2px_0_var(--color-clay)]",
+        );
+        if (!open) {
           return (
-            <Link
-              key={d}
-              href={`/portal/rooms?day=${d}`}
-              scroll={false}
-              aria-current={selected ? "date" : undefined}
-              aria-label={`${dayLabel(d, "long")}${d === today ? " (today)" : ""}${booked.has(d) ? ", you have a booking" : ""}`}
-              className={cn(
-                "relative flex h-9 items-center justify-center border text-sm font-medium tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay",
-                selected ? "border-graphite bg-graphite text-bone" : "border-border bg-bone text-graphite hover:border-graphite",
-                // Today: a Clay rule under the date — a marker, never a fill.
-                d === today && !selected && "border-b-2 border-b-clay",
-              )}
-            >
-              {num}
-              {booked.has(d) && <span aria-hidden="true" className="absolute top-1 right-1 h-1.5 w-1.5 bg-clay" />}
-            </Link>
+            <div key={d} className={cn(tile, "text-muted-foreground")} aria-label={`${dayLabel(d, "long")}: not bookable`}>
+              <span className="text-[11px]">{weekday}</span>
+              <span className="text-sm font-medium tabular-nums">{Number(d.slice(8))}</span>
+              <span className="text-[11px]">Not bookable</span>
+            </div>
           );
-        })}
-      </div>
-    </div>
+        }
+        return (
+          <Link
+            key={d}
+            href={`/portal/rooms?day=${d}`}
+            scroll={false}
+            aria-current={selected ? "date" : undefined}
+            aria-label={`${dayLabel(d, "long")}${d === today ? " (today)" : ""}${mine ? ", you have a room" : ""}`}
+            className={cn(
+              tile,
+              "transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-clay",
+              selected ? "bg-graphite text-bone" : "text-graphite hover:bg-bone",
+            )}
+          >
+            <span className={cn("text-[11px]", selected ? "text-bone/70" : "text-muted-foreground")}>{weekday}</span>
+            <span className="text-sm font-medium tabular-nums">{Number(d.slice(8))}</span>
+            <span className={cn("inline-flex items-center gap-1 text-[11px]", selected ? "text-bone/80" : "text-graphite")}>
+              {mine ? (
+                <>
+                  <span aria-hidden="true" className="h-1.5 w-1.5 bg-clay" />
+                  <span className="hidden sm:inline">Your room</span>
+                </>
+              ) : (
+                "\u00a0"
+              )}
+            </span>
+          </Link>
+        );
+      })}
+    </nav>
   );
 }

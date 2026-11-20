@@ -1,3 +1,5 @@
+import { requireAdmin } from "@/lib/auth/session";
+import { can } from "@/lib/auth/roles";
 import { bookingsBetween, listRooms } from "@/lib/rooms/rooms";
 import { listInquiries } from "@/lib/admin/inquiries";
 import { addDays, centralDay, dayStartIso, isDay, weekKey, windowSlots } from "@/lib/rooms/rules";
@@ -15,6 +17,7 @@ export const metadata = { title: "Rooms" };
 */
 export default async function AdminRoomsPage(props: PageProps<"/portal/admin/rooms">) {
   const { day: raw, block, inquiry } = await props.searchParams;
+  const canConfigure = can((await requireAdmin()).role, "rooms.configure");
   const now = new Date().getTime();
   const today = centralDay(new Date(now));
   const day = isDay(raw) ? raw : today;
@@ -57,6 +60,7 @@ export default async function AdminRoomsPage(props: PageProps<"/portal/admin/roo
           bookings={bookings}
           eventRequests={eventRequests}
           startBlocking={block === "1"}
+          canConfigure={canConfigure}
           // "Hold a room" on an event request opens the block form already linked to it.
           startInquiry={typeof inquiry === "string" && eventRequests.some((e) => e.id === inquiry) ? inquiry : undefined}
         />

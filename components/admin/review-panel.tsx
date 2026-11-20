@@ -80,10 +80,13 @@ const MOVES_ON: Move[] = ["advance", "approve", "decline", "ban"];
 export function ReviewPanel({
   application,
   afterHref,
+  canDecide,
 }: {
   application: Application;
   /** Where a decision lands: the next application in the queue, or the list when it's the last. */
   afterHref: string;
+  /** Management (lib/auth/roles.ts `applications.decide`): approve, decline at team review, reopen. Staff see who decides instead. */
+  canDecide: boolean;
 }) {
   const router = useRouter();
   const research = useResearch();
@@ -154,7 +157,7 @@ export function ReviewPanel({
     run(c.move, () => moveApplication(application.id, c.move, note));
   }
 
-  const choices = choicesFor(application);
+  const choices = canDecide ? choicesFor(application) : [];
   const paymentPending = application.status === "approved" && application.plan !== "enterprise" && !application.paidAt;
   const card = "border border-border bg-bone-light p-5";
   const inTeam = application.status === "team_review";
@@ -271,6 +274,16 @@ export function ReviewPanel({
               className="min-h-16"
             />
           </Field>
+        </section>
+      )}
+
+      {!inResearch && !canDecide && application.status === "team_review" && (
+        <section className={card} aria-labelledby="next-step">
+          <h2 id="next-step" className={cn(ADMIN_LABEL, "text-graphite")}>Team decision</h2>
+          <Steps steps={APPLICATION_STEPS} current={1} />
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+            Decided in the team meeting, and recorded here by Geekdom management.
+          </p>
         </section>
       )}
 

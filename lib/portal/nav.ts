@@ -19,6 +19,7 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
+import { can, type Permission, type Role } from "@/lib/auth/roles";
 
 export interface NavItem {
   href: string;
@@ -26,6 +27,8 @@ export interface NavItem {
   icon: LucideIcon;
   /** A shorter label for the phone tab bar, where four sit side by side. */
   short?: string;
+  /** Shown only to roles that have it (lib/auth/roles.ts). The page and its actions check too. */
+  permission?: Permission;
 }
 
 export interface NavGroup {
@@ -53,7 +56,7 @@ export const MEMBER_NAV: NavGroup[] = [
 
 /*
   WHAT THE ADMIN SWITCH OPENS. Staff only — rendered when the session's role is
-  staff or superadmin, and every page under /portal/admin re-checks that on
+  an admin role, and every page under /portal/admin re-checks that on
   the server. Hiding the Admin switch is UX; it is not the gate.
 */
 /*
@@ -98,11 +101,11 @@ export const ADMIN_NAV: NavGroup[] = [
       // mostly set once.
       // The words on the public pages — the scope of work's "maintain
       // website content without developer assistance".
-      { href: "/portal/admin/copy", label: "Site copy", icon: Type },
+      { href: "/portal/admin/copy", label: "Site copy", icon: Type, permission: "site.claims" },
       { href: "/portal/admin/events", label: "Events", icon: CalendarDays },
       { href: "/portal/admin/field-notes", label: "Field Notes", icon: NotebookPen },
-      { href: "/portal/admin/portfolio", label: "Portfolio", icon: Shapes },
-      { href: "/portal/admin/gallery", label: "Photo archive", icon: Images },
+      { href: "/portal/admin/portfolio", label: "Portfolio", icon: Shapes, permission: "site.claims" },
+      { href: "/portal/admin/gallery", label: "Photo archive", icon: Images, permission: "site.claims" },
     ],
   },
   {
@@ -110,7 +113,8 @@ export const ADMIN_NAV: NavGroup[] = [
     // Vercel's settings: who can sign in, and the record of what they did.
     label: "Settings",
     items: [
-      // Who can sign in to this admin — owners manage it.
+      // Who can sign in to this admin, and their role — Management manages
+      // it; Staff can read it (so they know who to ask).
       { href: "/portal/admin/team", label: "Admin access", icon: ShieldCheck },
       // Member tags, and the PERK tags that make a membership complimentary.
       { href: "/portal/admin/tags", label: "Tags & perks", icon: Tag },
@@ -118,6 +122,11 @@ export const ADMIN_NAV: NavGroup[] = [
     ],
   },
 ];
+
+/** The admin sidebar for one role: items it can't use are left out, and so is an emptied group. */
+export function adminNavFor(role: Role): NavGroup[] {
+  return ADMIN_NAV.map((g) => ({ ...g, items: g.items.filter((i) => !i.permission || can(role, i.permission)) })).filter((g) => g.items.length);
+}
 
 export const ADMIN_ROOT = "/portal/admin";
 

@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/auth/session";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { listMembers } from "@/lib/admin/queries";
@@ -14,6 +15,7 @@ const CURRENT = ["active", "trialing", "past_due"];
  * Real sending is locked until launch (lib/invitations.ts).
  */
 export default async function InvitationsPage() {
+  await requirePermission("members.money"); // Management only — Staff are sent to the Overview
   const [members, logins] = await Promise.all([listMembers(), loginStates().catch(() => new Map())]);
   const rows: InviteRow[] = members
     .filter((m) => CURRENT.includes(m.status))

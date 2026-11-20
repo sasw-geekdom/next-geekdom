@@ -7,7 +7,7 @@ import { ArrowLeft, ArrowRight, Menu, ShieldCheck, X } from "lucide-react";
 import { signOut } from "firebase/auth";
 import { getFirebaseAuth } from "@/lib/firebase/client";
 import {
-  ADMIN_NAV,
+  adminNavFor,
   ADMIN_ROOT,
   MEMBER_NAV,
   activeHref,
@@ -36,7 +36,7 @@ import { buttonClass } from "@/components/ui/button";
   staff access; the word says where it goes. Icon-only on the phone bar,
   where there's no room, with the label in the menu.
 
-  Rendered only when the session's role is staff or superadmin — but hiding
+  Rendered only when the session has an admin role — but hiding
   it is UX, not the gate: every /portal/admin page and server action calls
   `requireAdmin()` on the server.
 
@@ -56,7 +56,7 @@ export function PortalShell({
   const [open, setOpen] = React.useState(false);
   const staff = isAdmin(user);
   const admin = staff && inAdmin(pathname);
-  const groups: NavGroup[] = admin ? ADMIN_NAV : MEMBER_NAV;
+  const groups: NavGroup[] = admin ? adminNavFor(user.role) : MEMBER_NAV;
   const active = activeHref(pathname, groups);
 
   // Close the mobile drawer on navigation, adjusted during render rather than

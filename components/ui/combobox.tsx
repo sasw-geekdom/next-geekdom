@@ -31,6 +31,8 @@ const LIST_MIN = 120;
 const SEARCH_HEIGHT = 53;
 const LIST_PADDING = 10;
 const GAP = 8;
+/** An option's height, generously (a label that wraps to two lines). */
+const ROW_ESTIMATE = 44;
 
 /** The visible box the list must fit in: the nearest scroller, clipped to the viewport. */
 function scrollBounds(el: HTMLElement): { top: number; bottom: number } {
@@ -138,7 +140,10 @@ export function Combobox({
       const below = box.bottom - r.bottom - GAP;
       const above = r.top - box.top - GAP;
       const chrome = (showSearch ? SEARCH_HEIGHT : 0) + LIST_PADDING;
-      const up = below < LIST_MAX + chrome && above > below;
+      // What THIS list needs, not the cap: a two-option list fits under a
+      // field near the foot of a slide-out, and flipping it up read as broken.
+      const needed = Math.min(LIST_MAX, Math.max(1, filtered.length) * ROW_ESTIMATE) + chrome;
+      const up = below < needed && above > below;
       const room = (up ? above : below) - chrome;
       setPlace({ up, max: Math.max(LIST_MIN, Math.min(LIST_MAX, room)) });
     }

@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireAdmin } from "@/lib/auth/session";
+import { adminAllowed } from "@/lib/auth/session";
+import { MANAGEMENT_ONLY_MESSAGE } from "@/lib/auth/roles";
 import { syncGalleryThumbnails, type SyncResult } from "@/lib/gallery-sync";
 import { logActivity } from "@/lib/admin/activity";
 import { ON_PREVIEW_DATA } from "@/lib/firebase/admin";
@@ -23,7 +24,8 @@ export type GallerySyncResult =
  * the admin page with an error boundary.
  */
 export async function syncGallery(): Promise<GallerySyncResult> {
-  const user = await requireAdmin();
+  const user = await adminAllowed("site.claims");
+  if (!user) return { ok: false, error: MANAGEMENT_ONLY_MESSAGE };
   /*
     NOT ON PREVIEW DATA. The wall's files live in the one Blob store every
     deployment shares, and a sync deletes the files its manifest no longer

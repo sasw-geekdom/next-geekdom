@@ -254,17 +254,18 @@ export function memberWelcomeEmail(v: { name: string }): Email {
 }
 
 /** An owner gave someone access to the Geekdom admin (/portal/admin/team). */
-export function adminAccessEmail(v: { name: string; by: string }): Email {
+export function adminAccessEmail(v: { name: string; by: string; role?: string }): Email {
   const signIn = url("/sign-in");
+  const as = v.role ? ` as ${v.role}` : "";
   return email(
     "You have access to the Geekdom admin",
-    `${v.by} gave you access. Sign in with this email address.`,
+    `${v.by} gave you access${as}. Sign in with this email address.`,
     eyebrow("Geekdom · Admin") +
       h1(`${first(v.name)}, you have access to the Geekdom admin.`) +
-      p(`${escapeHtml(v.by)} added you. Sign in with this email address — there's no password; we'll email you a link each time.`) +
+      p(`${escapeHtml(v.by)} added you${escapeHtml(as)}. Sign in with this email address — there's no password; we'll email you a link each time.`) +
       button(signIn, "Sign in") +
       muted("Didn't expect this? Reply to this email and we'll sort it out."),
-    `${first(v.name)}, you have access to the Geekdom admin. ${v.by} added you.\n\nSign in with this email address (no password): ${signIn}`,
+    `${first(v.name)}, you have access to the Geekdom admin. ${v.by} added you${as}.\n\nSign in with this email address (no password): ${signIn}`,
   );
 }
 

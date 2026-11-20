@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { Timestamp } from "firebase-admin/firestore";
-import { requireAdmin } from "@/lib/auth/session";
+import { adminAllowed, requireAdmin } from "@/lib/auth/session";
+import { MANAGEMENT_ONLY_MESSAGE } from "@/lib/auth/roles";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { COLLECTIONS, type MemberDoc } from "@/lib/firebase/collections";
 import { logActivity } from "@/lib/admin/activity";
@@ -76,7 +77,8 @@ export async function stripeSnapshot(memberId: string): Promise<StripeSnapshot> 
 }
 
 export async function linkStripe(memberId: string, query: string): Promise<{ ok: boolean; message: string }> {
-  const admin = await requireAdmin();
+  const admin = await adminAllowed("members.money");
+  if (!admin) return { ok: false, message: MANAGEMENT_ONLY_MESSAGE };
   if (!env(process.env.STRIPE_SECRET_KEY)) return { ok: false, message: "Stripe isn't connected on this copy of the site." };
   const q = String(query ?? "").trim();
   if (!q) return { ok: false, message: "Enter their Stripe email or customer id (cus_…)." };
@@ -105,7 +107,8 @@ export async function linkStripe(memberId: string, query: string): Promise<{ ok:
 
 /** startOn: "now" or an ISO date (the day billing begins). */
 export async function startClubBilling(memberId: string, startOn: string): Promise<{ ok: boolean; message: string }> {
-  const admin = await requireAdmin();
+  const admin = await adminAllowed("members.money");
+  if (!admin) return { ok: false, message: MANAGEMENT_ONLY_MESSAGE };
   if (!env(process.env.STRIPE_SECRET_KEY)) return { ok: false, message: "Stripe isn't connected on this copy of the site." };
   try {
     const { ref, m } = await member(memberId);

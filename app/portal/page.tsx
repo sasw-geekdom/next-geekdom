@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { requireMember } from "@/lib/auth/session";
-import { isAdmin } from "@/lib/auth/roles";
+import { isAdmin, ROLE_LABELS, type AdminRole } from "@/lib/auth/roles";
 import { getMemberByEmail } from "@/lib/admin/queries";
 import { getUpcomingEvents } from "@/lib/content/events";
 import { getGalleryImages } from "@/lib/gallery";
@@ -150,7 +150,7 @@ export default async function PortalHome() {
         ) : staff ? (
           <>
             <span>
-              Geekdom team{user.role === "superadmin" ? " · Owner" : ""} — you see the portal as members do.
+              Geekdom team · {ROLE_LABELS[user.role as AdminRole] ?? "Staff"} — you see the portal as members do.
             </span>
             <Link href="/portal/admin" className={cn("text-sm", LINK_ARROW)}>
               Open the admin

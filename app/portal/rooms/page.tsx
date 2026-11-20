@@ -7,7 +7,7 @@ import { RoomBooker } from "@/components/portal/room-booker";
 export const metadata = { title: "Book a room" };
 
 /*
-  BOOK A ROOM — the member side of Phase 4. Pick a weekday in the coming
+  BOOK A ROOM — the member side of Phase 4. Pick a day in the coming
   week, see every room's day at a glance, book a free time in one
   slide-out. Your bookings sit beside it, each with "Add time" while the
   room is free after it. No weekly limit.

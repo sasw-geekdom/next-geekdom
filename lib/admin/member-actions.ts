@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import * as z from "zod";
 import { requireAdmin } from "@/lib/auth/session";
+import { can, MANAGEMENT_ONLY_MESSAGE } from "@/lib/auth/roles";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { COLLECTIONS, type MemberDoc } from "@/lib/firebase/collections";
 import { fieldErrors } from "@/lib/validation/schemas";
@@ -13,7 +14,8 @@ import type { ActionResult } from "@/lib/content/types";
 import { logActivity } from "@/lib/admin/activity";
 import { addTeammate, getTeam, removeTeammate, syncTeamStatus } from "@/lib/team";
 import { hasTeam, PLAN_IDS } from "@/lib/membership";
-import { applyPerks } from "@/lib/perks-server";
+import { applyPerks, readPerkTags } from "@/lib/perks-server";
+import { isPerk } from "@/lib/perks";
 
 /*
   "ADD A MEMBER" AND EDITING ONE, from /portal/admin/members.
@@ -95,6 +97,28 @@ export async function saveMember(input: MemberInput): Promise<ActionResult> {
         fieldErrors: { email: `${clash.docs[0].data().name} already has a membership under this email.` },
       };
     }
+  }
+
+  // STAFF EDIT THE RECORD; MANAGEMENT CHANGES THE MEMBERSHIP (lib/auth/roles.ts,
+  // `members.money`): pausing, canceling or reactivating, the plan, and any
+  // tag that carries complimentary time (it pauses their Stripe billing).
+  const defs = await readPerkTags();
+  // TAGS ARE CREATED IN TAGS & PERKS, never here: a new tag must be one of
+  // its definitions. One the member already carries (from before the rule)
+  // may stay.
+  const undefinedTag = data.tags.find((t) => !(before?.tags ?? []).includes(t) && !defs.some((d) => d.name === t));
+  if (undefinedTag) return { ok: false, error: "Tags are created in Tags & perks.", fieldErrors: { tags: `"${undefinedTag}" isn't a tag yet — create it in Tags & perks first.` } };
+
+  if (!can(user.role, "members.money")) {
+    const perks = new Set(defs.filter(isPerk).map((t) => t.name));
+    const had = new Set(before?.tags ?? []);
+    const has = new Set(data.tags);
+    const perkChanged = [...perks].some((t) => had.has(t) !== has.has(t));
+    const errors: Record<string, string> = {};
+    if (before && before.status !== data.status) errors.status = MANAGEMENT_ONLY_MESSAGE;
+    if (before && !before.teamOwnerId && (before.plan ?? "solo") !== data.plan) errors.plan = MANAGEMENT_ONLY_MESSAGE;
+    if (perkChanged) errors.tags = `Complimentary tags pause billing. ${MANAGEMENT_ONLY_MESSAGE}`;
+    if (Object.keys(errors).length) return { ok: false, error: MANAGEMENT_ONLY_MESSAGE, fieldErrors: errors };
   }
 
   // A Stripe-billed member's status is Stripe's: the webhook would overwrite

@@ -1,10 +1,11 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronDown, ExternalLink, Plus, Search, X } from "lucide-react";
+import { ArrowUpRight, ChevronDown, ExternalLink, Plus, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Field, Input, Textarea } from "@/components/ui/field";
+import { Input, Textarea } from "@/components/ui/field";
 import { Combobox } from "@/components/ui/combobox";
 import { Drawer } from "@/components/ui/drawer";
 import { ADMIN_CHIP, ADMIN_LABEL, MemberStatusLabel, RowButton, Table, Td, Th, Tr, tableDate, type SortDir } from "@/components/admin/admin-ui";
@@ -14,7 +15,7 @@ import { addTeammateForOwner, createMemberLogin, removeTeammateForOwner, saveMem
 import { hasTeam, PLANS, planOf, type PlanId } from "@/lib/membership";
 import { TeamCard } from "@/components/portal/team-card";
 import type { Member } from "@/lib/admin/types";
-import { compActive, compDate, compLine, compRunning, compUntil, isPerk, type PerkTag } from "@/lib/perks";
+import { compActive, compDate, compLine, compRunning, compUntil, isPerk, perkSummary, type PerkTag } from "@/lib/perks";
 import { linkStripe, startClubBilling, stripeSnapshot, type StripeSnapshot } from "@/lib/admin/stripe-actions";
 import type { MemberStatus } from "@/lib/firebase/collections";
 
@@ -172,8 +173,15 @@ export function MembersManager({
   perks = [],
   startAdding = false,
   startView,
+  canManageMoney = false,
 }: {
   members: MemberRow[];
+  /**
+   * Management (lib/auth/roles.ts `members.money`): status, plan,
+   * complimentary tags and the Stripe panel's actions. Staff edit the
+   * record and see those read-only; the server refuses them regardless.
+   */
+  canManageMoney?: boolean;
   /** Tag definitions (Settings → Tags & perks) — for the slide-out's "what saving will do". */
   perks?: PerkTag[];
   /** Open "Add a member" straight away — the Overview's quick action (?add=1). */
@@ -516,7 +524,7 @@ export function MembersManager({
               ) : (
                 <>
                   <Row label="Plan" htmlFor="m-plan" error={errors.plan}>
-                    <Combobox id="m-plan" name="plan" options={PLAN_OPTIONS} value={draft.plan} onChange={(v) => set("plan")(v as PlanId)} searchable={false} />
+                    <Combobox id="m-plan" name="plan" options={PLAN_OPTIONS} value={draft.plan} onChange={(v) => set("plan")(v as PlanId)} searchable={false} disabled={Boolean(editing) && !canManageMoney} />
                   </Row>
                   {(draft.plan !== "solo" || draft.company) && (
                     <Row label="Company" htmlFor="m-company" error={errors.company}>
@@ -532,10 +540,12 @@ export function MembersManager({
                 hint={
                   stripeManaged
                     ? "Billed through Stripe — follows their subscription."
-                    : "Paused or canceled members can't sign in; Active restores access."
+                    : editing && !canManageMoney
+                      ? "Management pauses, cancels and reactivates memberships."
+                      : "Paused or canceled members can't sign in; Active restores access."
                 }
               >
-                <Combobox id="m-status" name="status" options={statusOptions} value={draft.status} onChange={set("status")} disabled={stripeManaged} />
+                <Combobox id="m-status" name="status" options={statusOptions} value={draft.status} onChange={set("status")} disabled={stripeManaged || (Boolean(editing) && !canManageMoney)} />
               </Row>
               <Row label="Member since" htmlFor="m-month" error={errors.day ?? errors.month ?? errors.year} required>
                 <div className="grid grid-cols-[1.4fr_1fr_1fr] gap-2">
@@ -581,7 +591,7 @@ export function MembersManager({
                   )}
                   <dt className="text-muted-foreground">Billing</dt>
                   <dd className="text-graphite">
-                    <StripePanel key={editing.id} memberId={editing.id} onChanged={() => router.refresh()} />
+                    <StripePanel key={editing.id} memberId={editing.id} canAct={canManageMoney} onChanged={() => router.refresh()} />
                   </dd>
                   <dt className="text-muted-foreground">Added by</dt>
                   <dd className="text-graphite">
@@ -591,17 +601,30 @@ export function MembersManager({
               </RecordSection>
             )}
 
-            <RecordSection title="Staff only" note="Never shown to the member — except a perk tag's complimentary membership.">
-              <TagInput
-                value={draft.tags}
-                onChange={set("tags")}
-                known={[...new Set([...tags, ...perks.map((p) => p.name)])].sort()}
-                labels={Object.fromEntries(perks.map((p) => [p.name, p.label]))}
-              />
-              <PerkPreview tags={draft.tags} before={editing?.tags ?? []} comp={editing?.comp ?? null} perks={perks} paying={Boolean(editing?.stripeSubscriptionId)} />
-              <Field label="Notes" htmlFor="m-notes" error={errors.notes}>
+            <RecordSection title="Staff only" note="Never shown to the member.">
+              {/* Label left, control right — the same Row as every other section. */}
+              <Row
+                label="Tags"
+                htmlFor="m-tags"
+                error={errors.tags}
+                hint={
+                  canManageMoney
+                    ? "Tags are created in Tags & perks, where each one's discount or complimentary time is set."
+                    : "Tags are created in Tags & perks. Complimentary tags are applied by Geekdom management."
+                }
+              >
+                <TagPicker
+                  value={draft.tags}
+                  onChange={set("tags")}
+                  defs={perks}
+                  canCreate={canManageMoney}
+                  locked={canManageMoney ? [] : perks.filter(isPerk).map((p) => p.name)}
+                />
+                <PerkPreview tags={draft.tags} before={editing?.tags ?? []} comp={editing?.comp ?? null} perks={perks} paying={Boolean(editing?.stripeSubscriptionId)} />
+              </Row>
+              <Row label="Notes" htmlFor="m-notes" error={errors.notes}>
                 <Textarea id="m-notes" value={draft.notes} onChange={(e) => set("notes")(e.target.value)} className="min-h-24" />
-              </Field>
+              </Row>
             </RecordSection>
 
             {drawerError && (
@@ -710,7 +733,7 @@ function RecordSection({ title, note, children }: { title: string; note?: string
   return (
     <section>
       <div className="mb-4 flex items-baseline justify-between gap-4 border-b border-border pb-2">
-        <h3 className={cn(ADMIN_LABEL, "text-graphite")}>{title}</h3>
+        <h3 className={cn(ADMIN_LABEL, "shrink-0 whitespace-nowrap text-graphite")}>{title}</h3>
         {note && <p className="text-[13px] text-muted-foreground">{note}</p>}
       </div>
       <div className="flex flex-col gap-4">{children}</div>
@@ -753,83 +776,101 @@ function Row({
 }
 
 /*
-  Tags as chips: type and press Enter (or comma) to add, × to remove, and
-  the tags already in use offered as one-click suggestions — so the next
-  admin reuses "founding member" instead of coining "founder member".
-  Not a native <datalist>, which is a native combobox by another name.
+  TAGS ARE PICKED, NEVER TYPED (Jesse, November 2026). A tag exists to turn
+  on a discount or a complimentary membership, so every tag is created in
+  Settings → Tags & perks, and here staff choose from that list. A tag the
+  member already carries that isn't defined there (from before this rule)
+  stays as a chip until someone removes it. Picking from a Combobox — the
+  custom dropdown, never a native <select>.
 */
-function TagInput({
+function TagPicker({
   value,
   onChange,
-  known,
-  labels = {},
+  defs,
+  locked = [],
+  canCreate = false,
 }: {
   value: string[];
   onChange: (tags: string[]) => void;
-  known: string[];
-  /** A perk tag's display name ("DEVSA community") for its lowercased key. */
-  labels?: Record<string, string>;
+  /** The tags defined in Tags & perks — the only ones that can be added. */
+  defs: PerkTag[];
+  /** Tags this person can't add or remove — complimentary tags, for Staff. */
+  locked?: string[];
+  /** Management: a link to create one. Staff can't, so they don't see it. */
+  canCreate?: boolean;
 }) {
-  const [text, setText] = React.useState("");
-  const add = (raw: string) => {
-    const t = raw.trim().toLowerCase();
-    if (t && !value.includes(t)) onChange([...value, t]);
-    setText("");
-  };
-  const suggestions = known.filter((t) => !value.includes(t) && t.includes(text.trim().toLowerCase())).slice(0, 8);
+  const router = useRouter();
+  // Back from the Tags & perks tab: re-read, so the new tag is in the list.
+  // router.refresh() keeps this half-filled form as it is.
+  const [away, setAway] = React.useState(false);
+  React.useEffect(() => {
+    if (!away) return;
+    const back = () => {
+      setAway(false);
+      router.refresh();
+    };
+    window.addEventListener("focus", back, { once: true });
+    return () => window.removeEventListener("focus", back);
+  }, [away, router]);
+  const labelOf = (t: string) => defs.find((d) => d.name === t)?.label ?? t;
+  const options = defs
+    .filter((d) => !value.includes(d.name) && !locked.includes(d.name))
+    .map((d) => ({ value: d.name, label: d.effect !== "none" ? `${d.label} — ${perkSummary(d).toLowerCase()}` : d.label }));
 
   return (
-    <div>
-      <label htmlFor="m-tags" className="mb-2 block text-sm font-medium text-graphite">
-        Tags
-      </label>
-      <div className="flex min-h-11 flex-wrap items-center gap-1.5 border border-border bg-bone-light px-2 py-1.5 focus-within:ring-2 focus-within:ring-clay focus-within:ring-offset-1">
-        {value.map((t) => (
-          <span key={t} className="inline-flex items-center gap-1 border border-border bg-bone px-2 py-0.5 text-sm text-graphite">
-            {labels[t] ?? t}
-            <button
-              type="button"
-              onClick={() => onChange(value.filter((x) => x !== t))}
-              aria-label={`Remove tag ${t}`}
-              className="text-muted-foreground hover:text-graphite"
-            >
-              <X className="h-3 w-3" strokeWidth={2} />
-            </button>
-          </span>
-        ))}
-        <input
-          id="m-tags"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === ",") {
-              e.preventDefault();
-              add(text);
-            } else if (e.key === "Backspace" && !text && value.length) {
-              onChange(value.slice(0, -1));
-            }
-          }}
-          onBlur={() => text.trim() && add(text)}
-          placeholder={value.length ? "" : "Add a tag and press Enter"}
-          className="min-w-32 flex-1 bg-transparent px-1 py-1 text-base text-graphite outline-none placeholder:text-muted-foreground"
-        />
-      </div>
-      {suggestions.length > 0 && (
-        <div className="mt-2 flex flex-wrap items-center gap-1.5">
-          <span className="text-xs text-muted-foreground">In use:</span>
-          {suggestions.map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => add(t)}
-              className="border border-dashed border-border px-2 py-0.5 text-xs text-graphite hover:border-graphite"
-            >
-              + {t}
-            </button>
+    <div className="flex flex-col gap-2">
+      {value.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          {value.map((t) => (
+            <span key={t} className="inline-flex items-center gap-1 border border-border bg-bone px-2 py-0.5 text-sm text-graphite">
+              {labelOf(t)}
+              {!locked.includes(t) && (
+                <button
+                  type="button"
+                  onClick={() => onChange(value.filter((x) => x !== t))}
+                  aria-label={`Remove tag ${labelOf(t)}`}
+                  className="text-muted-foreground hover:text-graphite"
+                >
+                  <X className="h-3 w-3" strokeWidth={2} />
+                </button>
+              )}
+            </span>
           ))}
         </div>
       )}
-      <p className="mt-2 text-xs text-muted-foreground">For grouping members on this list. Never shown to them.</p>
+      {defs.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          No tags yet. They&rsquo;re created in{" "}
+          <Link href="/portal/admin/tags" className="text-graphite underline decoration-clay decoration-1 underline-offset-2">
+            Tags &amp; perks
+          </Link>
+          .
+        </p>
+      ) : options.length > 0 ? (
+        <Combobox
+          id="m-tags"
+          name="tag-picker"
+          options={options}
+          value=""
+          onChange={(t) => t && onChange([...value, t])}
+          placeholder="Add a tag…"
+          searchable={options.length > 7}
+        />
+      ) : (
+        <p className="text-sm text-muted-foreground">Every tag you can add is on this member.</p>
+      )}
+      {canCreate && defs.length > 0 && (
+        <a
+          href="/portal/admin/tags?new=1"
+          target="_blank"
+          rel="noopener"
+          onClick={() => setAway(true)}
+          className="inline-flex items-center gap-1 self-start text-sm text-graphite underline decoration-clay decoration-1 underline-offset-2"
+        >
+          New tag in Tags &amp; perks
+          <ArrowUpRight aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={1.7} />
+        </a>
+      )}
     </div>
   );
 }
@@ -854,7 +895,7 @@ function PerkPreview({
   const running = compActive(comp);
   if (running && comp && !tags.includes(comp.tag)) {
     return (
-      <p className="-mt-2 border-l-2 border-clay bg-bone-light px-3 py-2 text-[13px] text-graphite">
+      <p className="mt-2 border-l-2 border-clay bg-bone-light px-3 py-2 text-[13px] text-graphite">
         Saving ends their complimentary membership today{comp.paused ? " and resumes their Stripe billing" : ""}.
       </p>
     );
@@ -865,7 +906,7 @@ function PerkPreview({
   const p = added[0];
   const until = compUntil(p, new Date());
   return (
-    <p className="-mt-2 border-l-2 border-clay bg-bone-light px-3 py-2 text-[13px] text-graphite">
+    <p className="mt-2 border-l-2 border-clay bg-bone-light px-3 py-2 text-[13px] text-graphite">
       Saving makes their membership complimentary {until ? `until ${compDate(until.toISOString())}` : "with no end date"} ({p.label})
       {paying ? `, and pauses their Stripe billing ${until ? "until then" : ""}` : ""}.
     </p>
@@ -886,7 +927,7 @@ const SOON_YEARS = [0, 1, 2].map((n) => {
   return { value: y, label: y };
 });
 
-function StripePanel({ memberId, onChanged }: { memberId: string; onChanged: () => void }) {
+function StripePanel({ memberId, canAct, onChanged }: { memberId: string; canAct: boolean; onChanged: () => void }) {
   const [snap, setSnap] = React.useState<StripeSnapshot | null>(null);
   const [failed, setFailed] = React.useState(false);
   const [query, setQuery] = React.useState("");
@@ -959,7 +1000,7 @@ function StripePanel({ memberId, onChanged }: { memberId: string; onChanged: () 
             Open in Stripe
             <ExternalLink className="h-3.5 w-3.5" strokeWidth={1.7} aria-hidden="true" />
           </a>
-          {!snap.club && snap.card && !starting && (
+          {canAct && !snap.club && snap.card && !starting && (
             <Button type="button" variant="outline" size="sm" className="mt-1 self-start" onClick={() => setStarting(true)} disabled={pending}>
               Start Club billing
             </Button>
@@ -1002,12 +1043,14 @@ function StripePanel({ memberId, onChanged }: { memberId: string; onChanged: () 
       ) : (
         <>
           <span className="text-muted-foreground">Not linked to Stripe</span>
-          <div className="flex gap-2">
-            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Their Stripe email, or cus_…" aria-label="Stripe email or customer id" className="h-9" />
-            <Button type="button" variant="outline" size="sm" onClick={link} disabled={pending || !query.trim()}>
-              {pending ? "Linking…" : "Link"}
-            </Button>
-          </div>
+          {canAct && (
+            <div className="flex gap-2">
+              <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Their Stripe email, or cus_…" aria-label="Stripe email or customer id" className="h-9" />
+              <Button type="button" variant="outline" size="sm" onClick={link} disabled={pending || !query.trim()}>
+                {pending ? "Linking…" : "Link"}
+              </Button>
+            </div>
+          )}
         </>
       )}
       {msg && (

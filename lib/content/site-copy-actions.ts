@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath, updateTag } from "next/cache";
-import { requireAdmin } from "@/lib/auth/session";
+import { adminAllowed } from "@/lib/auth/session";
+import { MANAGEMENT_ONLY_MESSAGE } from "@/lib/auth/roles";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { logActivity } from "@/lib/admin/activity";
 import { COPY_BY_KEY, COPY_PAGES } from "@/lib/content/site-copy-fields";
@@ -52,7 +53,8 @@ function refresh(page: string) {
 }
 
 export async function saveCopy(key: string, value: string): Promise<CopyResult> {
-  const admin = await requireAdmin();
+  const admin = await adminAllowed("site.claims");
+  if (!admin) return { ok: false, message: MANAGEMENT_ONLY_MESSAGE };
   const field = COPY_BY_KEY[key];
   if (!field || typeof value !== "string") return { ok: false, message: "That isn't a field we know." };
   const next = clean(field.kind, value);
@@ -69,7 +71,8 @@ export async function saveCopy(key: string, value: string): Promise<CopyResult> 
 }
 
 export async function resetCopy(key: string): Promise<CopyResult> {
-  const admin = await requireAdmin();
+  const admin = await adminAllowed("site.claims");
+  if (!admin) return { ok: false, message: MANAGEMENT_ONLY_MESSAGE };
   const field = COPY_BY_KEY[key];
   if (!field) return { ok: false, message: "That isn't a field we know." };
   await write(key, null);

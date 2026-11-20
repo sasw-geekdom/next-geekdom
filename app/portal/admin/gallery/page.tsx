@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/auth/session";
 import { PageHeader, AdminSection } from "@/components/admin/page-header";
 import { GalleryManager } from "@/components/admin/gallery-manager";
 import { getGalleryManifest } from "@/lib/gallery";
@@ -24,6 +25,7 @@ export const metadata = { title: "Photo archive" };
 export const dynamic = "force-dynamic";
 
 export default async function AdminGalleryPage() {
+  await requirePermission("site.claims"); // Management only — Staff are sent to the Overview
   const manifest = await getGalleryManifest();
   const years = new Date().getFullYear() - FOUNDED_YEAR;
 

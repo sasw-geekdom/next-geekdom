@@ -5,13 +5,15 @@ import { redirect } from "next/navigation";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { COLLECTIONS, type MemberStatus } from "@/lib/firebase/collections";
 import {
+  can,
   isAdmin,
+  type Permission,
   type AdminUser,
   type Role,
   type SessionUser,
 } from "@/lib/auth/roles";
 import { SESSION_COOKIE } from "@/lib/auth/constants";
-import { adminRoleFor } from "@/lib/auth/admin-access";
+import { adminNameFor, adminRoleFor } from "@/lib/auth/admin-access";
 
 export { SESSION_COOKIE };
 const EXPIRES_IN_MS = 60 * 60 * 24 * 5 * 1000; // 5 days
@@ -69,6 +71,9 @@ function trusted(decoded: { email_verified?: boolean }) {
   return decoded.email_verified === true;
 }
 
+/** Staff: the name typed on the Admin access screen (same cached read as the role). Members: their login's. */
+const displayName = (role: Role, email: string | undefined) => (role === "member" ? Promise.resolve(null) : adminNameFor(email));
+
 /**
  * Exchange a Firebase ID token for a server-verified session cookie.
  * Rejects any account that doesn't resolve to a role.
@@ -92,7 +97,7 @@ export async function createSession(
     user: {
       uid: decoded.uid,
       email: decoded.email!,
-      name: decoded.name ?? null,
+      name: (await displayName(role, decoded.email)) ?? decoded.name ?? null,
       picture: decoded.picture ?? null,
       role,
     },
@@ -122,7 +127,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
     return {
       uid: decoded.uid,
       email: decoded.email!,
-      name: decoded.name ?? null,
+      name: (await displayName(role, decoded.email)) ?? decoded.name ?? null,
       picture: decoded.picture ?? null,
       role,
     };
@@ -155,12 +160,25 @@ export async function requireAdmin(): Promise<AdminUser> {
   return user;
 }
 
-/** Guard that additionally requires the superadmin role. */
-export async function requireRole(role: "superadmin"): Promise<AdminUser> {
+/**
+ * Guard for a SERVER ACTION that only some roles may take: the admin, or
+ * null when their role can't (the caller returns MANAGEMENT_ONLY_MESSAGE).
+ * Non-admins are redirected as by requireAdmin().
+ */
+export async function adminAllowed(permission: Permission): Promise<AdminUser | null> {
   const user = await requireAdmin();
-  if (role === "superadmin" && user.role !== "superadmin") {
-    redirect(ADMIN_PATH);
-  }
+  return can(user.role, permission) ? user : null;
+}
+
+/**
+ * Guard for a PAGE only Management can open (lib/auth/roles.ts `can`):
+ * Staff are sent to the admin's Overview. Server actions don't use this —
+ * they call requireAdmin() and return MANAGEMENT_ONLY_MESSAGE, so the
+ * person sees why instead of being bounced.
+ */
+export async function requirePermission(permission: Permission): Promise<AdminUser> {
+  const user = await requireAdmin();
+  if (!can(user.role, permission)) redirect(ADMIN_PATH);
   return user;
 }
 

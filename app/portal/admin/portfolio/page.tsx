@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/auth/session";
 import { listPortfolio } from "@/lib/content/portfolio";
 import { PortfolioManager } from "@/components/admin/portfolio-manager";
 import { PageHeader, AdminSection } from "@/components/admin/page-header";
@@ -10,6 +11,7 @@ export const metadata = { title: "Portfolio" };
  * PORTFOLIO in lib/site.ts renders until it has anything in it.
  */
 export default async function AdminPortfolioPage(props: PageProps<"/portal/admin/portfolio">) {
+  await requirePermission("site.claims"); // Management only — Staff are sent to the Overview
   const { add } = await props.searchParams;
   const companies = await listPortfolio();
 

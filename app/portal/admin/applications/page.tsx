@@ -1,3 +1,5 @@
+import { requireAdmin } from "@/lib/auth/session";
+import { can } from "@/lib/auth/roles";
 import { Download } from "lucide-react";
 import { listApplications } from "@/lib/admin/queries";
 import { APPLICATION_STATUSES, type ApplicationStatus } from "@/lib/firebase/collections";
@@ -44,6 +46,7 @@ export const metadata = { title: "Applications" };
 export default async function ApplicationsPage(
   props: PageProps<"/portal/admin/applications">,
 ) {
+  const me = await requireAdmin();
   const params = await props.searchParams;
   const queue = parseApplicationQueue(params);
   const { status, sort, dir } = queue;
@@ -84,13 +87,15 @@ export default async function ApplicationsPage(
         title="Applications"
         description={`${total("initial_review")} in research · ${total("team_review")} ready for the team`}
         actions={
-          <a
-            href={`/api/admin/export/applications${status !== "all" ? `?status=${status}` : ""}`}
-            className={buttonClass("outline", "sm", "border-border bg-bone-light")}
-          >
-            <Download className="h-3.5 w-3.5" strokeWidth={1.8} />
-            Export CSV
-          </a>
+          can(me.role, "data.export") ? (
+            <a
+              href={`/api/admin/export/applications${status !== "all" ? `?status=${status}` : ""}`}
+              className={buttonClass("outline", "sm", "border-border bg-bone-light")}
+            >
+              <Download className="h-3.5 w-3.5" strokeWidth={1.8} />
+              Export CSV
+            </a>
+          ) : undefined
         }
       />
 

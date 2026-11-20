@@ -8,7 +8,7 @@ import { AlertTriangle, ArrowUpRight, CreditCard, FileText, Lock } from "lucide-
 import { Button } from "@/components/ui/button";
 import { Drawer } from "@/components/ui/drawer";
 import { FieldGroup } from "@/components/admin/field-group";
-import { HEADING, MONO } from "@/components/site/section";
+import { HEADING } from "@/components/site/section";
 import { cn } from "@/lib/utils";
 import { finishCardUpdate, payNow, setCancelAtPeriodEnd, startCardUpdate } from "@/lib/stripe/billing-actions";
 import type { BillingView } from "@/lib/stripe/billing";
@@ -22,8 +22,10 @@ import type { BillingView } from "@/lib/stripe/billing";
                      a SetupIntent — card numbers go browser → Stripe, never
                      through Geekdom's servers. Styled to the brand: Rubik,
                      square corners, Bone fields, Graphite text.
-    · Invoices       Stripe's own PDF and hosted receipt for each.
-    · Pay now        past due: retries what's owed on the card on file.
+    · Invoices       Upcoming (Stripe's preview of the next bill), then each
+                     invoice named by its month, marked Paid / Due / Void,
+                     with Stripe's PDF and receipt; Pay now sits on the
+                     Due one.
     · Cancel/resume  cancel at the end of the paid period, or undo it.
 
   Every action is a server action that resolves the member from the
@@ -64,6 +66,52 @@ const longDate = (iso: string | null) =>
 const shortDate = (iso: string) =>
   new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", month: "short", day: "numeric", year: "numeric" }).format(new Date(iso));
 
+const monthOf = (iso: string) =>
+  new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", month: "long", year: "numeric" }).format(new Date(iso));
+const dayOf = (iso: string) => new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", month: "short", day: "numeric" }).format(new Date(iso));
+
+/*
+  AN INVOICE'S STATUS — a square marker and a word, the admin's convention
+  in the brand's own colors (no green or blue here): Upcoming is Clay (on
+  its way, nothing to do), Paid is Graphite, Due is Geekdom Red — the one
+  that needs the member — and Void is hollow. Stripe sets the status;
+  nobody labels an invoice by hand.
+*/
+/** Past invoices shown before "Show earlier invoices" — anything Due always shows. */
+const RECENT = 3;
+
+type Mark = "upcoming" | "paid" | "due" | "unpaid" | "void";
+const MARKS: Record<Mark, [string, string]> = {
+  upcoming: ["bg-clay", "Upcoming"],
+  paid: ["bg-graphite", "Paid"],
+  due: ["bg-geekdom-red", "Due"],
+  unpaid: ["bg-geekdom-red", "Unpaid"],
+  void: ["border border-muted-foreground", "Void"],
+};
+
+function InvoiceRow({ title, mark, detail, amount, when, children }: { title: string; mark: Mark; detail: string; amount: string; when: string; children?: React.ReactNode }) {
+  const [dot, word] = MARKS[mark];
+  return (
+    <li className="flex items-start justify-between gap-4 border-t border-border py-4 first:border-t-0">
+      <div className="min-w-0">
+        <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span className="font-medium text-graphite">{title}</span>
+          <span className={cn("inline-flex items-center gap-1.5 whitespace-nowrap text-sm", mark === "due" || mark === "unpaid" ? "text-geekdom-red" : "text-graphite")}>
+            <span aria-hidden="true" className={cn("h-2 w-2 shrink-0", dot)} />
+            {word}
+          </span>
+        </p>
+        <p className="mt-1 text-sm text-muted-foreground">{detail}</p>
+        {children && <div className="mt-3 flex flex-wrap items-center gap-2">{children}</div>}
+      </div>
+      <div className="shrink-0 text-right">
+        <p className="tabular-nums text-graphite">{amount}</p>
+        <p className="mt-1 text-sm tabular-nums text-muted-foreground">{when}</p>
+      </div>
+    </li>
+  );
+}
+
 export function LiveBillingButton({ billing, planName }: { billing: BillingView; planName: string }) {
   const [open, setOpen] = React.useState(false);
   return (
@@ -82,8 +130,13 @@ function LiveBillingDrawer({ open, onClose, billing, planName }: { open: boolean
   const [notice, setNotice] = React.useState<{ ok: boolean; text: string } | null>(null);
   const [pending, startTransition] = React.useTransition();
   const [clientSecret, setClientSecret] = React.useState<string | null>(null);
+  const [allInvoices, setAllInvoices] = React.useState(false);
 
   const b = billing;
+  // Not an endless list: Upcoming, anything Due, and the latest RECENT; the
+  // rest (up to two years) fold behind one button.
+  const shownInvoices = allInvoices ? b.invoices : b.invoices.filter((inv, i) => i < RECENT || inv.status === "open");
+  const folded = b.invoices.length - shownInvoices.length;
   const pastDue = b.state === "past_due";
   const canceling = b.state === "canceling";
 
@@ -161,16 +214,11 @@ function LiveBillingDrawer({ open, onClose, billing, planName }: { open: boolean
                 <div>
                   <p className="font-medium text-graphite">Your last payment didn&rsquo;t go through.</p>
                   <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                    {b.open.amount} is due{b.card ? ` — ${b.card.brand} •••• ${b.card.last4} was declined` : ""}. Update your card or try it again; your access continues while you sort it out.
+                    {b.open.amount} is due{b.card ? ` — ${b.card.brand} •••• ${b.card.last4} was declined` : ""}. {b.card ? "Pay it again from the invoice below, or use a different card" : "Add a card to pay it"}; your access continues while you sort it out.
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
-                    {b.card && (
-                      <Button type="button" variant="ink" size="sm" disabled={pending} onClick={() => act(payNow)}>
-                        {pending ? "Paying…" : `Pay ${b.open.amount} with •••• ${b.card.last4}`}
-                      </Button>
-                    )}
                     <Button type="button" variant="outline" size="sm" disabled={pending} onClick={() => go("card")}>
-                      Use a different card
+                      {b.card ? "Use a different card" : "Add a card"}
                     </Button>
                   </div>
                 </div>
@@ -226,23 +274,40 @@ function LiveBillingDrawer({ open, onClose, billing, planName }: { open: boolean
             </FieldGroup>
 
             <FieldGroup title="Invoices and receipts">
-              {b.invoices.length === 0 ? (
+              {b.invoices.length === 0 && !b.upcoming ? (
                 <p className="text-sm text-muted-foreground">No invoices yet.</p>
               ) : (
                 <ul className="-mt-2 border-b border-border">
-                  {b.invoices.map((inv) => (
-                    <li key={inv.id} className="grid grid-cols-[1fr_5rem_9.5rem] items-center gap-4 border-t border-border py-3 first:border-t-0">
-                      <span>
-                        <span className="block tabular-nums text-graphite">{shortDate(inv.date)}</span>
-                        <span className={cn(MONO.micro, "text-muted-foreground")}>{inv.number}</span>
-                      </span>
-                      <span className="text-right">
-                        <span className="block tabular-nums text-graphite">{inv.amount}</span>
-                        <span className={cn(MONO.micro, inv.status === "open" ? "text-geekdom-red" : "text-muted-foreground")}>
-                          {inv.status === "paid" ? "Paid" : inv.status === "open" ? "Unpaid" : inv.status === "void" ? "Void" : "Unpaid"}
-                        </span>
-                      </span>
-                      <span className="flex justify-end gap-1">
+                  {b.upcoming && (
+                    <InvoiceRow
+                      title={b.upcoming.kind === "resumes" ? `Complimentary until ${shortDate(b.upcoming.date)}` : monthOf(b.upcoming.periodStart)}
+                      mark="upcoming"
+                      detail={
+                        b.upcoming.kind === "resumes"
+                          ? `Club membership · ${planName} · billing resumes`
+                          : `Club membership · ${planName}${b.upcoming.periodEnd ? ` · ${dayOf(b.upcoming.periodStart)} – ${dayOf(b.upcoming.periodEnd)}` : ""}`
+                      }
+                      amount={b.upcoming.amount}
+                      when={`Charged ${shortDate(b.upcoming.date)}${b.card ? ` to •••• ${b.card.last4}` : ""}`}
+                    />
+                  )}
+                  {shownInvoices.map((inv) => {
+                    const mark: Mark = inv.status === "paid" ? "paid" : inv.status === "open" ? "due" : inv.status === "void" ? "void" : "unpaid";
+                    const payHere = inv.status === "open" && b.open?.id === inv.id && b.card;
+                    return (
+                      <InvoiceRow
+                        key={inv.id}
+                        title={monthOf(inv.periodStart)}
+                        mark={mark}
+                        detail={`Club membership · ${planName}${inv.number ? ` · ${inv.number}` : ""}`}
+                        amount={inv.amount}
+                        when={mark === "paid" ? `Paid ${shortDate(inv.date)}` : mark === "void" ? "Voided" : `Issued ${shortDate(inv.date)}`}
+                      >
+                        {payHere && (
+                          <Button type="button" variant="ink" size="sm" disabled={pending} onClick={() => act(payNow)}>
+                            {pending ? "Paying…" : `Pay ${inv.amount} now`}
+                          </Button>
+                        )}
                         {inv.pdf && (
                           <a href={inv.pdf} target="_blank" rel="noreferrer noopener" className="inline-flex h-8 items-center gap-1.5 border border-border px-2 text-xs text-graphite hover:border-graphite">
                             <FileText className="h-3.5 w-3.5" strokeWidth={1.6} />
@@ -255,11 +320,23 @@ function LiveBillingDrawer({ open, onClose, billing, planName }: { open: boolean
                             <ArrowUpRight className="h-3 w-3" strokeWidth={1.6} />
                           </a>
                         )}
-                      </span>
-                    </li>
-                  ))}
+                      </InvoiceRow>
+                    );
+                  })}
                 </ul>
               )}
+              {folded > 0 ? (
+                <button type="button" onClick={() => setAllInvoices(true)} className="self-start text-sm text-graphite underline decoration-clay decoration-1 underline-offset-4">
+                  Show {folded} earlier {folded === 1 ? "invoice" : "invoices"}
+                </button>
+              ) : allInvoices && b.invoices.length > RECENT ? (
+                <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                  <button type="button" onClick={() => setAllInvoices(false)} className="text-graphite underline decoration-clay decoration-1 underline-offset-4">
+                    Show fewer
+                  </button>
+                  {b.olderInvoices && <span>Need one from before {monthOf(b.invoices[b.invoices.length - 1].periodStart)}? Email club@geekdom.com.</span>}
+                </p>
+              ) : null}
             </FieldGroup>
 
             {b.state === "active" && (

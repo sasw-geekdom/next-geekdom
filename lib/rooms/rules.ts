@@ -13,13 +13,14 @@ import { centralParts, fromCentral, TIME_ZONE } from "@/lib/content/dates";
       "one room at a time".
     · ONE WEEK AHEAD, rolling: today and the 6 days after it (it was 14).
       Rolling, not "this calendar week", so a Friday can still book Monday.
-    · WEEKDAYS ONLY, Monday to Friday (BOOKING_WINDOW.weekdays) — staff
-      aren't in on weekends; a weekend room goes through the Club team,
-      like the hours below.
-    · 8 AM – 6 PM (BOOKING_WINDOW; it was 7 AM – 9 PM): around the hours
-      staff are in, with an hour either side. The Club is open 24/7 —
-      anything outside goes through the Club team (club@), who block a
-      room at any hour from the admin.
+    · EVERY DAY, weekends included (Jesse, November 2026 — it was Monday
+      to Friday, set around staff hours). The space is open 24/7 and
+      booking is instant, so nothing about booking needs staff; the
+      system already stops double booking. BOOKING_WINDOW.weekdays is the
+      switch if a day ever comes off again.
+    · 8 AM – 6 PM, every day (BOOKING_WINDOW; it was 7 AM – 9 PM). The
+      Club is open 24/7 — anything outside the hours goes through the
+      Club team (club@), who block a room at any hour from the admin.
     · one room at a time per member (no two bookings that overlap)
     · instant: a free slot is yours when you book it, no staff approval
 
@@ -37,10 +38,11 @@ export const ROOM_RULES = {
 export const BOOKING_WINDOW = {
   opens: "08:00",
   closes: "18:00",
-  /** Day of the week, 0 = Sunday. Monday to Friday. */
-  weekdays: [1, 2, 3, 4, 5] as readonly number[],
+  /** Day of the week, 0 = Sunday. Every day. */
+  weekdays: [0, 1, 2, 3, 4, 5, 6] as readonly number[],
   label: "8 AM – 6 PM",
-  daysLabel: "Monday to Friday",
+  /** Mid-sentence ("Four rooms, every day, 8 AM – 6 PM"). */
+  daysLabel: "every day",
 } as const;
 
 const dowOf = (day: string) => {
@@ -48,7 +50,7 @@ const dowOf = (day: string) => {
   return new Date(Date.UTC(y, m - 1, d)).getUTCDay();
 };
 
-/** Can a member book on this Central day at all (a weekday)? */
+/** Can a member book on this Central day at all? (Every day, today.) */
 export const isBookableWeekday = (day: string) => BOOKING_WINDOW.weekdays.includes(dowOf(day));
 
 /** What staff can block in one go (a Geekdom event, maintenance). */
@@ -125,10 +127,10 @@ export function weekKey(iso: string): string {
   return addDays(day, -dow);
 }
 
-/** The weekdays a member can book, today through the end of the horizon. */
+/** The days a member can book, today through the end of the horizon. */
 export function bookableDays(now: Date): string[] {
   const today = centralDay(now);
-  // The horizon is calendar days; within it, only the bookable weekdays.
+  // The horizon is calendar days; within it, only the bookable ones (every day, today).
   return Array.from({ length: ROOM_RULES.daysAhead }, (_, i) => addDays(today, i)).filter(isBookableWeekday);
 }
 

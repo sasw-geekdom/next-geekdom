@@ -48,7 +48,7 @@ export const MOCK_FAQ: { group: string; items: FaqItem[] }[] = [
       },
       {
         q: "How do I book a conference room?",
-        a: "Under Book a room. Pick a day and a free time — it's yours straight away. Up to 4 hours at a time, up to a week ahead, Monday to Friday, 8 AM – 6 PM. Running long? Add time to your booking while the room is free after it. Phone booths and call rooms are first come, first served.",
+        a: "Under Book a room. Pick a day and a free time — it's yours straight away. Up to 4 hours at a time, up to a week ahead, every day, 8 AM – 6 PM. Running long? Add time to your booking while the room is free after it. Phone booths and call rooms are first come, first served.",
         confirm: false,
       },
       {

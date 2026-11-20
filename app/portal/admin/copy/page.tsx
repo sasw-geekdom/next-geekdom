@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/auth/session";
 import { readCopyEdits } from "@/lib/content/site-copy";
 import { COPY_PAGES, type CopyPageId } from "@/lib/content/site-copy-fields";
 import { SiteCopyManager } from "@/components/admin/site-copy-manager";
@@ -10,6 +11,7 @@ export const metadata = { title: "Site copy" };
   in the address (?page=), so a link can open the right one.
 */
 export default async function SiteCopyPage(props: PageProps<"/portal/admin/copy">) {
+  await requirePermission("site.claims"); // Management only — Staff are sent to the Overview
   const { page: raw } = await props.searchParams;
   const page: CopyPageId = COPY_PAGES.some((p) => p.id === raw) ? (raw as CopyPageId) : "home";
   const edits = await readCopyEdits().catch(() => ({}));

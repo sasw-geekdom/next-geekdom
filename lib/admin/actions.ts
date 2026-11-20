@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { requireAdmin } from "@/lib/auth/session";
+import { can, MANAGEMENT_ONLY_MESSAGE } from "@/lib/auth/roles";
 import {
   COLLECTIONS,
   normalizeApplicationStatus,
@@ -54,6 +55,13 @@ export interface ActionResult {
 
   `requireAdmin()` on every action: server actions are reachable by direct
   POST and never run a layout.
+
+  WHO MAY MOVE IT (lib/auth/roles.ts): research is Staff's — the write-up,
+  sending it to the team, declining an obvious no. The TEAM'S DECISION
+  (approve, decline from team review), ban and reopen are Management's
+  (`applications.decide`): they email the applicant, send a payment link
+  and make members. Checked inside the transaction, against the status it
+  actually has.
 */
 
 type Move = "advance" | "approve" | "decline" | "ban" | "reopen";
@@ -101,6 +109,8 @@ export async function moveApplication(id: string, move: Move, note?: string): Pr
       if (!rule.from.includes(current)) {
         throw new Error(`This application is ${STAGE_NAMES[current]} now — someone may have moved it. Refresh the page.`);
       }
+      const decides = move === "approve" || move === "ban" || move === "reopen" || (move === "decline" && current === "team_review");
+      if (decides && !can(admin.role, "applications.decide")) throw new Error(MANAGEMENT_ONLY_MESSAGE);
       let outcome = rule.label;
       if (move === "advance") {
         const r = a.research;

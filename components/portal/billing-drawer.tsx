@@ -267,7 +267,7 @@ function BillingDrawer({ open, onClose, mock }: { open: boolean; onClose: () => 
                     <span className="text-right">
                       <span className="block tabular-nums text-graphite">{mock.amount}</span>
                       <span className={cn(MONO.micro, inv.status === "open" ? "text-geekdom-red" : "text-muted-foreground")}>
-                        {inv.status === "open" ? "Unpaid" : "Paid"}
+                        {inv.status === "open" ? "Due" : "Paid"}
                       </span>
                     </span>
                     <span className="flex justify-end gap-1">

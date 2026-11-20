@@ -502,11 +502,12 @@ easing in or the page gliding, wanted both. They are two separate mechanisms:
 
 ## Member portal and admin
 
-**One sign-in, three roles.** `/sign-in` serves members and staff; the
+**One sign-in, four roles.** `/sign-in` serves members and staff; the
 account decides where it lands. Roles resolve on EVERY request in
-[lib/auth/session.ts](lib/auth/session.ts), never from the cookie: superadmin
-(`SUPER_ADMIN_EMAILS`), staff (`@geekdom.com`), member (an email with a
-`members` doc whose status is active, trialing or past_due). Admin wins over
+[lib/auth/session.ts](lib/auth/session.ts), never from the cookie: developer
+(`SUPER_ADMIN_EMAILS`), management (the Admin access list), staff
+(`@geekdom.com`), member (an email with a `members` doc whose status is
+active, trialing or past_due). Admin wins over
 member. **Everyone signs in without a password**: members by email link,
 staff by email link or Google (the password option came off the form).
 **Roles are only given to VERIFIED emails** (`trusted()` in session.ts) —
@@ -541,25 +542,68 @@ members use personal Gmail, and the hint hid their accounts.
 - **Admin access is managed at `/portal/admin/team`** (Settings → Admin
   access) — the scope of work's "manage administrative user access"
   (November 2026). [admin-access.ts](lib/auth/admin-access.ts):
-  `settings/adminAccess` holds `added` (anyone outside @geekdom.com given
-  staff access) and `removed` (an @geekdom.com address switched off without
-  deleting it). **`adminRoleFor()` is the ONE staff check** — the session
+  `settings/adminAccess` holds `management` (people given the Management
+  role), `added` (anyone outside @geekdom.com given staff access) and
+  `removed` (an @geekdom.com address switched off without deleting it). **`adminRoleFor()` is the ONE staff check** — the session
   on every request and the sign-in-link route both call it; don't call
   `resolveAdminRole` (the env/domain rule) alone anywhere else, or a
   removed person gets back in. Cached 30s, tag cleared on change.
-  - **Owners (the code's `superadmin` role — always "Owner" on screen,
-    never "Super admin") still come from `SUPER_ADMIN_EMAILS`** (hosting
-    settings): listed, never removable here, so nobody locks out the last
-    one. Only owners can add or remove (`requireRole("superadmin")`), nobody can
-    remove themselves, and an added person is emailed how to sign in
-    (`adminAccessEmail`). Every change is in the activity log ("Admin
-    access"). Other staff see the list read-only. If a limited role comes
-    later, the set reads Owner · Staff · Reviewer.
+  - **Three admin roles: Developer · Management · Staff** (Jesse, November
+    2026; [roles.ts](lib/auth/roles.ts)). The rule: **Staff do the daily
+    work; Management makes the calls that admit people, move money, or
+    speak for Geekdom in public; the Developer keeps the keys.**
+    - **Developer** — `SUPER_ADMIN_EMAILS` (hosting settings), Jesse. Same
+      access as Management; listed, never changeable or removable on the
+      screen, so Geekdom can't lock itself out. Replaced "Owner"
+      (`superadmin`), which read as Geekdom's own leadership.
+    - **Management** — Brooke and Leslie. Given on the screen ("Make
+      Management", or Add someone → Role), by Management or the Developer,
+      so Geekdom runs its own access without editing hosting settings.
+    - **Staff** — every verified @geekdom.com address, plus anyone added.
+  - **`can(role, permission)` is the one table.** Management-only:
+    `access.manage` (this screen), `tags.define`, `applications.decide`
+    (approve, decline AT TEAM REVIEW, ban, reopen — research, "send to the
+    team" and the obvious-no decline are Staff's), `members.money`
+    (Stripe link/start billing, complimentary tags, a member's status and
+    plan, the launch invitations), `data.export` (CSVs), `rooms.configure`
+    (the rooms themselves; booking, blocking and cancelling are Staff's),
+    `site.claims` (Site copy, Portfolio, Photo archive). Everything else —
+    requests, members' records, events, Field Notes (publishing too),
+    member resources, the payment-link resend — is every admin's.
+  - **The server is the gate**: actions call `adminAllowed(permission)`
+    and return `MANAGEMENT_ONLY_MESSAGE`; Management-only pages call
+    `requirePermission()` (Staff land on the Overview); the export route
+    403s. The sidebar (`adminNavFor`) hides Site copy, Portfolio and
+    Photo archive from Staff, and screens hide or disable the controls
+    (Staff see a member's status, plan, perk tags and billing read-only;
+    an application with the team says Management records the decision).
+    Admin access and Tags & perks stay visible to Staff, read-only, so
+    they know who to ask. A new admin write picks a permission or
+    deliberately none.
+  - **Names are set on the screen** — click the NAME (the name is the
+    control; a separate "Edit name" button squeezed the column so names
+    truncated — Jesse), `setAdminName`: email-link logins carry no name, so a staff member read
+    as "brooke@geekdom.com" in the list, history and activity log. Stored as
+    `names` in the same doc and preferred by the SESSION (no extra read — it
+    rides the cached access list), so it applies on their next page load.
+    Blank clears it (an explicit `FieldValue.delete()` — a merge write
+    leaves an omitted map key in place; tested). The access writes MERGE
+    so they never drop `names`.
+    Not a staff profile: no photo or contact details, on purpose — Slack
+    and Workspace already have them.
+  - Nobody changes or removes their OWN access, and an added person is
+    emailed how to sign in, with their role (`adminAccessEmail`). Every
+    change is in the activity log ("Admin access"). A future limited role
+    (e.g. Reviewer) is a new row in `can()`.
   - @geekdom.com staff appear in the list once they have a login (their
     first sign-in link creates it); people added here appear at once.
   - Tested: plain staff read-only; add → the person reaches the admin;
     remove → sent to sign-in; remove an @geekdom.com address → out, listed
-    under "Access removed"; give it back → in again.
+    under "Access removed"; give it back → in again. Roles (November 2026):
+    Staff's sidebar lacks the three, the four Management pages send them
+    to the Overview, export 403s; Management adds someone as Management,
+    makes them Staff, removes them; promoting a Staff user shows them Site
+    copy on their next load, demoting hides it.
 - **`/portal` is the member portal; `/portal/admin` is the admin behind the
   sidebar's labeled "Admin" switch** (a shield, and "← Member portal" inside
   the admin). It was a bare wrench; an unlabeled tool icon reads as the
@@ -678,9 +722,22 @@ members use personal Gmail, and the hint hid their accounts.
   [perks-actions.ts](lib/perks-actions.ts).
   - **Definitions** in `settings/memberTags`: name (the lowercased key members
     carry), label ("DEVSA community"), effect — label only / complimentary
-    for N months / complimentary, no end date — and a staff note. **OWNERS
-    create and change them** (`requireRole("superadmin")`); every admin can
-    read the list and APPLY tags. Logged ("Tags & perks").
+    for N months / complimentary, no end date — and a staff note.
+    **MANAGEMENT creates and changes them** (`tags.define`); every admin can
+    read the list and apply LABEL tags; perk tags are Management's
+    (`members.money`).
+  - **Tags are CREATED ONLY in Tags & perks** (Jesse, November 2026): a
+    tag exists to turn on a discount or a complimentary membership, so a
+    member's slide-out PICKS from the defined list (`TagPicker`, a
+    Combobox — no typing), and `saveMember` refuses a new tag that isn't
+    defined. A tag a member already carries from before the rule stays
+    until removed; Tags & perks lists any such as "Not set up", with a
+    count, and Management clicks one to define it under the same key.
+    Under the picker, Management gets "New tag in Tags & perks ↗" — a NEW
+    TAB (`/portal/admin/tags?new=1` opens the form), not an option inside
+    the list: leaving the page would lose the half-filled member. Coming
+    back to the tab refreshes, so the new tag is in the list and the form
+    is as they left it (tested). Logged ("Tags & perks").
   - **Applying a perk tag** in a member's slide-out (the Tags field; a
     preview says what saving will do) stamps `MemberDoc.comp` — tag, label,
     since, until (**12 months from the day applied** for DEVSA), by,
@@ -720,6 +777,18 @@ members use personal Gmail, and the hint hid their accounts.
     keep it**. The design mock (billing-drawer.tsx) stays for staff
     previews and copies without Stripe; the profile panel shows "Sample
     billing" only then.
+  - **The invoice list reads like Vercel's, in the brand**: an **Upcoming**
+    row first (Stripe's `invoices.createPreview` — date, amount, period; a
+    complimentary member's reads "Complimentary until …", from
+    `pause_collection.resumes_at`), then each invoice named by the MONTH it
+    bills for, marked **Paid** (Graphite) / **Due** (Red, with Pay now on
+    that row) / **Void** (hollow) — a square marker and a word, never a
+    tinted pill. Stripe sets the status; nobody labels an invoice by hand.
+    **Not an endless list**: Upcoming, anything Due, and the latest three
+    (`RECENT`); the rest of the newest 24 (two years) fold behind "Show N
+    earlier invoices", and anything older is a line pointing to club@.
+    Every member is on autopay (the subscription charges the card); there's
+    no pay-by-invoice or ACH.
   - **Card only, no Stripe Link** in the Payment Element (`wallets.link:
     "never"`): Link's banner, "save my information" box and "Bank · $5
     back" tab were off-brand and sign members up for a Stripe account.
@@ -948,11 +1017,14 @@ members use personal Gmail, and the hint hid their accounts.
   most per booking**, **NO WEEKLY LIMIT** (it was 4 hours a week), **one
   week ahead, rolling** (today + 6 — not "this calendar week", so a Friday
   can book Monday; it was 14 days), one room at a time per member,
-  instant (no approval), **Monday to Friday, 8 AM – 6 PM**
-  (`BOOKING_WINDOW`, enforced server-side; it was 7 AM – 9 PM — now around
-  the hours staff are in, an hour either side). For a weekend or outside
-  the hours, members email club@ (the page says so) and staff block the
-  room for them — blocks can go at any hour. Central time throughout; the
+  instant (no approval), **EVERY DAY, 8 AM – 6 PM** (`BOOKING_WINDOW`,
+  enforced server-side; it was 7 AM – 9 PM). **Weekends are bookable**
+  (Jesse, November 2026 — it was Monday to Friday, set around staff
+  hours): the space is open 24/7 and booking needs no staff. Never say
+  "Closed" about a day — the building doesn't close; a day the rules
+  ever take off reads "Not bookable". Outside the hours, members email
+  club@ (the page says so) and staff block the room for them — blocks
+  can go at any hour. Central time throughout; the
   schedule shows the window, anything outside it is in the admin's table.
 - **Members ADD TIME to their own booking** (`extendMyBooking`): "Add time"
   on each booking under Your bookings, in 30-minute steps while the room is
@@ -966,7 +1038,7 @@ members use personal Gmail, and the hint hid their accounts.
   slots that week, so their bookings can't overlap (it no longer caps
   hours). Cancelling deletes the slots. The page's free/busy is a convenience;
   `bookRoom` re-checks everything.
-- **Every admin (staff and superadmin) can book too**, as themselves, under
+- **Every admin (every role) can book too**, as themselves, under
   the same rules — `bookerFor()` in [rooms.ts](lib/rooms/rooms.ts), id
   `staff_{uid}`, no members record (which would put them in the roster,
   directory and counts). Staff who are also members book as the member.
@@ -993,19 +1065,21 @@ members use personal Gmail, and the hint hid their accounts.
   reload (tested). Polling `router.refresh()`, not a database listener:
   the page's reads are server-side and uncached, so this needs no client
   database access or security rules.
-- **The day picker is a Monday-to-Friday calendar**, one row per week:
-  one weekday header, short tiles with just the date, days before today or
-  past the week-ahead horizon faint, today marked by a Clay rule under its
-  date (the REAL today — on a weekend it isn't a tile), a Clay square on
-  days you have a room (the "time left this week" line went with the
-  weekly cap). A weekend `?day=` opens the first bookable day.
-  Earlier tries: a row of 14 tiles (ran off the column), a labeled
-  week-by-week calendar (~315px), two rows starting today (columns moved
-  every day), Sun–Sat (before weekends came off). The phone tab bar sizes
-  to its items (it was a fixed four).
+- **The day picker is the admin's 7-day strip** (Jesse, November 2026 —
+  both sides read the same): seven tiles in one row, weekday · date · one
+  line, the selected day in Graphite, today a Clay rule under its tile.
+  The member's strip is TODAY + 6 (the rolling horizon), so it has no ‹ ›
+  arrows — nothing past it can be booked. Weekends are ordinary days in
+  it (Jesse: they read "Closed" for a day, and the building doesn't
+  close). The line under a day is the member's OWN: a Clay square
+  and "Your room" (square only on a phone) — never anyone else's count.
+  A `?day=` outside the strip opens today. Earlier tries: a row of
+  14 tiles, a labeled week-by-week calendar, two rows starting today, a
+  Monday-to-Friday calendar one row per week. The phone tab bar sizes to
+  its items (it was a fixed four).
 - **The admin Rooms page is a work tool, and a calm one**: one column —
   a WEEK STRIP picks the day (Sun–Sat, a count only on days with
-  bookings, ‹ › by week, Today; weekends quieter), the date with its
+  bookings, ‹ › by week, Today), the date with its
   numbers in ONE LINE ("1 booking · 1 hr · Cranberry busiest"), the
   day's reservations as a table (ended rows faded, "In use" on what's
   happening now), then the room-by-room schedule. The rooms and the rules
@@ -1107,7 +1181,9 @@ credentials renders today's site word for word).
   title. Past events sit in a closed `<details>` in the admin. No event
   search yet: worth adding once the past list runs to dozens.
 - **Dropdowns never move the page they're in.** The Combobox opens upward
-  when there's no room below inside its scroll container, caps its height to
+  when there's no room below inside its scroll container FOR THE LIST IT
+  HAS (it measured against the 240px cap, so a one-option list near a
+  slide-out's foot flipped up for no reason), caps its height to
   the space it gets, and scrolls only its own list — `scrollIntoView` there
   used to lurch the whole slide-out 200px.
 - **The wall's order is the admin's**: staff drag cells in

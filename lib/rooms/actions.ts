@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import * as z from "zod";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
-import { requireAdmin, requireMember } from "@/lib/auth/session";
+import { adminAllowed, requireAdmin, requireMember } from "@/lib/auth/session";
+import { MANAGEMENT_ONLY_MESSAGE } from "@/lib/auth/roles";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { COLLECTIONS, type BookingDoc, type RoomDoc } from "@/lib/firebase/collections";
 import { logActivity } from "@/lib/admin/activity";
@@ -96,7 +97,7 @@ export async function bookRoom(input: z.input<typeof bookSchema>): Promise<RoomR
   if (start % SLOT_MS !== 0) return { ok: false, message: "Bookings start on the hour or the half hour." };
   if (start < currentSlotStart(now) || end <= now) return { ok: false, message: "That time has passed. Pick a later one." };
   const bookingDay = centralDay(new Date(start));
-  if (!isBookableWeekday(bookingDay)) return { ok: false, message: `Rooms can be booked ${BOOKING_WINDOW.daysLabel}. For a weekend, email ${CONTACT_EMAIL}.` };
+  if (!isBookableWeekday(bookingDay)) return { ok: false, message: `Rooms can't be booked on that day. Email ${CONTACT_EMAIL} and the Club team will set it up.` };
   const lastDay = addDays(centralDay(new Date(now)), ROOM_RULES.daysAhead - 1);
   if (start >= Date.parse(dayStartIso(addDays(lastDay, 1)))) return { ok: false, message: `Rooms can be booked up to ${ROOM_RULES.daysAhead} days ahead.` };
 
@@ -385,7 +386,8 @@ const roomSchema = z.object({
 });
 
 export async function saveRoom(input: z.input<typeof roomSchema>): Promise<RoomResult & { fieldErrors?: Record<string, string> }> {
-  const admin = await requireAdmin();
+  const admin = await adminAllowed("rooms.configure");
+  if (!admin) return { ok: false, message: MANAGEMENT_ONLY_MESSAGE };
   const parsed = roomSchema.safeParse(input);
   if (!parsed.success) {
     return { ok: false, message: "Check the highlighted fields.", fieldErrors: Object.fromEntries(parsed.error.issues.map((i) => [String(i.path[0]), i.message])) };

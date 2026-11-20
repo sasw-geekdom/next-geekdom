@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { Timestamp } from "firebase-admin/firestore";
-import { requireAdmin } from "@/lib/auth/session";
+import { adminAllowed } from "@/lib/auth/session";
+import { MANAGEMENT_ONLY_MESSAGE } from "@/lib/auth/roles";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { COLLECTIONS, type MemberDoc } from "@/lib/firebase/collections";
 import { loginStates } from "@/lib/admin/member-logins";
@@ -27,7 +28,8 @@ export interface InviteResult {
 }
 
 export async function sendInvitations(memberIds: string[]): Promise<InviteResult> {
-  const admin = await requireAdmin();
+  const admin = await adminAllowed("members.money");
+  if (!admin) return { ok: false, message: MANAGEMENT_ONLY_MESSAGE };
   if (!INVITES_LIVE) {
     return { ok: false, message: "Invitations are locked until launch — only previews can be sent. Nothing went out." };
   }
