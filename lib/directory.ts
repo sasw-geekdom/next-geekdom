@@ -55,3 +55,26 @@ export async function listDirectory(): Promise<DirectoryMember[]> {
     })
     .sort((a, b) => a.name.localeCompare(b.name));
 }
+
+/**
+ * The "Ask me about" topics in use, most common first — the directory's
+ * popular-topics row and the topic field's suggestions. Matched without
+ * case; shown in the spelling most members used.
+ */
+export function topicsInUse(members: Pick<DirectoryMember, "askMeAbout">[]): { topic: string; count: number }[] {
+  const by = new Map<string, Map<string, number>>();
+  for (const m of members) {
+    for (const t of new Set(m.askMeAbout.map((x) => x.trim()).filter(Boolean))) {
+      const key = t.toLowerCase();
+      const spellings = by.get(key) ?? new Map<string, number>();
+      spellings.set(t, (spellings.get(t) ?? 0) + 1);
+      by.set(key, spellings);
+    }
+  }
+  return [...by.values()]
+    .map((spellings) => {
+      const [topic] = [...spellings.entries()].sort((a, b) => b[1] - a[1])[0];
+      return { topic, count: [...spellings.values()].reduce((a, b) => a + b, 0) };
+    })
+    .sort((a, b) => b.count - a.count || a.topic.localeCompare(b.topic));
+}

@@ -48,7 +48,7 @@ export const MOCK_FAQ: { group: string; items: FaqItem[] }[] = [
       },
       {
         q: "How do I book a conference room?",
-        a: "Under Book a room. Pick a day and a free time — it's yours straight away. Up to 4 hours at a time, up to a week ahead, every day, 8 AM – 6 PM. Running long? Add time to your booking while the room is free after it. Phone booths and call rooms are first come, first served.",
+        a: "Under Book a room. Pick a day and a free time — it's yours straight away. Up to 4 hours at a time, up to a week ahead, every day, 8 AM – 6 PM. Running long? Add time while the room is free after it. Phone booths and call rooms are first come, first served.",
         confirm: false,
       },
       {
@@ -66,8 +66,16 @@ export const MOCK_FAQ: { group: string; items: FaqItem[] }[] = [
         a: "Profile → Manage billing. Every invoice and receipt is listed there, with a PDF of each — no need to leave the portal.",
       },
       {
+        q: "How does billing work?",
+        a: "Your membership renews monthly on the card you saved — no invoices to pay by hand. Update your card any time under Profile → Manage billing. If a payment doesn't go through, you keep access while you fix it.",
+      },
+      {
         q: "How do I change how I appear in the directory?",
-        a: "Edit your profile under Profile. The directory shows only members who choose to be listed.",
+        a: "Edit your profile under Profile. Members are listed in the directory by default — you can hide yourself there any time.",
+      },
+      {
+        q: "How do I cancel my membership?",
+        a: "Profile → Manage billing → Cancel membership. You keep full access until the end of the month you've paid for and aren't charged again — and you can change your mind any time before then.",
       },
       {
         q: "Can I pause my membership?",

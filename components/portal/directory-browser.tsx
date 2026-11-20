@@ -2,7 +2,10 @@
 
 import * as React from "react";
 import { Globe, Search, X } from "lucide-react";
-import { Input } from "@/components/ui/field";
+import { Input, Textarea } from "@/components/ui/field";
+import { Button } from "@/components/ui/button";
+import { requestIntro } from "@/lib/portal/intro-actions";
+import { INTRO_NOTE_MAX, INTRO_NOTE_MIN } from "@/lib/intro-rules";
 import { Combobox } from "@/components/ui/combobox";
 import { Drawer } from "@/components/ui/drawer";
 import { FieldGroup } from "@/components/admin/field-group";
@@ -71,12 +74,23 @@ function Portrait({ m, size }: { m: DirectoryMember; size: "row" | "pane" }) {
 export function DirectoryBrowser({
   members,
   initialId,
+  meId = null,
+  popular = [],
+  openIntro = false,
 }: {
+  /** `?intro=1` (the welcome flow's "Ask for an intro"): open the form for the preselected member. */
+  openIntro?: boolean;
   members: DirectoryMember[];
   /** Preselected from `?m=` — the dashboard's "Say hello" links land here. */
   initialId?: string;
+  /** The viewer's own member id — no intro to yourself. Null: staff without a membership (can't send). */
+  meId?: string | null;
+  /** "Ask me about" topics in use, most common first (lib/directory.ts topicsInUse). */
+  popular?: { topic: string; count: number }[];
 }) {
   const [query, setQuery] = React.useState("");
+  // A topic picked from a profile or the popular row — an exact match, not a search.
+  const [topic, setTopic] = React.useState<string | null>(null);
   const [audience, setAudience] = React.useState("all");
   const hasAudience = members.some((m) => m.audience);
   const [selectedId, setSelectedId] = React.useState<string | null>(initialId ?? null);
@@ -87,10 +101,11 @@ export function DirectoryBrowser({
     return members
       .filter((m) => {
         const hay = [m.name, m.headline, m.role, m.company ?? "", ...m.askMeAbout].join(" ").toLowerCase();
-        return (!q || hay.includes(q)) && (audience === "all" || m.audience === audience);
+        const onTopic = !topic || m.askMeAbout.some((t) => t.toLowerCase() === topic.toLowerCase());
+        return (!q || hay.includes(q)) && (audience === "all" || m.audience === audience) && onTopic;
       })
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [members, query, audience]);
+  }, [members, query, audience, topic]);
 
   const groups = React.useMemo(() => {
     const by = new Map<string, DirectoryMember[]>();
@@ -104,7 +119,15 @@ export function DirectoryBrowser({
   // The pane shows the selection while it's still in the filtered list,
   // otherwise the first person as rendered.
   const selected = filtered.find((m) => m.id === selectedId) ?? groups[0]?.[1][0] ?? null;
-  const narrowed = Boolean(query.trim()) || audience !== "all";
+  const narrowed = Boolean(query.trim()) || audience !== "all" || Boolean(topic);
+  // Shared by two or more members — a single person's topic isn't "popular".
+  const popularRow = popular.filter((t) => t.count >= 2).slice(0, 12);
+  function pickTopic(t: string) {
+    setTopic(t);
+    setQuery("");
+    setDrawerOpen(false);
+    document.getElementById("dir-search")?.scrollIntoView({ block: "nearest" });
+  }
   const letters = new Set(groups.map(([l]) => l));
 
   function choose(m: DirectoryMember) {
@@ -146,6 +169,39 @@ export function DirectoryBrowser({
         )}
       </div>
 
+      {/*
+        TOPICS: what members said they can be asked about, most common
+        first. One tap shows everyone with that topic; the chosen one reads
+        as a filter with its own ×.
+      */}
+      {(popularRow.length > 0 || topic) && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="mr-1 text-sm text-muted-foreground">{topic ? "Topic:" : "Ask about:"}</span>
+          {topic ? (
+            <button
+              type="button"
+              onClick={() => setTopic(null)}
+              aria-label={`Clear topic ${topic}`}
+              className="inline-flex items-center gap-1.5 border border-graphite bg-graphite px-2.5 py-1 text-sm text-bone"
+            >
+              {topic}
+              <X className="h-3.5 w-3.5" strokeWidth={1.8} />
+            </button>
+          ) : (
+            popularRow.map((t) => (
+              <button
+                key={t.topic}
+                type="button"
+                onClick={() => pickTopic(t.topic)}
+                className="border border-border bg-bone-light px-2.5 py-1 text-sm text-graphite transition-colors hover:border-graphite focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay"
+              >
+                {t.topic} <span className="tabular-nums text-muted-foreground">{t.count}</span>
+              </button>
+            ))
+          )}
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className={cn(MONO.label, "text-muted-foreground")}>
           {narrowed ? `${filtered.length} of ${members.length} members` : `${members.length} members`}
@@ -155,6 +211,7 @@ export function DirectoryBrowser({
               onClick={() => {
                 setQuery("");
                 setAudience("all");
+                setTopic(null);
               }}
               className={cn("ml-3 normal-case tracking-normal", LINK)}
             >
@@ -227,7 +284,7 @@ export function DirectoryBrowser({
           <div className="hidden lg:sticky lg:top-20 lg:block">
             {selected && (
               <div className="max-h-[calc(100vh-6.5rem)] overflow-y-auto border border-border bg-bone-light p-8">
-                <MemberDetail m={selected} />
+                <MemberDetail m={selected} meId={meId} onTopic={pickTopic} startIntro={openIntro && selected.id === initialId} />
               </div>
             )}
           </div>
@@ -236,13 +293,25 @@ export function DirectoryBrowser({
 
       {/* Detail: the slide-out (phones and tablets). */}
       <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} eyebrow={selected?.audience} title={selected?.name ?? "Member"}>
-        {selected && <MemberDetail m={selected} inDrawer />}
+        {selected && <MemberDetail m={selected} meId={meId} onTopic={pickTopic} startIntro={openIntro && selected.id === initialId} inDrawer />}
       </Drawer>
     </div>
   );
 }
 
-function MemberDetail({ m, inDrawer = false }: { m: DirectoryMember; inDrawer?: boolean }) {
+function MemberDetail({
+  m,
+  meId,
+  onTopic,
+  startIntro = false,
+  inDrawer = false,
+}: {
+  m: DirectoryMember;
+  meId: string | null;
+  onTopic: (t: string) => void;
+  startIntro?: boolean;
+  inDrawer?: boolean;
+}) {
   const work = [m.role, m.company].filter(Boolean).join(" · ");
   // Only what the member filled in — an empty "Ask me about" heading read as
   // a broken page. A sparse profile says so once, kindly.
@@ -263,8 +332,17 @@ function MemberDetail({ m, inDrawer = false }: { m: DirectoryMember; inDrawer?: 
       {m.askMeAbout.length > 0 && (
         <FieldGroup title="Ask me about">
           <div className="flex flex-wrap gap-1.5">
+            {/* Each topic shows everyone who can be asked about it. */}
             {m.askMeAbout.map((t) => (
-              <span key={t} className="border border-border bg-bone px-2.5 py-1 text-sm text-graphite">{t}</span>
+              <button
+                key={t}
+                type="button"
+                onClick={() => onTopic(t)}
+                title={`Everyone you can ask about ${t}`}
+                className="border border-border bg-bone px-2.5 py-1 text-sm text-graphite transition-colors hover:border-graphite focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay"
+              >
+                {t}
+              </button>
             ))}
           </div>
         </FieldGroup>
@@ -317,9 +395,84 @@ function MemberDetail({ m, inDrawer = false }: { m: DirectoryMember; inDrawer?: 
           )}
         </div>
       )}
-      <p className="text-sm leading-relaxed text-muted-foreground">
-        Want an introduction? Say hello on the floor, or message them in the member Slack.
-      </p>
+      {m.id !== meId && <IntroBox key={m.id} m={m} canSend={meId !== null} startOpen={startIntro} />}
     </div>
+  );
+}
+
+/*
+  ASK FOR AN INTRO (lib/portal/intro-actions.ts). Geekdom emails them your
+  note with Reply-To set to you, so their reply comes straight to your
+  inbox and their address stays private until they answer. Folded to one
+  button until asked for; keyed by member, so switching people resets it.
+*/
+function IntroBox({ m, canSend, startOpen = false }: { m: DirectoryMember; canSend: boolean; startOpen?: boolean }) {
+  const first = m.name.split(" ")[0];
+  const [open, setOpen] = React.useState(startOpen);
+  const [note, setNote] = React.useState("");
+  const [result, setResult] = React.useState<{ ok: boolean; message: string } | null>(null);
+  const [pending, startTransition] = React.useTransition();
+
+  if (!canSend) {
+    return <p className="text-sm text-muted-foreground">Members can ask {first} for an intro from here. (You&rsquo;re previewing as staff.)</p>;
+  }
+  if (result?.ok) {
+    return (
+      <p role="status" className="border-l-2 border-clay bg-bone px-4 py-3 text-sm text-graphite">
+        {result.message}
+      </p>
+    );
+  }
+  if (!open) {
+    return (
+      <div className="flex flex-col items-start gap-2 border-t border-border pt-5">
+        <Button type="button" variant="ink" onClick={() => setOpen(true)}>
+          Ask {first} for an intro
+        </Button>
+        <p className="text-sm text-muted-foreground">We&rsquo;ll email {first} your note. Their reply comes straight to you.</p>
+      </div>
+    );
+  }
+  const short = note.trim().length < INTRO_NOTE_MIN;
+  return (
+    <form
+      className="flex flex-col gap-3 border-t border-border pt-5"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (short) return setResult({ ok: false, message: "Say a little about why you'd like to meet — a sentence or two." });
+        startTransition(async () => setResult(await requestIntro(m.id, note)));
+      }}
+    >
+      <label htmlFor={`intro-${m.id}`} className="text-sm font-medium text-graphite">
+        Why would you like to meet {first}?
+      </label>
+      <Textarea
+        id={`intro-${m.id}`}
+        value={note}
+        maxLength={INTRO_NOTE_MAX}
+        onChange={(e) => {
+          setNote(e.target.value);
+          // An old "too short" shouldn't sit under a note that's now fine.
+          if (result && !result.ok) setResult(null);
+        }}
+        placeholder={`A sentence or two — what you're working on, and what you'd like to ask ${first}.`}
+        className="min-h-24"
+        autoFocus
+      />
+      {result && !result.ok && (
+        <p role="alert" className="text-sm text-geekdom-red">
+          {result.message}
+        </p>
+      )}
+      <div className="flex items-center gap-3">
+        <Button type="submit" variant="ink" disabled={pending}>
+          {pending ? "Sending…" : "Send"}
+        </Button>
+        <button type="button" onClick={() => setOpen(false)} className="text-sm text-muted-foreground underline underline-offset-2">
+          Cancel
+        </button>
+      </div>
+      <p className="text-[13px] text-muted-foreground">Your email goes to {first} as the reply address. Theirs stays private until they answer.</p>
+    </form>
   );
 }

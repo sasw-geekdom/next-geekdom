@@ -32,6 +32,10 @@ export const COLLECTIONS = {
   roomWeeks: "roomWeeks",
   // Stripe events already handled — so a redelivered event never emails twice (app/api/stripe/webhook).
   stripeEvents: "stripeEvents",
+  /** Directory intros sent (who to whom, when — never the note) — see lib/portal/intro-actions.ts. */
+  intros: "intros",
+  /** The intro limits: `${memberId}_${day}` (5 a day) and `pair_${from}_${to}` (once a week). */
+  introLimits: "introLimits",
 } as const;
 
 /**

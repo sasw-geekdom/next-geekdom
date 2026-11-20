@@ -285,6 +285,29 @@ export function teammateBackEmail(v: { name: string; team: string }): Email {
   );
 }
 
+/*
+  A DIRECTORY INTRO (lib/portal/intro-actions.ts): one member asks to meet
+  another. Sent BY GEEKDOM with Reply-To set to the asker, so the
+  recipient's address stays private until they choose to reply — and
+  replying is all it takes.
+*/
+export function introRequestEmail(v: { toName: string; fromName: string; fromHeadline: string; fromTopics: string[]; note: string; profileUrl: string }): Email {
+  const asker = escapeHtml(v.fromName);
+  return email(
+    `${v.fromName} would like to meet you`,
+    `A Geekdom member asked for an intro. Reply to answer them directly.`,
+    eyebrow("Geekdom Club · Intro") +
+      h1(`${first(v.toName)}, ${asker} would like to meet you.`) +
+      (v.fromHeadline ? p(`<strong style="font-weight:500;">${asker}</strong> — ${escapeHtml(v.fromHeadline)}`) : "") +
+      (v.fromTopics.length ? details([["Ask them about", escapeHtml(v.fromTopics.join(", "))]]) : "") +
+      p(`&ldquo;${escapeHtml(v.note).replace(/\n/g, "<br>")}&rdquo;`) +
+      p(`<strong style="font-weight:500;">Reply to this email to answer ${first(v.fromName)}</strong> — it goes straight to them. Your email address stays private until you do.`) +
+      button(v.profileUrl, `See ${first(v.fromName)}'s profile`) +
+      muted("Not a fit right now? No reply needed. You can hide from the directory any time at Profile → Edit."),
+    `${v.fromName} would like to meet you.\n\n"${v.note}"\n\nReply to this email to answer them — it goes straight to them. Their profile: ${v.profileUrl}`,
+  );
+}
+
 /** Sent to BOTH the old and new address when the sign-in email changes. */
 export function emailChangedEmail(v: { name: string; oldEmail: string; newEmail: string }): Email {
   return email(
@@ -505,6 +528,7 @@ export function samples(): { key: string; mail: Email }[] {
     { key: "cancellation-confirmed", mail: cancellationConfirmedEmail({ name, endDate: "November 22, 2026" }) },
     { key: "membership-ended", mail: membershipEndedEmail({ name }) },
     { key: "membership-paused", mail: membershipPausedEmail({ name }) },
+    { key: "intro-request", mail: introRequestEmail({ toName: name, fromName: "Dana Ruiz", fromHeadline: "Building scheduling tools for clinics", fromTopics: ["fundraising", "B2B sales"], note: "I saw you've sold into hospital systems — I'm about to start that process and would love 20 minutes of your time.", profileUrl: url("/portal/directory") }) },
     { key: "teammate-ending", mail: teammateEndingEmail({ name, team: "Acme Co.", endDate: "December 19, 2026" }) },
     { key: "teammate-continues", mail: teammateContinuesEmail({ name, team: "Acme Co." }) },
     { key: "teammate-ended", mail: teammateEndedEmail({ name, team: "Acme Co." }) },

@@ -8,8 +8,12 @@ import { Field, Input, Textarea } from "@/components/ui/field";
 import { HEADING, LINK_ARROW, MONO, ARROW } from "@/components/site/section";
 import { cn } from "@/lib/utils";
 import { PhotoField } from "@/components/portal/photo-field";
+import { TopicInput } from "@/components/portal/topic-input";
+import { HeadlineField } from "@/components/portal/headline-field";
+import { Switch } from "@/components/ui/switch";
 import { CardSetup } from "@/components/portal/billing-live";
 import { saveMyProfile, type ProfileInput } from "@/lib/portal/profile-actions";
+import { peopleToMeet, type PersonToMeet } from "@/lib/portal/people-actions";
 import { finishWelcome } from "@/lib/portal/onboarding-actions";
 
 /*
@@ -44,6 +48,10 @@ interface Props {
     profile: Omit<ProfileInput, "name">;
   };
   membership: MembershipCase;
+  /** "Ask me about" topics other members use — offered as suggestions. */
+  topicSuggestions?: string[];
+  /** Some fields came from their application (lib/application-prefill.ts) — say so. */
+  prefilled?: boolean;
 }
 
 const STEPS = ["Your profile", "Your membership", "You're in"];
@@ -57,7 +65,7 @@ const PREVIEW_CASES: { label: string; m: MembershipCase }[] = [
   { label: "Teammate", m: { kind: "team", owner: "Ana Planner", company: "QA Clinic Group" } },
 ];
 
-export function WelcomeFlow({ member, membership, preview = false }: Props) {
+export function WelcomeFlow({ member, membership, preview = false, topicSuggestions = [], prefilled = false }: Props) {
   const router = useRouter();
   const [step, setStep] = React.useState(0);
   const [leaving, setLeaving] = React.useState(false);
@@ -92,7 +100,7 @@ export function WelcomeFlow({ member, membership, preview = false }: Props) {
         </ol>
       </div>
 
-      {step === 0 && <ProfileStep member={member} preview={preview} onNext={() => setStep(1)} />}
+      {step === 0 && <ProfileStep member={member} preview={preview} topicSuggestions={topicSuggestions} prefilled={prefilled} onNext={() => setStep(1)} />}
       {step === 1 && (
         <MembershipStep membership={membership} plan={member.plan} preview={preview} onNext={() => setStep(2)} onBack={() => setStep(0)} />
       )}
@@ -102,6 +110,7 @@ export function WelcomeFlow({ member, membership, preview = false }: Props) {
           <p className="mt-2 max-w-xl leading-relaxed text-muted-foreground">
             The Club is the people on the third floor. Here&rsquo;s where to start finding them.
           </p>
+          <PeopleToMeet go={(href) => done(href)} leaving={leaving} />
           <ul className="mt-6 flex flex-col gap-3">
             {[
               { href: "/portal/directory", label: "See who's in the directory" },
@@ -125,7 +134,19 @@ export function WelcomeFlow({ member, membership, preview = false }: Props) {
   );
 }
 
-function ProfileStep({ member, preview, onNext }: { member: Props["member"]; preview: boolean; onNext: () => void }) {
+function ProfileStep({
+  member,
+  preview,
+  topicSuggestions,
+  prefilled,
+  onNext,
+}: {
+  member: Props["member"];
+  preview: boolean;
+  topicSuggestions: string[];
+  prefilled: boolean;
+  onNext: () => void;
+}) {
   const [p, setP] = React.useState(member.profile);
   const [photo, setPhoto] = React.useState<string | null>(member.photo);
   const [errors, setErrors] = React.useState<Record<string, string>>({});
@@ -141,6 +162,8 @@ function ProfileStep({ member, preview, onNext }: { member: Props["member"]; pre
     if (!photo) missing.photo = "Add a photo — it's how members recognize you on the floor.";
     if (!p.headline.trim()) missing.headline = "Add a headline.";
     if (p.bio.trim().length < 20) missing.bio = "Add a few sentences about you.";
+    // The directory's reason to exist: who to ask about what.
+    if (!p.askMeAbout.length) missing.askMeAbout = "Add at least one thing members can ask you about.";
     setErrors(missing);
     if (Object.keys(missing).length) return;
     if (preview) return onNext(); // the staff preview saves nothing
@@ -156,9 +179,14 @@ function ProfileStep({ member, preview, onNext }: { member: Props["member"]; pre
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
         <div>
           <h2 className={cn(HEADING.subhead, "text-graphite")}>How members will see you.</h2>
-          <p className="mt-1.5 max-w-2xl leading-relaxed text-muted-foreground">
-            The directory is how members find the person who knows the thing. A photo, a line about what you&rsquo;re building, and where to find your work.
-          </p>
+          {/* ONE line either way, so the step still fits a laptop screen (1440×780). */}
+          {prefilled ? (
+            <p className="mt-1.5 max-w-2xl border-l-2 border-clay pl-3 leading-relaxed text-graphite">
+              We started this from your application. Change anything — it&rsquo;s how other members will see you.
+            </p>
+          ) : (
+            <p className="mt-1.5 max-w-2xl leading-relaxed text-muted-foreground">The directory is how members find the person who knows the thing.</p>
+          )}
         </div>
         <p className="text-sm text-muted-foreground">
           <span className="text-geekdom-red">*</span> Required
@@ -166,8 +194,8 @@ function ProfileStep({ member, preview, onNext }: { member: Props["member"]; pre
       </div>
 
       {/* Two columns from lg up — the whole step fits a laptop screen. */}
-      <div className="mt-6 grid gap-6 lg:grid-cols-2 lg:gap-10">
-        <div className="flex flex-col gap-5">
+      <div className="mt-5 grid gap-6 lg:grid-cols-2 lg:gap-10">
+        <div className="flex flex-col gap-4">
           <div>
             <p className="mb-2 text-sm font-medium text-graphite">
               Photo <span className="text-geekdom-red">*</span>
@@ -179,8 +207,8 @@ function ProfileStep({ member, preview, onNext }: { member: Props["member"]; pre
               </p>
             )}
           </div>
-          <Field label="Headline" htmlFor="w-headline" hint="One line on what you're building or what you do." error={errors.headline} required>
-            <Input id="w-headline" value={p.headline} maxLength={160} onChange={(e) => set("headline")(e.target.value)} placeholder="Building scheduling tools for clinics" />
+          <Field label="Headline" htmlFor="w-headline" error={errors.headline} required>
+            <HeadlineField id="w-headline" value={p.headline} onChange={set("headline")} placeholder="What you're building or what you do — e.g. Building scheduling tools for clinics" invalid={Boolean(errors.headline)} />
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Website" htmlFor="w-site">
@@ -193,11 +221,23 @@ function ProfileStep({ member, preview, onNext }: { member: Props["member"]; pre
         </div>
         <div className="flex flex-col gap-5">
           <Field label="About you" htmlFor="w-bio" hint="A few sentences — what you're working on, what you'd like help with." error={errors.bio} required>
-            <Textarea id="w-bio" rows={7} value={p.bio} maxLength={2000} onChange={(e) => set("bio")(e.target.value)} />
+            <Textarea id="w-bio" rows={4} value={p.bio} maxLength={2000} onChange={(e) => set("bio")(e.target.value)} />
           </Field>
-          <p className="text-sm text-muted-foreground">
-            {p.listed ? "You'll be listed in the member directory. You can hide yourself any time from your profile." : "You're hidden from the member directory."}
-          </p>
+          <Field
+            label="Ask me about"
+            htmlFor="w-topics"
+            hint="Topics you're happy to be asked about — fundraising, B2B sales, Rails."
+            error={errors.askMeAbout}
+            required
+          >
+            <TopicInput
+              id="w-topics"
+              value={p.askMeAbout}
+              onChange={(v) => setP((x) => ({ ...x, askMeAbout: v }))}
+              suggestions={topicSuggestions}
+              invalid={Boolean(errors.askMeAbout)}
+            />
+          </Field>
         </div>
       </div>
 
@@ -206,10 +246,34 @@ function ProfileStep({ member, preview, onNext }: { member: Props["member"]; pre
           {error}
         </p>
       )}
-      <div className="mt-6 border-t border-border pt-5">
+      <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-border pt-4">
         <Button type="submit" variant="ink" disabled={pending}>
           {pending ? "Saving…" : "Save and continue"}
         </Button>
+        {/* The directory choice, right here — beside the button, so the step still fits a laptop screen. */}
+        <Switch checked={p.listed} onChange={(v) => setP((x) => ({ ...x, listed: v }))} label="List me in the member directory" />
+        {/*
+          HOW YOU'LL APPEAR — the directory's own row, live as they type (the
+          step is "How members will see you", so show it). In this row, beside
+          the switch it previews: in a column it pushed Save off a laptop screen.
+        */}
+        <div
+          aria-label={p.listed ? "How you'll appear in the directory" : "Hidden from the directory"}
+          className={cn("flex min-w-0 items-center gap-2.5 border border-border bg-bone px-2.5 py-1.5 lg:ml-auto lg:max-w-sm", !p.listed && "opacity-50")}
+        >
+          {photo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={photo} alt="" width={32} height={32} className="h-8 w-8 shrink-0 object-cover" />
+          ) : (
+            <span aria-hidden="true" className={cn(MONO.micro, "flex h-8 w-8 shrink-0 items-center justify-center bg-graphite text-bone")}>
+              {member.name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase()}
+            </span>
+          )}
+          <span className="min-w-0 leading-tight">
+            <span className="block truncate text-sm font-medium text-graphite">{member.name}</span>
+            <span className="block truncate text-xs text-muted-foreground">{p.listed ? p.headline || "Your headline" : "Hidden from the directory"}</span>
+          </span>
+        </div>
       </div>
     </form>
   );
@@ -246,6 +310,7 @@ function MembershipStep({
         );
       case "paying":
         return (
+          <div className="flex flex-col gap-4">
           <dl className="grid grid-cols-[8rem_minmax(0,1fr)] gap-x-4 gap-y-2 text-sm">
             <dt className="text-muted-foreground">Plan</dt>
             <dd className="text-graphite">Club · {plan} · {m.price}</dd>
@@ -262,11 +327,37 @@ function MembershipStep({
               </>
             )}
           </dl>
+          {/* What happens next — autopay, and where the receipts live. */}
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            Renews monthly{m.card ? ` on ${m.card}` : ""} — nothing to pay by hand. Receipts and your card are in Profile → Manage billing.
+          </p>
+          </div>
         );
       case "card":
+        // A different card: Stripe's form, same as Manage billing (it becomes the card on file).
+        if (adding && !saved) {
+          return preview ? (
+            <p className="border border-dashed border-border px-4 py-6 text-sm text-muted-foreground">
+              Members change their card here with Stripe&rsquo;s secure card form. (Off in the preview.)
+            </p>
+          ) : (
+            <CardSetup onSaved={(msg) => setSaved(msg)} />
+          );
+        }
         return (
           <div className="flex flex-col gap-3 leading-relaxed text-graphite">
-            <p>We found your card on file from Geekdom: <span className="tabular-nums">{m.card}</span>.</p>
+            <p>
+              We found your card on file from Geekdom: <span className="tabular-nums">{m.card}</span>.
+              {!saved && (
+                <>
+                  {" "}
+                  <button type="button" onClick={() => setAdding(true)} className="text-graphite underline decoration-clay decoration-1 underline-offset-2">
+                    Use a different card
+                  </button>
+                </>
+              )}
+            </p>
+            {saved && <p className="text-sm text-graphite">{saved}</p>}
             {m.other.length > 0 ? (
               <p className="text-muted-foreground">
                 You&rsquo;re paying for {m.other.join(", ")} through Geekdom&rsquo;s old system today. The Club team will move that over to your Club membership, timed so you&rsquo;re only ever charged once. Nothing for you to do.
@@ -278,7 +369,9 @@ function MembershipStep({
         );
       case "none":
         return saved ? (
-          <p className="leading-relaxed text-graphite">{saved} The Club team will start your Club billing and let you know first.</p>
+          <p className="leading-relaxed text-graphite">
+            {saved} Nothing is charged today — the Club team confirms your start date by email first.
+          </p>
         ) : adding && preview ? (
           <p className="border border-dashed border-border px-4 py-6 text-sm text-muted-foreground">
             Members add their card here with Stripe&rsquo;s secure card form — the same one as Manage billing. (Off in the preview.)
@@ -287,8 +380,11 @@ function MembershipStep({
           <CardSetup onSaved={(msg) => setSaved(msg)} />
         ) : (
           <div className="flex flex-col gap-3">
-            <p className="leading-relaxed text-graphite">
-              Add the card for your Club membership{m.price ? ` (${m.price})` : ""} to finish setting up. Saving it doesn&rsquo;t charge anything — the Club team starts your billing and lets you know first.
+            {/* Specific about money: when, how much, and that they'll hear first. */}
+            <p className="leading-relaxed text-graphite">Add the card for your Club membership to finish setting up.</p>
+            <p className="leading-relaxed text-muted-foreground">
+              Nothing is charged today. Your {m.price ? `${m.price} ` : ""}membership starts when the Club team confirms the date — you&rsquo;ll get an email
+              first.
             </p>
             {m.stripe ? (
               <Button type="button" variant="outline" className="self-start" onClick={() => setAdding(true)}>
@@ -348,5 +444,58 @@ function MembershipStep({
         {preview && m.kind === "none" && <span className="text-sm text-muted-foreground">Members can&rsquo;t continue until they save a card.</span>}
       </div>
     </section>
+  );
+}
+
+/*
+  PEOPLE TO MEET (lib/portal/people-actions.ts) — three members who share
+  the topics they just wrote, each one tap from an intro: the first minute
+  in the portal ends in a real introduction, which is what the Club
+  promises. Launch day, before anyone shares a topic: the newest members.
+  "Ask for an intro" finishes the welcome and opens their profile in the
+  directory with the intro form open.
+*/
+function PeopleToMeet({ go, leaving }: { go: (href: string) => void; leaving: boolean }) {
+  const [data, setData] = React.useState<{ basis: "topics" | "newest"; people: PersonToMeet[] } | null>(null);
+  React.useEffect(() => {
+    let live = true;
+    peopleToMeet()
+      .then((d) => live && setData(d))
+      .catch(() => live && setData({ basis: "newest", people: [] }));
+    return () => {
+      live = false;
+    };
+  }, []);
+  if (!data) return <p className="mt-6 text-sm text-muted-foreground">Finding people you might want to meet…</p>;
+  if (!data.people.length) return null;
+  return (
+    <div className="mt-6">
+      <p className="text-sm font-medium text-graphite">{data.basis === "topics" ? "People to meet — you know some of the same things" : "New to the Club, like you"}</p>
+      <ul className="mt-3 grid gap-3 md:grid-cols-3">
+        {data.people.map((p) => (
+          <li key={p.id} className="flex flex-col gap-3 border border-border bg-bone p-4">
+            <div className="flex items-center gap-3">
+              {p.avatar ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={p.avatar} alt="" width={40} height={40} className="h-10 w-10 shrink-0 object-cover" />
+              ) : (
+                <span aria-hidden="true" className={cn(MONO.label, "flex h-10 w-10 shrink-0 items-center justify-center bg-graphite text-bone")}>
+                  {p.name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase()}
+                </span>
+              )}
+              <span className="min-w-0">
+                <span className="block truncate font-medium text-graphite">{p.name}</span>
+                {p.headline && <span className="line-clamp-2 text-sm text-muted-foreground">{p.headline}</span>}
+              </span>
+            </div>
+            {p.shared.length > 0 && <p className="text-[13px] text-muted-foreground">You both know {p.shared.join(", ")}</p>}
+            <button type="button" disabled={leaving} onClick={() => go(`/portal/directory?m=${p.id}&intro=1`)} className={cn("mt-auto self-start text-left text-sm", LINK_ARROW)}>
+              Ask {p.name.split(" ")[0]} for an intro
+              <ArrowRight aria-hidden="true" className={ARROW.internal} />
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

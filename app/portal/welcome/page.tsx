@@ -11,6 +11,9 @@ import { compDate, compRunning } from "@/lib/perks";
 import { planOf, type Audience } from "@/lib/membership";
 import { PortalPage } from "@/components/portal/portal-page";
 import { WelcomeFlow, type MembershipCase } from "@/components/portal/welcome-flow";
+import { listDirectory, topicsInUse } from "@/lib/directory";
+import { prefillFromApplication } from "@/lib/application-prefill";
+import { withStarters } from "@/lib/topics";
 
 export const metadata = { title: "Welcome" };
 
@@ -49,6 +52,7 @@ export default async function WelcomePage() {
       >
         <WelcomeFlow
           preview
+          topicSuggestions={(await suggestedTopics())}
           member={{ name: user.name ?? "Geekdom team", photo: null, plan: "Solo", profile: { headline: "", role: "", company: "", audience: "", askMeAbout: [], lookingFor: "", bio: "", website: "", linkedin: "", listed: true } }}
           membership={{ kind: "complimentary", label: "DEVSA community", until: compDate(new Date(new Date().getTime() + 365 * 86_400_000).toISOString()) }}
         />
@@ -89,6 +93,16 @@ export default async function WelcomePage() {
   }
 
   const p = member.profile;
+  // A draft from their application for anything still empty (lib/application-prefill.ts).
+  const current = {
+    headline: p?.headline ?? "",
+    bio: p?.bio ?? "",
+    website: p?.website ?? "",
+    linkedin: p?.linkedin ?? "",
+    company: p?.company || member.company || "",
+  };
+  const prefill = await prefillFromApplication(member, current);
+  const start = prefill?.fields ?? current;
   return (
     <PortalPage compact eyebrow="Welcome" title={`Welcome to Geekdom, ${member.name.split(" ")[0]}.`}>
       <WelcomeFlow
@@ -97,20 +111,28 @@ export default async function WelcomePage() {
           photo: member.photo,
           plan: plan.name,
           profile: {
-            headline: p?.headline ?? "",
+            headline: start.headline,
             role: p?.role ?? "",
-            company: p?.company || member.company || "",
+            company: start.company,
             audience: (p?.audience ?? "") as Audience | "",
             askMeAbout: p?.askMeAbout ?? [],
             lookingFor: p?.lookingFor ?? "",
-            bio: p?.bio ?? "",
-            website: p?.website ?? "",
-            linkedin: p?.linkedin ?? "",
+            bio: start.bio,
+            website: start.website,
+            linkedin: start.linkedin,
             listed: p?.listed !== false,
           },
         }}
         membership={membership}
+        topicSuggestions={await suggestedTopics()}
+        prefilled={Boolean(prefill)}
       />
     </PortalPage>
   );
+}
+
+/** The topics members already use, for the "Ask me about" suggestions — never fails the page. */
+async function suggestedTopics(): Promise<string[]> {
+  const members = await listDirectory().catch(() => []);
+  return withStarters(topicsInUse(members).map((t) => t.topic));
 }

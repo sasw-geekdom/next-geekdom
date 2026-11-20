@@ -1,10 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Textarea } from "@/components/ui/field";
 import { Combobox } from "@/components/ui/combobox";
+import { TopicInput } from "@/components/portal/topic-input";
+import { HeadlineField } from "@/components/portal/headline-field";
 import { Switch } from "@/components/ui/switch";
 import { FieldGroup } from "@/components/admin/field-group";
 import { MONO } from "@/components/site/section";
@@ -46,8 +47,11 @@ export function ProfileEditor({
   initial,
   formId,
   onSave,
+  topicSuggestions = [],
 }: {
   initial: ProfileDraft;
+  /** "Ask me about" topics other members use. */
+  topicSuggestions?: string[];
   /** Set when the form lives in a drawer whose footer holds the Save button. */
   formId?: string;
   onSave?: (draft: ProfileDraft) => void;
@@ -55,15 +59,9 @@ export function ProfileEditor({
   const inDrawer = Boolean(formId);
   const [d, setD] = React.useState(initial);
   const [saved, setSaved] = React.useState(false);
-  const [tag, setTag] = React.useState("");
   const set = <K extends keyof ProfileDraft>(k: K) => (v: ProfileDraft[K]) => {
     setSaved(false);
     setD((x) => ({ ...x, [k]: v }));
-  };
-  const addTag = () => {
-    const t = tag.trim();
-    if (t && !d.askMeAbout.includes(t) && d.askMeAbout.length < 6) set("askMeAbout")([...d.askMeAbout, t]);
-    setTag("");
   };
 
   return (
@@ -88,7 +86,7 @@ export function ProfileEditor({
             <Input id="p-name" value={d.name} onChange={(e) => set("name")(e.target.value)} data-autofocus />
           </Field>
           <Field label="Headline" htmlFor="p-headline" hint="One line, in your words: what you're building or doing.">
-            <Input id="p-headline" value={d.headline} maxLength={120} onChange={(e) => set("headline")(e.target.value)} />
+            <HeadlineField id="p-headline" value={d.headline} onChange={set("headline")} />
           </Field>
           <div className="grid gap-5 sm:grid-cols-2">
             <Field label="Role" htmlFor="p-role">
@@ -113,36 +111,9 @@ export function ProfileEditor({
         </FieldGroup>
 
         <FieldGroup title="How you can help, and what you need">
-          <div>
-            <label htmlFor="p-ask" className="mb-2 block text-sm font-medium text-graphite">
-              Ask me about
-            </label>
-            <div className="flex min-h-11 flex-wrap items-center gap-1.5 border border-border bg-bone-light px-2 py-1.5 focus-within:ring-2 focus-within:ring-clay focus-within:ring-offset-1">
-              {d.askMeAbout.map((t) => (
-                <span key={t} className="inline-flex items-center gap-1 border border-border bg-bone px-2 py-0.5 text-sm text-graphite">
-                  {t}
-                  <button type="button" aria-label={`Remove ${t}`} onClick={() => set("askMeAbout")(d.askMeAbout.filter((x) => x !== t))} className="text-muted-foreground hover:text-graphite">
-                    <X className="h-3 w-3" strokeWidth={2} />
-                  </button>
-                </span>
-              ))}
-              <input
-                id="p-ask"
-                value={tag}
-                onChange={(e) => setTag(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === ",") {
-                    e.preventDefault();
-                    addTag();
-                  }
-                }}
-                onBlur={addTag}
-                placeholder={d.askMeAbout.length ? "" : "Type a topic and press Enter"}
-                className="min-w-40 flex-1 bg-transparent px-1 py-1 text-base text-graphite outline-none placeholder:text-muted-foreground"
-              />
-            </div>
-            <p className="mt-2 text-xs text-muted-foreground">Up to six. What you&rsquo;re happy to be asked about over coffee.</p>
-          </div>
+          <Field label="Ask me about" htmlFor="p-ask" hint="Up to six. What you're happy to be asked about over coffee — it's how members find you.">
+            <TopicInput id="p-ask" value={d.askMeAbout} onChange={set("askMeAbout")} suggestions={topicSuggestions} />
+          </Field>
           <Field label="Looking for" htmlFor="p-looking" hint="What would help you most right now? A hire, a customer, an intro. Optional.">
             <Input id="p-looking" value={d.lookingFor} onChange={(e) => set("lookingFor")(e.target.value)} />
           </Field>

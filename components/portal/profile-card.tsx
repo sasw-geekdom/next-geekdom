@@ -28,8 +28,11 @@ function initials(name: string) {
 export function ProfileCard({
   initial,
   save,
+  topicSuggestions = [],
 }: {
   initial: ProfileDraft;
+  /** "Ask me about" topics other members use — the editor's suggestions. */
+  topicSuggestions?: string[];
   /** Stores the profile (a member's own). Absent = a design preview (staff). */
   save?: (d: ProfileDraft) => Promise<{ ok: boolean; message: string }>;
 }) {
@@ -167,6 +170,7 @@ export function ProfileCard({
           key={editorKey}
           initial={profile}
           formId="profile-form"
+          topicSuggestions={topicSuggestions}
           onSave={async (d) => {
             setProfile(d);
             setSaved(true);

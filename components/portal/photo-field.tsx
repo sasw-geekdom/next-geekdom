@@ -117,7 +117,7 @@ export function PhotoField({
             </button>
           )}
         </div>
-        <p className="text-sm text-muted-foreground">A clear photo of your face helps members recognize you on the floor.</p>
+        <p className="text-sm text-muted-foreground">A clear photo of your face, so members know you on the floor.</p>
         {message && (
           <p role={message.ok ? "status" : "alert"} className={cn("text-sm", message.ok ? "text-graphite" : "text-geekdom-red")}>
             {message.text}

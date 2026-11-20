@@ -836,6 +836,59 @@ members use personal Gmail, and the hint hid their accounts.
   the member filled in (an empty "Ask me about" heading read as broken),
   with one quiet line for a sparse profile. The audience filter appears only once a member
   has set one, and lists only audiences in use (none imported had one).
+- **"Ask me about" is the directory's spine, so it's REQUIRED in the
+  welcome flow** (≥1 topic; Jesse, November 2026 — all 57 imported
+  profiles had none). One field, [topic-input.tsx](components/portal/topic-input.tsx),
+  in the welcome flow and Profile → Edit, offering the topics members
+  already use ("Members use: + fundraising") so spellings converge
+  (`topicsInUse` in lib/directory.ts, case-insensitive, shown in the most
+  common spelling). In the directory a profile's topics are buttons that
+  show everyone with that topic, and an "Ask about:" row lists topics
+  two or more members share.
+- **The welcome flow STARTS FROM THEIR APPLICATION** (Jesse, November
+  2026; [application-prefill.ts](lib/application-prefill.ts)) — the
+  import's mapping: "In one sentence" → Headline (160, cut at a word),
+  "What are you building?" → About, "LinkedIn or personal site" →
+  LinkedIn or Website, Company → Company. EMPTY FIELDS ONLY (what they
+  wrote wins), nothing saved until "Save and continue", and the step
+  says "We started this from your application." The application is
+  found by `applicationId`, else their newest approved one by email, and
+  never changes — it's staff's record; the profile is the member's.
+  Step 1 still fits 1440×780 with the note (the "You'll be listed" line
+  sits beside the Save button to make room).
+- **The welcome flow, improved** (Jesse, November 2026):
+  - **Starter topics** ([lib/topics.ts](lib/topics.ts), `STARTER_TOPICS`):
+    suggestions are the topics members use, most common first, then the
+    starters nobody's used yet — on launch day nobody has any, and the
+    spellings would drift. Geekdom may edit the list.
+  - **The headline is a two-line box** ([headline-field.tsx](components/portal/headline-field.tsx))
+    with a count in its corner — one paragraph (Enter adds no break), 160
+    max, here and in Profile → Edit (which capped it at 120).
+  - **The Save row holds the directory choice and its preview**: a "List
+    me in the member directory" switch, and a compact copy of their
+    directory row (photo, name, headline), live as they type. In a column
+    it pushed Save off a laptop screen. Step 1 fits 1440×780 (767px).
+  - **The membership step says what happens with money**: "Nothing is
+    charged today. Your $100/month membership starts when the Club team
+    confirms the date — you'll get an email first"; a card already on
+    file can be swapped ("Use a different card" → Stripe's form, the
+    Manage billing flow); "You're all set" says it renews monthly on the
+    card and where receipts are.
+  - **"You're in" shows People to meet** (lib/portal/people-actions.ts,
+    read when the step opens so it uses the topics just saved): up to
+    three listed members sharing their topics ("You both know
+    fundraising"), else the newest members. "Ask for an intro" finishes
+    the welcome and opens `/portal/directory?m=…&intro=1` — their profile
+    with the intro form open.
+- **"Ask {name} for an intro"** on every profile but your own
+  ([intro-actions.ts](lib/portal/intro-actions.ts)): Geekdom emails the
+  member your note (`introRequestEmail`) with REPLY-TO set to you — their
+  reply comes straight to you, and their address stays private until
+  they answer. A 20–1,000 character note; 5 a day per member and the same
+  person once a week (`introLimits`, in one transaction); `intros` keeps
+  who, whom and when — never the note. Staff without a membership see a
+  line instead of the button. Tested with Resend's test inbox: delivered,
+  reply-to correct, the repeat refused.
 - **The directory is REAL MEMBERS, LISTED BY DEFAULT** (Geekdom's call,
   November 2026) — [lib/directory.ts](lib/directory.ts): every current
   member whose `profile.listed` isn't false; they opt out at Profile →

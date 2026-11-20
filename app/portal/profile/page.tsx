@@ -1,3 +1,5 @@
+import { withStarters } from "@/lib/topics";
+import { listDirectory, topicsInUse } from "@/lib/directory";
 import { requireMember } from "@/lib/auth/session";
 import { getMemberByEmail } from "@/lib/admin/queries";
 import { formatPrice, hasTeam, planOf } from "@/lib/membership";
@@ -128,6 +130,7 @@ export default async function ProfilePage(props: PageProps<"/portal/profile">) {
                 : { ...MOCK_MY_PROFILE, name: user.name ?? "" }
             }
             save={member ? saveMyProfile : undefined}
+            topicSuggestions={withStarters(topicsInUse(await listDirectory().catch(() => [])).map((t) => t.topic))}
           />
 
           {team && (

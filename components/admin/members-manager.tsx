@@ -605,7 +605,13 @@ export function MembersManager({
                     )}
                   </dd>
                   <dt className="text-muted-foreground">Invitation</dt>
-                  <dd className="text-graphite">{editing.portalInvitedAt ? `Sent ${longDate(editing.portalInvitedAt)}` : "Not sent"}</dd>
+                  <dd className="text-graphite">
+                    {editing.portalInvitedAt ? `Sent ${longDate(editing.portalInvitedAt)}` : "Not sent"}
+                    {/* What the invitation is, for someone seeing this row for the first time. */}
+                    <span className="block text-[13px] text-muted-foreground">
+                      {editing.portalInvitedAt ? "The email inviting them to the member portal." : "The member portal invitation goes out in waves at launch."}
+                    </span>
+                  </dd>
                   {editing.currentPeriodEnd && (
                     <>
                       <dt className="text-muted-foreground">{editing.cancelAtPeriodEnd ? "Ends" : "Renews"}</dt>
@@ -1157,14 +1163,31 @@ function StripePanel({ memberId, canAct, onChanged }: { memberId: string; canAct
         </>
       ) : (
         <>
-          <span className="text-muted-foreground">Not linked to Stripe</span>
-          {canAct && (
-            <div className="flex gap-2">
-              <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Their Stripe email, or cus_…" aria-label="Stripe email or customer id" className="h-9" />
-              <Button type="button" variant="outline" size="sm" onClick={link} disabled={pending || !query.trim()}>
-                {pending ? "Linking…" : "Link"}
-              </Button>
-            </div>
+          {/*
+            NOT LINKED, said in words (Jesse: "Not linked to Stripe" told a
+            first-time admin nothing). What it means, when it's normal, and
+            what linking does — then the control, for Management.
+          */}
+          <span className="text-graphite">No billing on file</span>
+          <span className="text-[13px] leading-relaxed text-muted-foreground">
+            They aren&rsquo;t paying through Stripe yet — normal for Enterprise, complimentary and imported members. Members who join through
+            the website are linked automatically when they pay.
+          </span>
+          {canAct ? (
+            <>
+              <span className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+                Already paying Geekdom on Stripe (for example, from Coworks)? Find them by their Stripe email or customer ID. Their card and
+                payments will show here, and you can start Club billing.
+              </span>
+              <div className="flex gap-2">
+                <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Stripe email, or cus_…" aria-label="Their Stripe email or customer ID" className="h-9" />
+                <Button type="button" variant="outline" size="sm" onClick={link} disabled={pending || !query.trim()}>
+                  {pending ? "Finding…" : "Find in Stripe"}
+                </Button>
+              </div>
+            </>
+          ) : (
+            <span className="text-[13px] text-muted-foreground">Geekdom management connects billing.</span>
           )}
         </>
       )}
