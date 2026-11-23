@@ -1130,6 +1130,30 @@ members use personal Gmail, and the hint hid their accounts.
   before it; never inside a complimentary period). Staff handle the
   switch from Coworks: start on the day the Coworks plan ends, then end
   it in Coworks. Logged.
+  - **Billing history** under it (Jesse, November 2026 — Management had
+    to open Stripe to see whether someone paid): the member's OWN Manage
+    billing list — same read (`getBilling`, via `memberBilling`), same
+    rows ([invoice-row.tsx](components/portal/invoice-row.tsx), shared
+    with billing-live.tsx) — Upcoming, Paid/Due/Void, PDF and receipt,
+    "Last paid …", a dashed past-due line. READ ONLY for every admin: no
+    Pay now, nothing that moves money. This is the answer to "view the
+    portal as a member" for billing; a full view-as was weighed and not
+    built (members' actions resolve from the session).
+- **The Overview's money row is MANAGEMENT ONLY** (`members.money`;
+  [lib/stripe/money.ts](lib/stripe/money.ts)): monthly recurring
+  revenue, collected in 30 days, past due (owed, failed charges). From
+  STRIPE, Club subscriptions only (`isClubSubscription` — the account
+  also bills Coworks' other plans); paused (complimentary) and
+  not-yet-started billing are counted apart, not in the revenue. Cached
+  5 min, keyed by test/live mode; it streams under Suspense and says
+  "SANDBOX" on test keys, which staging and localhost have until launch.
+  Tested on the sandbox with a throwaway subscription (removed): $100,
+  1 paying, +$100 collected; Staff don't see the row.
+  - **Testing billing against the sandbox webhook**: the sandbox's
+    webhook points at STAGING, which reads the LIVE database. A test
+    subscription WITHOUT `metadata.plan`, and a member record added only
+    after its events land (deleted before cancelling), passes through it
+    untouched.
 - **First-login onboarding is a checklist, not a tooltip tour**
   ([lib/onboarding.ts](lib/onboarding.ts), `OnboardingPanel` on the
   dashboard): check your profile, see the directory, find an event, join
@@ -1545,6 +1569,14 @@ read at `/field-notes` (a sideways shelf of covers, newest first) and
 - **The preview is at `/preview/field-notes/[id]`, outside /portal** so it
   looks like the public page (no admin sidebar) — so it does its own
   `requireAdmin()`, and `/preview` is disallowed in robots.
+- **Server code fetches stored URLs only through [blob-fetch.ts](lib/blob-fetch.ts)**
+  (`fetchOwnBlob`; GitHub CodeQL flagged two server-side request forgery
+  alerts, November 2026 — grading an uploaded photo in media.ts and the
+  share card's cover photo in og-card.tsx). It accepts only OUR store's
+  exact host (derived from `BLOB_READ_WRITE_TOKEN`'s store id), rebuilds
+  the URL from that fixed origin plus the checked path, refuses redirects,
+  and caps time and size. `isBlobUrl` (any Blob store) stays the schema
+  check for what a note may contain; it is not enough to FETCH with.
 - **`cn()` gotcha, found here:** tailwind-merge drops a `leading-*` that comes
   BEFORE a `text-*` size. Put line-height after the size.
 

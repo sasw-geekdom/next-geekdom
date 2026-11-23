@@ -17,7 +17,9 @@ import { hasTeam, PLANS, planOf, type PlanId } from "@/lib/membership";
 import { TeamCard } from "@/components/portal/team-card";
 import type { Member } from "@/lib/admin/types";
 import { compActive, compDate, compLine, compRunning, compUntil, isPerk, perkSummary, type PerkTag } from "@/lib/perks";
-import { cancelClubBilling, keepClubBilling, linkStripe, startClubBilling, stripeSnapshot, type StripeSnapshot } from "@/lib/admin/stripe-actions";
+import { cancelClubBilling, keepClubBilling, linkStripe, memberBilling, startClubBilling, stripeSnapshot, type StripeSnapshot } from "@/lib/admin/stripe-actions";
+import type { BillingView } from "@/lib/stripe/billing";
+import { InvoiceRow, dayOf, invoiceMark, invoiceWhen, monthOf, shortDate } from "@/components/portal/invoice-row";
 import { ExitSurvey, type ExitAnswer } from "@/components/portal/exit-survey";
 import { exitReasonLabel } from "@/lib/membership-exit";
 import type { MemberStatus } from "@/lib/firebase/collections";
@@ -661,6 +663,9 @@ export function MembersManager({
               </RecordSection>
             )}
 
+            {/* Billing history: what the member sees in Manage billing, read only. Only once there's a Stripe customer. */}
+            {editing?.stripeCustomerId && <BillingHistory key={`bh-${editing.id}`} memberId={editing.id} />}
+
             <RecordSection title="Staff only" note="Never shown to the member.">
               {/* Label left, control right — the same Row as every other section. */}
               <Row
@@ -986,6 +991,105 @@ const SOON_YEARS = [0, 1, 2].map((n) => {
   const y = String(new Date().getFullYear() + n);
   return { value: y, label: y };
 });
+
+/*
+  BILLING HISTORY — the member's own Manage billing list, for staff (Jesse,
+  November 2026: Management had to open Stripe to see whether someone had
+  paid). The same read (getBilling) and the same rows (InvoiceRow), so staff
+  and member describe a bill identically. READ ONLY: no Pay now, nothing that
+  moves money — PDF and receipt links only. Shown once the member has a
+  Stripe customer; the Billing row above holds the controls.
+*/
+const HISTORY_RECENT = 6;
+
+function BillingHistory({ memberId }: { memberId: string }) {
+  const [b, setB] = React.useState<BillingView | null | undefined>(undefined);
+  const [failed, setFailed] = React.useState(false);
+  const [all, setAll] = React.useState(false);
+  React.useEffect(() => {
+    memberBilling(memberId)
+      .then(setB)
+      .catch(() => setFailed(true));
+  }, [memberId]);
+
+  const lastPaid = b?.invoices.find((i) => i.status === "paid");
+  const shown = b ? (all ? b.invoices : b.invoices.filter((inv, i) => i < HISTORY_RECENT || inv.status === "open")) : [];
+  const folded = b ? b.invoices.length - shown.length : 0;
+  const note = b
+    ? b.state === "past_due"
+      ? null
+      : lastPaid
+        ? `Last paid ${lastPaid.amount} on ${shortDate(lastPaid.date)}`
+        : "No payments yet"
+    : undefined;
+
+  return (
+    <RecordSection title="Billing history" note={note ?? undefined}>
+      {failed ? (
+        <p className="text-sm text-muted-foreground">Couldn&rsquo;t reach Stripe just now.</p>
+      ) : b === undefined ? (
+        <p className="text-sm text-muted-foreground">Reading Stripe…</p>
+      ) : b === null ? (
+        <p className="text-sm text-muted-foreground">Stripe isn&rsquo;t connected on this copy of the site.</p>
+      ) : (
+        <>
+          {b.state === "past_due" && (
+            // The one red line: a failed charge is the thing staff open this for.
+            <p className="border border-dashed border-geekdom-red px-3 py-2 text-sm text-graphite">
+              <span className="text-geekdom-red">Past due</span>
+              {b.open ? ` · ${b.open.amount} owed` : ""} — Stripe retries the card, and they&rsquo;ve been emailed to update it. They keep access meanwhile.
+            </p>
+          )}
+          {!b.upcoming && b.invoices.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No invoices yet.</p>
+          ) : (
+            <ul className="-mt-2 border-b border-border text-sm">
+              {b.upcoming && (
+                <InvoiceRow
+                  title={b.upcoming.kind === "resumes" ? `Complimentary until ${shortDate(b.upcoming.date)}` : monthOf(b.upcoming.periodStart)}
+                  mark="upcoming"
+                  detail={
+                    b.upcoming.kind === "resumes"
+                      ? "Billing resumes"
+                      : `Club membership${b.upcoming.periodEnd ? ` · ${dayOf(b.upcoming.periodStart)} – ${dayOf(b.upcoming.periodEnd)}` : ""}`
+                  }
+                  amount={b.upcoming.amount}
+                  when={`Charged ${shortDate(b.upcoming.date)}${b.card ? ` to •••• ${b.card.last4}` : ""}`}
+                />
+              )}
+              {shown.map((inv) => {
+                const mark = invoiceMark(inv.status);
+                return (
+                  <InvoiceRow key={inv.id} title={monthOf(inv.periodStart)} mark={mark} detail={inv.number || "Club membership"} amount={inv.amount} when={invoiceWhen(inv, mark)}>
+                    {inv.pdf && (
+                      <a href={inv.pdf} target="_blank" rel="noreferrer noopener" className="inline-flex h-7 items-center gap-1 border border-border px-2 text-xs text-graphite hover:border-graphite">
+                        PDF
+                        <ArrowUpRight className="h-3 w-3" strokeWidth={1.6} aria-hidden="true" />
+                      </a>
+                    )}
+                    {inv.hosted && inv.status === "paid" && (
+                      <a href={inv.hosted} target="_blank" rel="noreferrer noopener" className="inline-flex h-7 items-center gap-1 border border-border px-2 text-xs text-graphite hover:border-graphite">
+                        Receipt
+                        <ArrowUpRight className="h-3 w-3" strokeWidth={1.6} aria-hidden="true" />
+                      </a>
+                    )}
+                  </InvoiceRow>
+                );
+              })}
+            </ul>
+          )}
+          {folded > 0 ? (
+            <button type="button" onClick={() => setAll(true)} className="self-start text-sm text-graphite underline decoration-clay decoration-1 underline-offset-4">
+              Show {folded} earlier {folded === 1 ? "invoice" : "invoices"}
+            </button>
+          ) : (
+            b.olderInvoices && all && <p className="text-[13px] text-muted-foreground">Older invoices are in Stripe (Open in Stripe, above).</p>
+          )}
+        </>
+      )}
+    </RecordSection>
+  );
+}
 
 function StripePanel({ memberId, canAct, onChanged }: { memberId: string; canAct: boolean; onChanged: () => void }) {
   const [snap, setSnap] = React.useState<StripeSnapshot | null>(null);

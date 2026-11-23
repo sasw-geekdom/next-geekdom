@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { finishCardUpdate, payNow, setCancelAtPeriodEnd, startCardUpdate } from "@/lib/stripe/billing-actions";
 import type { BillingView } from "@/lib/stripe/billing";
 import { ExitSurvey, type ExitAnswer } from "@/components/portal/exit-survey";
+import { InvoiceRow, dayOf, invoiceMark, invoiceWhen, monthOf, shortDate } from "@/components/portal/invoice-row";
 
 /*
   BILLING, IN THE APP — LIVE (the design mock it replaces is billing-drawer.tsx,
@@ -64,54 +65,9 @@ type Panel = "overview" | "card" | "cancel";
 
 const longDate = (iso: string | null) =>
   iso ? new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", month: "long", day: "numeric", year: "numeric" }).format(new Date(iso)) : "—";
-const shortDate = (iso: string) =>
-  new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", month: "short", day: "numeric", year: "numeric" }).format(new Date(iso));
 
-const monthOf = (iso: string) =>
-  new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", month: "long", year: "numeric" }).format(new Date(iso));
-const dayOf = (iso: string) => new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", month: "short", day: "numeric" }).format(new Date(iso));
-
-/*
-  AN INVOICE'S STATUS — a square marker and a word, the admin's convention
-  in the brand's own colors (no green or blue here): Upcoming is Clay (on
-  its way, nothing to do), Paid is Graphite, Due is Geekdom Red — the one
-  that needs the member — and Void is hollow. Stripe sets the status;
-  nobody labels an invoice by hand.
-*/
 /** Past invoices shown before "Show earlier invoices" — anything Due always shows. */
 const RECENT = 3;
-
-type Mark = "upcoming" | "paid" | "due" | "unpaid" | "void";
-const MARKS: Record<Mark, [string, string]> = {
-  upcoming: ["bg-clay", "Upcoming"],
-  paid: ["bg-graphite", "Paid"],
-  due: ["bg-geekdom-red", "Due"],
-  unpaid: ["bg-geekdom-red", "Unpaid"],
-  void: ["border border-muted-foreground", "Void"],
-};
-
-function InvoiceRow({ title, mark, detail, amount, when, children }: { title: string; mark: Mark; detail: string; amount: string; when: string; children?: React.ReactNode }) {
-  const [dot, word] = MARKS[mark];
-  return (
-    <li className="flex items-start justify-between gap-4 border-t border-border py-4 first:border-t-0">
-      <div className="min-w-0">
-        <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span className="font-medium text-graphite">{title}</span>
-          <span className={cn("inline-flex items-center gap-1.5 whitespace-nowrap text-sm", mark === "due" || mark === "unpaid" ? "text-geekdom-red" : "text-graphite")}>
-            <span aria-hidden="true" className={cn("h-2 w-2 shrink-0", dot)} />
-            {word}
-          </span>
-        </p>
-        <p className="mt-1 text-sm text-muted-foreground">{detail}</p>
-        {children && <div className="mt-3 flex flex-wrap items-center gap-2">{children}</div>}
-      </div>
-      <div className="shrink-0 text-right">
-        <p className="tabular-nums text-graphite">{amount}</p>
-        <p className="mt-1 text-sm tabular-nums text-muted-foreground">{when}</p>
-      </div>
-    </li>
-  );
-}
 
 export function LiveBillingButton({ billing, planName }: { billing: BillingView; planName: string }) {
   const [open, setOpen] = React.useState(false);
@@ -294,7 +250,7 @@ function LiveBillingDrawer({ open, onClose, billing, planName }: { open: boolean
                     />
                   )}
                   {shownInvoices.map((inv) => {
-                    const mark: Mark = inv.status === "paid" ? "paid" : inv.status === "open" ? "due" : inv.status === "void" ? "void" : "unpaid";
+                    const mark = invoiceMark(inv.status);
                     const payHere = inv.status === "open" && b.open?.id === inv.id && b.card;
                     return (
                       <InvoiceRow
@@ -303,7 +259,7 @@ function LiveBillingDrawer({ open, onClose, billing, planName }: { open: boolean
                         mark={mark}
                         detail={`Club membership · ${planName}${inv.number ? ` · ${inv.number}` : ""}`}
                         amount={inv.amount}
-                        when={mark === "paid" ? `Paid ${shortDate(inv.date)}` : mark === "void" ? "Voided" : `Issued ${shortDate(inv.date)}`}
+                        when={invoiceWhen(inv, mark)}
                       >
                         {payHere && (
                           <Button type="button" variant="ink" size="sm" disabled={pending} onClick={() => act(payNow)}>

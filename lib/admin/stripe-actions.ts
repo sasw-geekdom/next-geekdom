@@ -9,7 +9,7 @@ import { getAdminDb } from "@/lib/firebase/admin";
 import { COLLECTIONS, type MemberDoc } from "@/lib/firebase/collections";
 import { logActivity } from "@/lib/admin/activity";
 import { getStripe, periodEnd, toMemberStatus } from "@/lib/stripe/server";
-import { cardOf } from "@/lib/stripe/billing";
+import { cardOf, getBilling, type BillingView } from "@/lib/stripe/billing";
 import { findBestCustomer, linkMember, summarize } from "@/lib/stripe/link";
 import { compActive } from "@/lib/perks";
 import { env } from "@/lib/env";
@@ -22,6 +22,12 @@ import { planOf } from "@/lib/membership";
                        file, Club subscription, any other active plan
                        (Coworks' Community Membership) — read when the
                        slide-out opens
+    · memberBilling    their BILLING HISTORY — the same Stripe read as the
+                       member's own Manage billing (getBilling), so staff and
+                       member see the same invoices: upcoming, paid, due,
+                       void, with Stripe's PDF and receipt. READ ONLY, every
+                       admin (staff see billing read-only); nothing here can
+                       charge, refund or pay.
     · linkStripe       link by EMAIL or customer id (cus_…) — for members
                        whose Stripe email differs from their Club one
     · startClubBilling the Club subscription on the card already on file,
@@ -83,6 +89,12 @@ export async function stripeSnapshot(memberId: string): Promise<StripeSnapshot> 
       : null,
     other: s.activeOther,
   };
+}
+
+export async function memberBilling(memberId: string): Promise<BillingView | null> {
+  await requireAdmin();
+  const { m } = await member(memberId);
+  return getBilling(m);
 }
 
 export async function linkStripe(memberId: string, query: string): Promise<{ ok: boolean; message: string }> {

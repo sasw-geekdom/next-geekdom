@@ -1,6 +1,10 @@
 import { exitReasonLabel } from "@/lib/membership-exit";
 import { compRunning } from "@/lib/perks";
 import Link from "next/link";
+import { Suspense } from "react";
+import { requireAdmin } from "@/lib/auth/session";
+import { can } from "@/lib/auth/roles";
+import { dollars, getClubMoney } from "@/lib/stripe/money";
 import { ArrowRight, Check, Plus } from "lucide-react";
 import { listApplications, listMembers } from "@/lib/admin/queries";
 import { loginStates } from "@/lib/admin/member-logins";
@@ -32,6 +36,8 @@ export const metadata = { title: "Overview" };
     │ ■ 2 approved, waiting on payment …   (only rows with something in them)    │
     ├──────────────┬──────────────────┬──────────────────────────────────────────┤
     │ Members      │ Applications 30d │ Signed in to the portal                  │
+    ├──────────────┼──────────────────┼──────────────────────────────────────────┤
+    │ Monthly rev. │ Collected 30d    │ Past due      (Management only, Stripe)  │
     ├──────────────┴─────────┬────────┴──────────────────────────────────────────┤
     │ Next on the homepage   │ Recent activity                                   │
     │ Recently joined        │ Field Notes                                       │
@@ -45,12 +51,19 @@ export const metadata = { title: "Overview" };
   THE NUMBERS are the ones that change week to week and say whether things
   are working — growth, demand, and whether members use the portal (the
   launch question). Former members and "never signed in" moved into those.
+
+  THE MONEY ROW (MANAGEMENT ONLY — members.money; Jesse, November 2026) is
+  Stripe's, not the members docs': Club revenue a month, what came in over
+  30 days, and what's past due (lib/stripe/money.ts). It streams in under
+  Suspense so a slow Stripe never holds the page, and says "sandbox" when
+  the keys are test keys — staging and localhost are, until launch.
 */
 
 const DAY = 86_400_000;
 const PROMISE_DAYS = 14;
 
 export default async function AdminOverview() {
+  const user = await requireAdmin();
   const [members, logins, events, notes, activity, applications, inquiries] = await Promise.all([
     listMembers(),
     loginStates().catch(() => new Map()),
@@ -276,6 +289,13 @@ export default async function AdminOverview() {
           />
         </div>
 
+        {/* ── The money (Management only) ── */}
+        {can(user.role, "members.money") && (
+          <Suspense fallback={<MoneyNote text="Reading Stripe…" />}>
+            <MoneyRow />
+          </Suspense>
+        )}
+
         {/* ── The site and the people ── */}
         <div className="mt-4 grid gap-4 lg:grid-cols-2">
           <Tile
@@ -447,12 +467,55 @@ export default async function AdminOverview() {
   );
 }
 
+async function MoneyRow() {
+  const money = await getClubMoney().catch(() => undefined);
+  if (money === undefined) return <MoneyNote text="Couldn't reach Stripe for the money figures just now." />;
+  if (money === null) return <MoneyNote text="Stripe isn't connected on this copy of the site." />;
+  const m = money;
+  const recurringNote = [
+    `${m.paying} paying`,
+    m.canceling > 0 && `${m.canceling} set to cancel`,
+    m.paused > 0 && `${m.paused} complimentary`,
+    m.startingLater > 0 && `${m.startingLater} starting later`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  return (
+    <>
+      <div className="mt-4 grid gap-4 sm:grid-cols-3">
+        <Stat label="Monthly recurring revenue" value={dollars(m.recurringCents)} href="/portal/admin/members" note={recurringNote} />
+        <Stat
+          label="Collected, last 30 days"
+          value={dollars(m.collectedCents)}
+          href="/portal/admin/members"
+          note={m.payments === 0 ? "No Club payments" : `${m.payments} ${m.payments === 1 ? "payment" : "payments"}`}
+        />
+        <Stat
+          label="Past due"
+          value={m.pastDue}
+          href="/portal/admin/members?view=past_due"
+          alert={m.pastDue > 0}
+          note={[m.owedCents > 0 ? `${dollars(m.owedCents)} owed` : "Nothing owed", `${m.failed30} failed ${m.failed30 === 1 ? "charge" : "charges"} in 30 days`].join(" · ")}
+        />
+      </div>
+      <p className="mt-2 text-[13px] text-muted-foreground">
+        Club billing only, from Stripe{m.sandbox ? " — the SANDBOX: test payments, not Geekdom's revenue" : ""}. Updated every 5 minutes.
+      </p>
+    </>
+  );
+}
+
+function MoneyNote({ text }: { text: string }) {
+  return <p className="mt-4 border border-dashed border-border px-4 py-3 text-sm text-muted-foreground">{text}</p>;
+}
+
 function Stat({
   label,
   value,
   href,
   note,
   meter,
+  alert,
 }: {
   label: string;
   value: number | string;
@@ -460,13 +523,18 @@ function Stat({
   note?: string;
   /** 0–100: a thin bar under the figure (portal sign-ins). */
   meter?: number;
+  /** A real problem (past due): a red square by the label — the admin's Status marker. */
+  alert?: boolean;
 }) {
   return (
     <Link
       href={href}
       className="group block border border-border bg-bone-light p-5 transition-colors hover:border-graphite focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-offset-2 focus-visible:ring-offset-bone"
     >
-      <p className={cn(ADMIN_LABEL, "text-muted-foreground")}>{label}</p>
+      <p className={cn(ADMIN_LABEL, "flex items-center gap-2 text-muted-foreground")}>
+        {alert && <span aria-hidden="true" className="h-2 w-2 shrink-0 bg-geekdom-red" />}
+        {label}
+      </p>
       <p className={cn(FIGURE.md, "mt-2 text-graphite")}>{value}</p>
       {meter !== undefined && (
         <div aria-hidden="true" className="mt-3 h-1 bg-border">
