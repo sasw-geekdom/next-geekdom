@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import sharp from "sharp";
+import { fetchOwnBlob } from "@/lib/blob-fetch";
 import type { NoteContent } from "@/lib/field-notes/types";
 
 /*
@@ -57,9 +58,9 @@ async function leadPhoto(c: NoteContent): Promise<string | null> {
   const img = first && (first.type === "cover" || first.type === "image") ? first.image : undefined;
   if (!img) return null;
   try {
-    const res = await fetch(img.srcSm);
-    if (!res.ok) return null;
-    const jpg = await sharp(Buffer.from(await res.arrayBuffer()))
+    // Only our own Blob store, by a rebuilt URL, no redirects (lib/blob-fetch.ts).
+    const source = await fetchOwnBlob(img.srcSm, { maxBytes: 10 * 1024 * 1024 });
+    const jpg = await sharp(source)
       .resize(560, 630, { fit: "cover" })
       .jpeg({ quality: 82 })
       .toBuffer();

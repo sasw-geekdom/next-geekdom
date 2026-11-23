@@ -6,6 +6,7 @@ import sharp from "sharp";
 import { gradeRaw } from "@/lib/photo-grade.mjs";
 import { hasEnv } from "@/lib/env";
 import { isBlobUrl } from "@/lib/field-notes/schemas";
+import { fetchOwnBlob, ownBlobPath } from "@/lib/blob-fetch";
 import type { NoteImage } from "@/lib/field-notes/types";
 
 /*
@@ -34,18 +35,16 @@ const token = () => process.env.BLOB_READ_WRITE_TOKEN;
 
 export const notePrefix = (noteId: string) => `field-notes/${noteId}/`;
 
-/** Is this URL one of THIS note's uploaded originals? */
+/** Is this URL one of THIS note's uploaded originals, on OUR Blob store? */
 function ownsOriginal(url: string, noteId: string): boolean {
   if (!isBlobUrl(url)) return false;
-  const path = decodeURIComponent(new URL(url).pathname.slice(1));
-  return path.startsWith(`${notePrefix(noteId)}originals/`);
+  const path = ownBlobPath(url);
+  if (!path) return false;
+  return decodeURIComponent(path.slice(1)).startsWith(`${notePrefix(noteId)}originals/`);
 }
 
-async function fetchOriginal(url: string): Promise<Buffer> {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Couldn't read the upload (${res.status}).`);
-  return Buffer.from(await res.arrayBuffer());
-}
+/** Photos are uploaded up to 25MB (the upload route's limit); a little headroom. */
+const fetchOriginal = (url: string) => fetchOwnBlob(url, { maxBytes: 26 * 1024 * 1024, timeoutMs: 30_000 });
 
 const upload = (path: string, body: Buffer, contentType: string) =>
   put(path, body, {
