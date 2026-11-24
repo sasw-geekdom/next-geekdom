@@ -30,6 +30,10 @@ import { env } from "@/lib/env";
 const ACTIVE = new Set(["active", "trialing", "past_due"]);
 
 export function isClubSubscription(sub: Stripe.Subscription, productNames: Map<string, string>): boolean {
+  // A MAILBOX-ONLY subscription (lib/stripe/extras.ts) is an add-on, never the membership.
+  if (sub.metadata?.kind === "mailbox") return false;
+  // Ours, made by this site: checkout, "Start Club billing", Enterprise billing — all stamp the plan.
+  if (sub.metadata?.plan === "solo" || sub.metadata?.plan === "team" || sub.metadata?.plan === "enterprise") return true;
   const ours = [env(process.env.STRIPE_PRICE_SOLO), env(process.env.STRIPE_PRICE_TEAM), env(process.env.STRIPE_MEMBERSHIP_PRICE_ID)].filter(Boolean);
   return sub.items.data.some((i) => {
     if (ours.includes(i.price.id)) return true;

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
-import { requireMember } from "@/lib/auth/session";
+import { requirePortalMember } from "@/lib/portal/gate";
 import { isAdmin, ROLE_LABELS, type AdminRole } from "@/lib/auth/roles";
 import { getMemberByEmail } from "@/lib/admin/queries";
 import { getUpcomingEvents } from "@/lib/content/events";
@@ -65,7 +65,7 @@ function longDate(iso: string | null): string {
   client navigation, so each page checks its own session (Next 16 auth guide).
 */
 export default async function PortalHome() {
-  const user = await requireMember();
+  const user = await requirePortalMember();
   // Server time, once.
   const now = new Date().getTime();
   const [member, events, wall, resources, directory, notes, booker] = await Promise.all([

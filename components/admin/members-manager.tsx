@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowUpRight, ChevronDown, ExternalLink, Plus, Search, X } from "lucide-react";
+import { ArrowRight, ArrowUpRight, ChevronDown, ExternalLink, Plus, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/field";
 import { Combobox } from "@/components/ui/combobox";
@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Drawer } from "@/components/ui/drawer";
 import { ADMIN_CHIP, ADMIN_LABEL, MemberStatusLabel, RowButton, Table, Td, Th, Tr, tableDate, type SortDir } from "@/components/admin/admin-ui";
 import { cn } from "@/lib/utils";
+import { ARROW, LINK_ARROW } from "@/components/site/section";
 import { centralParts } from "@/lib/content/dates";
 import { addTeammateForOwner, createMemberLogin, removeTeammateForOwner, saveMember } from "@/lib/admin/member-actions";
 import { hasTeam, PLANS, planOf, type PlanId } from "@/lib/membership";
@@ -21,7 +22,9 @@ import { cancelClubBilling, keepClubBilling, linkStripe, memberBilling, startClu
 import type { BillingView } from "@/lib/stripe/billing";
 import { InvoiceRow, dayOf, invoiceMark, invoiceWhen, monthOf, shortDate } from "@/components/portal/invoice-row";
 import { ExitSurvey, type ExitAnswer } from "@/components/portal/exit-survey";
+import { InvoiceComposer, MailboxControl } from "@/components/admin/billing-extras";
 import { exitReasonLabel } from "@/lib/membership-exit";
+import { termsCurrent } from "@/lib/terms";
 import type { MemberStatus } from "@/lib/firebase/collections";
 
 /*
@@ -75,7 +78,9 @@ const isCurrent = (m: Member) => CURRENT.includes(m.status);
   ONE "VIEW" FILTER, replacing separate Status and Sign-in dropdowns. Both
   were about getting in — membership vs. whether the login had ever been
   used — and read as contradicting each other ("Canceled" + "Has signed
-  in"). Each view is a question staff ask about CURRENT members.
+  in"). Each view is a question staff ask about CURRENT members — except
+  the last three, which show FORMER members in the main table (Geekdom,
+  November 2026: the folded list below had no filter of its own).
 */
 const VIEWS = [
   { value: "all", label: "All current members" },
@@ -83,10 +88,20 @@ const VIEWS = [
   { value: "never", label: "Never signed in" },
   { value: "nologin", label: "No login yet" },
   { value: "comp", label: "Complimentary" },
+  { value: "paused", label: "Paused" },
+  { value: "canceled", label: "Canceled" },
+  { value: "former", label: "All former members" },
 ] as const;
 type View = (typeof VIEWS)[number]["value"];
+const FORMER_VIEWS: View[] = ["paused", "canceled", "former"];
+
+/** Plan — Team and Enterprise accounts at a glance. A teammate counts under their team's plan. */
+const PLAN_FILTER = [{ value: "all", label: "All plans" }, ...PLANS.map((p) => ({ value: p.id, label: p.name }))];
 
 function inView(m: MemberRow, view: View): boolean {
+  if (view === "paused") return m.status === "inactive";
+  if (view === "canceled") return m.status === "canceled";
+  if (view === "former") return !isCurrent(m);
   if (view === "past_due") return m.status === "past_due";
   if (view === "never") return m.login.state === "invited";
   if (view === "nologin") return m.login.state === "none";
@@ -146,6 +161,8 @@ interface Draft {
   notes: string;
   plan: PlanId;
   company: string;
+  /** The team they're on (lib/teams.ts) — "" for none. Picked from the dropdown, never typed. */
+  teamId: string;
   /** Asked only when staff change the status: why, and whether to email them. */
   exit: ExitAnswer;
   notify: boolean;
@@ -157,7 +174,7 @@ const PLAN_OPTIONS = PLANS.map((p) => ({ value: p.id, label: p.name }));
 
 function blank(): Draft {
   const t = centralParts(new Date().toISOString());
-  return { name: "", email: "", status: "active", year: t.year, month: t.month, day: t.day, tags: [], notes: "", plan: "solo", company: "", exit: NO_EXIT, notify: true };
+  return { name: "", email: "", status: "active", year: t.year, month: t.month, day: t.day, tags: [], notes: "", plan: "solo", company: "", teamId: "", exit: NO_EXIT, notify: true };
 }
 
 function fromRow(m: MemberRow): Draft {
@@ -175,13 +192,25 @@ function fromRow(m: MemberRow): Draft {
     notes: m.notes,
     plan: m.plan,
     company: m.company,
+    teamId: m.teamId ?? "",
     exit: NO_EXIT,
     notify: true,
   };
 }
 
+/** A team, as the slide-out's dropdown and the list need it (lib/teams.ts). */
+export interface TeamOption {
+  id: string;
+  name: string;
+  plan: "team" | "enterprise";
+  ownerId: string;
+  seats: number | null;
+  used: number;
+}
+
 export function MembersManager({
   members,
+  teams = [],
   perks = [],
   startAdding = false,
   startView,
@@ -189,6 +218,8 @@ export function MembersManager({
   canManageMoney = false,
 }: {
   members: MemberRow[];
+  /** Team and Enterprise accounts — the slide-out's Team dropdown. */
+  teams?: TeamOption[];
   /**
    * Management (lib/auth/roles.ts `members.money`): status, plan,
    * complimentary tags and the Stripe panel's actions. Staff edit the
@@ -209,6 +240,9 @@ export function MembersManager({
   const [query, setQuery] = React.useState("");
   const [view, setView] = React.useState<View>(() => (VIEWS.some((v) => v.value === startView) ? (startView as View) : "all"));
   const [tag, setTag] = React.useState("all");
+  const [planFilter, setPlanFilter] = React.useState("all");
+  // Bumped after a mailbox or invoice, so Billing history reads Stripe again.
+  const [billingVersion, setBillingVersion] = React.useState(0);
   const [formerOpen, setFormerOpen] = React.useState(false);
   const [sort, setSort] = React.useState<{ by: Sort; dir: SortDir }>({ by: "joined", dir: "desc" });
   const sortBy = (by: Sort) => ({
@@ -246,15 +280,18 @@ export function MembersManager({
       const q = query.trim().toLowerCase();
       return (
         (!q || m.name.toLowerCase().includes(q) || m.email.includes(q)) &&
-        (tag === "all" || m.tags.includes(tag))
+        (tag === "all" || m.tags.includes(tag)) &&
+        (planFilter === "all" || m.plan === planFilter)
       );
     },
-    [query, tag],
+    [query, tag, planFilter],
   );
-  const shownCurrent = current.filter((m) => matches(m) && inView(m, view));
-  const shownFormer = former.filter(matches);
+  // A former view shows former members in the main table, and the fold goes away.
+  const formerView = FORMER_VIEWS.includes(view);
+  const shownCurrent = (formerView ? former : current).filter((m) => matches(m) && inView(m, view));
+  const shownFormer = formerView ? [] : former.filter(matches);
 
-  const filtering = Boolean(query) || view !== "all" || tag !== "all";
+  const filtering = Boolean(query) || view !== "all" || tag !== "all" || planFilter !== "all";
   // A search that finds a former member opens their list — otherwise the
   // only match would be hidden behind a closed fold.
   const formerShown = formerOpen || (Boolean(query.trim()) && shownFormer.length > 0);
@@ -284,6 +321,8 @@ export function MembersManager({
         notes: draft.notes,
         plan: draft.plan,
         company: draft.company,
+        // Only for someone who isn't paying for a team: an owner's team changes on Teams.
+        ...(editing && !(editing.teamId && !editing.teamOwnerId) ? { teamId: draft.teamId } : {}),
         exitReason: draft.exit.reason,
         exitNote: draft.exit.note,
         notify: draft.notify,
@@ -388,6 +427,7 @@ export function MembersManager({
             value={view}
             onChange={(v) => setView(v as View)}
           />
+          <Combobox name="plan-filter" label="Filter by plan" className="sm:w-40" options={PLAN_FILTER} value={planFilter} onChange={setPlanFilter} searchable={false} />
           {tags.length > 0 && (
             <Combobox
               name="tag-filter"
@@ -402,9 +442,11 @@ export function MembersManager({
       </div>
 
       <p className={cn(ADMIN_LABEL, "-mb-3 text-muted-foreground")}>
-        {filtering
-          ? `${shownCurrent.length} of ${current.length} current members`
-          : `${current.length} current members`}
+        {formerView
+          ? `${shownCurrent.length} of ${former.length} former members`
+          : filtering
+            ? `${shownCurrent.length} of ${current.length} current members`
+            : `${current.length} current members`}
       </p>
 
       {members.length === 0 ? (
@@ -418,12 +460,14 @@ export function MembersManager({
         </p>
       ) : shownCurrent.length === 0 ? (
         <p className="border border-dashed border-border bg-bone-light px-6 py-12 text-sm text-muted-foreground">
-          {current.length === 0
+          {formerView
+            ? "No former members match."
+            : current.length === 0
             ? "No current members."
             : "No current members match. Clear the search or change the view."}
         </p>
       ) : (
-        <MemberList members={ordered(shownCurrent)} sortBy={sortBy} onOpen={(m) => open(fromRow(m))} perks={perks} />
+        <MemberList members={ordered(shownCurrent)} sortBy={sortBy} onOpen={(m) => open(fromRow(m))} perks={perks} muted={formerView} />
       )}
 
       {/*
@@ -431,7 +475,7 @@ export function MembersManager({
         rather than deleted: their history, notes and tags stay, and setting
         one back to Active restores their access.
       */}
-      {former.length > 0 && (
+      {former.length > 0 && !formerView && (
         <details
           open={formerShown}
           onToggle={(e) => setFormerOpen(e.currentTarget.open)}
@@ -439,7 +483,7 @@ export function MembersManager({
         >
           <summary className="flex cursor-pointer list-none items-center justify-between py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-offset-2 focus-visible:ring-offset-bone [&::-webkit-details-marker]:hidden">
             <span className={cn(ADMIN_LABEL, "text-muted-foreground")}>
-              Former members · {filtering && (query || tag !== "all") ? `${shownFormer.length} of ${former.length}` : former.length}
+              Former members · {filtering && (query || tag !== "all" || planFilter !== "all") ? `${shownFormer.length} of ${former.length}` : former.length}
             </span>
             <ChevronDown
               aria-hidden="true"
@@ -495,7 +539,7 @@ export function MembersManager({
               <dl className="grid grid-cols-2 gap-px border border-border bg-border sm:grid-cols-4">
                 {(
                   [
-                    ["Plan", `${planOf(editing.plan).name}${editing.teamOwnerId ? " · teammate" : ""}`],
+                    ["Plan", `${planOf(editing.plan).name}${editing.teamId ? ` · ${editing.company || "team"}` : ""}`],
                     ["Joined", tableDate(editing.joinedAt)],
                     ["Portal", editing.login.state === "active" ? `Signed in ${tableDate(editing.login.lastSignIn)}` : editing.login.state === "invited" ? "Never signed in" : "No login"],
                     [
@@ -536,18 +580,54 @@ export function MembersManager({
             </RecordSection>
 
             <RecordSection title="Membership">
-              {editing?.teamOwnerId ? (
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  On{" "}
-                  <span className="text-graphite">{members.find((m) => m.id === editing.teamOwnerId)?.name ?? "another member"}</span>
-                  &rsquo;s {planOf(editing.plan).name} membership. Their plan and access follow the team&rsquo;s.
-                </p>
-              ) : (
+              {/*
+                THE TEAM — a dropdown of real team records (lib/teams.ts), never a
+                typed company (Geekdom: "teams is a string"). Someone who PAYS for
+                a team sees it read-only: it changes on Members → Teams.
+              */}
+              {editing && editing.teamId && !editing.teamOwnerId ? (
+                <Row label="Team" htmlFor="m-team-link">
+                  <Link id="m-team-link" href="/portal/admin/members/teams" className={cn(LINK_ARROW, "mt-2.5 text-sm")}>
+                    Pays for {teams.find((t) => t.id === editing.teamId)?.name ?? "a team"}
+                    <ArrowRight aria-hidden="true" className={ARROW.internal} />
+                  </Link>
+                </Row>
+              ) : editing ? (
+                <Row
+                  label="Team"
+                  htmlFor="m-team"
+                  error={errors.teamId}
+                  hint={
+                    draft.teamId !== (editing.teamId ?? "")
+                      ? draft.teamId
+                        ? "On save they join the team: its plan and access become theirs, and we email them."
+                        : "On save they come off the team, and their membership ends — they can rejoin on their own plan."
+                      : editing.teamOwnerId
+                        ? "Their plan and access follow the team's."
+                        : teams.length === 0
+                          ? "No teams yet — create one in Members → Teams."
+                          : undefined
+                  }
+                >
+                  <Combobox
+                    id="m-team"
+                    name="team"
+                    label="Team"
+                    options={[
+                      { value: "", label: "No team" },
+                      ...teams.map((t) => ({ value: t.id, label: `${t.name} · ${planOf(t.plan).name} · ${t.seats === null ? `${t.used} people` : `${t.used} of ${t.seats} seats`}` })),
+                    ]}
+                    value={draft.teamId}
+                    onChange={set("teamId")}
+                  />
+                </Row>
+              ) : null}
+              {editing?.teamOwnerId ? null : (
                 <>
-                  <Row label="Plan" htmlFor="m-plan" error={errors.plan}>
-                    <Combobox id="m-plan" name="plan" options={PLAN_OPTIONS} value={draft.plan} onChange={(v) => set("plan")(v as PlanId)} searchable={false} disabled={Boolean(editing) && !canManageMoney} />
+                  <Row label="Plan" htmlFor="m-plan" error={errors.plan} hint={editing?.teamId ? "They pay for a team — its plan changes on Members → Teams." : undefined}>
+                    <Combobox id="m-plan" name="plan" options={PLAN_OPTIONS} value={draft.plan} onChange={(v) => set("plan")(v as PlanId)} searchable={false} disabled={(Boolean(editing) && !canManageMoney) || Boolean(editing?.teamId)} />
                   </Row>
-                  {(draft.plan !== "solo" || draft.company) && (
+                  {!editing?.teamId && (draft.plan !== "solo" || draft.company) && (
                     <Row label="Company" htmlFor="m-company" error={errors.company}>
                       <Input id="m-company" value={draft.company} onChange={(e) => set("company")(e.target.value)} autoComplete="off" />
                     </Row>
@@ -651,10 +731,55 @@ export function MembersManager({
                       </dd>
                     </>
                   )}
+                  {/* The Terms of Membership (lib/terms.ts): the portal stays closed until the current version is agreed. */}
+                  <dt className="text-muted-foreground">Terms</dt>
+                  <dd className="text-graphite">
+                    {editing.terms && termsCurrent(editing.terms) ? (
+                      `Agreed ${tableDate(editing.terms.acceptedAt)}`
+                    ) : (
+                      <>
+                        Not agreed yet
+                        <span className="block text-[13px] text-muted-foreground">
+                          {editing.terms ? `Agreed to an earlier version on ${tableDate(editing.terms.acceptedAt)}. ` : ""}They&rsquo;re asked when they next open the portal; it stays closed until they agree.
+                        </span>
+                      </>
+                    )}
+                  </dd>
                   <dt className="text-muted-foreground">Billing</dt>
                   <dd className="text-graphite">
                     <StripePanel key={editing.id} memberId={editing.id} canAct={canManageMoney} onChanged={() => router.refresh()} />
                   </dd>
+                  {/* Beyond the plan price (lib/stripe/extras.ts): the mailbox, and one-off invoices. */}
+                  <dt className="text-muted-foreground">Mailbox</dt>
+                  <dd className="text-graphite">
+                    <MailboxControl
+                      key={`mb-${editing.id}`}
+                      memberId={editing.id}
+                      mailbox={editing.mailbox}
+                      teammateOf={editing.teamOwnerId ? (members.find((x) => x.id === editing.teamOwnerId)?.name ?? "the team's owner") : null}
+                      canAct={canManageMoney}
+                      onChanged={() => {
+                        setBillingVersion((v) => v + 1);
+                        router.refresh();
+                      }}
+                    />
+                  </dd>
+                  {canManageMoney && (
+                    <>
+                      <dt className="text-muted-foreground">Invoice</dt>
+                      <dd className="text-graphite">
+                        <InvoiceComposer
+                          key={`inv-${editing.id}`}
+                          memberId={editing.id}
+                          payerName={editing.teamOwnerId ? (members.find((x) => x.id === editing.teamOwnerId)?.name ?? "the team's owner") : null}
+                          onChanged={() => {
+                            setBillingVersion((v) => v + 1);
+                            router.refresh();
+                          }}
+                        />
+                      </dd>
+                    </>
+                  )}
                   <dt className="text-muted-foreground">Added by</dt>
                   <dd className="text-graphite">
                     {{ admin: "Staff", import: "Member import", application: "Approved application", team: "Their team", stripe: "Stripe checkout" }[editing.source]}
@@ -664,7 +789,7 @@ export function MembersManager({
             )}
 
             {/* Billing history: what the member sees in Manage billing, read only. Only once there's a Stripe customer. */}
-            {editing?.stripeCustomerId && <BillingHistory key={`bh-${editing.id}`} memberId={editing.id} />}
+            {editing?.stripeCustomerId && <BillingHistory key={`bh-${editing.id}-${billingVersion}`} memberId={editing.id} />}
 
             <RecordSection title="Staff only" note="Never shown to the member.">
               {/* Label left, control right — the same Row as every other section. */}
@@ -712,6 +837,7 @@ export function MembersManager({
                 team={{
                   ownerName: editing.name,
                   company: editing.company,
+                  plan: editing.plan === "enterprise" ? "enterprise" : "team",
                   seats: planOf(editing.plan).seats,
                   teammates: members
                     .filter((m) => m.teamOwnerId === editing.id)
@@ -772,7 +898,7 @@ function MemberList({
             <Td className="hidden text-muted-foreground md:table-cell">{m.email}</Td>
             <Td className="hidden lg:table-cell">
               {planOf(m.plan).name}
-              {m.teamOwnerId && <span className="text-muted-foreground"> · teammate</span>}
+              {m.teamOwnerId && <span className="text-muted-foreground"> · {m.company || "teammate"}</span>}
               {compRunning(m.comp) && <span className="text-muted-foreground"> · complimentary</span>}
             </Td>
             <Td className="hidden tabular-nums text-muted-foreground md:table-cell">{tableDate(m.joinedAt)}</Td>
@@ -1060,7 +1186,14 @@ function BillingHistory({ memberId }: { memberId: string }) {
               {shown.map((inv) => {
                 const mark = invoiceMark(inv.status);
                 return (
-                  <InvoiceRow key={inv.id} title={monthOf(inv.periodStart)} mark={mark} detail={inv.number || "Club membership"} amount={inv.amount} when={invoiceWhen(inv, mark)}>
+                  <InvoiceRow
+                    key={inv.id}
+                    title={inv.label && inv.label !== "Mailbox" ? inv.label : monthOf(inv.periodStart)}
+                    mark={mark}
+                    detail={[inv.label === "Mailbox" ? "Mailbox" : inv.label ? "One-off invoice" : "Club membership", inv.number].filter(Boolean).join(" · ")}
+                    amount={inv.amount}
+                    when={invoiceWhen(inv, mark)}
+                  >
                     {inv.pdf && (
                       <a href={inv.pdf} target="_blank" rel="noreferrer noopener" className="inline-flex h-7 items-center gap-1 border border-border px-2 text-xs text-graphite hover:border-graphite">
                         PDF

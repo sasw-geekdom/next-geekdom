@@ -255,9 +255,9 @@ function LiveBillingDrawer({ open, onClose, billing, planName }: { open: boolean
                     return (
                       <InvoiceRow
                         key={inv.id}
-                        title={monthOf(inv.periodStart)}
+                        title={inv.label && inv.label !== "Mailbox" ? inv.label : monthOf(inv.periodStart)}
                         mark={mark}
-                        detail={`Club membership · ${planName}${inv.number ? ` · ${inv.number}` : ""}`}
+                        detail={`${inv.label === "Mailbox" ? "Mailbox" : inv.label ? "Invoice" : `Club membership · ${planName}`}${inv.number ? ` · ${inv.number}` : ""}`}
                         amount={inv.amount}
                         when={invoiceWhen(inv, mark)}
                       >

@@ -8,6 +8,8 @@ import { PageHeader, AdminSection } from "@/components/admin/page-header";
 import { buttonClass } from "@/components/ui/button";
 import { requireAdmin } from "@/lib/auth/session";
 import { can } from "@/lib/auth/roles";
+import { MembersTabs } from "@/components/admin/members-tabs";
+import { listTeams } from "@/lib/teams";
 
 export const metadata = { title: "Members" };
 
@@ -21,11 +23,12 @@ export default async function MembersPage(props: PageProps<"/portal/admin/member
   const me = await requireAdmin();
   const money = can(me.role, "members.money");
   const exports = can(me.role, "data.export");
-  const [members, logins, perks] = await Promise.all([
+  const [members, logins, perks, teams] = await Promise.all([
     listMembers(),
     // Firebase being slow or down shouldn't take the roster with it.
     loginStates().catch(() => new Map()),
     readPerkTags().catch(() => []),
+    listTeams().catch(() => []),
   ]);
   const rows: MemberRow[] = members.map((m) => ({
     ...m,
@@ -68,7 +71,9 @@ export default async function MembersPage(props: PageProps<"/portal/admin/member
         }
       />
       <AdminSection>
-        <MembersManager members={rows} perks={perks} canManageMoney={money} startAdding={add === "1"} startView={typeof view === "string" ? view : undefined} startMemberId={typeof m === "string" ? m : undefined} />
+        <MembersTabs active="people" people={active} teams={teams.length} />
+        <div className="mt-6" />
+        <MembersManager teams={teams.map((t) => ({ id: t.id, name: t.name, plan: t.plan, ownerId: t.ownerId, seats: t.seats, used: t.used }))} members={rows} perks={perks} canManageMoney={money} startAdding={add === "1"} startView={typeof view === "string" ? view : undefined} startMemberId={typeof m === "string" ? m : undefined} />
       </AdminSection>
     </>
   );

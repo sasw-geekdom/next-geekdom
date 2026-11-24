@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
-import { requireMember } from "@/lib/auth/session";
+import { requirePortalMember } from "@/lib/portal/gate";
 import { LOCATION } from "@/lib/site";
 import { FAQ_GROUPS, faqForMembers, getMemberResources } from "@/lib/content/member-resources";
 import { ARROW, HEADING, LINK_ARROW_ON_INK, MONO } from "@/components/site/section";
@@ -32,7 +32,7 @@ export const metadata = { title: "FAQ and resources" };
   are marked "To confirm" — a placeholder must never read as a policy.
 */
 export default async function ResourcesPage() {
-  await requireMember();
+  await requirePortalMember();
   // Edited by staff at /portal/admin/resources; the shipped text until then.
   const res = await getMemberResources();
   const slack = res.slackInviteUrl

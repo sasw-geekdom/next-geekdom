@@ -14,6 +14,11 @@ import { findBestCustomer, linkMember, summarize } from "@/lib/stripe/link";
 import { compActive } from "@/lib/perks";
 import { env } from "@/lib/env";
 import { planOf } from "@/lib/membership";
+import * as z from "zod";
+import { addMailbox, createOneOffInvoice, removeMailbox, setEnterpriseBilling } from "@/lib/stripe/extras";
+import { sendSafely } from "@/lib/email/resend";
+import { getTeamRecord } from "@/lib/teams";
+import { invoiceEmail } from "@/lib/email/member-templates";
 
 /*
   STAFF'S STRIPE CONTROLS in a member's slide-out (ADMIN ONLY):
@@ -82,7 +87,7 @@ export async function stripeSnapshot(memberId: string): Promise<StripeSnapshot> 
     club: s.club
       ? {
           status: s.club.status,
-          price: item?.price.unit_amount != null ? `$${item.price.unit_amount / 100}/${item.price.recurring?.interval ?? "month"}` : "",
+          price: item?.price.unit_amount != null ? `${usd(item.price.unit_amount)}/${item.price.recurring?.interval ?? "month"}` : "",
           next: periodEnd(s.club)?.toISOString() ?? null,
           canceling: s.club.cancel_at_period_end,
         }
@@ -259,3 +264,100 @@ export async function keepClubBilling(memberId: string): Promise<{ ok: boolean; 
     return { ok: false, message: e instanceof Error ? e.message : "Couldn't keep the membership." };
   }
 }
+
+/*
+  BEYOND THE PLAN PRICE (lib/stripe/extras.ts) — Management only, logged:
+  the mailbox add-on, one-off invoices, and an Enterprise account's custom
+  monthly amount.
+*/
+type Done = { ok: boolean; message: string };
+const failed = (e: unknown, fallback: string): Done => ({ ok: false, message: e instanceof Error ? e.message : fallback });
+
+export async function addMailboxAction(memberId: string): Promise<Done> {
+  const admin = await adminAllowed("members.money");
+  if (!admin) return { ok: false, message: MANAGEMENT_ONLY_MESSAGE };
+  try {
+    const message = await addMailbox(memberId, admin.name || admin.email);
+    const { m } = await member(memberId);
+    await logActivity(admin, { area: "members", action: "added a mailbox for", label: m.name, href: "/portal/admin/members" });
+    revalidatePath("/portal/admin/members");
+    return { ok: true, message };
+  } catch (e) {
+    return failed(e, "Couldn't add the mailbox.");
+  }
+}
+
+export async function removeMailboxAction(memberId: string): Promise<Done> {
+  const admin = await adminAllowed("members.money");
+  if (!admin) return { ok: false, message: MANAGEMENT_ONLY_MESSAGE };
+  try {
+    const message = await removeMailbox(memberId);
+    const { m } = await member(memberId);
+    await logActivity(admin, { area: "members", action: "removed the mailbox of", label: m.name, href: "/portal/admin/members" });
+    revalidatePath("/portal/admin/members");
+    return { ok: true, message };
+  } catch (e) {
+    return failed(e, "Couldn't remove the mailbox.");
+  }
+}
+
+const invoiceSchema = z.object({
+  lines: z
+    .array(
+      z.object({
+        description: z.string().trim().min(2, "Describe each line.").max(200),
+        cents: z.number().int().min(50, "Each line is at least $0.50.").max(10_000_000),
+      }),
+    )
+    .min(1, "Add at least one line.")
+    .max(10),
+  mode: z.enum(["charge", "send"]),
+  dueDays: z.number().int().min(1).max(60).default(7),
+});
+
+/** A one-off invoice, card only (lib/stripe/extras.ts). "send" emails them to pay it in the portal. */
+export async function oneOffInvoiceAction(memberId: string, input: z.input<typeof invoiceSchema>): Promise<Done> {
+  const admin = await adminAllowed("members.money");
+  if (!admin) return { ok: false, message: MANAGEMENT_ONLY_MESSAGE };
+  const parsed = invoiceSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Check the invoice and try again." };
+  const { lines, mode, dueDays } = parsed.data;
+  try {
+    const { invoice, payer, paid } = await createOneOffInvoice(memberId, lines, mode, dueDays, admin.name || admin.email);
+    const total = usd(invoice.amount_due || invoice.total);
+    const { m } = await member(memberId);
+    await logActivity(admin, { area: "members", action: `${mode === "charge" ? "charged" : "sent"} a ${total} invoice to`, label: m.name, href: "/portal/admin/members" });
+    revalidatePath("/portal/admin/members");
+    if (mode === "charge") {
+      return paid
+        ? { ok: true, message: `Charged ${total} to ${payer.name}'s card. They'll get a receipt.` }
+        : { ok: false, message: `The card was declined. The ${total} invoice is open — ${payer.name} can pay it in the portal with another card.` };
+    }
+    const due = invoice.due_date ? new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", month: "long", day: "numeric" }).format(new Date(invoice.due_date * 1000)) : `in ${dueDays} days`;
+    const mail = invoiceEmail({ name: payer.name, total, lines: lines.map((l) => [l.description, usd(l.cents)]), due, number: invoice.number ?? "" });
+    const sent = await sendSafely({ to: payer.email, subject: mail.subject, html: mail.html, text: mail.text });
+    return { ok: true, message: `${total} invoice sent to ${payer.name}, due ${due}.${sent ? "" : " (The email didn't send — tell them it's in Profile → Billing.)"}` };
+  } catch (e) {
+    return failed(e, "Couldn't create the invoice.");
+  }
+}
+
+/** An Enterprise account's monthly amount, on card autopay. `startOn`: "now" or an ISO date. */
+export async function enterpriseBillingAction(teamId: string, cents: number, startOn: string): Promise<Done> {
+  const admin = await adminAllowed("members.money");
+  if (!admin) return { ok: false, message: MANAGEMENT_ONLY_MESSAGE };
+  if (typeof teamId !== "string" || !teamId) return { ok: false, message: "Missing team." };
+  try {
+    const message = await setEnterpriseBilling(teamId, Math.round(Number(cents)), String(startOn), admin.name || admin.email);
+    const team = await getTeamRecord(teamId);
+    await logActivity(admin, { area: "members", action: `set Enterprise billing to ${usd(Math.round(Number(cents)))}/month for`, label: team?.name ?? "a team", href: "/portal/admin/members/teams" });
+    revalidatePath("/portal/admin/members/teams");
+    revalidatePath("/portal/admin/members");
+    return { ok: true, message };
+  } catch (e) {
+    return failed(e, "Couldn't set up the billing.");
+  }
+}
+
+const usd = (cents: number) =>
+  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: cents % 100 ? 2 : 0 }).format(cents / 100);

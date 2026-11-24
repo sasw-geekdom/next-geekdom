@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { createSession, SESSION_COOKIE } from "@/lib/auth/session";
 import { WELCOME_EVERY_SIGN_IN, WELCOME_SEEN_COOKIE } from "@/lib/onboarding";
+import { termsCurrent } from "@/lib/terms";
 import { getMemberByEmail } from "@/lib/admin/queries";
 
 /** Exchange a Firebase ID token for an httpOnly, server-verified session cookie. */
@@ -41,7 +42,8 @@ export async function POST(request: Request) {
   // every sign-in (WELCOME_EVERY_SIGN_IN); after, only a member who hasn't
   // finished it — everyone else is marked done here, for the session.
   const member = WELCOME_EVERY_SIGN_IN ? null : await getMemberByEmail(result.user.email).catch(() => null);
-  if (WELCOME_EVERY_SIGN_IN || (member && !member.onboarding.welcomedAt)) store.delete(WELCOME_SEEN_COOKIE);
+  // …or hasn't agreed to the CURRENT terms (lib/terms.ts) — agreeing sits on the welcome flow's first step.
+  if (WELCOME_EVERY_SIGN_IN || (member && (!member.onboarding.welcomedAt || !termsCurrent(member.terms)))) store.delete(WELCOME_SEEN_COOKIE);
   else store.set(WELCOME_SEEN_COOKIE, "1", { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: result.maxAge });
   store.set(SESSION_COOKIE, result.cookie, {
     httpOnly: true,

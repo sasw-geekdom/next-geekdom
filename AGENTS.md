@@ -324,7 +324,8 @@ same bug.
   email to `APPLICATION_REVIEW_EMAILS` (Monica; falls back to
   `TEAM_NOTIFY_EMAILS`).
 - **Three plans, one application** (`PLANS` in [lib/membership.ts](lib/membership.ts)):
-  Solo ($100), Team ($200), Enterprise (no listed price). The form opens on
+  Solo ($100), Team ($500 for up to 10 — Geekdom, November 2026; it was
+  $200), Enterprise (no listed price; a custom amount set per account). The form opens on
   a plan picker (`/apply?plan=team` preselects; /club's plan rows link that
   way); Team and Enterprise require a company. Figures come from `PLANS`,
   never typed. `MEMBERSHIP_PRICE_CENTS` is still the Solo price, for the
@@ -992,6 +993,27 @@ members use personal Gmail, and the hint hid their accounts.
   `FieldGroup`s, Save/Cancel pinned in its footer. Not inline forms above the
   list — Jesse found that "staggered". Mark the first field `data-autofocus`;
   React's `autoFocus` loses to `showModal()`.
+- **TEAMS ARE RECORDS** (Geekdom, November 2026: "teams is a string" — it
+  was the owner's free-text Company). [lib/teams.ts](lib/teams.ts): a
+  `teams` doc holds the name, plan (Team / Enterprise), seats and the
+  OWNER (who pays); the owner and every teammate carry `teamId`. The
+  owner model below is unchanged underneath — billing and status still
+  live on the owner — so the webhook and `syncTeamStatus` need nothing new.
+  - **Members → Teams** (`/portal/admin/members/teams`, a TAB on Members,
+    not a sidebar row — the sidebar fits 900px): the accounts, who pays,
+    seats used, monthly; "Create a team" around a current member who pays
+    (Management). The slide-out's people are the owner's TeamCard.
+  - **The member slide-out's Team is a DROPDOWN** of team records, never a
+    typed company: picking one makes them a teammate (`joinTeam` — plan,
+    company and status follow; refused if they pay for their own Club
+    subscription, pay for a team, or the seats are full); "No team" takes
+    a teammate off (their membership ends, as before). An owner's Team row
+    is read-only, and their Plan locks — it changes on the team.
+  - **A team record appears wherever an owner does** (`ensureTeamFor`):
+    a Team checkout (webhook), an approved Enterprise application, and
+    Management moving a member to Team/Enterprise. A team's name is its
+    people's `company`. Transactions READ BEFORE THEY WRITE — Firestore
+    refuses a read after a write (createTeam shipped that bug for an hour).
 - **Teams: a Team membership is up to 10 people, the owner included;
   Enterprise has no fixed cap** (`seats` in `PLANS`; Enterprise's cap is
   ours, pending Geekdom). [lib/team.ts](lib/team.ts). EACH PERSON IS STILL
@@ -1068,7 +1090,10 @@ members use personal Gmail, and the hint hid their accounts.
     (answers go nowhere).
   - **One "View" filter** (all current / past due / never signed in / no
     login) — not separate Status and Sign-in dropdowns, which read as
-    contradicting each other.
+    contradicting each other. **Paused / Canceled / All former members**
+    (Geekdom, November 2026) show former members in the main table, and
+    the fold below goes away; a **Plan** filter (Solo / Team / Enterprise)
+    sits beside it — a teammate counts under their team's plan.
   - **Record ids are auto ids that never change**; email and
     `stripeCustomerId` are fields, looked up by value. The webhook finds a
     member by customer-id doc, then the `stripeCustomerId` field, then (at
@@ -1076,6 +1101,20 @@ members use personal Gmail, and the hint hid their accounts.
     is linked, not duplicated. Only a total miss creates a `cus_`-keyed doc.
   - Join dates are stored at noon Central (midnight UTC is the day before
     here).
+- **THE TERMS OF MEMBERSHIP ARE AGREED BEFORE THE PORTAL OPENS** (Geekdom,
+  November 2026; [lib/terms.ts](lib/terms.ts)): a REQUIRED switch, "I agree
+  to the Terms of Membership" + "Read them ↗", under the directory switch
+  on the welcome flow's profile step (the two stacked, so Save still fits
+  1440×780). Recorded as `MemberDoc.terms` {version, acceptedAt} by
+  `acceptTerms` (member from the session). **The gate is the SERVER**:
+  every member page calls `requirePortalMember()`
+  ([lib/portal/gate.ts](lib/portal/gate.ts)), which sends a member without
+  the CURRENT version to /portal/welcome — a forged welcome cookie can't
+  skip it (tested); sign-in also withholds the cookie until terms are
+  current. Profile's membership panel shows "you agreed on …" and the
+  link; the admin slide-out has a Terms row. **GEEKDOM IS SENDING NEW
+  TERMS**: replace /terms's text and bump `TERMS_VERSION` — everyone is
+  asked again.
 - **THE WELCOME FLOW IS REQUIRED** (Geekdom, November 2026) — no "Skip",
   no "Set this up later". Profile needs a PHOTO, a HEADLINE and "ABOUT YOU"
   (≥20 characters; links optional); a member with nothing on file must
@@ -1121,6 +1160,36 @@ members use personal Gmail, and the hint hid their accounts.
   on file (no customer, not comped, not a teammate). The profile's billing
   panel shows the real "Add a card" for them — the sample billing is only
   for staff previews now.
+- **BEYOND THE PLAN PRICE — all card, Management only, logged**
+  ([lib/stripe/extras.ts](lib/stripe/extras.ts); Geekdom, November 2026):
+  - **Enterprise: a custom monthly amount, card autopay** — the team
+    slide-out's Billing: a subscription on the owner's card priced inline
+    against the "Club Enterprise" product (`STRIPE_PRODUCT_ENTERPRISE`),
+    today or on a date; changing it applies from the next bill.
+    `TeamDoc.monthlyCents` is the record.
+  - **Mailbox, $50/month** (`STRIPE_PRICE_MAILBOX`, lookup
+    `club_mailbox_monthly`): the member slide-out's Mailbox row. The
+    PARTIAL MONTH IS CHARGED at once (an item on the payer's subscription,
+    `always_invoice`). NOT free for complimentary members — their
+    subscription is paused, so the mailbox gets its OWN subscription
+    (`kind: mailbox`); a future perk tag making mail complimentary would
+    pause that one. A teammate's goes to the owner. `MemberDoc.mailbox`.
+    **A mailbox subscription is never the membership**: isClubSubscription
+    and the webhook skip it (it would otherwise become their
+    stripeSubscriptionId); the money row counts it as revenue, not a member.
+  - **One-off invoices, card only** (a company event in the space): the
+    slide-out's "New invoice…" — lines, then CHARGE the card on file now,
+    or SEND it (due in 7/14/30 days, `invoiceEmail`) to pay with Pay now in
+    the portal — members still never see Stripe's pages. A teammate's
+    goes to the owner. Billing lists name it by its description, the
+    receipt says what it was for (`receiptItem`), and a declined one-off
+    doesn't send the "membership payment failed" email.
+  - Tested on the sandbox (removed after): Enterprise $2,500 → $3,000; a
+    teammate's mailbox on the owner's bill ($50 now); a $1,200 one-off
+    charged; a $450 one sent (open, due in 7 days, shown in their
+    billing); a no-plan member's mailbox on its own; money row $3,100,
+    1 paying. **At launch, Production needs** the live `STRIPE_PRICE_TEAM`
+    ($500), `STRIPE_PRICE_MAILBOX` and `STRIPE_PRODUCT_ENTERPRISE`.
 - **Staff's Stripe panel** in the member slide-out
   ([stripe-actions.ts](lib/admin/stripe-actions.ts)): Club billing, card
   on file, any OTHER plan they pay (Coworks), "Open in Stripe"; **Link**

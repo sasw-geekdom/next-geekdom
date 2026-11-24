@@ -35,6 +35,8 @@ export interface BillingInvoice {
   pdf: string | null;
   /** Stripe's hosted invoice page — the receipt once paid. */
   hosted: string | null;
+  /** NOT the membership: a one-off invoice's description, or "Mailbox" (lib/stripe/extras.ts). Null for the membership's own bills. */
+  label: string | null;
 }
 
 export interface BillingView {
@@ -121,6 +123,7 @@ export async function getBilling(member: Pick<MemberDoc, "stripeCustomerId" | "s
       amount: money(i.status === "paid" ? i.amount_paid : i.amount_due, i.currency),
       status: (i.status ?? "open") as BillingInvoice["status"],
       periodStart: iso(i.lines?.data[0]?.period?.start ?? i.created),
+      label: i.metadata?.kind === "one_off" ? i.description || "Invoice" : i.parent?.subscription_details?.metadata?.kind === "mailbox" ? "Mailbox" : null,
       pdf: i.invoice_pdf ?? null,
       hosted: i.hosted_invoice_url ?? null,
     }));

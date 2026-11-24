@@ -82,7 +82,8 @@ async function readClubMoney(): Promise<ClubMoney> {
   for (const status of ["active", "past_due", "trialing"] as const)
     for await (const s of stripe.subscriptions.list({ status, limit: 100 })) live.push(s);
   await nameProducts(live);
-  const club = live.filter((s) => isClubSubscription(s, names));
+  // The membership, and a mailbox billed on its own (lib/stripe/extras.ts) — both Club billing.
+  const club = live.filter((s) => isClubSubscription(s, names) || s.metadata?.kind === "mailbox");
   const clubIds = new Set(club.map((s) => s.id));
 
   let recurringCents = 0;
@@ -92,6 +93,11 @@ async function readClubMoney(): Promise<ClubMoney> {
   let paused = 0;
   let pastDue = 0;
   for (const s of club) {
+    // A mailbox billed on its own is revenue, not a member.
+    if (s.metadata?.kind === "mailbox") {
+      if (!s.pause_collection && s.status !== "trialing") recurringCents += s.items.data.reduce((sum, i) => sum + monthly(i), 0);
+      continue;
+    }
     if (s.status === "trialing") {
       startingLater++;
       continue;
@@ -116,7 +122,7 @@ async function readClubMoney(): Promise<ClubMoney> {
     if (!ended.has(id)) {
       const sub = await stripe.subscriptions.retrieve(id).catch(() => null);
       if (sub) await nameProducts([sub]);
-      ended.set(id, Boolean(sub && isClubSubscription(sub, names)));
+      ended.set(id, Boolean(sub && (isClubSubscription(sub, names) || sub.metadata?.kind === "mailbox")));
     }
     return ended.get(id)!;
   }

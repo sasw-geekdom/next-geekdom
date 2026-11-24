@@ -84,6 +84,12 @@ export interface Member {
   teamOwnerId: string | null;
   profile: MemberProfile | null;
   onboarding: { done: string[]; dismissed: boolean; firstSeenAt: string | null; welcomedAt: string | null };
+  /** A mailbox add-on, if they have one (lib/stripe/extras.ts). */
+  mailbox: { since: string; separate: boolean } | null;
+  /** The team or Enterprise account they're on (lib/teams.ts) — owner or teammate. */
+  teamId: string | null;
+  /** The Terms of Membership they agreed to (lib/terms.ts), or null. */
+  terms: { version: string; acceptedAt: string } | null;
   portalInvitedAt: string | null;
   /** A complimentary period from a perk tag (lib/perks.ts), running or ended. */
   comp: CompPeriod | null;

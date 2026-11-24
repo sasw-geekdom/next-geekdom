@@ -2,7 +2,7 @@ import "server-only";
 
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
-import { COLLECTIONS, type MemberDoc, type MemberStatus } from "@/lib/firebase/collections";
+import { COLLECTIONS, type MemberDoc, type MemberStatus, type TeamDoc } from "@/lib/firebase/collections";
 import { planOf } from "@/lib/membership";
 import { ensureLogin } from "@/lib/admin/member-logins";
 import { sendSafely } from "@/lib/email/resend";
@@ -25,7 +25,17 @@ import { teamInviteEmail, teamRemovedEmail } from "@/lib/email/member-templates"
 
   Used by the owner (Profile → Your team) and by staff (Members). Callers
   check who's asking; these functions check what's allowed.
+
+  THE TEAM RECORD (lib/teams.ts) sits over this: when the owner has one
+  (`teamId`), its name and seats win over the owner's Company and the
+  plan's default, and every teammate added carries its id.
 */
+
+/** The owner's team record, if they have one. */
+async function recordOf(owner: MemberDoc | undefined): Promise<TeamDoc | null> {
+  if (!owner?.teamId) return null;
+  return ((await getAdminDb().collection(COLLECTIONS.teams).doc(owner.teamId).get()).data() as TeamDoc | undefined) ?? null;
+}
 
 const CURRENT: MemberStatus[] = ["active", "trialing", "past_due"];
 const members = () => getAdminDb().collection(COLLECTIONS.members);
@@ -45,6 +55,7 @@ export interface Team {
   seats: number | null;
   /** Teammates only (not the owner). */
   teammates: Teammate[];
+  plan: "team" | "enterprise";
 }
 
 /** The team a member owns, or null if their plan has no team. */
@@ -52,12 +63,13 @@ export async function getTeam(ownerId: string): Promise<Team | null> {
   const ownerSnap = await members().doc(ownerId).get();
   const owner = ownerSnap.data() as MemberDoc | undefined;
   if (!owner || owner.teamOwnerId || planOf(owner.plan).seats === 1) return null;
-  const snap = await members().where("teamOwnerId", "==", ownerId).get();
+  const [snap, record] = await Promise.all([members().where("teamOwnerId", "==", ownerId).get(), recordOf(owner)]);
   return {
     ownerId,
     ownerName: owner.name,
-    company: owner.company ?? "",
-    seats: planOf(owner.plan).seats,
+    company: record?.name ?? owner.company ?? "",
+    seats: record ? record.seats : planOf(owner.plan).seats,
+    plan: record?.plan ?? (owner.plan === "enterprise" ? "enterprise" : "team"),
     teammates: snap.docs
       .map((d) => {
         const m = d.data() as MemberDoc;
@@ -94,11 +106,15 @@ export async function addTeammate(ownerId: string, input: { name: string; email:
       if (!CURRENT.includes(owner.status)) throw new Error("The membership isn't active, so teammates can't be added.");
       if (owner.email === email) throw new Error("That's the team owner's own email.");
       ownerName = owner.name;
-      company = owner.company ?? "";
+      const record = owner.teamId ? ((await tx.get(getAdminDb().collection(COLLECTIONS.teams).doc(owner.teamId))).data() as TeamDoc | undefined) : undefined;
+      company = record?.name ?? owner.company ?? "";
+      const seats = record ? record.seats : plan.seats;
 
       const team = await tx.get(members().where("teamOwnerId", "==", ownerId));
-      if (plan.seats !== null && team.size + 1 >= plan.seats) {
-        throw new Error(`All ${plan.seats} seats are taken. Remove someone to add someone new.`);
+      // Current teammates only: a canceled one no longer holds a seat.
+      const taken = team.docs.filter((d) => CURRENT.includes((d.data() as MemberDoc).status)).length;
+      if (seats !== null && taken + 1 >= seats) {
+        throw new Error(`All ${seats} seats are taken. Remove someone to add someone new.`);
       }
       const clash = await tx.get(members().where("email", "==", email).limit(1));
       const existing = clash.docs[0];
@@ -116,6 +132,7 @@ export async function addTeammate(ownerId: string, input: { name: string; email:
           plan: owner.plan ?? plan.id,
           company: company || FieldValue.delete(),
           teamOwnerId: ownerId,
+          ...(owner.teamId ? { teamId: owner.teamId } : {}),
           formerTeamOwnerId: FieldValue.delete(),
           updatedAt: now,
         });
@@ -127,6 +144,7 @@ export async function addTeammate(ownerId: string, input: { name: string; email:
           plan: owner.plan ?? plan.id,
           ...(company ? { company } : {}),
           teamOwnerId: ownerId,
+          ...(owner.teamId ? { teamId: owner.teamId } : {}),
           stripeCustomerId: null,
           stripeSubscriptionId: null,
           currentPeriodEnd: null,
@@ -160,6 +178,7 @@ export async function removeTeammate(ownerId: string, teammateId: string): Promi
   await ref.update({
     status: "canceled",
     teamOwnerId: FieldValue.delete(),
+    teamId: FieldValue.delete(),
     formerTeamOwnerId: ownerId,
     updatedAt: Timestamp.now(),
   });

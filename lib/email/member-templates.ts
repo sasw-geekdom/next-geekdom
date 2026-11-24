@@ -385,21 +385,41 @@ export function adminAccessEmail(v: { name: string; by: string; role?: string })
 
 const BILLING = url("/portal/profile#billing");
 
-export function receiptEmail(v: { name: string; amount: string; date: string; card: string; invoiceNumber: string }): Email {
+/** `item`: what was paid for — "Club membership" (the default), "Mailbox", or a one-off invoice's description. */
+export function receiptEmail(v: { name: string; amount: string; date: string; card: string; invoiceNumber: string; item?: string }): Email {
+  const item = v.item || "Club membership";
   return email(
     `Your Geekdom receipt — ${v.amount}`,
-    `Paid ${v.amount} for your Club membership on ${v.date}.`,
+    `Paid ${v.amount} for ${item === "Club membership" ? "your Club membership" : item} on ${v.date}.`,
     eyebrow("Receipt") +
       h1(`Thanks, ${first(v.name)}. You're paid up.`) +
       details([
-        ["Club membership", v.amount],
+        [item, v.amount],
         ["Paid", v.date],
         ["Card", v.card],
         ["Invoice", v.invoiceNumber],
       ]) +
       button(BILLING, "View invoices and receipts") +
       muted("Your PDF receipt is in the member portal, under Manage billing."),
-    `Paid ${v.amount} for your Geekdom Club membership on ${v.date} (${v.card}). Invoice ${v.invoiceNumber}. Receipts: ${BILLING}`,
+    `Paid ${v.amount} for ${item === "Club membership" ? "your Geekdom Club membership" : item} on ${v.date} (${v.card}). Invoice ${v.invoiceNumber}. Receipts: ${BILLING}`,
+  );
+}
+
+/**
+ * A ONE-OFF INVOICE to pay (lib/stripe/extras.ts) — a company event in the
+ * space, say. Card only, paid with Pay now in their portal: members never
+ * see Stripe's own pages.
+ */
+export function invoiceEmail(v: { name: string; total: string; lines: [string, string][]; due: string; number: string }): Email {
+  return email(
+    `An invoice from Geekdom — ${v.total}`,
+    `${v.total}, due ${v.due}. Pay it by card in the member portal.`,
+    eyebrow("Invoice") +
+      h1(`Hi ${first(v.name)}, here's your invoice.`) +
+      details([...v.lines, ["Total", v.total], ["Due", v.due], ["Invoice", v.number]]) +
+      button(BILLING, "Pay it in the portal") +
+      muted("Sign in, open Profile → Billing, and use Pay now — by card. Questions about it? Reply to this email."),
+    `Geekdom invoice ${v.number}: ${v.lines.map(([d, a]) => `${d} ${a}`).join("; ")}. Total ${v.total}, due ${v.due}. Pay by card in the member portal: ${BILLING}`,
   );
 }
 

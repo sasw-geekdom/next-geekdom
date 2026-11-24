@@ -2,7 +2,7 @@ import { IntrosCard } from "@/components/portal/intros-card";
 import { introsFor } from "@/lib/portal/intros";
 import { withStarters } from "@/lib/topics";
 import { listDirectory, topicsInUse } from "@/lib/directory";
-import { requireMember } from "@/lib/auth/session";
+import { requirePortalMember } from "@/lib/portal/gate";
 import { getMemberByEmail } from "@/lib/admin/queries";
 import { formatPrice, hasTeam, planOf } from "@/lib/membership";
 import { getTeam } from "@/lib/team";
@@ -13,7 +13,9 @@ import { addMyTeammate, removeMyTeammate } from "@/lib/portal/team-actions";
 import { MOCK_BILLING, MOCK_MEMBER_CARD, MOCK_MY_PROFILE } from "@/data/mock/portal";
 import { saveMyProfile } from "@/lib/portal/profile-actions";
 import type { Audience } from "@/lib/membership";
-import { HEADING, LINK, MONO } from "@/components/site/section";
+import { ARROW, HEADING, LINK, LINK_ARROW, MONO } from "@/components/site/section";
+import { ArrowUpRight } from "lucide-react";
+import { TERMS_PATH, termsCurrent } from "@/lib/terms";
 import { PortalPage } from "@/components/portal/portal-page";
 import { ProfileCard } from "@/components/portal/profile-card";
 import { ManageBillingButton } from "@/components/portal/billing-drawer";
@@ -67,7 +69,7 @@ function longDate(iso: string | null): string | null {
   (not as a page banner). Staff see the page as a labeled preview.
 */
 export default async function ProfilePage(props: PageProps<"/portal/profile">) {
-  const user = await requireMember();
+  const user = await requirePortalMember();
   const member = await getMemberByEmail(user.email);
   const { billing } = await props.searchParams;
   // The member's own card, or — for a team account — a SAMPLE member's,
@@ -139,7 +141,7 @@ export default async function ProfilePage(props: PageProps<"/portal/profile">) {
 
           {team && (
             <TeamCard
-              team={{ ownerName: team.ownerName, company: team.company, seats: team.seats, teammates: team.teammates }}
+              team={{ ownerName: team.ownerName, company: team.company, seats: team.seats, teammates: team.teammates, plan: team.plan }}
               add={addMyTeammate}
               remove={removeMyTeammate}
             />
@@ -276,6 +278,19 @@ export default async function ProfilePage(props: PageProps<"/portal/profile">) {
               </>
             )}
           </div>
+          {/* THE TERMS they agreed to — readable any time (Geekdom, November 2026). Staff previews have none. */}
+          {member && (
+            <p className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-t border-border px-6 py-4 text-sm sm:px-7">
+              <span className="text-muted-foreground">
+                Terms of Membership
+                {member.terms && termsCurrent(member.terms) ? ` · you agreed on ${longDate(member.terms.acceptedAt)}` : ""}
+              </span>
+              <a href={TERMS_PATH} target="_blank" rel="noopener" className={cn(LINK_ARROW, "text-sm")}>
+                Read the terms
+                <ArrowUpRight aria-hidden="true" className={ARROW.external} />
+              </a>
+            </p>
+          )}
         </section>
       </div>
     </PortalPage>

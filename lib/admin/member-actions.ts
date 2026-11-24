@@ -13,6 +13,7 @@ import { ensureLogin } from "@/lib/admin/member-logins";
 import type { ActionResult } from "@/lib/content/types";
 import { logActivity } from "@/lib/admin/activity";
 import { addTeammate, getTeam, removeTeammate, syncTeamStatus } from "@/lib/team";
+import { ensureTeamFor, joinTeam } from "@/lib/teams";
 import { notifyTeammates } from "@/lib/team-notify";
 import { hasTeam, PLAN_IDS } from "@/lib/membership";
 import { applyPerks, readPerkTags } from "@/lib/perks-server";
@@ -69,6 +70,9 @@ const memberSchema = z.object({
   exitReason: z.enum(EXIT_REASON_IDS).nullable().default(null),
   exitNote: z.string().trim().max(EXIT_NOTE_MAX).default(""),
   notify: z.boolean().default(true),
+  // THE TEAM DROPDOWN (lib/teams.ts): the team they should be on, "" for none.
+  // Undefined leaves it as it is (adding a member, or an owner).
+  teamId: z.string().max(64).optional(),
 });
 
 export type MemberInput = z.input<typeof memberSchema>;
@@ -82,7 +86,7 @@ export async function saveMember(input: MemberInput): Promise<ActionResult> {
   const user = await requireAdmin();
   const parsed = memberSchema.safeParse(input);
   if (!parsed.success) return { ok: false, fieldErrors: fieldErrors(parsed.error) };
-  const { id, year, month, day, exitReason, exitNote, notify, ...data } = parsed.data;
+  const { id, year, month, day, exitReason, exitNote, notify, teamId, ...data } = parsed.data;
 
   // Noon Central, not midnight UTC — midnight UTC is the previous evening
   // here, and the profile would show the day before they joined.
@@ -130,6 +134,12 @@ export async function saveMember(input: MemberInput): Promise<ActionResult> {
     if (Object.keys(errors).length) return { ok: false, error: MANAGEMENT_ONLY_MESSAGE, fieldErrors: errors };
   }
 
+  // AN OWNER'S PLAN IS THEIR TEAM'S: it changes on the team (Members → Teams),
+  // where everyone on it follows.
+  if (before?.teamId && !before.teamOwnerId && (before.plan ?? "solo") !== data.plan) {
+    return { ok: false, fieldErrors: { plan: "They pay for a team — change the plan on the team, in Members → Teams." } };
+  }
+
   // A Stripe-billed member's status is Stripe's: the webhook would overwrite
   // an edit here on the next billing event, so don't pretend otherwise.
   const status =
@@ -147,7 +157,8 @@ export async function saveMember(input: MemberInput): Promise<ActionResult> {
     notes: data.notes,
     // A teammate's plan is their team's; staff change it on the owner.
     ...(before?.teamOwnerId ? {} : { plan: data.plan }),
-    ...(data.company ? { company: data.company } : before?.company ? { company: FieldValue.delete() } : {}),
+    // A team's people carry the TEAM's name as their company (lib/teams.ts); it changes on the team.
+    ...(before?.teamId ? {} : data.company ? { company: data.company } : before?.company ? { company: FieldValue.delete() } : {}),
     joinedAt: Timestamp.fromDate(new Date(joined)),
     updatedAt: Timestamp.now(),
   };
@@ -202,6 +213,26 @@ export async function saveMember(input: MemberInput): Promise<ActionResult> {
     }
   }
 
+  // MANAGEMENT MOVED A MEMBER TO TEAM OR ENTERPRISE: they pay for an account
+  // now, so it gets its team record, named after their company.
+  if (!before?.teamOwnerId && hasTeam(data.plan) && status === "active") await ensureTeamFor(ref.id, user.name || user.email);
+
+  // THE TEAM DROPDOWN: on a team, moved to another, or taken off one.
+  let teamNote: string | null = null;
+  if (before && teamId !== undefined && !(before.teamId && !before.teamOwnerId) && teamId !== (before.teamId ?? "")) {
+    if (teamId) {
+      const res = await joinTeam(ref.id, teamId);
+      if (!res.ok) return { ok: false, error: `Saved, but ${res.error}`, fieldErrors: { teamId: res.error } };
+      teamNote = res.message;
+      await logActivity(user, { area: "members", action: "added to a team", label: data.name, href: "/portal/admin/members" });
+    } else if (before.teamOwnerId) {
+      const res = await removeTeammate(before.teamOwnerId, ref.id);
+      if (!res.ok) return { ok: false, error: `Saved, but ${res.error}` };
+      teamNote = `${data.name} is off the team, and their membership has ended.`;
+      await logActivity(user, { area: "members", action: "removed from a team", label: data.name, href: "/portal/admin/members" });
+    }
+  }
+
   // A PERK TAG added or removed (lib/perks-server.ts): start or end a
   // complimentary period, pausing or resuming their Stripe billing.
   let perkNote: string | null = null;
@@ -226,7 +257,8 @@ export async function saveMember(input: MemberInput): Promise<ActionResult> {
   if (!login.ok) {
     return { ok: false, error: `Saved, but their sign-in couldn't be set up: ${login.error}` };
   }
-  const note = [perkNote, mailNote].filter(Boolean).join(" ");
+  revalidatePath("/portal/admin/teams");
+  const note = [teamNote, perkNote, mailNote].filter(Boolean).join(" ");
   return { ok: true, id: ref.id, ...(note ? { note } : {}) };
 }
 

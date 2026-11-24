@@ -26,6 +26,7 @@ import {
 import { planOf } from "@/lib/membership";
 import { logActivity } from "@/lib/admin/activity";
 import { ensureLogin } from "@/lib/admin/member-logins";
+import { ensureTeamFor } from "@/lib/teams";
 
 export interface ActionResult {
   ok: boolean;
@@ -239,12 +240,14 @@ async function addEnterpriseMember(applicationId: string, a: ApplicationDoc): Pr
         plan: "enterprise",
         ...(a.company ? { company: a.company } : {}),
       };
-      await col.add(doc);
+      const added = await col.add(doc);
+      await ensureTeamFor(added.id, "Approved application");
     } else {
       await existing.docs[0].ref.set(
         { status: "active", plan: "enterprise", applicationId, ...(a.company ? { company: a.company } : {}), updatedAt: now },
         { merge: true },
       );
+      await ensureTeamFor(existing.docs[0].id, "Approved application");
     }
     const login = await ensureLogin(email, a.name);
     return login.ok;

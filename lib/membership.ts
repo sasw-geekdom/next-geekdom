@@ -35,7 +35,7 @@ export interface Plan {
  */
 export const PLANS: Plan[] = [
   { id: "solo", name: "Solo", priceCents: 10_000, blurb: "For one founder or builder.", seats: 1 },
-  { id: "team", name: "Team", priceCents: 20_000, blurb: "For a company of up to 10 people.", seats: 10 },
+  { id: "team", name: "Team", priceCents: 50_000, blurb: "For a company of up to 10 people.", seats: 10 },
   { id: "enterprise", name: "Enterprise", priceCents: null, blurb: "For larger teams and corporate partners. Let's talk.", seats: null },
 ];
 

@@ -14,6 +14,7 @@ import { WelcomeFlow, type MembershipCase } from "@/components/portal/welcome-fl
 import { listDirectory, topicsInUse } from "@/lib/directory";
 import { prefillFromApplication } from "@/lib/application-prefill";
 import { withStarters } from "@/lib/topics";
+import { termsCurrent } from "@/lib/terms";
 
 export const metadata = { title: "Welcome" };
 
@@ -53,7 +54,7 @@ export default async function WelcomePage() {
         <WelcomeFlow
           preview
           topicSuggestions={(await suggestedTopics())}
-          member={{ name: user.name ?? "Geekdom team", photo: null, plan: "Solo", profile: { headline: "", role: "", company: "", audience: "", askMeAbout: [], lookingFor: "", bio: "", website: "", linkedin: "", listed: true } }}
+          member={{ name: user.name ?? "Geekdom team", photo: null, plan: "Solo", profile: { headline: "", role: "", company: "", audience: "", askMeAbout: [], lookingFor: "", bio: "", website: "", linkedin: "", listed: true }, termsAgreed: false }}
           membership={{ kind: "complimentary", label: "DEVSA community", until: compDate(new Date(new Date().getTime() + 365 * 86_400_000).toISOString()) }}
         />
       </PortalPage>
@@ -122,6 +123,7 @@ export default async function WelcomePage() {
             linkedin: start.linkedin,
             listed: p?.listed !== false,
           },
+          termsAgreed: termsCurrent(member.terms),
         }}
         membership={membership}
         topicSuggestions={await suggestedTopics()}

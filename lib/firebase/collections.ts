@@ -36,7 +36,29 @@ export const COLLECTIONS = {
   intros: "intros",
   /** The intro limits: `${memberId}_${day}` (5 a day) and `pair_${from}_${to}` (once a week). */
   introLimits: "introLimits",
+  /** Team and Enterprise accounts — the company, its plan, seats and who pays (lib/teams.ts). */
+  teams: "teams",
 } as const;
+
+/**
+ * A TEAM OR ENTERPRISE ACCOUNT (lib/teams.ts). The people on it are members
+ * in their own right (lib/team.ts); this is the account they share: its
+ * name, plan, seats and the member who pays (the OWNER — their status and
+ * Stripe billing are the team's).
+ */
+export interface TeamDoc {
+  name: string;
+  plan: "team" | "enterprise";
+  /** The member who pays. Teammates point at them (`MemberDoc.teamOwnerId`). */
+  ownerId: string;
+  /** Owner included. Null = no cap (Enterprise). */
+  seats: number | null;
+  /** ENTERPRISE ONLY: the custom monthly amount Management agreed, in cents. Null = not set. */
+  monthlyCents?: number | null;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  createdBy: string;
+}
 
 /**
  * An event request (/club) or a Studio partner inquiry (/studio), reviewed
@@ -354,6 +376,16 @@ export interface MemberDoc {
    * skipped, and whether they folded the panel away with "Not now".
    */
   onboarding?: { done: string[]; dismissed?: boolean; firstSeenAt?: Timestamp; welcomedAt?: Timestamp };
+  /**
+   * A MAILBOX ($50/month, lib/stripe/extras.ts): where it's billed — an item
+   * on the payer's Club subscription, or a mailbox-only subscription when
+   * theirs is paused (complimentary) or there isn't one.
+   */
+  mailbox?: { since: Timestamp; by: string; subscriptionId: string; itemId: string; separate: boolean };
+  /** The team or Enterprise account they're on (lib/teams.ts) — the owner's and every teammate's. */
+  teamId?: string;
+  /** The Terms of Membership they agreed to, and when (lib/terms.ts). The portal stays closed until it's the current version. */
+  terms?: { version: string; acceptedAt: Timestamp };
   /** When the launch invitation (lib/invitations.ts) went to them. */
   portalInvitedAt?: Timestamp;
   /** Staff-only grouping ("founding member", "former coworking"). Never shown to members. */

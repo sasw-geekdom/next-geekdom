@@ -19,6 +19,7 @@ import { PLAN_IDS, type PlanId } from "@/lib/membership";
 import { syncTeamStatus } from "@/lib/team";
 import type { ApplicationDoc } from "@/lib/firebase/collections";
 import { logActivity } from "@/lib/admin/activity";
+import { ensureTeamFor } from "@/lib/teams";
 
 /**
  * Stripe webhook — the only thing that promotes an applicant to a member.
@@ -226,6 +227,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   if (existing && subscription && staying(subscription)) await ref.update({ cancellation: FieldValue.delete() }).catch(() => undefined);
   // A returning owner's teammates come back with them.
   if (record.status) await syncTeamStatus(ref.id, record.status);
+  // A Team (or Enterprise) checkout is an account: give it its team record (lib/teams.ts).
+  if (plan === "team" || plan === "enterprise") await ensureTeamFor(ref.id, "Stripe").catch((e) => console.error("[stripe] team record", e));
 
   // The application they came through is now a membership — its history
   // shows "Paid", and its payment-link control goes away.
@@ -267,6 +270,18 @@ async function syncSubscription(subscription: Stripe.Subscription) {
     typeof subscription.customer === "string"
       ? subscription.customer
       : subscription.customer.id;
+
+  // A MAILBOX billed on its own (lib/stripe/extras.ts) is an add-on, never the
+  // membership: it must not become the member's stripeSubscriptionId or set
+  // their status. When it ends, the mailbox comes off their record.
+  if (subscription.metadata?.kind === "mailbox") {
+    if (subscription.status === "canceled" && subscription.metadata.memberId) {
+      const mref = getAdminDb().collection(COLLECTIONS.members).doc(subscription.metadata.memberId);
+      const m = (await mref.get()).data() as MemberDoc | undefined;
+      if (m?.mailbox?.subscriptionId === subscription.id) await mref.update({ mailbox: FieldValue.delete(), updatedAt: Timestamp.now() });
+    }
+    return null;
+  }
 
   const { ref, existing } = await findMember(customerId);
 
@@ -369,11 +384,22 @@ async function invoicePaid(inv: Stripe.Invoice) {
     date: longDate(new Date(((inv.status_transitions?.paid_at ?? inv.created) || 0) * 1000)),
     card: await invoiceCard(inv),
     invoiceNumber: inv.number ?? "",
+    item: receiptItem(inv),
   });
   await sendSafely({ to: m.email, subject: mail.subject, html: mail.html, text: mail.text });
 }
 
+/** What a paid invoice was FOR, in the receipt's words: a one-off's description, a mailbox, or the membership. */
+function receiptItem(inv: Stripe.Invoice): string {
+  if (inv.metadata?.kind === "one_off") return inv.description || "Invoice";
+  if (inv.parent?.subscription_details?.metadata?.kind === "mailbox") return "Mailbox";
+  return "Club membership";
+}
+
 async function invoiceFailed(inv: Stripe.Invoice) {
+  // A one-off charge that's declined is reported to the admin who made it, and stays open to pay in the portal —
+  // "your membership payment didn't go through" would be the wrong email.
+  if (inv.metadata?.kind === "one_off") return;
   const { existing } = await findMember(customerOf(inv));
   if (!existing) return;
   const m = existing.data() as MemberDoc;

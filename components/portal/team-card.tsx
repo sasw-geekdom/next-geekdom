@@ -26,6 +26,8 @@ export interface TeamView {
   /** Owner included. Null = no fixed cap. */
   seats: number | null;
   teammates: { id: string; name: string; email: string; status: string }[];
+  /** Enterprise or Team — what the card's label calls it. Team when absent. */
+  plan?: "team" | "enterprise";
 }
 
 const CURRENT = ["active", "trialing", "past_due"];
@@ -120,7 +122,7 @@ export function TeamCard({
   return (
     <section className={cn(tone === "light" && "border border-border bg-bone-light p-6 sm:p-7")}>
       <div className="flex items-center justify-between gap-4">
-        <h2 className={cn(MONO.label, "text-muted-foreground")}>{team.company ? `${team.company} · Team` : "Your team"}</h2>
+        <h2 className={cn(MONO.label, "text-muted-foreground")}>{team.company ? `${team.company} · ${team.plan === "enterprise" ? "Enterprise" : "Team"}` : "Your team"}</h2>
         <span className={cn(MONO.label, "tabular-nums text-graphite")}>{seatsLine}</span>
       </div>
       <p className="mt-3 text-sm leading-relaxed text-muted-foreground">

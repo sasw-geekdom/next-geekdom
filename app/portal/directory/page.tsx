@@ -1,4 +1,4 @@
-import { requireMember } from "@/lib/auth/session";
+import { requirePortalMember } from "@/lib/portal/gate";
 import { listDirectory, topicsInUse } from "@/lib/directory";
 import { getMemberByEmail } from "@/lib/admin/queries";
 import { DirectoryBrowser } from "@/components/portal/directory-browser";
@@ -13,7 +13,7 @@ export const metadata = { title: "Directory" };
   Members upload their own photo; until then, initials.
 */
 export default async function DirectoryPage(props: PageProps<"/portal/directory">) {
-  const user = await requireMember();
+  const user = await requirePortalMember();
   const { m, intro } = await props.searchParams;
   const [members, me] = await Promise.all([listDirectory().catch(() => []), getMemberByEmail(user.email).catch(() => null)]);
   return (

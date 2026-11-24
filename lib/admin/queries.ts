@@ -106,6 +106,8 @@ function toMember(id: string, doc: MemberDoc): Member {
     plan: doc.plan ?? "solo",
     company: doc.company ?? "",
     teamOwnerId: doc.teamOwnerId ?? null,
+    teamId: doc.teamId ?? null,
+    mailbox: doc.mailbox ? { since: iso(doc.mailbox.since) ?? "", separate: doc.mailbox.separate } : null,
     profile: doc.profile ?? null,
     onboarding: {
       done: doc.onboarding?.done ?? [],
@@ -114,6 +116,7 @@ function toMember(id: string, doc: MemberDoc): Member {
       welcomedAt: iso(doc.onboarding?.welcomedAt),
     },
     portalInvitedAt: iso(doc.portalInvitedAt),
+    terms: doc.terms ? { version: doc.terms.version, acceptedAt: iso(doc.terms.acceptedAt) ?? "" } : null,
     comp: doc.comp ?? null,
     cancellation: doc.cancellation ?? null,
     photo: doc.photo ?? null,

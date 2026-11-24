@@ -21,6 +21,7 @@ import {
   paymentFailedEmail,
   portalInviteEmail,
   receiptEmail,
+  invoiceEmail,
   signInLinkEmail,
   teamInviteEmail,
   teamRemovedEmail,
@@ -112,6 +113,7 @@ export const CATALOG: CatalogEntry[] = [
   { key: "membership-active-again", group: "Membership", title: "Your membership is active again", to: "The member", when: "Staff reactivate a paused or ended membership (staff can choose not to send it).", build: () => membershipActiveAgainEmail({ name: NAME }) },
 
   // ── Payments ──
+  { key: "invoice", group: "Payments", title: "An invoice to pay", to: "The member (or their team's owner)", when: "Management sends a one-off invoice to pay in the portal — a company event in the space.", build: () => invoiceEmail({ name: NAME, total: "$1,200", lines: [["Event space · December 12", "$1,000"], ["A/V and setup", "$200"]], due: day(7), number: "GKDM-0012" }) },
   { key: "receipt", group: "Payments", title: "Your receipt", to: "The member", when: "Each monthly payment goes through.", build: () => receiptEmail({ name: NAME, amount: AMOUNT, date: day(0), card: "Visa •••• 4242", invoiceNumber: "GKDM-0007" }) },
   { key: "payment-failed", group: "Payments", title: "Your payment didn't go through", to: "The member", when: "A monthly payment fails. They keep access while they fix it.", build: () => paymentFailedEmail({ name: NAME, amount: AMOUNT, card: "Visa •••• 4242" }) },
   { key: "comp-ending", group: "Payments", title: "Your complimentary membership ends soon", to: "The member", when: "30 days before a complimentary period (e.g. DEVSA community) ends.", build: () => compEndingEmail({ name: NAME, label: "DEVSA community", endDate: day(30), resumes: { amount: AMOUNT, card: "Visa •••• 4242" } }) },

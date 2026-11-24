@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Textarea } from "@/components/ui/field";
 import { HEADING, LINK_ARROW, MONO, ARROW } from "@/components/site/section";
@@ -15,6 +15,8 @@ import { CardSetup } from "@/components/portal/billing-live";
 import { saveMyProfile, type ProfileInput } from "@/lib/portal/profile-actions";
 import { peopleToMeet, type PersonToMeet } from "@/lib/portal/people-actions";
 import { finishWelcome } from "@/lib/portal/onboarding-actions";
+import { acceptTerms } from "@/lib/portal/terms-actions";
+import { TERMS_PATH } from "@/lib/terms";
 
 /*
   THE WELCOME FLOW (app/portal/welcome) — two steps and a send-off, in the
@@ -25,6 +27,12 @@ import { finishWelcome } from "@/lib/portal/onboarding-actions";
   step needs billing in place — a member with nothing on file saves a card
   before Continue (saving charges nothing). proxy.ts keeps every other
   portal page behind it until it's finished.
+
+  THE TERMS OF MEMBERSHIP are agreed on the profile step, a switch under
+  "List me in the member directory" (Geekdom's placement). Required: the
+  portal stays closed until it's recorded (lib/portal/gate.ts). A member
+  sent back here only because the terms changed sees their profile as
+  they left it, with the switch off.
 
   SIZED FOR A LAPTOP: a compact header, and the profile step in two
   columns from lg up, so a MacBook Air shows the whole step without
@@ -46,6 +54,8 @@ interface Props {
     photo: string | null;
     plan: string;
     profile: Omit<ProfileInput, "name">;
+    /** They've already agreed to the CURRENT terms (lib/terms.ts). */
+    termsAgreed: boolean;
   };
   membership: MembershipCase;
   /** "Ask me about" topics other members use — offered as suggestions. */
@@ -149,6 +159,7 @@ function ProfileStep({
 }) {
   const [p, setP] = React.useState(member.profile);
   const [photo, setPhoto] = React.useState<string | null>(member.photo);
+  const [agreed, setAgreed] = React.useState(member.termsAgreed);
   const [errors, setErrors] = React.useState<Record<string, string>>({});
   const [error, setError] = React.useState<string | null>(null);
   const [pending, startTransition] = React.useTransition();
@@ -164,10 +175,15 @@ function ProfileStep({
     if (p.bio.trim().length < 20) missing.bio = "Add a few sentences about you.";
     // The directory's reason to exist: who to ask about what.
     if (!p.askMeAbout.length) missing.askMeAbout = "Add at least one thing members can ask you about.";
+    if (!agreed) missing.terms = "Agree to the Terms of Membership to continue.";
     setErrors(missing);
     if (Object.keys(missing).length) return;
     if (preview) return onNext(); // the staff preview saves nothing
     startTransition(async () => {
+      if (!member.termsAgreed) {
+        const t = await acceptTerms();
+        if (!t.ok) return setError(t.message);
+      }
       const res = await saveMyProfile({ name: member.name, ...p });
       if (res.ok) onNext();
       else setError(res.message);
@@ -241,9 +257,9 @@ function ProfileStep({
         </div>
       </div>
 
-      {error && (
+      {(error || errors.terms) && (
         <p role="alert" className="mt-4 text-sm text-geekdom-red">
-          {error}
+          {error ?? errors.terms}
         </p>
       )}
       <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-border pt-4">
@@ -251,7 +267,34 @@ function ProfileStep({
           {pending ? "Saving…" : "Save and continue"}
         </Button>
         {/* The directory choice, right here — beside the button, so the step still fits a laptop screen. */}
-        <Switch checked={p.listed} onChange={(v) => setP((x) => ({ ...x, listed: v }))} label="List me in the member directory" />
+        {/* The two choices STACKED: side by side they pushed the preview onto a second line, off a laptop screen. */}
+        <div className="flex flex-col gap-1.5">
+          <Switch checked={p.listed} onChange={(v) => setP((x) => ({ ...x, listed: v }))} label="List me in the member directory" />
+          {/* The terms (Geekdom's placement). The link is OUTSIDE the switch's label, so reading them doesn't flip it. */}
+          <span className="inline-flex items-center gap-2">
+            <Switch
+              checked={agreed}
+              onChange={(v) => {
+                setAgreed(v);
+                if (v)
+                  setErrors((e) => {
+                    const rest = { ...e };
+                    delete rest.terms;
+                    return rest;
+                  });
+              }}
+              label={
+                <>
+                  I agree to the Terms of Membership <span className="text-geekdom-red">*</span>
+                </>
+              }
+            />
+            <a href={TERMS_PATH} target="_blank" rel="noopener" className={cn(LINK_ARROW, "text-sm")}>
+              Read them
+              <ArrowUpRight aria-hidden="true" className={ARROW.external} />
+            </a>
+          </span>
+        </div>
         {/*
           HOW YOU'LL APPEAR — the directory's own row, live as they type (the
           step is "How members will see you", so show it). In this row, beside

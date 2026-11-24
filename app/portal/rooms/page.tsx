@@ -1,4 +1,4 @@
-import { requireMember } from "@/lib/auth/session";
+import { requirePortalMember } from "@/lib/portal/gate";
 import { bookerFor, bookingsForDay, listRooms, upcomingFor } from "@/lib/rooms/rooms";
 import { bookableDays, isDay, windowSlots } from "@/lib/rooms/rules";
 import { PortalPage } from "@/components/portal/portal-page";
@@ -16,7 +16,7 @@ export const metadata = { title: "Book a room" };
   the names aren't. Rules: lib/rooms/rules.ts; enforced in lib/rooms/actions.ts.
 */
 export default async function RoomsPage(props: PageProps<"/portal/rooms">) {
-  const user = await requireMember();
+  const user = await requirePortalMember();
   const { day: raw } = await props.searchParams;
   // Server time, once, for every "is it past" decision on the page.
   const now = new Date().getTime();
